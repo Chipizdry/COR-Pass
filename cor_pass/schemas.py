@@ -103,6 +103,12 @@ class PasswordGeneratorSettings(BaseModel):
     include_digits: bool = True
     include_special: bool = True
 
+class WordPasswordGeneratorSettings(BaseModel):
+    length: int = Field(4, ge=1, le=7)
+    separator_hyphen: bool = True
+    separator_underscore: bool = True
+    include_uppercase: bool = True
+
 # class RecordFieldValueModel(BaseModel):
 #     string_value: Optional[str] = None
 #     date_value: Optional[datetime] = None

@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 import hashlib
 import hmac
 
+
 from cor_pass.routes import auth
 from cor_pass.database.db import get_db
 from cor_pass.routes import auth, records, tags, password_generator
