@@ -36,7 +36,7 @@ class User(Base):
     restore_code = Column(String(250), nullable=True)
     is_active = Column(Boolean, default=True)
     role: Mapped[Enum] = Column("role", Enum(Role), default=Role.admin)
-    unique_cipher_key = Column(LargeBinary, unique=True, nullable=False)
+    unique_cipher_key = Column(LargeBinary, nullable=False)
 
     user_records = relationship("Record", back_populates="user")
 

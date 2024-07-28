@@ -38,7 +38,9 @@ security = HTTPBearer()
 SECRET_KEY = settings.secret_key
 ALGORITHM = settings.algorithm
 
-
+"""
+Путь для регистрации нового пользователя, будет меняться
+"""
 @router.post(
     "/signup", response_model=ResponseUser, status_code=status.HTTP_201_CREATED
 )
@@ -65,6 +67,12 @@ async def signup(
     new_user = await repository_users.create_user(body, db)
     logger.debug(f"{body.email} user successfully created")
     return {"user": new_user, "detail": "User successfully created"}
+
+
+
+"""
+Путь для логина пользователя
+"""
 
 
 @router.post(
@@ -103,9 +111,12 @@ async def login(
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
-        # "redirectUrl": redirect_url,
     }
 
+
+"""
+Путь для обновления рефреш токена, под вопросом
+"""
 
 @router.get(
     "/refresh_token",
@@ -146,6 +157,11 @@ async def refresh_token(
     }
 
 
+
+"""
+Маршрут проверки почты в случае если это новая регистрация
+"""
+
 @router.post(
     "/send_verification_code"
 )  # Маршрут проверки почты в случае если это новая регистрация
@@ -178,7 +194,12 @@ async def send_verification_code(
     return {"message": "Check your email for verification code."}
 
 
-# Маршрут подтверждения почты/кода
+
+
+"""
+Маршрут подтверждения почты/кода
+"""
+
 @router.post("/confirm_email")
 async def confirm_email(body: VerificationModel, db: Session = Depends(get_db)):
 
@@ -200,7 +221,12 @@ async def confirm_email(body: VerificationModel, db: Session = Depends(get_db)):
         )
 
 
-@router.post("/forgot_password")  # Маршрут проверки почты в случае если забыли пароль
+
+"""
+Маршрут проверки почты в случае если забыли пароль
+"""
+
+@router.post("/forgot_password")  
 async def forgot_password_send_verification_code(
     body: EmailSchema,
     background_tasks: BackgroundTasks,
@@ -227,6 +253,11 @@ async def forgot_password_send_verification_code(
         logger.debug(f"{body.email} - Check your email for verification code.")
     return {"message": "Check your email for verification code."}
 
+
+
+"""
+Маршрут смены пароля
+"""
 
 @router.patch("/change_password")
 async def change_password(body: ChangePasswordModel, db: Session = Depends(get_db)):

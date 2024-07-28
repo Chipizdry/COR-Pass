@@ -67,8 +67,8 @@ def read_config():
 
 @app.get("/", name="Корень")
 def read_root(request: Request):
-    # return FileResponse("cor_pass/static/login.html")
-    return "welcome"
+    return FileResponse("cor_pass/static/login.html")
+    # return "welcome"
 
 
 @app.get("/api/healthchecker")

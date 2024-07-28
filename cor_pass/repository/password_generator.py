@@ -3,8 +3,7 @@ import secrets
 from cor_pass.schemas import PasswordGeneratorSettings, WordPasswordGeneratorSettings
 from cor_pass.services import words
 
-# Список слов для генерации паролей из слов / заменить на открытую базу слов
-# WORDS_LIST = ["apple", "banana", "cherry", "date", "fig", "grape", "kiwi", "lemon", "mango", "nectarine", "orange", "papaya"]
+
 WORDS_LIST = words.word_list
 
 def generate_password(settings: PasswordGeneratorSettings) -> str:

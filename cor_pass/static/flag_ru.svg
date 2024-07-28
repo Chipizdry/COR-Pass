@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<svg width="640" height="480" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <g class="layer">
+  <title>Layer 1</title>
+  <path d="m0,0l640,0l0,160l-640,0l0,-160z" fill="#fff" id="svg_1"/>
+  <path d="m0,160l640,0l0,160l-640,0l0,-160z" fill="#0039a6" id="svg_2"/>
+  <path d="m0,320l640,0l0,160l-640,0l0,-160z" fill="#d52b1e" id="svg_3"/>
+  <rect fill="#0000ff" height="2" id="svg_4" stroke="#000000" width="641" x="-0.8" y="0.2"/>
+ </g>
+</svg>

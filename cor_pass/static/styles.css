@@ -1,0 +1,374 @@
+
+
+
+body, html {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, sans-serif;
+}
+
+
+.container {
+    width: 250px; /* Установите фиксированную ширину контейнера */
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    text-align: center;
+}
+
+#back-link {
+  /*  position: absolute; */
+  text-align: left;
+    top: 10px;
+    left: -50px;
+    text-decoration: none;
+    color: #007bff; /* цвет ссылки */
+}
+
+#back-link:hover {
+    text-decoration: underline;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+.input-wrapper {
+    position: relative;
+}
+
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+input[type="button"],
+input[type="submit"],
+button {
+    padding: 10px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 5px;
+    background-color: #007BFF;
+    color: white;
+    cursor: pointer;
+}
+
+input[type="button"]:hover,
+input[type="submit"]:hover,
+button:hover {
+    background-color: #0056b3;
+}
+
+ .toggle-password {
+        position: absolute;
+    right: 10px;
+    top: 40%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 18px;
+    user-select: none;
+    }
+
+
+#message {
+    color: red;
+}
+#messageOk {
+    color: green;
+}
+button, input[type="submit"], input[type="button"] {
+    padding: 10px;
+    border: none;
+    background-color: #dc56a8;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+    width: 100%;
+    max-width: 200px;
+}
+button:hover, input[type="submit"]:hover, input[type="button"]:hover {
+   /* background-color: #dc56a8;*/
+    background-color: #981666;
+}
+
+
+
+
+
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+
+}
+
+
+h3 {
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+
+}
+
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 200px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+input[type="submit"] {
+    width: 200px;  /*фиксированная ширина */
+    background-color: #dc56a8; 
+   /* background-color: #981666; */
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+
+input[type="submit"]:hover {
+    background-color: #981666;
+}
+
+.registration-button {
+    background-color: #dc56a8; 
+  /*  background-color: #981666; */
+    color: white;
+    padding: 10px 20px;
+    margin: 0 auto;
+    display: block;
+}
+
+.password-container {
+    display: flex;
+    flex-direction: column;
+}
+
+
+
+.hidden {
+    display: none;
+}
+
+
+.message {
+    font-size: 14px; /* Уменьшите размер шрифта по необходимости */
+    text-align: center; /* Центрируйте текст */
+    margin-top: 10px; /* Дополнительный отступ сверху для лучшей читаемости */
+    font-weight: bold;
+}
+
+.registration-title, .forgot-password-link {
+    text-align: center;
+}
+
+
+
+
+/* Кнопка Google */
+.customGPlusSignIn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 200px;
+    height: 50px;
+    background-color: #dd4b39;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .customGPlusSignIn:hover {
+    background-color: #e74b37;
+  }
+
+
+  
+  /* Иконка Google */
+  .icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 5px;
+    background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 533.5 544.3"><path fill="%23FFF" d="M533.5 278.4c0 145.2-117.3 262.5-262.5 262.5s-262.5-117.3-262.5-262.5 117.3-262.5 262.5-262.5S533.5 133.2 533.5 278.4z"/><path fill="%23FFF" d="M213.9 336.3h-133.8V171.8h133.8v164.5z"/><path fill="%23FFF" d="M266.8 336.3h-133.8V196.1h133.8v140.2z"/><path fill="%23FFF" d="M319.6 336.3h-133.8V220.4h133.8v115.9z"/><path fill="%23FFF" d="M213.9 171.8c-14.9 0-27 12.1-27 27v164.5c0 14.9 12.1 27 27 27h133.8c14.9 0 27-12.1 27-27V198.8c0-14.9-12.1-27-27-27h-133.8z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+  
+  /* Текст кнопки */
+  .buttonText {
+    font-size: 16px;
+    font-weight: bold;
+  }
+
+
+
+
+#verificationCodeWindow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin-top: 20px;
+}
+input[type="button"].registration-button:hover {
+    background-color: #dc56a8;
+}
+/*
+.g-signin2,
+.fb-login-button {
+    /* Задайте требуемый размер 
+    width: 150px;
+    height: 30px; /* Выберите подходящую высоту 
+}*/
+
+.custom-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    margin: 10px auto;
+    width: 220px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    background-color: #4285f4;
+    font-family: Arial, sans-serif;
+}
+.google-btn {
+    background-color: #4285F4;
+    color: white;
+}
+.google-btn img {
+    margin-right: 10px;
+}
+.facebook-btn {
+    background-color:  #4285F4;
+    color: white;
+}
+.facebook-btn img {
+    margin-right: 10px;
+} 
+
+a:hover {
+    color: blue; /* Измените цвет по вашему вкусу */
+} 
+
+.inactive-button {
+    background-color: gray;
+    color: #3a3838; /* Цвет текста */
+    cursor: not-allowed; /* Курсор "недоступен" */
+    
+    pointer-events: none;
+}
+
+.inactive-button:hover {
+    background-color: gray;}
+
+
+.error-message {
+    color: red;
+    font-size: 9px;
+    margin-top: 1px; }
+
+
+
+.confirmationMessage {
+    color: green;
+    font-size: 14px;
+    margin-top: 10px;}
+ 
+ .language-switcher {
+            position: relative;
+            margin-left: -109px; /* Отступ справа от панели */
+            /*width: 54px; */
+        }
+
+        #lang-select {
+            display: none; /* Скрытие оригинального select элемента */
+        }
+
+.select2-container--default .select2-selection--single {
+            border: none;
+            height: 36px;
+            padding-left: 1px; /* Отступ слева для иконок */
+            background-repeat: no-repeat;
+            background-position: center left;
+            background-size: 14px; /* Размер иконок */
+            font-size: 10px; /* Уменьшение размера шрифта */
+            border-radius: 4px;
+        }
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 36px; /* Выравнивание текста по вертикали */
+        }
+
+.select2-container--default .select2-selection--single .flag-img {
+            width: 14px; /* Ширина изображения флага */
+            height: auto; /* Автоматическая высота */
+            vertical-align: middle; /* Выравнивание по вертикали */
+            margin-right: 5px; /* Отступ справа от текста */
+            
+        }
+
+        /* Стили для уменьшения размера флагов и текста в выпадающем списке */
+.select2-dropdown .select2-results__option {
+            font-size: 10px; /* Уменьшение размера шрифта */
+        }
+
+.select2-dropdown .select2-results__option .flag-img {
+            width: 14px; /* Уменьшение ширины изображения флага */
+            height: auto; /* Автоматическая высота */
+            vertical-align: middle; /* Выравнивание по вертикали */
+            margin-right: 5px; /* Отступ справа от текста */
+        }  
+
+.link-button {
+     background: none;
+     border: none;
+    color: blue;
+            
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    font-family: inherit;
+    }
+
+.link-button:hover {
+     color: darkblue;
+     text-decoration: underline;
+     background: none;
+     border: none;
+
+        }        

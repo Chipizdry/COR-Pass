@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="icon" type="image/png" href="favicon.png">
+        <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
+        <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
+        <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
+        <link rel="apple-touch-icon" sizes="76x76" href="/apple-icon-76x76.png">
+        <link rel="apple-touch-icon" sizes="114x114" href="/apple-icon-114x114.png">
+        <link rel="apple-touch-icon" sizes="120x120" href="/apple-icon-120x120.png">
+        <link rel="apple-touch-icon" sizes="144x144" href="/apple-icon-144x144.png">
+        <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">
+        <link rel="icon" type="image/png" sizes="192x192"  href="/android-icon-192x192.png">
+        <meta name="msapplication-TileColor" content="#ffffff">
+        <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+        <meta name="theme-color" content="#ffffff">
+    
+        <title>Авторизация и регистрация</title>
+        <link rel="stylesheet" type="text/css" href="static/styles.css">
+        <meta name="google-signin-client_id" content="161352424929-s3ris9429m994vcm2m35epe6eu4538el.apps.googleusercontent.com">
+        <!-- <script src="https://apis.google.com/js/platform.js" async defer></script> -->
+        <meta name="facebook-sdk-version" content="v15.0" />
+        <script src="https://connect.facebook.net/en_US/sdk.js"></script>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet" />
+        <style>
+            button,
+            .google-signin-btn,
+            .custom-btn {
+                font-family: inherit; /* Наследовать шрифт от родительского элемента */
+                font-size: 16px; /* Размер шрифта */
+            }
+    
+            .custom-btn img {
+                margin-right: 10px;
+                align-items: center;
+            }
+    
+            .g-signin2 {
+                display: none; /* Скрыть стандартную кнопку */
+            }
+    
+            .google-signin-btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 5px 10px;
+                border: none;
+                border-radius: 5px;
+                background-color: #4285f4;
+                color: white;
+                cursor: pointer;
+                margin-top: 10px;
+                width: 100%;
+                max-width: 200px;
+            }
+    
+            .google-signin-btn img {
+                margin-right: 10px;
+            }
+        </style>
+</head>
+<body>
+<div class="container">
+    <div class="top-panel">
+        <div class="language-switcher">
+            <select id="lang-select" onchange="switchLanguage(this.value)">
+                <option value="ru" data-icon="flag_ru.svg">Русский</option>
+                <option value="zh" data-icon="flag_cn.svg">中文</option>
+                <option value="en" data-icon="flag_en.svg">English</option>
+                <option value="uk" data-icon="flag_uk.svg">Українська</option>
+            </select>
+        </div>
+    </div>
+    <script src="static/translation.js"></script>
+    <h1 data-translate="title">Authorization and Registration</h1>
+    <form id="login-form">
+        <label for="email" data-translate="email-label">Email:</label>
+        <input type="email" id="email" name="username" required>
+        <label for="password" data-translate="password-label">Password:</label>
+        <input type="password" id="password" name="password" required>
+        <button type="submit" data-translate="login-button">Login</button>
+    </form>
+    <div id="message"></div>
+    <p>
+        <div class="g-signin2" data-onsuccess="onSignIn"></div>
+        <button class="google-signin-btn" id='google-btn' onclick="signInWithGoogle()">
+            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Icon" width="20" height="20"> <span data-translate="login-button-google">Login</span>
+        </button>
+    </p>
+    <button class="custom-btn facebook-btn" id='facebook-btn' onclick="signInWithFacebook()">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook Icon" width="20" height="20"> <span data-translate="login-button-facebook"></span>
+    </button>
+
+    <h3 data-translate="registration">Registration</h3>
+    <button onclick="window.location.href='/static/signup.html' + '?redirectUrl=' + redirectUrl;" class="registration-button" data-translate="registration-button">Register</button>
+    <br><button onclick="window.location.href='/static/forgot-password.html' + '?redirectUrl=' + redirectUrl;" class="registration-button"><span data-translate="forgot-password-button">Forgot password?</span></a><br>
+</div>
+
+
+
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const storedLang = localStorage.getItem('selectedLanguage');
+    const browserLang = navigator.language || navigator.userLanguage;
+    let defaultLang;
+
+    if (storedLang) {
+        defaultLang = storedLang;
+    } else if (browserLang) {
+        defaultLang = browserLang.startsWith('ru') ? 'ru' :
+                      browserLang.startsWith('en') ? 'en' :
+                      browserLang.startsWith('zh') ? 'zh' : 
+                      browserLang.startsWith('uk') ? 'uk':'ru';
+    } else {
+        defaultLang = 'en';
+    }
+
+    setLanguage(defaultLang);
+     // Установка значения селектора языка на загруженный язык
+     const langSelect = document.getElementById('lang-select');
+    langSelect.value = defaultLang;
+
+        // Инициализация Select2 для выпадающего списка языка
+        $('#lang-select').select2({
+            templateResult: formatState,
+            templateSelection: formatState,
+            minimumResultsForSearch: Infinity
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const GoogleBtn = document.getElementById('google-btn');
+        const FaceBookBtn = document.getElementById('facebook-btn');
+        
+        console.log('DOM fully loaded and parsed');
+        
+        // Делаем AJAX-запрос к Python приложению для получения настроек
+        fetch('/get_social_login_settings')
+            .then(response => response.json())
+            .then(data => {
+                // console.log('Settings received:', data);
+                // Приводим строковые значения к булевым
+                const googleLoginEnabled = data.google_login === 'True';
+                const facebookLoginEnabled = data.facebook_login === 'True';
+                // console.log('googleLoginEnabled:', googleLoginEnabled);
+                // console.log('facebookLoginEnabled:', facebookLoginEnabled);
+                // Показываем или скрываем кнопки в зависимости от настроек
+                if (!googleLoginEnabled) {
+                    // console.log('Hiding Google login button');
+                    GoogleBtn.style.display = 'none';
+                }
+                if (!facebookLoginEnabled) {
+                    // console.log('Hiding Facebook login button');
+                    FaceBookBtn.style.display = 'none';
+                }
+                
+                
+            })
+            .catch(error => console.error('Error fetching settings:', error));
+        });
+        
+</script>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    let redirectUrl = urlParams.get('redirectUrl');
+
+    if (redirectUrl == null) {
+        console.log('redirectUrl');
+    } else {
+        redirectUrl = redirectUrl.trim();
+    }
+    if (redirectUrl !== null) {
+        redirectUrl = decodeURIComponent(redirectUrl);
+    }
+    localStorage.setItem('redirectUrl', redirectUrl);
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('login-form');
+        const messageDiv = document.getElementById('message');
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+
+            formData.forEach((value, key) => {
+                params.append(key, value);
+            });
+
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "/api/auth/login");
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+                        console.log("Successful login.");
+                        const userLang = localStorage.getItem('selectedLanguage');
+                        // console.log("__________translation___________");
+                        // console.log(translations); // Проверить объект translations в консоли
+                        // console.log("_____________userLang____________");
+                        // console.log(userLang); // Проверить значение userLang в консоли
+                        // console.log("_____________translations[userLang]____________");
+                        // console.log(translations[userLang]); // Проверить значение translations[userLang] в консоли
+                        // console.log("_____________messageDiv.innerText____________");
+                        // console.log(translations[userLang]["message-ok"]);
+                        // console.log(errorMessage); // Проверить значение errorMessage в консоли
+                        messageDiv.innerText = "Successful login"
+                        // messageDiv.innerText = translations[userLang]["message-ok"];
+                        messageDiv.style.color = 'green';
+
+                        setTimeout(() => {
+                            const refreshToken = response.refresh_token;
+                            const accessToken = response.access_token;
+
+                            urlParams.set('access_token', accessToken);
+                            urlParams.set('refresh_token', refreshToken);
+
+                            const queryString = urlParams.toString();
+                            // const url = `${redirectUrl}/?access_token=${accessToken}&refresh_token=${refreshToken}`;
+                            const url = `/static/mainscreen.html/?access_token=${accessToken}&refresh_token=${refreshToken}`;
+
+                            window.location.href = url;
+                        }, 500);
+
+                    } else {
+                        const errorMessage = getErrorMessage(xhr.status, messageDiv);
+                        // console.error("Error during login.");
+                        messageDiv.innerText = errorMessage;
+                        messageDiv.style.color = 'red';
+                    }
+                }
+            };
+
+            xhr.send(params);
+        });
+    });
+
+    function getErrorMessage(status, messageDiv) {
+        const userLang = localStorage.getItem('selectedLanguage');
+        switch(status) {      
+            case 401:
+                // messageDiv.innerText = translations[userLang]["message-error"];
+                messageDiv.style.color = 'red';
+                return "Invalid username or password.";
+            case 404:
+                messageDiv.innerText = "User not registered!";
+                messageDiv.style.color = 'red';
+                return "User not registered!";
+            case 403:
+                return "Access denied.";
+            default:
+                // console.error("Error during login.");
+                // console.log(translations); // Проверить объект translations в консоли
+                // console.log(userLang); // Проверить значение userLang в консоли
+                // console.log(translations[userLang]); // Проверить значение translations[userLang] в консоли
+                // console.log(errorMessage); // Проверить значение errorMessage в консоли
+                // messageDiv.innerText = translations[userLang]["message-error"];
+                messageDiv.style.color = 'red';
+                return "Error during login.";
+        }
+    }
+
+    function onSignIn(googleUser) {
+        var profile = googleUser.getBasicProfile();
+        console.log('ID: ' + profile.getId());
+        console.log('Name: ' + profile.getName());
+        console.log('Image URL: ' + profile.getImageUrl());
+        console.log('Email: ' + profile.getEmail());
+        // Здесь вы можете отправить данные на ваш сервер для аутентификации
+    }
+
+    function signInWithGoogle() {
+        console.log('Google sign-in button clicked');
+        var auth2 = gapi.auth2.getAuthInstance();
+        if (auth2) {
+            auth2.signIn().then(function(googleUser) {
+                onSignIn(googleUser);
+            }, function(error) {
+                console.error('Error signing in with Google: ', error);
+            });
+        } else {
+            console.error('Google API not initialized.');
+        }
+    }
+
+    window.fbAsyncInit = function() {
+        FB.init({
+            appId      : '1580389042741794',
+            cookie     : true,
+            xfbml      : true,
+            version    : 'v15.0'
+        });
+    };
+
+    (function(d, s, id){
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) {return;}
+        js = d.createElement(s); js.id = id;
+        js.src = "https://connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+
+    function signInWithFacebook() {
+        console.log('Facebook sign-in button clicked');
+        FB.login(function(response) {
+            if (response.status === 'connected') {
+                var accessToken = response.authResponse.accessToken;
+                FB.api('/me', {fields: 'name,email,picture'}, function(profile) {
+                    console.log('ID: ' + profile.id);
+                    console.log('Name: ' + profile.name);
+                    console.log('Image URL: ' + profile.picture.data.url);
+                    console.log('Email: ' + profile.email);
+                    // Здесь вы можете отправить данные на ваш сервер для аутентификации
+                });
+            } else {
+                console.log('Not authenticated with Facebook.');
+            }
+        }, {scope: 'public_profile,email'});
+    }
+
+    function loadGoogleAPI() {
+        gapi.load('auth2', function() {
+            gapi.auth2.init().then(function() {
+                console.log('Google API initialized');
+            }, function(error) {
+                console.error('Error initializing Google API: ', error);
+            });
+        });
+    }
+
+  //  window.onload = function() {
+  //      loadGoogleAPI();
+  //      setLanguage(defaultLang); // Установка языка при загрузке страницы
+  //  };
+</script>
+
+
+<script>
+    // Функция для отображения изображений в Select2
+    function formatState(state) {
+        if (!state.id) {
+            return state.text;
+        }
+        var baseUrl = 'static/flags';
+        var $state = $(
+            '<span><img src="' + baseUrl + '/' + state.element.getAttribute('data-icon') + '" class="flag-img" /> ' + state.text + '</span>'
+        );
+        return $state;
+    }
+
+    // Функция для переключения языка
+    function switchLanguage(language) {
+        setLanguage(language);
+        const langSelect = document.getElementById('lang-select');
+        langSelect.value = language;
+        localStorage.setItem('selectedLanguage', language); // Сохраняем выбранный язык в localStorage
+    }
+
+    // Функция для установки языка
+    function setLanguage(language) {
+        document.querySelectorAll("[data-translate]").forEach(function(element) {
+            const key = element.getAttribute("data-translate");
+            element.innerText = translations[language][key];
+           
+        });
+    }
+</script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/js/select2.min.js"></script>
+
+</body>
+</html>

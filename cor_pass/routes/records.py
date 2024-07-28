@@ -16,6 +16,12 @@ router = APIRouter(prefix="/records", tags=["Records"])
 encryption_key = settings.encryption_key
 
 
+
+"""
+Маршрут получения всех записей пользователя
+"""
+
+
 @router.get(
     "/", response_model=List[RecordResponse], dependencies=[Depends(user_access)]
 )
@@ -45,6 +51,11 @@ async def read_records(
     return records
 
 
+
+"""
+Маршрут получения конкретной записи пользователя
+"""
+
 @router.get(
     "/{record_id}", response_model=RecordResponse, dependencies=[Depends(user_access)]
 )
@@ -72,6 +83,11 @@ async def read_record(
     return record
 
 
+
+"""
+Маршрут создания записи
+"""
+
 @router.post(
     "/",
     response_model=RecordResponse,
@@ -96,6 +112,12 @@ async def create_record(
     record = await repository_record.create_record(body, db, user)
     return record
 
+
+
+
+"""
+Маршрут обновления записи
+"""
 
 @router.put(
     "/{record_id}", response_model=RecordResponse, dependencies=[Depends(user_access)]
@@ -126,6 +148,12 @@ async def update_record(
         )
     return record
 
+
+
+
+"""
+Маршрут удаления записи
+"""
 
 @router.delete("/{record_id}", response_model=RecordResponse)
 async def remove_record(
