@@ -17,14 +17,14 @@
         }
         
         .panel {
-         width: 100%;
-         max-width: 800px;
-         max-height: 90vh; /* Максимальная высота панели 90% высоты окна */
-         background-color: #fff;
-         padding: 10px; /* Уменьшение внутреннего отступа */
-         border-radius: 5px;
-         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-         overflow-y: auto; /* Добавление вертикальной прокрутки */
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh; /* Максимальная высота панели 90% высоты окна */
+            background-color: #fff;
+            padding: 10px; /* Уменьшение внутреннего отступа */
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow-y: auto; /* Добавление вертикальной прокрутки */
         }
         
         h1 {
@@ -78,8 +78,9 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed; /* Добавляем фиксированное расположение колонок */
             margin-top: 20px;
-            font-size: 12px; /* Уменьшение размера шрифта */
+            font-size: 10px; /* Уменьшение размера шрифта */
         }
         
         th, td {
@@ -93,6 +94,14 @@
         th {
             background-color: #f2f2f2;
         }
+
+        th:nth-child(1), td:nth-child(1) { width: 15%; }
+        th:nth-child(2), td:nth-child(2) { width: 15%; }
+        th:nth-child(3), td:nth-child(3) { width: 15%; }
+        th:nth-child(4), td:nth-child(4) { width: 15%; }
+        th:nth-child(5), td:nth-child(5) { width: 15%; }
+        th:nth-child(6), td:nth-child(6) { width: 15%; }
+        th:nth-child(7), td:nth-child(7) { width: 10%; }
     </style>
 </head>
 <body>
@@ -131,7 +140,7 @@
                         <th>Record Name</th>
                         <th>Website</th>
                         <th>Username</th>
-                        <th>Password</th>
+                       
                         <th>Created At</th>
                         <th>Edited At</th>
                         <th>Notes</th>
@@ -198,7 +207,7 @@
                     <td>${record.record_name}</td>
                     <td>${record.website}</td>
                     <td>${record.username}</td>
-                    <td>${record.password}</td>
+                    
                     <td>${new Date(record.created_at).toLocaleString()}</td>
                     <td>${new Date(record.edited_at).toLocaleString()}</td>
                     <td>${record.notes}</td>`;
