@@ -17,7 +17,7 @@
         <meta name="theme-color" content="#ffffff">
     
         <title>Авторизация и регистрация</title>
-        <link rel="stylesheet" type="text/css" href="static/styles.css">
+        <link rel="stylesheet" type="text/css" href="styles.css">
         <meta name="google-signin-client_id" content="161352424929-s3ris9429m994vcm2m35epe6eu4538el.apps.googleusercontent.com">
         <!-- <script src="https://apis.google.com/js/platform.js" async defer></script> -->
         <meta name="facebook-sdk-version" content="v15.0" />
@@ -72,7 +72,7 @@
             </select>
         </div>
     </div>
-    <script src="static/translation.js"></script>
+    <script src="translation.js"></script>
     <h1 data-translate="title">Authorization and Registration</h1>
     <form id="login-form">
         <label for="email" data-translate="email-label">Email:</label>
@@ -168,6 +168,8 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     let redirectUrl = urlParams.get('redirectUrl');
+    let Item=urlParams.get('access_token')
+    localStorage.setItem('Item', access_token);
 
     if (redirectUrl == null) {
         console.log('redirectUrl');
@@ -349,7 +351,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!state.id) {
             return state.text;
         }
-        var baseUrl = 'static/flags';
+        var baseUrl = 'flags';
         var $state = $(
             '<span><img src="' + baseUrl + '/' + state.element.getAttribute('data-icon') + '" class="flag-img" /> ' + state.text + '</span>'
         );
