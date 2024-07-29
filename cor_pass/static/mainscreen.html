@@ -5,83 +5,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Records</title>
     <link rel="stylesheet" href="styles.css">
-    <style>body, html {
-        height: 100%;
-        margin: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-family: Arial, sans-serif;
-        background-color: #f0f0f0;
-    }
-    
-    .panel {
-        width: 80%;
-        max-width: 800px;
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 5px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    
-    h1 {
-        text-align: center;
-        color: #333;
-    }
-    
-    .form-container {
-        margin-bottom: 20px;
-    }
-    
-    .input-wrapper {
-        margin-bottom: 10px;
-    }
-    
-    label {
-        display: block;
-        margin-bottom: 5px;
-        color: #333;
-    }
-    
-    input[type="text"],
-    input[type="password"] {
-        width: 100%;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        box-sizing: border-box;
-    }
-    
-    input[type="submit"], .fetch-button {
-        width: 100%;
-        background-color: #007BFF;
-        color: white;
-        padding: 10px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        margin-top: 10px;
-    }
-    
-    input[type="submit"]:hover, .fetch-button:hover {
-        background-color: #0056b3;
-    }
-    
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-    }
-    
-    th, td {
-        border: 1px solid black;
-        padding: 8px;
-        text-align: left;
-    }
-    
-    th {
-        background-color: #f2f2f2;
-    }
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        
+        .panel {
+         width: 100%;
+         max-width: 800px;
+         max-height: 90vh; /* Максимальная высота панели 90% высоты окна */
+         background-color: #fff;
+         padding: 10px; /* Уменьшение внутреннего отступа */
+         border-radius: 5px;
+         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+         overflow-y: auto; /* Добавление вертикальной прокрутки */
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        
+        .form-container {
+            margin-bottom: 20px;
+        }
+        
+        .input-wrapper {
+            margin-bottom: 10px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        
+        input[type="submit"], .fetch-button {
+            width: 100%;
+            background-color: #007BFF;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        input[type="submit"]:hover, .fetch-button:hover {
+            background-color: #0056b3;
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 12px; /* Уменьшение размера шрифта */
+        }
+        
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+            word-wrap: break-word; /* Перенос длинных строк */
+            white-space: pre-wrap; /* Обеспечение переноса строк */
+        }
+        
+        th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
@@ -113,22 +124,24 @@
             </form>
             <button id="fetchRecordsButton" class="fetch-button">Get Records</button>
         </div>
-        <table id="recordsTable">
-            <thead>
-                <tr>
-                    <th>Record Name</th>
-                    <th>Website</th>
-                    <th>Username</th>
-                    <th>Password</th>
-                    <th>Created At</th>
-                    <th>Edited At</th>
-                    <th>Notes</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Здесь будут отображаться данные пользователей -->
-            </tbody>
-        </table>
+        <div class="table-container">
+            <table id="recordsTable">
+                <thead>
+                    <tr>
+                        <th>Record Name</th>
+                        <th>Website</th>
+                        <th>Username</th>
+                        <th>Password</th>
+                        <th>Created At</th>
+                        <th>Edited At</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Здесь будут отображаться данные пользователей -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>
