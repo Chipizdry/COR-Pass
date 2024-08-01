@@ -25,7 +25,8 @@ def decrypt_data(encrypted_data, key):
 
 
 def generate_aes_key(key):
+    random_key = secrets.token_urlsafe(16)
     sha256 = hashlib.sha256()
-    sha256.update(key.encode())
+    sha256.update(random_key.encode())
     aes_key = sha256.digest()[:16]
     return aes_key

@@ -41,7 +41,8 @@ async def get_record_by_id(user: User, db: Session, record_id: int):
         .filter(and_(Record.record_id == record_id, User.id == user.id))
         .first()
     )
-    record.password = decrypt_data(
+    if record:
+        record.password = decrypt_data(
         encrypted_data=record.password, key=user.unique_cipher_key
     )
     return record
