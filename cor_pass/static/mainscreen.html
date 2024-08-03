@@ -235,7 +235,150 @@ class="registration-button" data-translate="registration-button">Register</butto
             </div>
         </div>
     
+
+        <!-- Модальное окно для редактирования -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeEditModal">&times;</span>
+        <div class="form-container">
+            <form id="editRecordForm">
+                <div class="input-wrapper">
+                    <label for="edit_record_name">Record Name</label>
+                    <input type="text" id="edit_record_name" name="record_name" placeholder="Record Name" required>
+                </div>
+                <div class="input-wrapper">
+                    <label for="edit_website">Website</label>
+                    <input type="text" id="edit_website" name="website" placeholder="Website" required>
+                </div>
+                <div class="input-wrapper">
+                    <label for="edit_username">Username</label>
+                    <input type="text" id="edit_username" name="username" placeholder="Username" required>
+                </div>
+                <div class="input-wrapper">
+                    <label for="edit_password">Password</label>
+                    <input type="password" id="edit_password" name="password" placeholder="Password" required>
+                </div>
+                <div class="input-wrapper">
+                    <label for="edit_notes">Notes</label>
+                    <input type="text" id="edit_notes" name="notes" placeholder="Notes">
+                </div>
+                <input type="submit" value="Save Changes" class="registration-button">
+            </form>
+        </div>
+    </div>
+</div>
         <script>
+
+document.addEventListener('DOMContentLoaded', () => {
+    const editModal = document.getElementById('editModal');
+    const closeEditModalBtn = document.getElementById('closeEditModal');
+    const editForm = document.getElementById('editRecordForm');
+    let currentRecordId = null;
+
+    // Открываем модальное окно для редактирования
+    function openEditModal(record) {
+        // Заполняем форму данными записи
+        document.getElementById('edit_record_name').value = record.record_name;
+        document.getElementById('edit_website').value = record.website;
+        document.getElementById('edit_username').value = record.username;
+        document.getElementById('edit_password').value = record.password;
+        document.getElementById('edit_notes').value = record.notes;
+        currentRecordId = record.id; // Сохраняем ID записи
+        editModal.style.display = 'block';
+    }
+
+    // Закрываем модальное окно
+    closeEditModalBtn.addEventListener('click', () => {
+        editModal.style.display = 'none';
+    });
+
+    // Закрываем модальное окно, если кликнули вне его
+    window.addEventListener('click', (event) => {
+        if (event.target === editModal) {
+            editModal.style.display = 'none';
+        }
+    });
+
+    // Добавляем обработчик кликов по строкам таблицы
+    /*
+    document.getElementById('recordsTable').addEventListener('click', (event) => {
+        if (event.target.tagName === 'TD' && event.target.parentElement) {
+            const row = event.target.parentElement;
+            const recordName = row.cells[0].textContent;
+           
+            if (record) {
+                openEditModal(record);
+            }
+        }
+    });
+    */
+    // Обработчик кликов по строкам таблицы
+document.getElementById('recordsTable').addEventListener('click', async (event) => {
+    const row = event.target.closest('tr');
+    if (row) {
+        const recordId = row.dataset.recordId; // Используем data-атрибут для хранения ID записи
+
+        if (recordId) {
+            try {
+                // Запрашиваем данные записи по ID
+                const response = await fetch(`/api/records/${recordId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+
+                const record = await response.json();
+                openEditModal(record); // Открываем модальное окно с данными записи
+            } catch (error) {
+                console.error('There was a problem with the fetch operation:', error);
+            }
+        }
+    }
+});
+
+
+
+    // Обработка отправки формы редактирования
+    editForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(editForm);
+        const data = Object.fromEntries(formData.entries());
+        data.id = currentRecordId; // Добавляем ID записи в данные
+
+        try {
+            const response = await fetch(`/api/records/${currentRecordId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+
+            const updatedRecord = await response.json();
+            fetchRecords(); // Обновляем таблицу после изменения записи
+            editModal.style.display = 'none'; // Закрываем модальное окно
+        } catch (error) {
+            console.error('There was a problem with the fetch operation:', error);
+        }
+    });
+
+    // Initial fetch to populate the table
+    fetchRecords();
+});
+
+
             // Получаем элементы модального окна
             const modal = document.getElementById('myModal');
             const openModalBtn = document.getElementById('openModal');
