@@ -235,9 +235,8 @@ class="registration-button" data-translate="registration-button">Register</butto
             </div>
         </div>
     
-
-        <!-- Модальное окно для редактирования -->
-<div id="editModal" class="modal">
+  <!-- Модальное окно для редактирования -->
+  <div id="editModal" class="modal">
     <div class="modal-content">
         <span class="close" id="closeEditModal">&times;</span>
         <div class="form-container">
@@ -274,23 +273,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeEditModalBtn = document.getElementById('closeEditModal');
     const editForm = document.getElementById('editRecordForm');
     let currentRecordId = null;
+  
+  
+             // Открытие модального окна для редактирования записи
+             function openEditModal(record) {
+                document.getElementById('edit_record_name').value = record.record_name;
+                document.getElementById('edit_website').value = record.website;
+                document.getElementById('edit_username').value = record.username;
+                document.getElementById('edit_password').value = record.password;
+                document.getElementById('edit_notes').value = record.notes;
+                recordId = record.id;
+                editModal.style.display = 'block';
+            }
+ 
 
-    // Открываем модальное окно для редактирования
-    function openEditModal(record) {
-        // Заполняем форму данными записи
-        document.getElementById('edit_record_name').value = record.record_name;
-        document.getElementById('edit_website').value = record.website;
-        document.getElementById('edit_username').value = record.username;
-        document.getElementById('edit_password').value = record.password;
-        document.getElementById('edit_notes').value = record.notes;
-        currentRecordId = record.id; // Сохраняем ID записи
-        editModal.style.display = 'block';
-    }
+            // Закрываем модальное окно
+            closeEditModalBtn.onclick = () => {
+                editModal.style.display = 'none';
+            }
 
-    // Закрываем модальное окно
-    closeEditModalBtn.addEventListener('click', () => {
-        editModal.style.display = 'none';
-    });
+
+       
+
+
+    
 
     // Закрываем модальное окно, если кликнули вне его
     window.addEventListener('click', (event) => {
@@ -299,19 +305,51 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Добавляем обработчик кликов по строкам таблицы
-    /*
-    document.getElementById('recordsTable').addEventListener('click', (event) => {
-        if (event.target.tagName === 'TD' && event.target.parentElement) {
-            const row = event.target.parentElement;
-            const recordName = row.cells[0].textContent;
-           
-            if (record) {
-                openEditModal(record);
+  
+
+            // Обрабатываем отправку формы для сохранения изменений
+            editForm.addEventListener('submit', event => {
+                event.preventDefault();
+                const formData = new FormData(editForm);
+                const recordData = {};
+                formData.forEach((value, key) => {
+                    recordData[key] = value;
+                });
+
+                // Отправка данных на сервер
+                fetch(`/api/record/${recordId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(recordData)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Изменения сохранены');
+                        // Обновление данных в таблице
+                        editModal.style.display = 'none';
+                        loadTableData(); // Функция для перезагрузки данных таблицы
+                    } else {
+                        alert('Ошибка при сохранении изменений');
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка при сохранении изменений:', error);
+                });
+            });
+
+            // Закрытие модального окна при клике вне его
+            window.onclick = (event) => {
+                if (event.target == editModal) {
+                    editModal.style.display = 'none';
+                }
             }
-        }
-    });
-    */
+
+
+
+
+
     // Обработчик кликов по строкам таблицы
 document.getElementById('recordsTable').addEventListener('click', async (event) => {
     const row = event.target.closest('tr');
@@ -320,6 +358,7 @@ document.getElementById('recordsTable').addEventListener('click', async (event) 
 
         if (recordId) {
             try {
+                console.log('Полученные данные записи:', recordId);
                 // Запрашиваем данные записи по ID
                 const response = await fetch(`/api/records/${recordId}`, {
                     method: 'GET',
@@ -334,6 +373,7 @@ document.getElementById('recordsTable').addEventListener('click', async (event) 
                 }
 
                 const record = await response.json();
+                console.log('Полученные данные записи:', record); // Выводим данные записи в консоль
                 openEditModal(record); // Открываем модальное окно с данными записи
             } catch (error) {
                 console.error('There was a problem with the fetch operation:', error);
@@ -350,10 +390,10 @@ document.getElementById('recordsTable').addEventListener('click', async (event) 
 
         const formData = new FormData(editForm);
         const data = Object.fromEntries(formData.entries());
-        data.id = currentRecordId; // Добавляем ID записи в данные
+        data.id = recordId; // Добавляем ID записи в данные
 
         try {
-            const response = await fetch(`/api/records/${currentRecordId}`, {
+            const response = await fetch(`/api/records/${recordId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -432,24 +472,29 @@ document.getElementById('recordsTable').addEventListener('click', async (event) 
                     console.error('There was a problem with the fetch operation:', error);
                 }
             }
-    
+   
             function populateTable(records) {
-                console.log('Populating table with records:', records);
-                const tableBody = document.getElementById('recordsTable').querySelector('tbody');
-                tableBody.innerHTML = '';
-    
+                const tbody = document.querySelector('#recordsTable tbody');
+                tbody.innerHTML = ''; // Очистить таблицу перед заполнением
+
                 records.forEach(record => {
-                    console.log('Adding record to table:', record);
+
+                         // Выводим отладочную информацию для проверки значений
+                      console.log('Record ID:', record.record_id);
+                      console.log('Record Data:', record);
+
                     const row = document.createElement('tr');
-                    const loginUrl = `${record.website}?username=${encodeURIComponent(record.username)}&password=${encodeURIComponent(record.password)}`;
+                    row.dataset.recordId = record.record_id; // Добавляем data-record-id
+
                     row.innerHTML = `
                         <td>${record.record_name}</td>
-                        <td><a href="${loginUrl}" target="_blank">${record.website}</a></td>
+                        <td><a href="${record.website}" target="_blank">${record.website}</a></td>
                         <td>${record.username}</td>
-                        <td>${new Date(record.created_at).toLocaleString()}</td>
-                        <td>${new Date(record.edited_at).toLocaleString()}</td>
-                        <td>${record.notes}</td>`;
-                    tableBody.appendChild(row);
+                        <td>${record.created_at}</td>
+                        <td>${record.edited_at}</td>
+                        <td>${record.notes}</td>
+                    `;
+                    tbody.appendChild(row);
                 });
             }
     
