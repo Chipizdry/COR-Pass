@@ -75,7 +75,18 @@ class="registration-button" data-translate="registration-button">Register</butto
             .input-wrapper {
                 margin-bottom: 10px;
             }
-            
+            .password-wrapper {
+             position: relative;
+            }
+
+            .eye-icon {
+             position: absolute;
+             right: 10px;
+             top: 50%;
+             transform: translateY(-50%);
+             cursor: pointer;
+            }
+
             label {
                 display: block;
                 margin-bottom: 5px;
@@ -236,7 +247,7 @@ class="registration-button" data-translate="registration-button">Register</butto
         </div>
     
   <!-- Модальное окно для редактирования -->
-  <div id="editModal" class="modal">
+<div id="editModal" class="modal">
     <div class="modal-content">
         <span class="close" id="closeEditModal">&times;</span>
         <div class="form-container">
@@ -255,7 +266,10 @@ class="registration-button" data-translate="registration-button">Register</butto
                 </div>
                 <div class="input-wrapper">
                     <label for="edit_password">Password</label>
-                    <input type="password" id="edit_password" name="password" placeholder="Password" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="edit_password" name="password" placeholder="Password" required>
+                        <span id="togglePassword" class="eye-icon">👁️</span>
+                    </div>
                 </div>
                 <div class="input-wrapper">
                     <label for="edit_notes">Notes</label>
@@ -267,6 +281,12 @@ class="registration-button" data-translate="registration-button">Register</butto
     </div>
 </div>
         <script>
+            document.getElementById('togglePassword').addEventListener('click', function () {
+    const passwordField = document.getElementById('edit_password');
+    const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordField.setAttribute('type', type);
+    this.textContent = type === 'password' ? '👁️' : '👁️‍🗨️'; // Изменение иконки при переключении
+                                                         });
 
 document.addEventListener('DOMContentLoaded', () => {
     const editModal = document.getElementById('editModal');
@@ -281,11 +301,34 @@ document.addEventListener('DOMContentLoaded', () => {
                editForm.elements['record_name'].value = record.record_name;
                editForm.elements['website'].value = record.website;
                editForm.elements['username'].value = record.username;
+               editForm.elements['password'].value = record.password;
                editForm.elements['notes'].value = record.notes;
                recordId = record.record_id; // Сохраняем ID записи в глобальной переменной
                console.log('Record ID set to:', recordId); // Проверка значения recordId
                editModal.style.display = 'block';
                    }
+
+
+/*
+                   function openEditModal(record) {
+                    const editModal = document.getElementById('editModal');
+                    const editForm = document.getElementById('editRecordForm');
+
+              // Заполнение полей формы данными записи
+                    editForm.edit_record_name.value = record.record_name;
+                    editForm.edit_website.value = record.website;
+                    editForm.edit_username.value = record.username;
+                    editForm.edit_password.value = record.password;
+                    editForm.edit_notes.value = record.notes;
+
+                      // Открытие модального окна
+                   
+    // Установка текущего recordId для использования при сохранении изменений
+                     recordId = record.record_id;
+                     editModal.style.display = 'block';
+                                          }
+*/
+
             // Закрываем модальное окно
             closeEditModalBtn.onclick = () => {
                 editModal.style.display = 'none';
