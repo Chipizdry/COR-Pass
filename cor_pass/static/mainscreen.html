@@ -333,10 +333,13 @@ class="registration-button" data-translate="registration-button">Register</butto
                                                          });
 
   
-document.addEventListener('DOMContentLoaded', function () {
+                                                         document.addEventListener('DOMContentLoaded', function () {
     const passwordInput = document.getElementById('edit_password');
     const progressBar = document.getElementById('passwordStrength');
     const editModal = document.getElementById('editModal');
+    const closeEditModalBtn = document.getElementById('closeEditModal');
+    const editForm = document.getElementById('editRecordForm');
+    let currentRecordId = null;
 
     function updateProgressBar() {
         const password = passwordInput.value;
@@ -347,8 +350,10 @@ document.addEventListener('DOMContentLoaded', function () {
             strengthClass = 'strong';
         } else if (length >= 10 && /[A-Za-z]/.test(password) && /[0-9]/.test(password)) {
             strengthClass = 'medium';
-        } else if ((length > 0||length <10)&&( /[A-Za-z]/.test(password) || /[0-9]/.test(password))) {
+        } else if (length > 0 && length < 10 && (/^[A-Za-z]/.test(password) || /[0-9]/.test(password))) {
             strengthClass = 'weak';
+        } else {
+            strengthClass = 'weak'; // Optional: for an empty or invalid state
         }
 
         progressBar.className = `progress-bar ${strengthClass}`;
@@ -357,83 +362,72 @@ document.addEventListener('DOMContentLoaded', function () {
     // Обновление прогресс-бара при вводе пароля
     passwordInput.addEventListener('input', updateProgressBar);
 
-    // Обновление прогресс-бара при открытии модального окна
-    editModal.addEventListener('click', function () {
-        updateProgressBar(); // Вызываем функцию при открытии модального окна
-    });
-});
+    // Функция для открытия модального окна
+    function openEditModal(record) {
+        editForm.elements['record_name'].value = record.record_name;
+        editForm.elements['website'].value = record.website;
+        editForm.elements['username'].value = record.username;
+        editForm.elements['password'].value = record.password;
+        editForm.elements['notes'].value = record.notes;
+        currentRecordId = record.record_id; // Сохраняем ID записи
 
+        // Обновляем прогресс-бар с текущим значением пароля
+        updateProgressBar();
 
+        // Открываем модальное окно
+        editModal.style.display = 'block';
+    }
 
+    // Закрытие модального окна
+    closeEditModalBtn.onclick = () => {
+        editModal.style.display = 'none';
+    };
 
-
-
-
-    document.addEventListener('DOMContentLoaded', () => {
-    const editModal = document.getElementById('editModal');
-    const closeEditModalBtn = document.getElementById('closeEditModal');
-    const editForm = document.getElementById('editRecordForm');
-    let currentRecordId = null;
-  
-  
-             // Открытие модального окна для редактирования записи
-        
-            function openEditModal(record) {
-              
-               editForm.elements['record_name'].value = record.record_name;
-               editForm.elements['website'].value = record.website;
-               editForm.elements['username'].value = record.username;
-               editForm.elements['password'].value = record.password;
-               editForm.elements['notes'].value = record.notes;
-               recordId = record.record_id; // Сохраняем ID записи в глобальной переменной
-               console.log('Record ID set to:', recordId); // Проверка значения recordId
-              
-               editModal.style.display = 'block';
-                   }
-
-
-            // Закрываем модальное окно
-            closeEditModalBtn.onclick = () => {
-                editModal.style.display = 'none';
-            }
-
-
-       
-
-
-    
-
-    // Закрываем модальное окно, если кликнули вне его
-    window.addEventListener('click', (event) => {
+    // Закрытие модального окна, если кликнули вне его
+    window.onclick = (event) => {
         if (event.target === editModal) {
             editModal.style.display = 'none';
         }
-    });
-
- 
-            // Закрытие модального окна при клике вне его
-            window.onclick = (event) => {
-                if (event.target == editModal) {
-                    editModal.style.display = 'none';
-                }
-            }
-
-
-
-
+    };
 
     // Обработчик кликов по строкам таблицы
-document.getElementById('recordsTable').addEventListener('click', async (event) => {
-    const row = event.target.closest('tr');
-    if (row) {
-        const recordId = row.dataset.recordId; // Используем data-атрибут для хранения ID записи
+    document.getElementById('recordsTable').addEventListener('click', async (event) => {
+        const row = event.target.closest('tr');
+        if (row) {
+            const recordId = row.dataset.recordId; // Используем data-атрибут для хранения ID записи
 
-        if (recordId) {
+            if (recordId) {
+                try {
+                    console.log('Полученные данные записи:', recordId);
+                    // Запрашиваем данные записи по ID
+                    const response = await fetch(`/api/records/${recordId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok ' + response.statusText);
+                    }
+
+                    const record = await response.json();
+                    console.log('Полученные данные записи:', record); // Выводим данные записи в консоль
+                    openEditModal(record); // Открываем модальное окно с данными записи
+                } catch (error) {
+                    console.error('There was a problem with the fetch operation:', error);
+                }
+            }
+        }
+    });
+
+    // Обработчик для кнопки удаления
+    document.getElementById('deleteRecordButton').addEventListener('click', async () => {
+        if (confirm('Are you sure you want to delete this record?')) {
             try {
-                console.log('Полученные данные записи:', recordId);
-                // Запрашиваем данные записи по ID
-                const response = await fetch(`/api/records/${recordId}`, {
-                    method: 'GET',
+                const response = await fetch(`/api/records/${currentRecordId}`, {
+                    method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + localStorage.getItem('access_token')
@@ -444,24 +438,19 @@ document.getElementById('recordsTable').addEventListener('click', async (event) 
                     throw new Error('Network response was not ok ' + response.statusText);
                 }
 
-                const record = await response.json();
-                console.log('Полученные данные записи:', record); // Выводим данные записи в консоль
-                openEditModal(record); // Открываем модальное окно с данными записи
+                alert('Record deleted successfully');
+                editModal.style.display = 'none'; // Закрываем модальное окно
+                loadTableData(); // Обновляем данные в таблице после удаления записи
             } catch (error) {
                 console.error('There was a problem with the fetch operation:', error);
             }
         }
-    }
-});
+    });
 
-
-
-// Обработчик для кнопки удаления
-document.getElementById('deleteRecordButton').addEventListener('click', async () => {
-    if (confirm('Are you sure you want to delete this record?')) {
+    async function loadTableData() {
         try {
-            const response = await fetch(`/api/records/${recordId}`, {
-                method: 'DELETE',
+            const response = await fetch('/api/records', {
+                method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + localStorage.getItem('access_token')
@@ -472,93 +461,57 @@ document.getElementById('deleteRecordButton').addEventListener('click', async ()
                 throw new Error('Network response was not ok ' + response.statusText);
             }
 
-            alert('Record deleted successfully');
-            editModal.style.display = 'none'; // Закрываем модальное окно
-            loadTableData(); // Обновляем данные в таблице после удаления записи
+            const records = await response.json();
+            // Логика для отображения записей в таблице
+            populateTable(records);
         } catch (error) {
             console.error('There was a problem with the fetch operation:', error);
         }
     }
-});
 
+    // Закрытие модального окна
+    document.getElementById('closeEditModal').addEventListener('click', function() {
+        document.getElementById('editModal').style.display = 'none';
+    });
 
+    // Обрабатываем отправку формы для сохранения изменений
+    editForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
 
-async function loadTableData() {
-    try {
-        const response = await fetch('/api/records', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+        const formData = new FormData(editForm);
+        const data = Object.fromEntries(formData.entries());
+
+        console.log('Updating record with ID:', currentRecordId); // Проверка значения recordId перед отправкой
+        console.log('Data to be sent:', data);
+
+        try {
+            const response = await fetch(`/api/records/${currentRecordId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const errorMessage = await response.text();
+                throw new Error('Network response was not ok: ' + response.statusText + ', ' + errorMessage);
             }
-        });
 
-        if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
+            const updatedRecord = await response.json();
+            alert('Изменения сохранены');
+            editModal.style.display = 'none'; // Закрываем модальное окно
+            fetchRecords(); // Обновляем таблицу после изменения записи
+        } catch (error) {
+            console.error('Ошибка при сохранении изменений:', error);
+            alert('Ошибка при сохранении изменений');
         }
-
-        const records = await response.json();
-        // Логика для отображения записей в таблице
-        populateTable(records);
-    } catch (error) {
-        console.error('There was a problem with the fetch operation:', error);
-    }
-}
-
-
-// Закрытие модального окна
-document.getElementById('closeEditModal').addEventListener('click', function() {
-    document.getElementById('editModal').style.display = 'none';
-});
-
-
-
-
-  // Обрабатываем отправку формы для сохранения изменений
-  editForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-
-    const formData = new FormData(editForm);
-    const data = Object.fromEntries(formData.entries());
-
-    console.log('Updating record with ID:', recordId); // Проверка значения recordId перед отправкой
-    console.log('Data to be sent:', data);
-
-    try {
-        const response = await fetch(`/api/records/${recordId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-            },
-            body: JSON.stringify(data)
-        });
-
-        if (!response.ok) {
-            const errorMessage = await response.text();
-            throw new Error('Network response was not ok: ' + response.statusText + ', ' + errorMessage);
-        }
-
-        const updatedRecord = await response.json();
-        alert('Изменения сохранены');
-        editModal.style.display = 'none'; // Закрываем модальное окно
-       // populateTable(records);
-       // loadTableData(); // Обновляем таблицу после изменения записи
-       fetchRecords();
-    } catch (error) {
-        console.error('Ошибка при сохранении изменений:', error);
-        alert('Ошибка при сохранении изменений');
-    }
-});
-
-
-
+    });
 
     // Initial fetch to populate the table
     fetchRecords();
 });
-
-
             // Получаем элементы модального окна
             const modal = document.getElementById('myModal');
             const openModalBtn = document.getElementById('openModal');
