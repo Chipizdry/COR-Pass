@@ -23,7 +23,7 @@ from fastapi.responses import JSONResponse
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="cor_pass/static"), name="static")
 
-origins = [ "http://192.168.153.203:8000"
+origins = [ "http://192.168.0.107:8000"
     # "http://localhost:3000", 
     # "http://192.168.153.21:3000"
     ]
@@ -162,5 +162,5 @@ app.include_router(password_generator.router, prefix="/api")
 
 
 if __name__ == "__main__":
-    uvicorn.run(app="main:app", host="192.168.153.203", port=8000, reload=settings.reload)
+    uvicorn.run(app="main:app", host="192.168.0.107", port=8000, reload=settings.reload)
 # 192.168.153.203

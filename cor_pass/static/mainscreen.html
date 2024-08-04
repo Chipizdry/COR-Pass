@@ -87,6 +87,15 @@ class="registration-button" data-translate="registration-button">Register</butto
              cursor: pointer;
             }
 
+             .delete-button {
+              background: none;
+               border: none;
+              color: red;
+              font-size: 24px;
+               cursor: pointer;
+              margin-top: 10px;
+            }
+
             label {
                 display: block;
                 margin-bottom: 5px;
@@ -187,6 +196,31 @@ class="registration-button" data-translate="registration-button">Register</butto
                 text-decoration: none;
                 cursor: pointer;
             }
+
+            /* Стили для прогресс-бара */
+            .progress-bar {
+              height: 5px;
+              width: 0;
+              margin-top: 5px;
+              border-radius: 2px;
+              transition: width 0.3s, background-color 0.3s;
+            }
+
+            .progress-bar.weak {
+                 background-color: red;
+                 width: 20%; /* Длина для слабого пароля */
+            }
+
+            .progress-bar.medium {
+                 background-color: yellow;
+                 width: 60%; /* Длина для среднего пароля */
+             }
+
+            .progress-bar.strong {
+                 background-color: green;
+                 width: 100%; /* Длина для сильного пароля */
+             }
+
         </style>
     </head>
     <body>
@@ -245,13 +279,13 @@ class="registration-button" data-translate="registration-button">Register</butto
                 </div>
             </div>
         </div>
-    
-  <!-- Модальное окно для редактирования -->
+ <!-- Модальное окно для редактирования -->
 <div id="editModal" class="modal">
     <div class="modal-content">
         <span class="close" id="closeEditModal">&times;</span>
         <div class="form-container">
             <form id="editRecordForm">
+                <!-- Поля формы -->
                 <div class="input-wrapper">
                     <label for="edit_record_name">Record Name</label>
                     <input type="text" id="edit_record_name" name="record_name" placeholder="Record Name" required>
@@ -269,6 +303,7 @@ class="registration-button" data-translate="registration-button">Register</butto
                     <div class="password-wrapper">
                         <input type="password" id="edit_password" name="password" placeholder="Password" required>
                         <span id="togglePassword" class="eye-icon">👁️</span>
+                        <div id="passwordStrength" class="progress-bar"></div>
                     </div>
                 </div>
                 <div class="input-wrapper">
@@ -277,6 +312,15 @@ class="registration-button" data-translate="registration-button">Register</butto
                 </div>
                 <input type="submit" value="Save Changes" class="registration-button">
             </form>
+            <button type="button" id="deleteRecordButton" class="delete-button">&#128465;</button> <!-- Иконка корзины -->
+          <!--  <button id="deleteRecordButton" class="delete-button">Delete</button> -->
+          <!-- SVG иконка корзины 
+            <button type="button" id="deleteRecordButton" class="delete-button">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+             <path d="M6 6V4C6 2.9 6.9 2 8 2H16C17.1 2 18 2.9 18 4V6H21V8H3V6H6ZM9 6V4H15V6H9ZM8 8V18C8 19.1 8.9 20 10 20H14C15.1 20 16 19.1 16 18V8H8ZM14 18H10V10H14V18Z" fill="#000"/>
+                         </svg>
+            </button>-->
+
         </div>
     </div>
 </div>
@@ -288,7 +332,44 @@ class="registration-button" data-translate="registration-button">Register</butto
     this.textContent = type === 'password' ? '👁️' : '👁️‍🗨️'; // Изменение иконки при переключении
                                                          });
 
-document.addEventListener('DOMContentLoaded', () => {
+  
+document.addEventListener('DOMContentLoaded', function () {
+    const passwordInput = document.getElementById('edit_password');
+    const progressBar = document.getElementById('passwordStrength');
+    const editModal = document.getElementById('editModal');
+
+    function updateProgressBar() {
+        const password = passwordInput.value;
+        const length = password.length;
+        let strengthClass = '';
+
+        if (length >= 16 && /[A-Za-z]/.test(password) && /[0-9]/.test(password)) {
+            strengthClass = 'strong';
+        } else if (length >= 10 && /[A-Za-z]/.test(password) && /[0-9]/.test(password)) {
+            strengthClass = 'medium';
+        } else if ((length > 0||length <10)&&( /[A-Za-z]/.test(password) || /[0-9]/.test(password))) {
+            strengthClass = 'weak';
+        }
+
+        progressBar.className = `progress-bar ${strengthClass}`;
+    }
+
+    // Обновление прогресс-бара при вводе пароля
+    passwordInput.addEventListener('input', updateProgressBar);
+
+    // Обновление прогресс-бара при открытии модального окна
+    editModal.addEventListener('click', function () {
+        updateProgressBar(); // Вызываем функцию при открытии модального окна
+    });
+});
+
+
+
+
+
+
+
+    document.addEventListener('DOMContentLoaded', () => {
     const editModal = document.getElementById('editModal');
     const closeEditModalBtn = document.getElementById('closeEditModal');
     const editForm = document.getElementById('editRecordForm');
@@ -298,6 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
              // Открытие модального окна для редактирования записи
         
             function openEditModal(record) {
+              
                editForm.elements['record_name'].value = record.record_name;
                editForm.elements['website'].value = record.website;
                editForm.elements['username'].value = record.username;
@@ -305,29 +387,10 @@ document.addEventListener('DOMContentLoaded', () => {
                editForm.elements['notes'].value = record.notes;
                recordId = record.record_id; // Сохраняем ID записи в глобальной переменной
                console.log('Record ID set to:', recordId); // Проверка значения recordId
+              
                editModal.style.display = 'block';
                    }
 
-
-/*
-                   function openEditModal(record) {
-                    const editModal = document.getElementById('editModal');
-                    const editForm = document.getElementById('editRecordForm');
-
-              // Заполнение полей формы данными записи
-                    editForm.edit_record_name.value = record.record_name;
-                    editForm.edit_website.value = record.website;
-                    editForm.edit_username.value = record.username;
-                    editForm.edit_password.value = record.password;
-                    editForm.edit_notes.value = record.notes;
-
-                      // Открытие модального окна
-                   
-    // Установка текущего recordId для использования при сохранении изменений
-                     recordId = record.record_id;
-                     editModal.style.display = 'block';
-                                          }
-*/
 
             // Закрываем модальное окно
             closeEditModalBtn.onclick = () => {
@@ -390,6 +453,64 @@ document.getElementById('recordsTable').addEventListener('click', async (event) 
         }
     }
 });
+
+
+
+// Обработчик для кнопки удаления
+document.getElementById('deleteRecordButton').addEventListener('click', async () => {
+    if (confirm('Are you sure you want to delete this record?')) {
+        try {
+            const response = await fetch(`/api/records/${recordId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+
+            alert('Record deleted successfully');
+            editModal.style.display = 'none'; // Закрываем модальное окно
+            loadTableData(); // Обновляем данные в таблице после удаления записи
+        } catch (error) {
+            console.error('There was a problem with the fetch operation:', error);
+        }
+    }
+});
+
+
+
+async function loadTableData() {
+    try {
+        const response = await fetch('/api/records', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+        }
+
+        const records = await response.json();
+        // Логика для отображения записей в таблице
+        populateTable(records);
+    } catch (error) {
+        console.error('There was a problem with the fetch operation:', error);
+    }
+}
+
+
+// Закрытие модального окна
+document.getElementById('closeEditModal').addEventListener('click', function() {
+    document.getElementById('editModal').style.display = 'none';
+});
+
 
 
 
