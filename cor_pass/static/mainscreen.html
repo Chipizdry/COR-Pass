@@ -52,7 +52,18 @@ class="registration-button" data-translate="registration-button">Register</butto
                 margin: 0;
                 color: #333;
             }
-            
+            .settings-button {
+               background-color: transparent;
+               border: none;
+               font-size: 34px; /* Размер иконки */
+               cursor: pointer;
+               margin-right: 10px; /* Расстояние между кнопкой настроек и кнопкой "+" */
+               color: #333; /* Цвет иконки */
+            }
+
+            .settings-button:hover {
+               color: #007bff; /* Цвет иконки при наведении */
+            }
             .plus-button {
                 font-size: 24px;
                 background-color: #007BFF;
@@ -153,9 +164,9 @@ class="registration-button" data-translate="registration-button">Register</butto
     
             th:nth-child(1), td:nth-child(1) { width: 15%; }
             th:nth-child(2), td:nth-child(2) { width: 15%; }
-            th:nth-child(3), td:nth-child(3) { width: 15%; }
-            th:nth-child(4), td:nth-child(4) { width: 15%; }
-            th:nth-child(5), td:nth-child(5) { width: 15%; }
+            th:nth-child(3), td:nth-child(3) { width: 17%; }
+            th:nth-child(4), td:nth-child(4) { width: 12%; }
+            th:nth-child(5), td:nth-child(5) { width: 12%; }
             th:nth-child(6), td:nth-child(6) { width: 15%; }
             th:nth-child(7), td:nth-child(7) { width: 10%; }
     
@@ -226,7 +237,8 @@ class="registration-button" data-translate="registration-button">Register</butto
     <body>
         <div class="panel">
             <div class="header-container">
-                <h1>User Records</h1>
+                <button class="settings-button" id="openSettings">⚙️</button> <!-- Кнопка настроек -->
+                <h1>Учётные записи</h1>
                 <button class="plus-button" id="openModal">+</button>
             </div>
             <div class="table-container">
@@ -565,32 +577,35 @@ class="registration-button" data-translate="registration-button">Register</butto
                     console.error('There was a problem with the fetch operation:', error);
                 }
             }
-   
+  
             function populateTable(records) {
-                const tbody = document.querySelector('#recordsTable tbody');
-                tbody.innerHTML = ''; // Очистить таблицу перед заполнением
+    const tbody = document.querySelector('#recordsTable tbody');
+    tbody.innerHTML = ''; // Очистить таблицу перед заполнением
 
-                records.forEach(record => {
+    records.forEach(record => {
 
-                         // Выводим отладочную информацию для проверки значений
-                      console.log('Record ID:', record.record_id);
-                      console.log('Record Data:', record);
+        // Выводим отладочную информацию для проверки значений
+        console.log('Record ID:', record.record_id);
+        console.log('Record Data:', record);
 
-                    const row = document.createElement('tr');
-                    row.dataset.recordId = record.record_id; // Добавляем data-record-id
+        const row = document.createElement('tr');
+        row.dataset.recordId = record.record_id; // Добавляем data-record-id
 
-                    row.innerHTML = `
-                        <td>${record.record_name}</td>
-                        <td><a href="${record.website}" target="_blank">${record.website}</a></td>
-                        <td>${record.username}</td>
-                        <td>${record.created_at}</td>
-                        <td>${record.edited_at}</td>
-                        <td>${record.notes}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            }
-    
+        const websiteUrl = record.website.startsWith('http') ? record.website : `http://${record.website}`;
+        
+        row.innerHTML = `
+            <td>${record.record_name}</td>
+            <td><a href="${websiteUrl}" target="_blank" rel="noopener noreferrer">${record.website}</a></td>
+            <td>${record.username}</td>
+            <td>${record.created_at}</td>
+            <td>${record.edited_at}</td>
+            <td>${record.notes}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+
             document.getElementById('createRecordForm').addEventListener('submit', async (event) => {
                 event.preventDefault();
                 console.log('Form submitted');

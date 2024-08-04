@@ -162,5 +162,5 @@ app.include_router(password_generator.router, prefix="/api")
 
 
 if __name__ == "__main__":
-    uvicorn.run(app="main:app", host="192.168.0.107", port=8000, reload=settings.reload)
+    uvicorn.run(app="main:app", host="http://192.168.0.107", port=8000, reload=settings.reload)
 # 192.168.153.203
