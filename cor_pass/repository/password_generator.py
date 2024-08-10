@@ -6,6 +6,7 @@ from cor_pass.services import words
 
 WORDS_LIST = words.word_list
 
+
 def generate_password(settings: PasswordGeneratorSettings) -> str:
     characters = ""
     if settings.include_uppercase:
@@ -20,8 +21,7 @@ def generate_password(settings: PasswordGeneratorSettings) -> str:
     if not characters:
         raise ValueError("No characters available for password generation.")
 
-    return ''.join(secrets.choice(characters) for _ in range(settings.length))
-
+    return "".join(secrets.choice(characters) for _ in range(settings.length))
 
 
 def generate_word_password(settings: WordPasswordGeneratorSettings):
@@ -38,5 +38,7 @@ def generate_word_password(settings: WordPasswordGeneratorSettings):
     else:
         words_list = [word.capitalize() for word in filtered_words]
 
-    password = separator.join(secrets.choice(words_list) for _ in range(settings.length))
+    password = separator.join(
+        secrets.choice(words_list) for _ in range(settings.length)
+    )
     return password

@@ -4,20 +4,25 @@ from sqlalchemy.orm import Session
 
 from cor_pass.database.models import User, Record, Tag
 from cor_pass.schemas import CreateRecordModel
+from cor_pass.repository.users import get_user_by_uuid
 from cor_pass.config.config import settings
-from cor_pass.services.cipher import encrypt_data, decrypt_data
+from cor_pass.services.cipher import encrypt_data, decrypt_data, decrypt_user_key
 import os
 
 
 async def create_record(body: CreateRecordModel, db: Session, user: User) -> Record:
     if not user:
         raise Exception("User not found")
-    record = Record(
+    new_record = Record(
         record_name=body.record_name,
         user_id=user.id,
         website=body.website,
-        username=body.username,
-        password=encrypt_data(data=body.password, key=user.unique_cipher_key),
+        username=await encrypt_data(
+            data=body.username, key=await decrypt_user_key(user.unique_cipher_key)
+        ),
+        password=await encrypt_data(
+            data=body.password, key=await decrypt_user_key(user.unique_cipher_key)
+        ),
         notes=body.notes,
     )
     if body.tag_names:
@@ -25,12 +30,12 @@ async def create_record(body: CreateRecordModel, db: Session, user: User) -> Rec
             tag = db.query(Tag).filter_by(name=tag_name).first()
             if not tag:
                 tag = Tag(name=tag_name)
-            record.tags.append(tag)
+            new_record.tags.append(tag)
 
-    db.add(record)
+    db.add(new_record)
     db.commit()
-    db.refresh(record)
-    return record
+    db.refresh(new_record)
+    return new_record
 
 
 async def get_record_by_id(user: User, db: Session, record_id: int):
@@ -42,9 +47,14 @@ async def get_record_by_id(user: User, db: Session, record_id: int):
         .first()
     )
     if record:
-        record.password = decrypt_data(
-        encrypted_data=record.password, key=user.unique_cipher_key
-    )
+        record.password = await decrypt_data(
+            encrypted_data=record.password,
+            key=await decrypt_user_key(user.unique_cipher_key),
+        )
+        record.username = await decrypt_data(
+            encrypted_data=record.username,
+            key=await decrypt_user_key(user.unique_cipher_key),
+        )
     return record
 
 
@@ -52,6 +62,10 @@ async def get_all_user_records(db: Session, user_id: str, skip: int, limit: int)
     records = (
         db.query(Record).filter_by(user_id=user_id).offset(skip).limit(limit).all()
     )
+    # current_user = await get_user_by_uuid(uuid=user_id, db=db)
+    # for record in records:
+    #     print(record)
+    #     # record.username = await decrypt_data(encrypted_data=record.username, key=await decrypt_user_key(current_user.unique_cipher_key))
     return records
 
 
@@ -67,8 +81,12 @@ async def update_record(
     if record:
         record.record_name = body.record_name
         record.website = body.website
-        record.username = body.username
-        record.password = encrypt_data(data=body.password, key=user.unique_cipher_key)
+        record.username = await encrypt_data(
+            data=body.username, key=await decrypt_user_key(user.unique_cipher_key)
+        )
+        record.password = await encrypt_data(
+            data=body.password, key=await decrypt_user_key(user.unique_cipher_key)
+        )
         record.notes = body.notes
         tags_copy = list(record.tags)
 
@@ -81,7 +99,6 @@ async def update_record(
                 if not tag:
                     tag = Tag(name=tag_name)
                 record.tags.append(tag)
-
         db.commit()
         db.refresh(record)
     return record
@@ -96,7 +113,7 @@ async def delete_record(user: User, db: Session, record_id: int):
         .first()
     )
     if not record:
-        return False, {"message": "Record not found"}
+        return None
     if record:
         db.delete(record)
         db.commit()

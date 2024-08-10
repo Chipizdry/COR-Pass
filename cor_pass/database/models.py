@@ -20,9 +20,9 @@ from cor_pass.database.db import engine
 Base = declarative_base()
 
 
-class Role(enum.Enum):
-    admin: str = "admin"
-    user: str = "user"
+class Status(enum.Enum):
+    premium: str = "premium"
+    basic: str = "basic"
 
 
 class User(Base):
@@ -35,8 +35,8 @@ class User(Base):
     refresh_token = Column(String(250), nullable=True)
     restore_code = Column(String(250), nullable=True)
     is_active = Column(Boolean, default=True)
-    role: Mapped[Enum] = Column("role", Enum(Role), default=Role.admin)
-    unique_cipher_key = Column(LargeBinary, nullable=False)
+    account_status: Mapped[Enum] = Column("status", Enum(Status), default=Status.basic)
+    unique_cipher_key = Column(String(250), nullable=False)
 
     user_records = relationship("Record", back_populates="user")
 
@@ -82,24 +82,6 @@ class RecordTag(Base):
     tag_id = Column(Integer, ForeignKey("tags.id"), primary_key=True)
 
 
-# class Record(Base):
-#     __tablename__ = "record"
-#     id = Column(Integer, primary_key=True)
-#     user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
-#     record_name = Column(String(250), nullable=False)
-#     website = Column(String(250), nullable=True)
-#     username = Column(String(250), nullable=True)
-#     password = Column(String(250), nullable=True)
-
-#     created_at = Column(DateTime, nullable=False, default=func.now())
-#     edited_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
-
-#     attachments = Column(String(250), nullable=True)
-#     notes = Column(Text, nullable=True)
-
-#     user = relationship("User", back_populates="records")
-#     fields = relationship("RecordFieldValue", back_populates="record")
-#     tags = relationship("Tag", secondary="record_tags", back_populates="records")
 
 # class FieldType(enum.Enum):
 #     TEXT = "text"

@@ -1,12 +1,11 @@
 from sqlalchemy.orm import Session
 import uuid
 
-from cor_pass.database.models import User, Role, Verification
+from cor_pass.database.models import User, Status, Verification
 from cor_pass.schemas import UserModel
-from sqlalchemy import func
 from cor_pass.services.auth import auth_service
 from cor_pass.services.logger import logger
-from cor_pass.services.cipher import generate_aes_key
+from cor_pass.services.cipher import generate_aes_key, encrypt_user_key
 from cor_pass.config.config import settings
 
 
@@ -51,14 +50,9 @@ async def create_user(body: UserModel, db: Session) -> User:
     new_user = User(**body.model_dump())
     new_user.id = str(uuid.uuid4())
 
-    new_user.role = Role.user
-    new_user.unique_cipher_key = generate_aes_key(settings.aes_key)
-    print(new_user.unique_cipher_key)
-
-    users_count = db.query(func.count(User.id)).scalar()
-
-    if users_count == 0:
-        new_user.role = Role.admin
+    new_user.account_status = Status.basic
+    new_user.unique_cipher_key = await generate_aes_key(settings.aes_key)  # ->bytes
+    new_user.unique_cipher_key = await encrypt_user_key(new_user.unique_cipher_key)
 
     try:
         db.add(new_user)
@@ -96,26 +90,34 @@ async def get_users(skip: int, limit: int, db: Session) -> list[User]:
     return query
 
 
-async def make_user_role(email: str, role: Role, db: Session) -> None:
+# переписать
+async def make_user_status(email: str, account_status: Status, db: Session) -> None:
     """
-    The make_user_role function takes in an email and a role, and then updates the user's role to that new one.
+    The make_user_status function takes in an email and a status, and then updates the user's status to that new one.
     Args:
     email (str): The user's email address.
-    role (Role): The new Role for the user.
+    status (Status): The new Status for the user.
 
     :param email: str: Get the user by email
-    :param role: Role: Set the role of the user
+    :param status: Status: Set the status of the user
     :param db: Session: Pass the database session to the function
     :return: None
     """
 
     user = await get_user_by_email(email, db)
-    user.role = role
+    user.account_status = account_status
     try:
         db.commit()
     except Exception as e:
         db.rollback()
         raise e
+
+
+async def get_user_status(email: str, db: Session):
+
+    user = await get_user_by_email(email, db)
+    status = user.account_status
+    return status
 
 
 async def write_verification_code(

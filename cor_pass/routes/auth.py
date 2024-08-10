@@ -6,7 +6,6 @@ from fastapi import (
     Security,
     BackgroundTasks,
     Request,
-    Query,
 )
 from fastapi.security import (
     OAuth2PasswordRequestForm,
@@ -28,7 +27,11 @@ from cor_pass.schemas import (
 )
 from cor_pass.repository import users as repository_users
 from cor_pass.services.auth import auth_service
-from cor_pass.services.email import send_email_code, send_email_code_forgot_password
+from cor_pass.services.email import (
+    send_email_code,
+    send_email_code_forgot_password,
+    send_email_code_with_qr,
+)
 from cor_pass.config.config import settings
 from cor_pass.services.logger import logger
 
@@ -41,6 +44,8 @@ ALGORITHM = settings.algorithm
 """
 Путь для регистрации нового пользователя, будет меняться
 """
+
+
 @router.post(
     "/signup", response_model=ResponseUser, status_code=status.HTTP_201_CREATED
 )
@@ -67,7 +72,6 @@ async def signup(
     new_user = await repository_users.create_user(body, db)
     logger.debug(f"{body.email} user successfully created")
     return {"user": new_user, "detail": "User successfully created"}
-
 
 
 """
@@ -118,6 +122,7 @@ async def login(
 Путь для обновления рефреш токена, под вопросом
 """
 
+
 @router.get(
     "/refresh_token",
     response_model=TokenModel,
@@ -157,10 +162,10 @@ async def refresh_token(
     }
 
 
-
 """
 Маршрут проверки почты в случае если это новая регистрация
 """
+
 
 @router.post(
     "/send_verification_code"
@@ -194,11 +199,10 @@ async def send_verification_code(
     return {"message": "Check your email for verification code."}
 
 
-
-
 """
 Маршрут подтверждения почты/кода
 """
+
 
 @router.post("/confirm_email")
 async def confirm_email(body: VerificationModel, db: Session = Depends(get_db)):
@@ -221,12 +225,12 @@ async def confirm_email(body: VerificationModel, db: Session = Depends(get_db)):
         )
 
 
-
 """
 Маршрут проверки почты в случае если забыли пароль
 """
 
-@router.post("/forgot_password")  
+
+@router.post("/forgot_password")
 async def forgot_password_send_verification_code(
     body: EmailSchema,
     background_tasks: BackgroundTasks,
@@ -254,10 +258,10 @@ async def forgot_password_send_verification_code(
     return {"message": "Check your email for verification code."}
 
 
-
 """
 Маршрут смены пароля
 """
+
 
 @router.patch("/change_password")
 async def change_password(body: ChangePasswordModel, db: Session = Depends(get_db)):
@@ -277,3 +281,30 @@ async def change_password(body: ChangePasswordModel, db: Session = Depends(get_d
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
                 detail="Incorrect password input",
             )
+
+
+@router.post(
+    "/send_verification_qr"
+)  # Маршрут проверки почты в случае если это новая регистрация
+async def send_verification_qr(
+    body: EmailSchema,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    verification_code = randint(100000, 999999)
+    exist_user = await repository_users.get_user_by_email(body.email, db)
+    if exist_user == None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    if exist_user:
+        background_tasks.add_task(
+            send_email_code_with_qr, body.email, request.base_url, verification_code
+        )
+        logger.debug("Check your email for verification code.")
+        await repository_users.write_verification_code(
+            email=body.email, db=db, verification_code=verification_code
+        )
+
+    return {"message": "Check your email for verification code."}

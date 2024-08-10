@@ -10,11 +10,9 @@ from cor_pass.config.config import settings
 from cor_pass.services.auth import auth_service
 from cor_pass.services.logger import logger
 from cor_pass.services.access import user_access
-from cor_pass.repository import users as repository_users
 
 router = APIRouter(prefix="/records", tags=["Records"])
 encryption_key = settings.encryption_key
-
 
 
 """
@@ -23,11 +21,11 @@ encryption_key = settings.encryption_key
 
 
 @router.get(
-    "/", response_model=List[RecordResponse], dependencies=[Depends(user_access)]
+    "/all", response_model=List[RecordResponse], dependencies=[Depends(user_access)]
 )
 async def read_records(
     skip: int = 0,
-    limit: int = 50,
+    limit: int = 150,
     user: User = Depends(auth_service.get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -51,10 +49,10 @@ async def read_records(
     return records
 
 
-
 """
 Маршрут получения конкретной записи пользователя
 """
+
 
 @router.get(
     "/{record_id}", response_model=RecordResponse, dependencies=[Depends(user_access)]
@@ -83,13 +81,13 @@ async def read_record(
     return record
 
 
-
 """
 Маршрут создания записи
 """
 
+
 @router.post(
-    "/",
+    "/create",
     response_model=RecordResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(user_access)],
@@ -109,15 +107,27 @@ async def create_record(
     :return: The created ResponseRecord object representing the new record.
     :rtype: ResponseRecord
     """
-    record = await repository_record.create_record(body, db, user)
-    return record
+    if user.account_status.value == "basic":
+        records = await repository_record.get_all_user_records(db, user.id, 0, 50)
+        print(len(records))
+        if len(records) < settings.basic_account_records:
+            record = await repository_record.create_record(body, db, user)
+            return record
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail="User is not premium",
+            )
 
-
+    else:
+        record = await repository_record.create_record(body, db, user)
+        return record
 
 
 """
 Маршрут обновления записи
 """
+
 
 @router.put(
     "/{record_id}", response_model=RecordResponse, dependencies=[Depends(user_access)]
@@ -149,11 +159,10 @@ async def update_record(
     return record
 
 
-
-
 """
 Маршрут удаления записи
 """
+
 
 @router.delete("/{record_id}", response_model=RecordResponse)
 async def remove_record(

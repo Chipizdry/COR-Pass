@@ -5,14 +5,13 @@ from cor_pass.schemas import PasswordGeneratorSettings, WordPasswordGeneratorSet
 from cor_pass.repository import password_generator as repository_password_generator
 
 
-
 router = APIRouter(prefix="/password_generator", tags=["Password Generator"])
-
 
 
 """
 Маршрут генератора пароля
 """
+
 
 @router.post("/generate_password/", status_code=status.HTTP_201_CREATED)
 async def generate_password_endpoint(settings: PasswordGeneratorSettings):
@@ -22,6 +21,7 @@ async def generate_password_endpoint(settings: PasswordGeneratorSettings):
 """
 Маршрут генератора парольной фразы
 """
+
 
 @router.post("/generate_word_password/", status_code=status.HTTP_201_CREATED)
 async def generate_word_password_endpoint(settings: WordPasswordGeneratorSettings):

@@ -4,8 +4,12 @@ from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from fastapi_mail.errors import ConnectionErrors
 from pydantic import EmailStr
 
+from io import BytesIO
+from fastapi import UploadFile
+
 from cor_pass.config.config import settings
 from cor_pass.services.logger import logger
+from cor_pass.services.qr_code import generate_qr_code
 
 
 conf = ConnectionConfig(
@@ -85,5 +89,29 @@ async def send_email_code_forgot_password(
             message, template_name="forgot_password_email_template.html"
         )
         logger.debug(f"Sending email to {email} done!")
+    except ConnectionErrors as err:
+        print(err)
+
+
+async def send_email_code_with_qr(email: EmailStr, host: str, verification_code):
+    logger.debug(f"Sending email to {email}")
+    try:
+        # Генерация QR кода
+        signature = "This is your recovery code"
+        qr_code_bytes = generate_qr_code(verification_code, signature)
+
+        message = MessageSchema(
+            subject="Recovery code",
+            recipients=[email],
+            body=f"This is your recovery code, please save it securely.",
+            subtype=MessageType.html,
+            attachments=[
+                UploadFile(filename="qrcode.png", file=BytesIO(qr_code_bytes))
+            ],
+        )
+
+        fm = FastMail(conf)
+        await fm.send_message(message)
+        logger.debug(f"Sending email to {email} with QR code done!")
     except ConnectionErrors as err:
         print(err)

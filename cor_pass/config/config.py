@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     signing_key_verification: bool = "TRUE"
     reload: bool = "False"
     aes_key: str = "key"
+    basic_account_records: int = "NUMBER_OF_RECORDS"
 
     class Config:
 

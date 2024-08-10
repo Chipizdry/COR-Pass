@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import Request, Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status
 
 from cor_pass.database.models import User
 from cor_pass.services.auth import auth_service

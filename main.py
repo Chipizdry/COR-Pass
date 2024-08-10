@@ -13,7 +13,7 @@ import hmac
 
 from cor_pass.routes import auth
 from cor_pass.database.db import get_db
-from cor_pass.routes import auth, records, tags, password_generator
+from cor_pass.routes import auth, records, tags, password_generator, users
 from cor_pass.repository import users as repo_users
 from cor_pass.config.config import settings
 from cor_pass.services.logger import logger
@@ -23,10 +23,10 @@ from fastapi.responses import JSONResponse
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="cor_pass/static"), name="static")
 
-origins = [ "http://192.168.0.107:8000"
-    # "http://localhost:3000", 
-    # "http://192.168.153.21:3000"
-    ]
+origins = [
+    "http://192.168.153.203:8000" "http://localhost:3000",
+    "http://192.168.153.21:3000",
+]
 
 # Middleware для CORS
 app.add_middleware(
@@ -158,9 +158,11 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(records.router, prefix="/api")
 app.include_router(tags.router, prefix="/api")
 app.include_router(password_generator.router, prefix="/api")
-
+app.include_router(users.router, prefix="/api")
 
 
 if __name__ == "__main__":
-    uvicorn.run(app="main:app", host="http://192.168.0.107", port=8000, reload=settings.reload)
+    uvicorn.run(
+        app="main:app", host="192.168.153.203", port=8000, reload=settings.reload
+    )
 # 192.168.153.203

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from cor_pass.database.db import get_db
 from cor_pass.services.auth import auth_service
-from cor_pass.database.models import User, Role
+from cor_pass.database.models import User, Status
 from cor_pass.services.access import user_access
 from cor_pass.schemas import UserDb
 from cor_pass.repository import users
@@ -35,32 +35,41 @@ async def get_all_users(
     return list_users
 
 
-@router.patch("/asign_role/{role}", dependencies=[Depends(user_access)])
-async def assign_role(email: EmailStr, role: Role, db: Session = Depends(get_db)):
+@router.patch("/asign_status/{account_status}", dependencies=[Depends(user_access)])
+async def assign_status(
+    email: EmailStr, account_status: Status, db: Session = Depends(get_db)
+):
     """
-    **Assign a role to a user by email.**
+    **Assign a account_status to a user by email.**
 
-    This route allows to assign the selected role to a user by their email.
+    This route allows to assign the selected account_status to a user by their email.
 
-    Level of Access:
+    :param email: EmailStr: Email of the user to whom you want to assign the status.
 
-    - Administrator
-
-    :param email: EmailStr: Email of the user to whom you want to assign the role.
-
-    :param role: Role: The selected role for the assignment (Administrator, Moderator or User).
+    :param account_status: Status: The selected account_status for the assignment (Premium, Basic).
 
     :param db: Session: Database Session.
 
-    :return: Message about successful role change.
+    :return: Message about successful status change.
 
     :rtype: dict
     """
     user = await users.get_user_by_email(email, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-    if role == user.role:
-        return {"message": "The role has already been assigned to this user"}
+    if account_status == user.account_status:
+        return {"message": "The acount status has already been assigned"}
     else:
-        await users.make_user_role(email, role, db)
-        return {"message": f"{email} {role.value}"}
+        await users.make_user_status(email, account_status, db)
+        return {"message": f"{email} - {account_status.value}"}
+
+
+@router.get("/account_status", dependencies=[Depends(user_access)])
+async def get_status(email: EmailStr, db: Session = Depends(get_db)):
+
+    user = await users.get_user_by_email(email, db)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    else:
+        account_status = await users.get_user_status(email, db)
+        return {"message": f"{email} - {account_status.value}"}

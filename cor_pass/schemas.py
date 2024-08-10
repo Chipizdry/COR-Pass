@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
 from datetime import datetime
-from cor_pass.database.models import Role
+from cor_pass.database.models import Status
 
 
 # AUTH MODELS
@@ -15,7 +15,7 @@ class UserModel(BaseModel):
 class UserDb(BaseModel):
     id: str
     email: str
-    role: Role
+    account_status: Status
 
     class Config:
         from_attributes = True
@@ -36,7 +36,6 @@ class LoginResponseModel(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
-
 
 
 class EmailSchema(BaseModel):
@@ -96,6 +95,7 @@ class RecordResponse(BaseModel):
 
 # PASS-GENERATOR MODELS
 
+
 class PasswordGeneratorSettings(BaseModel):
     length: int = Field(12, ge=8, le=128)
     include_uppercase: bool = True
@@ -103,11 +103,13 @@ class PasswordGeneratorSettings(BaseModel):
     include_digits: bool = True
     include_special: bool = True
 
+
 class WordPasswordGeneratorSettings(BaseModel):
     length: int = Field(4, ge=1, le=7)
     separator_hyphen: bool = True
     separator_underscore: bool = True
     include_uppercase: bool = True
+
 
 # class RecordFieldValueModel(BaseModel):
 #     string_value: Optional[str] = None

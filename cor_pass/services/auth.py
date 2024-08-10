@@ -6,7 +6,6 @@ from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from datetime import timedelta, datetime, timezone
 from sqlalchemy.orm import Session
-from urllib.parse import urlparse
 
 from cor_pass.database.db import get_db
 from cor_pass.repository import users as repository_users
