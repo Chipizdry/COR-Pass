@@ -1,79 +1,98 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <link rel="icon" type="image/png" href="favicon.png">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COR-ID</title>
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        body, html {
-            height: 100%;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-        }
 
-        .panel {
-            width: 100%;
-            max-width: 800px;
-            background-color: #fff;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
 
-        h1 {
-            margin-bottom: 20px;
-            color: #333;
-        }
 
-        .button {
-            display: block;
-            width: 80%;
-            margin: 10px auto;
-            padding: 15px;
-            font-size: 18px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-align: center;
-        }
 
-        .button:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</head>
-<body>
-    <div class="panel">
-        <h1>COR-ID</h1>
-        <button class="button" id="passwordManagerButton">Manage Passwords</button>
-        <button class="button" id="Cor-Id-Button">MY COR-ID</button>
-        <button class="button" id="loginButton">COR-Platform</button>
+<!-- 
+Можно сделать по такому принципу, как было с редиректом - после того как мы достали токен на странице login.html или mainscreen.html, мы его добавляем в квери параметр для последующих переходах на другие страницы -->
+<!-- </button>
+<h3 data-translate="registration">Registration</h3>
+<button onclick="window.location.href='/static/signup.html' -> тут новая страница 
++ '?access_token=' + access_token;" -> а тут добавляем квери параметр со старой страницы 
+class="registration-button" data-translate="registration-button">Register</button>
+<br><button onclick="window.location.href='/static/forgot-password.html' + '?access_token=' + access_token;" class="registration-button"><span data-translate="forgot-password-button">Forgot password?</span></a><br> -->
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <link rel="icon" type="image/png" href="/static/favicon.png">
+        <!-- Другие метатеги и ссылки на иконки -->
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>User Records</title>
+        <link rel="stylesheet" type="text/css" href="/static/styles.css">
+
+       <!-- <style>
+            body, html {
+                height: 100%;
+                margin: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-family: Arial, sans-serif;
+                background-color: #f0f0f0;
+            }
+    
+            .panel {
+                width: 100%;
+                max-width: 800px;
+                background-color: #fff;
+                padding: 10px;
+                border-radius: 5px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                text-align: center;
+            }
+    
+            h1 {
+                margin-bottom: 20px;
+                color: #333;
+            }
+    
+            .button {
+                display: block;
+                width: 80%;
+                margin: 10px auto;
+                padding: 15px;
+                font-size: 18px;
+                background-color: #007BFF;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                text-align: center;
+            }
+    
+            .button:hover {
+                background-color: #0056b3;
+            }
+        </style> -->
+    </head>
+    <body>
+     <div class="container">
+        <div class="top-panel">
+        <div class="panel">
+            <h1>COR-ID</h1>
+            <button class="button" id="passwordManagerButton">Password manager</button>
+            <button class="button" id="Cor-Id-Button">MY COR-ID</button>
+            <button class="button" id="loginButton">COR-Platform</button>
+        </div>
     </div>
-
-    <script>
-       const accessToken = new URLSearchParams(window.location.search).get('access_token');
-      //  const accessToken =localStorage.getItem('access_token')
-
-        document.getElementById('passwordManagerButton').addEventListener('click', function() {
-            window.location.href = '/password_manager.html' + '?access_token=' + accessToken;
-        });
-
-        document.getElementById('Cor-Id-Button').addEventListener('click', function() {
-            window.location.href = '/static/Cor-Id.html' + '?access_token=' + accessToken;
-        });
-
-        document.getElementById('loginButton').addEventListener('click', function() {
-            window.location.href = '/static/login-COR.html' + '?access_token=' + accessToken;
-        });
-    </script>
-</body>
-</html>
+    </div>
+        <script>
+           const accessToken = new URLSearchParams(window.location.search).get('access_token');
+          //  const accessToken =localStorage.getItem('access_token')
+    
+            document.getElementById('passwordManagerButton').addEventListener('click', function() {
+                window.location.href = '/static/password_manager.html' + '?access_token=' + accessToken;
+            });
+    
+            document.getElementById('Cor-Id-Button').addEventListener('click', function() {
+                window.location.href = '/static/Cor-Id.html' + '?access_token=' + accessToken;
+            });
+    
+            document.getElementById('loginButton').addEventListener('click', function() {
+                window.location.href = '/static/COR.html' + '?access_token=' + accessToken;
+            });
+        </script>
+    </body>
+    </html>
+    
