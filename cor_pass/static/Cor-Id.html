@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <!-- Другие метатеги и ссылки на иконки -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create_COR-Id</title>
+    <link rel="stylesheet" type="text/css" href="/static/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  
+</head>
+<body>
+    <div class="container">
+        <button class="link-button" onclick="goBack()" data-translate="back-link-text"><<<назад<<<</button>
+        <div class="top-panel">
+            <div class="panel">
+                <h1>COR-ID Registration</h1>
+                <!-- Форма для регистрации COR-ID -->
+                <form id="corIdForm">
+                    <div class="form-group">
+                        <label for="dob">Дата рождения:</label>
+                        <input type="date" id="dob" name="dob" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="gender">Пол:</label>
+                        <select id="gender" name="gender" required>
+                            <option value="M">Мужской</option>
+                            <option value="F">Женский</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="hospitalCode">Код учреждения:</label>
+                        <input type="text" id="hospitalCode" name="hospitalCode" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="patientNumber">Учетный номер пациента:</label>
+                        <input type="text" id="patientNumber" name="patientNumber" required>
+                    </div>
+                    <button type="submit" class="button">Создать COR-ID</button>
+                    <div id="corIdMessage" class="cor-id-message"></div>
+                      <!-- DIV для отображения QR-кода -->
+                     <div id="qrcode"></div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+<script src="/static/translation.js"></script>   
+<script> function goBack() { window.history.back();  } </script>
+    <script>
+     
+     document.getElementById('corIdForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            // Логика для создания COR-ID на основе введенных данных
+            const dob = document.getElementById('dob').value;
+            const gender = document.getElementById('gender').value;
+            const hospitalCode = document.getElementById('hospitalCode').value;
+            const patientNumber = document.getElementById('patientNumber').value;
+
+            //  Генерация COR-ID
+            const corId = generateCorId(dob, gender, hospitalCode, patientNumber);
+           // alert('Ваш COR-ID: ' + corId);
+            const corIdMessageDiv = document.getElementById('corIdMessage');
+            corIdMessageDiv.textContent = 'Ваш COR-ID: ' + corId;
+            corIdMessageDiv.style.display = 'block';
+
+             // Генерация и отображение QR-кода
+             const qrCodeDiv = document.getElementById('qrcode');
+            qrCodeDiv.innerHTML = ''; // Очистка предыдущего QR-кода
+            new QRCode(qrCodeDiv, {
+                text: corId,
+                width: 128,  // ширина QR-кода
+                height: 128  // высота QR-кода
+            });
+        });
+
+        function generateCorId(dob, gender, hospitalCode, patientNumber) {
+            // Реализуйте логику генерации COR-ID здесь
+            // Например: 1-4 дата создания, 5-7 код учреждения, 8-0-1 номер пациента, последние символы год рождения и пол
+            const dobFormatted = dob.replace(/-/g, '').slice(2); // Форматирование даты (YYMMDD)
+            const corId = dobFormatted + hospitalCode + patientNumber + '-' + dob.slice(0, 4) + gender;
+            return corId;
+        }
+    </script>
+</body>
+</html>

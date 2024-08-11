@@ -21,53 +21,11 @@ class="registration-button" data-translate="registration-button">Register</butto
         <title>User Records</title>
         <link rel="stylesheet" type="text/css" href="/static/styles.css">
 
-       <!-- <style>
-            body, html {
-                height: 100%;
-                margin: 0;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                font-family: Arial, sans-serif;
-                background-color: #f0f0f0;
-            }
-    
-            .panel {
-                width: 100%;
-                max-width: 800px;
-                background-color: #fff;
-                padding: 10px;
-                border-radius: 5px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-                text-align: center;
-            }
-    
-            h1 {
-                margin-bottom: 20px;
-                color: #333;
-            }
-    
-            .button {
-                display: block;
-                width: 80%;
-                margin: 10px auto;
-                padding: 15px;
-                font-size: 18px;
-                background-color: #007BFF;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                cursor: pointer;
-                text-align: center;
-            }
-    
-            .button:hover {
-                background-color: #0056b3;
-            }
-        </style> -->
+      
     </head>
     <body>
      <div class="container">
+        <button class="link-button" onclick="goBack()" data-translate="back-link-text"><<<назад<<<</button>
         <div class="top-panel">
         <div class="panel">
             <h1>COR-ID</h1>
@@ -77,6 +35,8 @@ class="registration-button" data-translate="registration-button">Register</butto
         </div>
     </div>
     </div>
+    <script src="/static/translation.js"></script>   
+    <script> function goBack() { window.history.back();  } </script>
         <script>
            const accessToken = new URLSearchParams(window.location.search).get('access_token');
           //  const accessToken =localStorage.getItem('access_token')
