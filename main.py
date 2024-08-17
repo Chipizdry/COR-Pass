@@ -163,6 +163,6 @@ app.include_router(users.router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run(
-        app="main:app", host="192.168.153.203", port=8000, reload=settings.reload
+        app="main:app", host="192.168.154.180", port=8888, reload=settings.reload
     )
 # 192.168.153.203

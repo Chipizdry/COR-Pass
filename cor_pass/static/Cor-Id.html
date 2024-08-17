@@ -76,8 +76,7 @@
         });
 
         function generateCorId(dob, gender, hospitalCode, patientNumber) {
-            // Реализуйте логику генерации COR-ID здесь
-            // Например: 1-4 дата создания, 5-7 код учреждения, 8-0-1 номер пациента, последние символы год рождения и пол
+           
             const dobFormatted = dob.replace(/-/g, '').slice(2); // Форматирование даты (YYMMDD)
             const corId = dobFormatted + hospitalCode + patientNumber + '-' + dob.slice(0, 4) + gender;
             return corId;
