@@ -13,7 +13,7 @@ import hmac
 
 from cor_pass.routes import auth
 from cor_pass.database.db import get_db
-from cor_pass.routes import auth, records, tags, password_generator, users
+from cor_pass.routes import auth, records, tags, password_generator, users, cor_id
 from cor_pass.repository import users as repo_users
 from cor_pass.config.config import settings
 from cor_pass.services.logger import logger
@@ -159,10 +159,11 @@ app.include_router(records.router, prefix="/api")
 app.include_router(tags.router, prefix="/api")
 app.include_router(password_generator.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
+app.include_router(cor_id.router, prefix="/api")
 
 
 if __name__ == "__main__":
     uvicorn.run(
-        app="main:app", host="192.168.154.180", port=8888, reload=settings.reload
+        app="main:app", host="192.168.153.203", port=8000, reload=settings.reload
     )
 # 192.168.153.203

@@ -44,12 +44,20 @@ async def decrypt_data(encrypted_data: bytes, key: bytes) -> str:
     return decrypted_data.decode()
 
 
-async def generate_aes_key(key: bytes) -> bytes:
+async def generate_aes_key() -> bytes:
     random_key = secrets.token_urlsafe(16)
     sha256 = hashlib.sha256()
     sha256.update(random_key.encode())
     aes_key = sha256.digest()[:16]
     return aes_key
+
+
+async def generate_recovery_code():
+    random_key = secrets.token_urlsafe(64)
+    sha256 = hashlib.sha256()
+    sha256.update(random_key.encode())
+    recovery_code = sha256.hexdigest()[:150]
+    return recovery_code
 
 
 async def encrypt_user_key(key: bytes) -> str:

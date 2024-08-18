@@ -1,12 +1,13 @@
 from sqlalchemy.orm import Session
 import uuid
 
-from cor_pass.database.models import User, Status, Verification
-from cor_pass.schemas import UserModel
+from cor_pass.database.models import User, Status, Verification, UserSettings
+from cor_pass.schemas import UserModel, PasswordStorageSettings, MedicalStorageSettings
 from cor_pass.services.auth import auth_service
 from cor_pass.services.logger import logger
-from cor_pass.services.cipher import generate_aes_key, encrypt_user_key
+from cor_pass.services.cipher import generate_aes_key, encrypt_user_key, generate_recovery_code
 from cor_pass.config.config import settings
+from cor_pass.services.email import send_email_code_with_qr
 
 
 async def get_user_by_email(email: str, db: Session) -> User | None:
@@ -50,14 +51,22 @@ async def create_user(body: UserModel, db: Session) -> User:
     new_user = User(**body.model_dump())
     new_user.id = str(uuid.uuid4())
 
+    user_settings = UserSettings(user_id = new_user.id)
+
     new_user.account_status = Status.basic
-    new_user.unique_cipher_key = await generate_aes_key(settings.aes_key)  # ->bytes
+    new_user.unique_cipher_key = await generate_aes_key()  # ->bytes
     new_user.unique_cipher_key = await encrypt_user_key(new_user.unique_cipher_key)
+
+    new_user.recovery_code = await generate_recovery_code()
+    await send_email_code_with_qr(new_user.email, host= None, recovery_code=new_user.recovery_code)
+    new_user.recovery_code = auth_service.get_password_hash(new_user.recovery_code)
 
     try:
         db.add(new_user)
+        db.add(user_settings)
         db.commit()
         db.refresh(new_user)
+        db.refresh(user_settings)
         return new_user
     except Exception as e:
         db.rollback()
@@ -185,3 +194,93 @@ async def change_user_password(email: str, password: str, db: Session) -> None:
     except Exception as e:
         db.rollback()
         raise e
+    
+
+
+async def change_user_email(email: str, current_user, db: Session) -> None:
+    current_user.email = email
+    try:
+        db.commit()
+        logger.debug("Email has changed")
+    except Exception as e:
+        db.rollback()
+        raise e
+    
+
+async def get_settings(user: User, db: Session):
+    user_settings =(
+        db.query(UserSettings)
+        .join(User, UserSettings.user_id == User.id)
+        .first()
+    )
+    if user_settings:
+        return user_settings
+    else:
+        user_settings = UserSettings(
+            user_id = user.id
+        )
+        try:
+            db.add(user_settings)
+            db.commit()
+            db.refresh(user_settings)
+            logger.debug("Created new user_settings")
+        except Exception as e:
+            db.rollback()
+            raise e
+    return user_settings
+    
+
+async def change_password_storage_settings(current_user: User, settings: PasswordStorageSettings, db: Session) -> None:
+    user_settings =(
+        db.query(UserSettings)
+        .join(User, UserSettings.user_id == User.id)
+        .first()
+    )
+    if user_settings:
+        user_settings.local_password_storage = settings.local_password_storage
+        user_settings.cloud_password_storage = settings.cloud_password_storage
+        db.commit()
+        db.refresh(user_settings)
+    else:
+        user_settings = UserSettings(
+            user_id = current_user.id,
+        )
+        user_settings.local_password_storage = settings.local_password_storage
+        user_settings.cloud_password_storage = settings.cloud_password_storage
+        try:
+            db.add(user_settings)
+            db.commit()
+            db.refresh(user_settings)
+            logger.debug("Created new user_settings")
+        except Exception as e:
+            db.rollback()
+            raise e
+    return user_settings
+
+
+async def change_medical_storage_settings(current_user: User, settings: MedicalStorageSettings, db: Session) -> None:
+    user_settings =(
+        db.query(UserSettings)
+        .join(User, UserSettings.user_id == User.id)
+        .first()
+    )
+    if user_settings:
+        user_settings.local_medical_storage = settings.local_medical_storage
+        user_settings.cloud_medical_storage = settings.cloud_medical_storage
+        db.commit()
+        db.refresh(user_settings)
+    else:
+        user_settings = UserSettings(
+            user_id = current_user.id,
+        )
+        user_settings.local_medical_storage = settings.local_medical_storage
+        user_settings.cloud_medical_storage = settings.cloud_medical_storage
+        try:
+            db.add(user_settings)
+            db.commit()
+            db.refresh(user_settings)
+            logger.debug("Created new user_settings")
+        except Exception as e:
+            db.rollback()
+            raise e
+    return user_settings

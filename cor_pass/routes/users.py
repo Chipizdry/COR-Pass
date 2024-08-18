@@ -5,7 +5,7 @@ from cor_pass.database.db import get_db
 from cor_pass.services.auth import auth_service
 from cor_pass.database.models import User, Status
 from cor_pass.services.access import user_access
-from cor_pass.schemas import UserDb
+from cor_pass.schemas import UserDb, PasswordStorageSettings, MedicalStorageSettings
 from cor_pass.repository import users
 from pydantic import EmailStr
 
@@ -73,3 +73,58 @@ async def get_status(email: EmailStr, db: Session = Depends(get_db)):
     else:
         account_status = await users.get_user_status(email, db)
         return {"message": f"{email} - {account_status.value}"}
+
+
+"""
+Маршрут получения настроек конкретного пользователя 
+"""
+
+@router.get("/get_settings")
+async def get_user_settings(
+    user: User = Depends(auth_service.get_current_user),
+    db: Session = Depends(get_db),
+):
+
+    settings = await users.get_settings(user, db)
+    return {"local_password_storage": settings.local_password_storage,
+            "cloud_password_storage": settings.cloud_password_storage,
+            "local_medical_storage": settings.local_medical_storage,
+            "cloud_medical_storage": settings.cloud_medical_storage}
+
+
+
+"""
+Маршрут изменения настроек места хранения паролей 
+"""
+
+
+@router.patch("/settings/password_storage", dependencies=[Depends(user_access)])
+async def choose_password_storage(
+    settings: PasswordStorageSettings,
+    user: User = Depends(auth_service.get_current_user),
+    db: Session = Depends(get_db),
+):
+    await users.change_password_storage_settings(user, settings, db)
+    return {"message": "Password storage settings are changed",
+            "local_password_storage": settings.local_password_storage,
+            "cloud_password_storage": settings.cloud_password_storage,
+            }
+
+    
+
+
+"""
+Маршрут изменения настроек места хранения мед. данных
+"""
+
+@router.patch("/settings/medical_storage", dependencies=[Depends(user_access)])
+async def choose_medical_storage(
+    settings: MedicalStorageSettings,
+    user: User = Depends(auth_service.get_current_user),
+    db: Session = Depends(get_db),
+):
+    await users.change_medical_storage_settings(user, settings, db)
+    return {"message": "Medical storage settings are changed",
+            "local_medical_storage": settings.local_medical_storage,
+            "cloud_medical_storage": settings.cloud_medical_storage,
+            }

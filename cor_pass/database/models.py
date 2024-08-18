@@ -29,16 +29,18 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    cor_id = Column(String(250), unique=True, nullable=True)
     email = Column(String(250), unique=True, nullable=False)
     password = Column(String(250), nullable=False)
     access_token = Column(String(250), nullable=True)
     refresh_token = Column(String(250), nullable=True)
-    restore_code = Column(String(250), nullable=True)
+    recovery_code = Column(String(250), nullable=True)
     is_active = Column(Boolean, default=True)
     account_status: Mapped[Enum] = Column("status", Enum(Status), default=Status.basic)
     unique_cipher_key = Column(String(250), nullable=False)
 
     user_records = relationship("Record", back_populates="user")
+    user_settings = relationship("UserSettings", back_populates="user")
 
 
 class Verification(Base):
@@ -82,43 +84,19 @@ class RecordTag(Base):
     tag_id = Column(Integer, ForeignKey("tags.id"), primary_key=True)
 
 
+class UserSettings(Base):
+    __tablename__ = "user_settings"
 
-# class FieldType(enum.Enum):
-#     TEXT = "text"
-#     URL = "url"
-#     ALPHA_NUMERIC = "alpha_numeric"
-#     PHONE_NUMBER = "phone_number"
-#     EMAIL = "email"
-#     NUMBER = "number"
-#     USERNAME = "username"
-#     PASSWORD = "password"
-#     SENSITIVE_NUMBER = "sensitive_number"
-#     DATE = "date"
-#     MONTH_YEAR = "month_year"
-#     CREDIT_CARD = "credit_card"
-#     ONE_TIME_PASSWORD = "otp"
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, primary_key=True)
+    local_password_storage = Column(Boolean, default=False)
+    cloud_password_storage = Column(Boolean, default=True)
+    local_medical_storage = Column(Boolean, default=False)
+    cloud_medical_storage = Column(Boolean, default=True)
 
-# class RecordField(Base):
-#     __tablename__ = "record_field"
-#     id = Column(Integer, primary_key=True)
-#     name = Column(String(250), nullable=False)
-#     type = Column(Enum(FieldType), nullable=False)
 
-#     values = relationship("RecordFieldValue", back_populates="field")
+    user = relationship("User", back_populates="user_settings")
 
-# class RecordFieldValue(Base):
-#     __tablename__ = "record_field_value"
-#     id = Column(Integer, primary_key=True)
-#     record_id = Column(Integer, ForeignKey("record.id"), nullable=False)
-#     field_id = Column(Integer, ForeignKey("record_field.id"), nullable=False)
 
-#     # Используем разные колонки для разных типов данных
-#     string_value = Column(Text, nullable=True)
-#     date_value = Column(Date, nullable=True)
-#     number_value = Column(Float, nullable=True)
-
-#     record = relationship("Record", back_populates="fields")
-#     field = relationship("RecordField", back_populates="values")
 
 
 Base.metadata.create_all(bind=engine)

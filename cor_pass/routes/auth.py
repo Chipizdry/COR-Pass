@@ -24,7 +24,9 @@ from cor_pass.schemas import (
     VerificationModel,
     ChangePasswordModel,
     LoginResponseModel,
+    RecoveryCodeModel
 )
+from cor_pass.database.models import User
 from cor_pass.repository import users as repository_users
 from cor_pass.services.auth import auth_service
 from cor_pass.services.email import (
@@ -281,30 +283,63 @@ async def change_password(body: ChangePasswordModel, db: Session = Depends(get_d
                 status_code=status.HTTP_406_NOT_ACCEPTABLE,
                 detail="Incorrect password input",
             )
+        
+"""
+Маршрут смены имейла, работает только для авторизированных пользователей
+"""
 
-
-@router.post(
-    "/send_verification_qr"
-)  # Маршрут проверки почты в случае если это новая регистрация
-async def send_verification_qr(
-    body: EmailSchema,
-    background_tasks: BackgroundTasks,
-    request: Request,
-    db: Session = Depends(get_db),
-):
-    verification_code = randint(100000, 999999)
-    exist_user = await repository_users.get_user_by_email(body.email, db)
-    if exist_user == None:
+@router.patch("/change_email")
+async def change_email(
+                    email: str,
+                    current_user: User = Depends(auth_service.get_current_user),
+                    db: Session = Depends(get_db)):
+    user = await repository_users.get_user_by_email(current_user.email, db)
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    if exist_user:
-        background_tasks.add_task(
-            send_email_code_with_qr, body.email, request.base_url, verification_code
-        )
-        logger.debug("Check your email for verification code.")
-        await repository_users.write_verification_code(
-            email=body.email, db=db, verification_code=verification_code
-        )
+    else:
+        if email:
+            await repository_users.change_user_email(email, user, db)
+            logger.debug(f"{current_user.id} - changed his email to {email}")
+            return {"message": f"User '{current_user.id}' changed his email to {email}"}
+        else:
+            print("Incorrect email input")
+            raise HTTPException(
+                status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                detail="Incorrect email input",
+            )
 
-    return {"message": "Check your email for verification code."}
+
+
+"""
+Маршрут подтверждения почты с введением кода восстановления
+"""
+
+@router.post("/restore_account")
+async def restore_account(body: RecoveryCodeModel, db: Session = Depends(get_db)):
+    user = await repository_users.get_user_by_email(body.email, db)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found / invalid email",
+        )
+    verify_restoration = auth_service.verify_password(body.recovery_code, user.recovery_code)
+    if not verify_restoration:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid recovery code"
+        )
+    confirmation = False
+    if verify_restoration:
+        confirmation = True
+        logger.debug(f"Your {body.email} is confirmed, restoration code is correct")
+        return {
+            "message": "Your email is confirmed, restoration code is correct",  # Сообщение для JS о том что код востановления верный 
+            "confirmation": confirmation,
+        }
+    else:
+        logger.debug(f"{body.email} - Invalid restoration code")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid restoration code"
+        )
+    

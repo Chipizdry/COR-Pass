@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, conint, field_validator
 from typing import List, Optional
 from datetime import datetime
 from cor_pass.database.models import Status
@@ -50,6 +50,21 @@ class VerificationModel(BaseModel):
 class ChangePasswordModel(BaseModel):
     email: str
     password: str = Field(min_length=4, max_length=20)
+
+
+class RecoveryCodeModel(BaseModel):
+    email: EmailStr
+    recovery_code: str
+
+
+class PasswordStorageSettings(BaseModel):
+    local_password_storage: bool
+    cloud_password_storage: bool
+
+class MedicalStorageSettings(BaseModel):
+    local_medical_storage: bool
+    cloud_medical_storage: bool
+
 
 
 # PASS-MANAGER MODELS
@@ -111,56 +126,20 @@ class WordPasswordGeneratorSettings(BaseModel):
     include_uppercase: bool = True
 
 
-# class RecordFieldValueModel(BaseModel):
-#     string_value: Optional[str] = None
-#     date_value: Optional[datetime] = None
-#     number_value: Optional[float] = None
+#MEDICAL MODELS
 
+class CreateCorIdModel(BaseModel):
+    medical_institution_code: str = Field(max_length=3)
+    patient_number: str = Field(max_length=3)
+    patient_birth: int = Field(ge=1900, le=2100)
+    patient_sex: str = Field(max_length=1)
 
-# class RecordFieldModel(BaseModel):
-#     id: int
-#     name: str
-#     type: str
+    @field_validator('patient_sex')
+    def patient_sex_must_be_m_or_f(cls, v):
+        if v not in ['M', 'F']:
+            raise ValueError('patient_sex must be "M" or "F"')
+        return v
+    
 
-#     class Config:
-#         from_attributes = True
-
-
-# class TagModel(BaseModel):
-#     id: int
-#     name: str
-
-#     class Config:
-#         from_attributes = True
-
-# class RecordModel(BaseModel):
-#     id: int
-#     user_id: str
-#     record_name: str
-#     website: Optional[str] = None
-#     username: Optional[str] = None
-#     password: Optional[str] = None
-#     created_at: datetime
-#     edited_at: datetime
-#     attachments: Optional[str] = None
-#     notes: Optional[str] = None
-#     fields: List[RecordFieldValueModel] = []
-#     tags: List[TagModel] = []
-
-#     class Config:
-#         from_attributes = True
-
-
-# class CreateRecordModel(BaseModel):
-#     record_name: str
-#     website: Optional[str] = None
-#     username: Optional[str] = None
-#     password: Optional[str] = None
-#     attachments: Optional[str] = None
-#     notes: Optional[str] = None
-#     fields: List[RecordFieldValueModel] = [None]
-#     tags: List[TagModel] = [None]
-
-# class ResponseRecord(BaseModel):
-#     record: RecordModel
-#     detail: str = "Record successfully created"
+class ResponseCorIdModel(BaseModel):
+    cor_id: str = None

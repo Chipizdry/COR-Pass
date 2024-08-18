@@ -10,6 +10,7 @@ from fastapi import UploadFile
 from cor_pass.config.config import settings
 from cor_pass.services.logger import logger
 from cor_pass.services.qr_code import generate_qr_code
+from base64 import b64encode
 
 
 conf = ConnectionConfig(
@@ -93,17 +94,19 @@ async def send_email_code_forgot_password(
         print(err)
 
 
-async def send_email_code_with_qr(email: EmailStr, host: str, verification_code):
+async def send_email_code_with_qr(email: EmailStr, host: str, recovery_code):
     logger.debug(f"Sending email to {email}")
     try:
         # Генерация QR кода
-        signature = "This is your recovery code"
-        qr_code_bytes = generate_qr_code(verification_code, signature)
+        qr_code_bytes = generate_qr_code(recovery_code)
 
         message = MessageSchema(
             subject="Recovery code",
             recipients=[email],
-            body=f"This is your recovery code, please save it securely.",
+            template_body={
+                "host": host,
+                "recovery_code": recovery_code,
+            },
             subtype=MessageType.html,
             attachments=[
                 UploadFile(filename="qrcode.png", file=BytesIO(qr_code_bytes))
@@ -111,7 +114,7 @@ async def send_email_code_with_qr(email: EmailStr, host: str, verification_code)
         )
 
         fm = FastMail(conf)
-        await fm.send_message(message)
+        await fm.send_message(message, template_name="recovery_code.html")
         logger.debug(f"Sending email to {email} with QR code done!")
     except ConnectionErrors as err:
         print(err)
