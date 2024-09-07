@@ -61,10 +61,10 @@ class PasswordStorageSettings(BaseModel):
     local_password_storage: bool
     cloud_password_storage: bool
 
+
 class MedicalStorageSettings(BaseModel):
     local_medical_storage: bool
     cloud_medical_storage: bool
-
 
 
 # PASS-MANAGER MODELS
@@ -126,7 +126,8 @@ class WordPasswordGeneratorSettings(BaseModel):
     include_uppercase: bool = True
 
 
-#MEDICAL MODELS
+# MEDICAL MODELS
+
 
 class CreateCorIdModel(BaseModel):
     medical_institution_code: str = Field(max_length=3)
@@ -134,12 +135,12 @@ class CreateCorIdModel(BaseModel):
     patient_birth: int = Field(ge=1900, le=2100)
     patient_sex: str = Field(max_length=1)
 
-    @field_validator('patient_sex')
+    @field_validator("patient_sex")
     def patient_sex_must_be_m_or_f(cls, v):
-        if v not in ['M', 'F']:
+        if v not in ["M", "F"]:
             raise ValueError('patient_sex must be "M" or "F"')
         return v
-    
+
 
 class ResponseCorIdModel(BaseModel):
     cor_id: str = None

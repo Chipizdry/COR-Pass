@@ -10,7 +10,7 @@ from fastapi import UploadFile
 from cor_pass.config.config import settings
 from cor_pass.services.logger import logger
 from cor_pass.services.qr_code import generate_qr_code
-from base64 import b64encode
+from cor_pass.services.recovery_file import generate_recovery_file
 
 
 conf = ConnectionConfig(
@@ -32,7 +32,7 @@ async def send_email_code(
     email: EmailStr, host: str, verification_code
 ):  # registration
     """
-    The send_email function sends an email to the user with a link to confirm their email address.
+    The send_email function sends an email to the user with a link to confirm their email address.\n
         Args:
             email (str): The user's email address.
             host (str): The hostname that will be used in constructing a URL for confirming their account registration.
@@ -64,7 +64,7 @@ async def send_email_code_forgot_password(
     email: EmailStr, host: str, verification_code
 ):  # forgot password
     """
-    The send_email function sends an email to the user with a link to confirm their email address.
+    The send_email function sends an email to the user with a link to confirm their email address.\n
         Args:
             email (str): The user's email address.
             host (str): The hostname that will be used in constructing a URL for confirming their account registration.
@@ -99,6 +99,7 @@ async def send_email_code_with_qr(email: EmailStr, host: str, recovery_code):
     try:
         # Генерация QR кода
         qr_code_bytes = generate_qr_code(recovery_code)
+        recovery_file = await generate_recovery_file(recovery_code)
 
         message = MessageSchema(
             subject="Recovery code",
@@ -109,7 +110,8 @@ async def send_email_code_with_qr(email: EmailStr, host: str, recovery_code):
             },
             subtype=MessageType.html,
             attachments=[
-                UploadFile(filename="qrcode.png", file=BytesIO(qr_code_bytes))
+                UploadFile(filename="qrcode.png", file=BytesIO(qr_code_bytes)),
+                UploadFile(filename="recovery_key.bin", file=recovery_file),
             ],
         )
 

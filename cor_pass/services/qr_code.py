@@ -2,7 +2,6 @@ from io import BytesIO
 import qrcode
 
 
-
 def generate_qr_code(data: str) -> bytes:
     qr = qrcode.QRCode(
         version=1,

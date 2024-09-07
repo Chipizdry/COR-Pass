@@ -13,7 +13,7 @@ router = APIRouter(prefix="/tags", tags=["Tags"])
 @router.get("/", response_model=List[TagResponse])
 async def read_tags(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
     """
-    Get a list of tags.
+    **Get a list of tags. / Получение списка всех тэгов** \n
 
     :param skip: The number of tags to skip (for pagination). Default is 0.
     :type skip: int
@@ -31,7 +31,7 @@ async def read_tags(skip: int = 0, limit: int = 50, db: Session = Depends(get_db
 @router.get("/{tag_id}", response_model=TagResponse)
 async def read_tag(tag_id: int, db: Session = Depends(get_db)):
     """
-    Get a specific tag by ID.
+    **Get a specific tag by ID. / Получение тэга по id** \n
 
     :param tag_id: The ID of the tag.
     :type tag_id: int
@@ -52,7 +52,7 @@ async def read_tag(tag_id: int, db: Session = Depends(get_db)):
 @router.post("/", response_model=TagResponse)
 async def create_tag(body: TagModel, db: Session = Depends(get_db)):
     """
-    Create a new tag.
+    **Create a new tag. / Создание нового тэга** \n
 
     :param body: The request body containing the tag data.
     :type body: TagModel
@@ -67,7 +67,7 @@ async def create_tag(body: TagModel, db: Session = Depends(get_db)):
 @router.put("/{tag_id}", response_model=TagResponse)
 async def update_tag(tag_id: int, body: TagModel, db: Session = Depends(get_db)):
     """
-    Update an existing tag.
+    **Update an existing tag. / Обновление существующего тэга** \n
 
     :param tag_id: The ID of the tag to update.
     :type tag_id: int
@@ -90,7 +90,7 @@ async def update_tag(tag_id: int, body: TagModel, db: Session = Depends(get_db))
 @router.delete("/{tag_id}", response_model=TagResponse)
 async def remove_tag(tag_id: int, db: Session = Depends(get_db)):
     """
-    Remove a tag.
+    **Remove a tag. / Удаление тэга** \n
 
     :param tag_id: The ID of the tag to remove.
     :type tag_id: int
