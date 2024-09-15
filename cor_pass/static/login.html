@@ -70,17 +70,9 @@
                 height: 100%;
                 background-color: rgba(0, 0, 0, 0.5);
             }
-          /*  .modal-content {
-                background-color: #fff;
-                margin: 15% auto;
-                padding: 20px;
-                border: 1px solid #888;
-                width: 30%;
-                border-radius: 5px; 
-               
-            }
- */
+       
             .modal-content {
+                position: relative; /* Добавьте это свойство */
                 display: flex;
                 flex-direction: column;
                 align-items: center; /* Центрирование по горизонтали */
@@ -92,12 +84,16 @@
                 width: 30%;
                 border-radius: 5px;
             }
+
             .close-btn {
-                float: right;
+                position: absolute;
+                top: 10px;
+                right: 10px;
                 font-size: 28px;
                 font-weight: bold;
                 cursor: pointer;
             }
+
             .close-btn:hover, .close-btn:focus {
                 color: red;
             }
@@ -147,7 +143,6 @@
     <br><button onclick="window.location.href='/static/forgot-password.html' + '?redirectUrl=' + redirectUrl;" class="registration-button"><span data-translate="forgot-password-button">Forgot password?</span>
     </button><br>
            <!-- Кнопка "Восстановить доступ" -->
-            <!-- <button id="recovery-btn" class="registration-button">Восстановить доступ</button>  <br>--> 
               <button id="recovery-btn" class="link-button"  >Восстановить доступ</button>
 
     <!-- Модальное окно для восстановления доступа -->
@@ -287,38 +282,6 @@ document.getElementById('send-recovery-btn').addEventListener('click', async fun
         alert('Пожалуйста, выберите способ восстановления и заполните необходимые поля.');
     }
 });
-/*
-    // Обработка отправки данных формы
-    document.getElementById('send-recovery-btn').addEventListener('click', async function() {
-    const email = document.getElementById('email-recovery').value;
-    const recoveryFile = document.getElementById('recovery-file').files[0];
-
-    // Создаем объект FormData для отправки email и файла
-    const formData = new FormData();
-    formData.append('email', email);
-    formData.append('file', recoveryFile); // Файл добавляется в поле 'file'
-
-    try {
-        const response = await fetch('api/auth/restore_account_by_recovery_file', {
-            method: 'POST',
-            body: formData 
-        });
-
-        if (response.ok) {
-            const result = await response.json();
-            console.log('Ответ сервера:', result); 
-            console.log('Ответ сервера:', response); 
-            alert('Успешное восстановление доступа');
-        } else {
-            const errorData = await response.json();
-            alert(`Ошибка: ${errorData.detail}`);
-        }
-    } catch (error) {
-        alert('Произошла ошибка при восстановлении доступа');
-    }
-});
-*/
-
 
 
 </script>
