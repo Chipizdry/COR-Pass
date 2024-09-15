@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <link rel="icon" type="image/png" href="favicon.png">
+        <link rel="icon" type="image/png" href="static/favicon.png">
         <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
         <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
         <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
@@ -17,7 +17,7 @@
         <meta name="theme-color" content="#ffffff">
     
         <title>Авторизация и регистрация</title>
-        <link rel="stylesheet" type="text/css" href="styles.css">
+        <link rel="stylesheet" type="text/css" href="static/styles.css">
         <meta name="google-signin-client_id" content="161352424929-s3ris9429m994vcm2m35epe6eu4538el.apps.googleusercontent.com">
         <!-- <script src="https://apis.google.com/js/platform.js" async defer></script> -->
         <meta name="facebook-sdk-version" content="v15.0" />
@@ -58,6 +58,34 @@
             .google-signin-btn img {
                 margin-right: 10px;
             }
+
+
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 1;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+            }
+            .modal-content {
+                background-color: #fff;
+                margin: 15% auto;
+                padding: 20px;
+                border: 1px solid #888;
+                width: 30%;
+            }
+            .close-btn {
+                float: right;
+                font-size: 28px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+            .close-btn:hover, .close-btn:focus {
+                color: red;
+            }
         </style>
 </head>
 <body>
@@ -72,7 +100,7 @@
             </select>
         </div>
     </div>
-    <script src="translation.js"></script>
+    <script src="static/translation.js"></script>
     <h1 data-translate="title">Authorization and Registration</h1>
     <form id="login-form">
         <label for="email" data-translate="email-label">Email:</label>
@@ -94,12 +122,101 @@
 
     <h3 data-translate="registration">Registration</h3>
     <button onclick="window.location.href='/static/signup.html' + '?redirectUrl=' + redirectUrl;" class="registration-button" data-translate="registration-button">Register</button>
-    <br><button onclick="window.location.href='/static/forgot-password.html' + '?redirectUrl=' + redirectUrl;" class="registration-button"><span data-translate="forgot-password-button">Forgot password?</span></a><br>
+    <br><button onclick="window.location.href='/static/forgot-password.html' + '?redirectUrl=' + redirectUrl;" class="registration-button"><span data-translate="forgot-password-button">Forgot password?</span>
+    </button><br>
+           <!-- Кнопка "Восстановить доступ" -->
+              <button id="recovery-btn" class="registration-button">Восстановить доступ</button>  <br>
+
+
+    <!-- Модальное окно для восстановления доступа -->
+    <div id="recovery-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="close-modal">&times;</span>
+            <h2>Восстановление доступа</h2>
+            <p>Выберите способ восстановления:</p>
+            <button id="super-password-btn">Ввести супер-пароль</button> <br>
+            <button id="file-upload-btn">Прикрепить файл восстановления</button><br>
+            <label for="email" data-translate="email-label">Email:</label>
+            <input type="email" id="email-recovery" name="username" required><br>
+
+            <!-- Поле для ввода супер-пароля -->
+            <div id="super-password-field" style="display:none;">
+                <label for="super-password">Супер-пароль:</label>
+                <input type="password" id="super-password" name="super-password">
+            </div>
+
+            <!-- Поле для загрузки файла восстановления -->
+            <div id="file-upload-field" style="display:none;">
+                <label for="recovery-file">Файл восстановления:</label> <br>
+                <input type="file" id="recovery-file" name="recovery-file">
+            </div>
+            <button id="send-recovery-btn">Отправить</button>
+        </div>
+    </div>
 </div>
 
 
 
+<script>
+    // Открытие модального окна
+    document.getElementById('recovery-btn').onclick = function() {
+        document.getElementById('recovery-modal').style.display = 'block';
+    }
 
+    // Закрытие модального окна
+    document.getElementById('close-modal').onclick = function() {
+        document.getElementById('recovery-modal').style.display = 'none';
+    }
+
+    // Ввод супер-пароля
+    document.getElementById('super-password-btn').onclick = function() {
+        document.getElementById('super-password-field').style.display = 'block';
+        document.getElementById('file-upload-field').style.display = 'none';
+    }
+
+    // Прикрепление файла восстановления
+    document.getElementById('file-upload-btn').onclick = function() {
+        document.getElementById('file-upload-field').style.display = 'block';
+        document.getElementById('super-password-field').style.display = 'none';
+    }
+
+    // Закрытие модального окна при клике вне его
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('recovery-modal')) {
+            document.getElementById('recovery-modal').style.display = 'none';
+        }
+    }
+
+
+    // Обработка отправки данных формы
+    document.getElementById('send-recovery-btn').addEventListener('click', async function() {
+    const email = document.getElementById('email-recovery').value;
+    const recoveryFile = document.getElementById('recovery-file').files[0];
+
+    // Создаем объект FormData для отправки email и файла
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('file', recoveryFile); // Файл добавляется в поле 'file'
+
+    try {
+        const response = await fetch('api/auth/restore_account_by_recovery_file', {
+            method: 'POST',
+            body: formData 
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            alert('Успешное восстановление доступа');
+        } else {
+            const errorData = await response.json();
+            alert(`Ошибка: ${errorData.detail}`);
+        }
+    } catch (error) {
+        alert('Произошла ошибка при восстановлении доступа');
+    }
+});
+
+</script>
 
 
 <script>
@@ -349,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!state.id) {
             return state.text;
         }
-        var baseUrl = 'flags';
+        var baseUrl = 'static/flags';
         var $state = $(
             '<span><img src="' + baseUrl + '/' + state.element.getAttribute('data-icon') + '" class="flag-img" /> ' + state.text + '</span>'
         );

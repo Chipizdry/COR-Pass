@@ -24,10 +24,10 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="cor_pass/static"), name="static")
 
 origins = [
-    "http://192.168.153.203:8000" "http://localhost:3000",
-    "http://192.168.153.21:3000",
+    "http://192.168.0.109:8000", "http://localhost:3000",
+    "http://192.168.0.107:3000",
 ]
-
+allow_origins=["*"]
 # Middleware для CORS
 app.add_middleware(
     CORSMiddleware,
@@ -164,6 +164,6 @@ app.include_router(cor_id.router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run(
-        app="main:app", host="192.168.153.203", port=8000, reload=settings.reload
+        app="main:app", host="0.0.0.0", port=8000, reload=settings.reload
     )
 # 192.168.153.203

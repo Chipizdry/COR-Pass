@@ -35,7 +35,7 @@ from cor_pass.services.email import (
     send_email_code,
     send_email_code_forgot_password,
 )
-from cor_pass.services.cipher import decrypt_data, decrypt_user_key
+from cor_pass.services.cipher import decrypt_data, decrypt_user_key, encrypt_data
 from cor_pass.config.config import settings
 from cor_pass.services.logger import logger
 from fastapi import UploadFile
@@ -322,8 +322,24 @@ async def restore_account_by_text(
     confirmation = False
     if user.recovery_code == body.recovery_code:
         confirmation = True
-        logger.debug(f"Recovery code is correct")
+        # logger.debug(f"Recovery code is correct")
+        # return {
+        #     "message": "Recovery code is correct",  # Сообщение для JS о том что код востановления верный
+        #     "confirmation": confirmation,
+        # }
+        user.recovery_code=await encrypt_data(
+            data=user.recovery_code, key=await decrypt_user_key(user.unique_cipher_key)
+        )
+        access_token = await auth_service.create_access_token(
+        data={"oid": user.id}, expires_delta=3600
+    )
+        refresh_token = await auth_service.create_refresh_token(data={"oid": user.id})
+        await repository_users.update_token(user, refresh_token, db)
+        logger.debug(f"{user.email}  login success")
         return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
             "message": "Recovery code is correct",  # Сообщение для JS о том что код востановления верный
             "confirmation": confirmation,
         }
@@ -347,6 +363,8 @@ async def upload_recovery_file(
     confirmation = False
     file_content = await file.read()
 
+    
+
     recovery_code = await decrypt_data(
         encrypted_data=user.recovery_code,
         key=await decrypt_user_key(user.unique_cipher_key),
@@ -354,8 +372,24 @@ async def upload_recovery_file(
 
     if file_content == recovery_code.encode():
         confirmation = True
-        logger.debug(f"Restoration code is correct")
+        # logger.debug(f"Restoration code is correct")
+        # return {
+        #     "message": "Recovery file is correct",  # Сообщение для JS о том что файл востановления верный
+        #     "confirmation": confirmation,
+        # }
+        recovery_code=await encrypt_data(
+            data=user.recovery_code, key=await decrypt_user_key(user.unique_cipher_key)
+        )
+        access_token = await auth_service.create_access_token(
+        data={"oid": user.id}, expires_delta=3600
+    )
+        refresh_token = await auth_service.create_refresh_token(data={"oid": user.id})
+        await repository_users.update_token(user, refresh_token, db)
+        logger.debug(f"{user.email}  login success")
         return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
             "message": "Recovery file is correct",  # Сообщение для JS о том что файл востановления верный
             "confirmation": confirmation,
         }

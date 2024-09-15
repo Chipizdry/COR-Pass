@@ -96,6 +96,8 @@ async def update_token(user: User, token: str | None, db: Session) -> None:
     """
     user.refresh_token = token
     db.commit()
+    db.refresh(user)
+    
 
 
 async def get_users(skip: int, limit: int, db: Session) -> list[User]:
