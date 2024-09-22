@@ -372,3 +372,31 @@ a:hover {
      border: none;
 
         }        
+
+
+
+/* Стили для рамки вокруг генератора паролей */
+.password-generator {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+/* Уменьшение шрифта для чекбоксов генератора паролей */
+.password-generator label {
+    font-size: 0.9em;
+}
+
+/* Изменение стиля для заголовка "Настройки генератора паролей" */
+.password-generator h3 {
+    font-size: 1em;
+    margin-bottom: 10px;
+}
+
+/* Уменьшение интервала между элементами */
+.checkbox-group input[type="checkbox"],
+.checkbox-group label {
+    margin-right: 10px;
+}
