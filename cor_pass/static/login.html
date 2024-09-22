@@ -242,11 +242,28 @@ document.getElementById('send-recovery-btn').addEventListener('click', async fun
           //  console.log('Ответ сервера:', response); 
             alert('Успешное восстановление доступа по файлу');
             localStorage.setItem('access_token', result.access_token);
+            setTimeout(() => {
+                            const refreshToken = result.refresh_token;
+                            const accessToken = result.access_token;
+
+                            urlParams.set('access_token', accessToken);
+                            urlParams.set('refresh_token', refreshToken);
+
+                            const queryString = urlParams.toString();
+                            // const url = `${redirectUrl}/?access_token=${accessToken}&refresh_token=${refreshToken}`;
+                            const url = `/static/mainscreen.html/?access_token=${accessToken}`;
+
+                            window.location.href = url;
+                        }, 500);
 
 
             } else {
                 const errorData = await response.json();
                 alert(`Ошибка: ${errorData.detail}`);
+                const errorMessage = getErrorMessage(xhr.status, messageDiv);
+                console.error("Error during login.");
+                messageDiv.innerText = errorMessage;
+                messageDiv.style.color = 'red';
             }
         } catch (error) {
             alert('Произошла ошибка при восстановлении доступа по файлу');
@@ -272,10 +289,34 @@ document.getElementById('send-recovery-btn').addEventListener('click', async fun
                 console.log('Ответ сервера:', result);
                 alert('Успешное восстановление доступа по супер-паролю');
                 localStorage.setItem('access_token', result.access_token);
+                setTimeout(() => {
+                            const refreshToken = result.refresh_token;
+                            const accessToken = result.access_token;
+
+                            urlParams.set('access_token', accessToken);
+                            urlParams.set('refresh_token', refreshToken);
+
+                            const queryString = urlParams.toString();
+                            // const url = `${redirectUrl}/?access_token=${accessToken}&refresh_token=${refreshToken}`;
+                            const url = `/static/mainscreen.html/?access_token=${accessToken}`;
+
+                            window.location.href = url;
+                        }, 500);
+
+                    // } else {
+                    //     const errorMessage = getErrorMessage(xhr.status, messageDiv);
+                    //     // console.error("Error during login.");
+                    //     messageDiv.innerText = errorMessage;
+                    //     messageDiv.style.color = 'red';
+                    // }
               
             } else {
                 const errorData = await response.json();
                 alert(`Ошибка: ${errorData.detail}`);
+                const errorMessage = getErrorMessage(xhr.status, messageDiv);
+                console.error("Error during login.");
+                messageDiv.innerText = errorMessage;
+                messageDiv.style.color = 'red';
             }
         } catch (error) {
             alert('Произошла ошибка при восстановлении доступа по супер-паролю');
