@@ -98,6 +98,7 @@ const translations = {
         "heading" : "Сброс пароля",
         'loginSuccess': 'Вход выполнен успешно!',
         'password-changed': 'Пароль изменён!',
+        'fillAllFields': "Заполните все поля",
         'login-error': 'Ошибка входа.'
     },
     en: {
@@ -136,6 +137,7 @@ const translations = {
         "heading" : "Password Reset",
         'loginSuccess': 'Login successful!',
         'password-changed': 'Password has been changed!',
+        'fillAllFields': "Please fill out all fields",
         'login-error': 'Login error.'
     },
     zh: {
@@ -174,6 +176,7 @@ const translations = {
         "heading" : "重设密码",
         'loginSuccess': '登录成功！',
         'password-changed': '密码已更改。',
+        'fillAllFields': "请填写所有字段",
         'login-error': '登录错误。'
     },
     uk: {

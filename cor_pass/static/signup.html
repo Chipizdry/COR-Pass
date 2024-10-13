@@ -32,6 +32,37 @@
         <button class="link-button" onclick="goBack()" data-translate="back-link-text"><<<назад<<<</button>
         <h1 data-translate="signup-title">Регистрация</h1>
         <form id="registrationForm">
+
+            <!-- Поле для выбора пола -->
+                <div id="gender-field">
+                    <label for="gender" data-translate="gender-label">Пол:</label>
+                    <select id="gender" name="gender" required>
+                        <option value="" disabled selected>Выберите пол</option>
+                        <option value="M" data-translate="male-option">Мужской</option>
+                        <option value="F" data-translate="female-option">Женский</option>
+                    </select>
+                </div>
+
+                <!-- Поле для выбора года рождения -->
+                <div id="birth-year-field">
+                    <label for="birth-year" data-translate="birth-year-label">Год рождения:</label>
+                    <select id="birth-year" name="birth-year" required>
+                        <option value="" disabled selected>Выберите год рождения</option>
+                    </select>
+                </div>
+
+                <script>
+                    const birthYearSelect = document.getElementById('birth-year');
+                    const currentYear = new Date().getFullYear();
+                    for (let year = currentYear; year >= 1900; year--) {
+                        const option = document.createElement('option');
+                        option.value = year;
+                        option.textContent = year;
+                        birthYearSelect.appendChild(option);
+                    }
+                </script>
+
+
             <label for="email" data-translate="email-label">Электронная почта:</label>
             <input type="email" id="email" name="email" required>
             <div id="message" class="message"></div>
@@ -206,6 +237,19 @@ if (passwordInput.value.length > 0 || confirmPasswordInput.value.length > 0) {
             formData.forEach((value, key) => {
                 formDataJson[key] = value;
             });
+         // Получаем значения пола и года рождения
+         const gender = document.getElementById('gender').value;
+        const birthYear = document.getElementById('birth-year').value;
+
+        // Проверяем, что оба поля заполнены
+        if (!gender || !birthYear) {
+            console.error("Пол и год рождения должны быть заполнены.");
+            return;
+        }
+
+        // Преобразуем данные в нужный формат для запроса
+        formDataJson['user_sex'] = gender;             // Пол в виде строки
+        formDataJson['birth'] = parseInt(birthYear);   // Год рождения как число
 
             const xhr = new XMLHttpRequest();
             xhr.open("POST", "/api/auth/signup");
@@ -297,6 +341,17 @@ var messageDiv = document.getElementById("message");
 var confirmationMessageDiv = document.getElementById("confirmationMessage");
 var messageDivErr = document.getElementById('messageDivErr');
 var email = emailInput.value;
+const gender = document.getElementById('gender').value;       
+const birthYear = document.getElementById('birth-year').value;
+
+        // Проверяем заполнены ли поля
+        if (!gender || !birthYear) {
+            messageDiv.innerText = translations[userLang]["fillAllFields"]; // Сообщение, если поля не заполнены
+            messageDiv.style.color = 'red';
+            return; // Не отправляем запрос, если поля не заполнены
+        }
+
+
 var xhr = new XMLHttpRequest();
 xhr.open("POST", "/api/auth/send_verification_code");
 xhr.setRequestHeader("Content-Type", "application/json");
@@ -313,6 +368,8 @@ xhr.onreadystatechange = function() {
             messageDiv.style.display = 'none';
             document.getElementById('ConfirmationCodeInput').style.display = 'block';
             document.getElementById('verificationCodeInput').style.display = 'block';
+            document.getElementById('gender-field').style.display = 'none';
+            document.getElementById('birth-year-field').style.display = 'none';
             startCountdown(sendCodeButton, userLang);
 
         } else {

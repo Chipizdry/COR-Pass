@@ -9,25 +9,49 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 import hashlib
 import hmac
+from prometheus_client import Counter, Histogram
+from prometheus_client import generate_latest
+from starlette.responses import Response
 
-
-from cor_pass.routes import auth
+from cor_pass.routes import auth, person
 from cor_pass.database.db import get_db
-from cor_pass.routes import auth, records, tags, password_generator, users, cor_id
-from cor_pass.repository import users as repo_users
+from cor_pass.routes import (
+    auth,
+    records,
+    tags,
+    password_generator,
+    cor_id,
+    otp_auth,
+    admin,
+)
 from cor_pass.config.config import settings
 from cor_pass.services.logger import logger
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from collections import defaultdict
+
+
+from datetime import datetime, timedelta
+
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="cor_pass/static"), name="static")
 
 origins = [
-    "http://192.168.0.109:8000", "http://localhost:3000",
-    "http://192.168.0.107:3000",
+    "http://192.168.153.203:8000" "http://localhost:3000",
+    "http://192.168.153.21:3000",
 ]
-allow_origins=["*"]
+
+
+@app.get("/metrics")
+async def metrics():
+    return Response(generate_latest(), media_type="text/plain")
+
+
+# Пример метрик
+REQUEST_COUNT = Counter("app_requests_total", "Total number of requests")
+REQUEST_LATENCY = Histogram("app_request_latency_seconds", "Request latency")
+
 # Middleware для CORS
 app.add_middleware(
     CORSMiddleware,
@@ -70,12 +94,15 @@ def read_config():
 
 @app.get("/", name="Корень")
 def read_root(request: Request):
-    return FileResponse("cor_pass/static/login.html")
-    # return "welcome"
+    logger.info("This is a test log message")
+    REQUEST_COUNT.inc()
+    with REQUEST_LATENCY.time():
+        return FileResponse("cor_pass/static/login.html")
 
 
 @app.get("/api/healthchecker")
 def healthchecker(db: Session = Depends(get_db)):
+    REQUEST_COUNT.inc()
     try:
         result = db.execute(text("SELECT 1")).fetchone()
         if result is None:
@@ -90,48 +117,6 @@ def healthchecker(db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Error connecting to the database",
         )
-
-
-# Middleware для проверки подписи
-@app.middleware("http")
-async def verify_request_signature(request: Request, call_next):
-    if settings.signing_key_verification:
-        try:
-            signature = request.headers.get("X-Signature")
-            if signature is None:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing signature"
-                )
-
-            body = await request.body()
-            body_str = body.decode()
-
-            if not verify_signature(body_str, signature):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid signature"
-                )
-
-            return await call_next(request)
-        except HTTPException as exc:
-            return JSONResponse(
-                status_code=exc.status_code, content={"detail": exc.detail}
-            )
-    else:
-        return await call_next(request)
-
-
-def verify_signature(body: str, signature: str) -> bool:
-    computed_signature = hmac.new(
-        settings.signing_key, body.encode(), hashlib.sha256
-    ).hexdigest()
-    return hmac.compare_digest(
-        computed_signature.encode("utf-8"), signature.encode("utf-8")
-    )
-
-
-# def create_signature(signing_key: str, body: str) -> str:
-#     signature = hmac.new(settings.signing_key.encode(), body.encode(), hashlib.sha256).hexdigest()
-#     return signature
 
 
 # Middleware для добавления заголовка времени обработки
@@ -150,20 +135,57 @@ async def startup():
     print("------------- STARTUP --------------")
 
 
-# if settings.app_env == "production":
-#     app.middleware("http")(verify_request_signature)
+auth_attempts = defaultdict(list)
+blocked_ips = {}
+
+
+# @app.middleware("http")
+# async def auth_attempt_middleware(request: Request, call_next):
+#     # Получите IP-адрес клиента
+#     client_ip = request.client.host
+
+#     try:
+#         # Выполните авторизацию
+#         response = await call_next(request)
+#     except HTTPException as e:
+#         if e.status_code == 401:  # Неудачная авторизация
+#             # Добавьте попытку авторизации в словарь
+#             auth_attempts[client_ip].append(datetime.now())
+#             print(client_ip)
+#             print("client_ip")
+#             # Проверьте, не заблокирован ли этот IP-адрес
+#             if client_ip in blocked_ips and blocked_ips[client_ip] > datetime.now():
+#                 raise HTTPException(status_code=429, detail="IP-адрес заблокирован")
+
+#             # Проверьте, если было 5 неудачных попыток за последние 15 минут
+#             if len(auth_attempts[client_ip]) >= 5 and auth_attempts[client_ip][
+#                 -1
+#             ] - auth_attempts[client_ip][0] <= timedelta(minutes=15):
+#                 # Заблокируйте IP-адрес на 15 минут
+#                 blocked_ips[client_ip] = datetime.now() + timedelta(minutes=15)
+#                 raise HTTPException(
+#                     status_code=429,
+#                     detail="Слишком много попыток авторизации, IP-адрес заблокирован на 15 минут",
+#                 )
+
+#         # Если произошло что-то другое, просто вернем исключение
+#         raise e
+
+#     return response
 
 
 app.include_router(auth.router, prefix="/api")
+app.include_router(admin.router, prefix="/api")
 app.include_router(records.router, prefix="/api")
 app.include_router(tags.router, prefix="/api")
 app.include_router(password_generator.router, prefix="/api")
-app.include_router(users.router, prefix="/api")
+app.include_router(person.router, prefix="/api")
 app.include_router(cor_id.router, prefix="/api")
+app.include_router(otp_auth.router, prefix="/api")
 
 
 if __name__ == "__main__":
     uvicorn.run(
-        app="main:app", host="0.0.0.0", port=8000, reload=settings.reload
+        app="main:app", host="192.168.153.203", port=8000, reload=settings.reload
     )
 # 192.168.153.203

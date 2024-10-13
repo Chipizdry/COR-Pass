@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: massivecapybara/corid_api:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - prometheus
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    user: "0:0" 
+    volumes:
+      - ./loki-config.yaml:/etc/loki/loki-config.yaml
+      - ./:/app
+      - loki-data:/wal
+      - compactor-data:/tmp/loki/compactor
+
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - /var/log:/var/log
+      - ./:/app
+      - ./promtail-config.yaml:/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      - loki
+
+volumes:
+  grafana-storage:
+  loki-data:
+  compactor-data:

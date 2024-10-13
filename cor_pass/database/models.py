@@ -45,11 +45,15 @@ class User(Base):
     unique_cipher_key = Column(
         String(250), nullable=False
     )  # уникальный ключ шифрования конкретного пользователя, в базе в зашифрованном виде, шифруется с помошью AES key переменной окружения
-    sex = Column(String(10), nullable=True)
-    birth = Column(Integer, nullable=True)
+    user_sex = Column(String(10), nullable=False)
+    birth = Column(Integer, nullable=False)
+    user_index = Column(
+        Integer, unique=True
+    )  # индекс пользователя, используется в создании cor_id
 
-    user_records = relationship("Record", back_populates="user")
-    user_settings = relationship("UserSettings", back_populates="user")
+    user_records = relationship("Record", back_populates="user", cascade="all, delete-orphan")
+    user_settings = relationship("UserSettings", back_populates="user", cascade="all, delete-orphan")
+    user_otp = relationship("OTP", back_populates="user", cascade="all, delete-orphan")
 
 
 class Verification(Base):
@@ -105,6 +109,22 @@ class UserSettings(Base):
     cloud_medical_storage = Column(Boolean, default=True)
 
     user = relationship("User", back_populates="user_settings")
+
+
+class OTP(Base):
+    __tablename__ = "otp_records"
+
+    record_id = Column(Integer, primary_key=True)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    record_name = Column(String(250), nullable=False)
+    username = Column(String(250), nullable=True)
+    private_key = Column(String(250), nullable=True)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    edited_at = Column(
+        DateTime, nullable=False, default=func.now(), onupdate=func.now()
+    )
+
+    user = relationship("User", back_populates="user_otp")
 
 
 Base.metadata.create_all(bind=engine)

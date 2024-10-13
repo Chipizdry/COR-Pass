@@ -12,46 +12,25 @@ from cor_pass.repository import cor_id as repository_cor_id
 router = APIRouter(prefix="/medical/cor_id", tags=["Cor-Id"])
 
 
-@router.get(
-    "/my_core_id",
-    response_model=ResponseCorIdModel,
+@router.post(
+    "/show_corid_info",
+    # response_model=ResponseCorIdModel,
     dependencies=[Depends(user_access)],
 )
 async def read_cor_id(
+    cor_id: ResponseCorIdModel,
     user: User = Depends(auth_service.get_current_user),
     db: Session = Depends(get_db),
 ):
     """
-    **Просмотр своего COR-id** \n
+    **Расшифровка COR-id** \n
 
     """
-
-    cor_id = await repository_cor_id.get_cor_id(user, db)
+    if cor_id:
+        cor_id = repository_cor_id.display_corid_info(cor_id.cor_id)
     if cor_id is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="COR-Id not found"
         )
     return cor_id
 
-
-@router.post(
-    "/create",
-    # response_model=ResponseCorIdModel,
-    status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(user_access)],
-)
-async def create_cor_id(
-    body: CreateCorIdModel,
-    user: User = Depends(auth_service.get_current_user),
-    db: Session = Depends(get_db),
-):
-    """
-    **Создание COR-id** \n
-
-    """
-
-    if not user.cor_id:
-        cor_id = await repository_cor_id.create_cor_id(body, db, user)
-        return cor_id
-    else:
-        return {"message": "cor-id already exist", "cor_id": user.cor_id}

@@ -8,7 +8,7 @@ from datetime import timedelta, datetime, timezone
 from sqlalchemy.orm import Session
 
 from cor_pass.database.db import get_db
-from cor_pass.repository import users as repository_users
+from cor_pass.repository import person as repository_users
 from cor_pass.config.config import settings
 from cor_pass.services.logger import logger
 
@@ -148,7 +148,7 @@ class Auth:
             payload = jwt.decode(token, key=self.SECRET_KEY, algorithms=self.ALGORITHM)
 
             if payload["scp"] == "access_token":
-                id = payload["oid"]
+                cor_id = payload["oid"]
                 if id is None:
                     raise credentials_exception
             else:
@@ -156,7 +156,7 @@ class Auth:
         except JWTError as e:
             raise credentials_exception
 
-        user = await repository_users.get_user_by_uuid(id, db)
+        user = await repository_users.get_user_by_corid(cor_id, db)
         if user is None:
             raise credentials_exception
         return user

@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings
 import glob
+import json
+import os
 
 
 class Settings(BaseSettings):
@@ -22,11 +24,11 @@ class Settings(BaseSettings):
     encryption_key: str = "ENCRYPTION_KEY"
     app_env: str = "ENVIROMENT"
     debug: bool = "FALSE"
-    signing_key: bytes = "SIGNING_KEY"
-    signing_key_verification: bool = "TRUE"
     reload: bool = "False"
     aes_key: str = "key"
     basic_account_records: int = "NUMBER_OF_RECORDS"
+    facility_key: int = "1"
+    admin_accounts: list = json.loads(os.getenv("ETERNAL_ACCOUNTS", "[]"))
 
     class Config:
 

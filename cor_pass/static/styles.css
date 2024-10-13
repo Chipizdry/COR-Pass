@@ -400,3 +400,25 @@ a:hover {
 .checkbox-group label {
     margin-right: 10px;
 }
+
+select#birth-year,
+select#gender {
+    width: 200px;          /* Ширина для обоих полей */
+    padding: 10px;         /* Внутренние отступы */
+    font-size: 14px;       /* Размер шрифта */
+    border: 1px solid #ccc;/* Рамка вокруг */
+    border-radius: 5px;    /* Скругленные углы */
+    box-sizing: border-box;/* Учитываем отступы и границы при расчете ширины */
+    background-color: white;/* Цвет фона */
+    appearance: none;      /* Скрываем стандартный стиль стрелки */
+    margin-bottom: 10px;   /* Отступ снизу для разделения полей */
+}
+
+select#birth-year:focus,
+select#gender:focus {
+    outline: none;         /* Убираем обводку при фокусе */
+    border-color: #021020; /* Цвет рамки при фокусе */
+}
+.hidden {
+    display: none;
+}

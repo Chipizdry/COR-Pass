@@ -29,7 +29,8 @@ from cor_pass.schemas import (
     RecoveryCodeModel,
 )
 from cor_pass.database.models import User
-from cor_pass.repository import users as repository_users
+from cor_pass.repository import person as repository_person
+from cor_pass.repository import cor_id as repository_cor_id
 from cor_pass.services.auth import auth_service
 from cor_pass.services.email import (
     send_email_code,
@@ -38,7 +39,14 @@ from cor_pass.services.email import (
 from cor_pass.services.cipher import decrypt_data, decrypt_user_key, encrypt_data
 from cor_pass.config.config import settings
 from cor_pass.services.logger import logger
+from cor_pass.services import cor_otp
 from fastapi import UploadFile
+
+from collections import defaultdict
+from datetime import datetime, timedelta
+
+auth_attempts = defaultdict(list)
+blocked_ips = {}
 
 
 router = APIRouter(prefix="/auth", tags=["Authorization"])
@@ -63,14 +71,16 @@ async def signup(
     :param db: Session: Pass the database session to the function
     :return: A dict, but the function expects a usermodel
     """
-    exist_user = await repository_users.get_user_by_email(body.email, db)
+    exist_user = await repository_person.get_user_by_email(body.email, db)
     if exist_user:
         logger.debug(f"{body.email} user already exist")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Account already exists"
         )
     body.password = auth_service.get_password_hash(body.password)
-    new_user = await repository_users.create_user(body, db)
+    new_user = await repository_person.create_user(body, db)
+    if not new_user.cor_id:
+        await repository_cor_id.create_corid(new_user, db)
     logger.debug(f"{body.email} user successfully created")
     return {"user": new_user, "detail": "User successfully created"}
 
@@ -91,22 +101,41 @@ async def login(
     :param db: Session: Get the database session
     :return: A dictionary with the access_token, refresh_token and token type
     """
-    user = await repository_users.get_user_by_email(body.username, db)
+    user = await repository_person.get_user_by_email(body.username, db)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found / invalid email",
         )
     if not auth_service.verify_password(body.password, user.password):
+        client_ip = request.client.host
+        auth_attempts[client_ip].append(datetime.now())
+
+        if client_ip in blocked_ips and blocked_ips[client_ip] > datetime.now():
+            print(f"IP-адрес {client_ip} заблокирован")
+            raise HTTPException(status_code=429, detail="IP-адрес заблокирован")
+
+        if len(auth_attempts[client_ip]) >= 5 and auth_attempts[client_ip][
+            -1
+        ] - auth_attempts[client_ip][0] <= timedelta(minutes=15):
+
+            blocked_ips[client_ip] = datetime.now() + timedelta(minutes=15)
+            print(
+                f"Слишком много попыток авторизации, IP-адрес {client_ip} заблокирован на 15 минут"
+            )
+            raise HTTPException(
+                status_code=429,
+                detail="Слишком много попыток авторизации, IP-адрес заблокирован на 15 минут",
+            )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password"
         )
     access_token = await auth_service.create_access_token(
-        data={"oid": user.id}, expires_delta=3600
+        data={"oid": user.cor_id}, expires_delta=3600
     )
-    refresh_token = await auth_service.create_refresh_token(data={"oid": user.id})
-    await repository_users.update_token(user, refresh_token, db)
-    logger.debug(f"{user.email}  login success")
+    refresh_token = await auth_service.create_refresh_token(data={"oid": user.cor_id})
+    await repository_person.update_token(user, refresh_token, db)
+    logger.info("login success")
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -132,19 +161,21 @@ async def refresh_token(
     :return: A new access token and a new refresh token
     """
     token = credentials.credentials
-    id = await auth_service.decode_refresh_token(token)
-    user = await repository_users.get_user_by_uuid(id, db)
+    # id = await auth_service.decode_refresh_token(token)
+    # user = await repository_person.get_user_by_uuid(id, db)
+    cor_id = await auth_service.decode_refresh_token(token)
+    user = await repository_person.get_user_by_corid(cor_id, db)
     if user.refresh_token != token:
-        await repository_users.update_token(user, None, db)
+        await repository_person.update_token(user, None, db)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
         )
 
-    access_token = await auth_service.create_access_token(data={"oid": user.id})
-    refresh_token = await auth_service.create_refresh_token(data={"oid": user.id})
+    access_token = await auth_service.create_access_token(data={"oid": user.cor_id})
+    refresh_token = await auth_service.create_refresh_token(data={"oid": user.cor_id})
     user.refresh_token = refresh_token
     db.commit()
-    await repository_users.update_token(user, refresh_token, db)
+    await repository_person.update_token(user, refresh_token, db)
     logger.debug(f"{user.email}'s refresh token updated")
     return {
         "access_token": access_token,
@@ -168,7 +199,7 @@ async def send_verification_code(
     """
     verification_code = randint(100000, 999999)
 
-    exist_user = await repository_users.get_user_by_email(body.email, db)
+    exist_user = await repository_person.get_user_by_email(body.email, db)
     if exist_user:
 
         logger.debug(f"{body.email}Account already exists")
@@ -182,7 +213,7 @@ async def send_verification_code(
             send_email_code, body.email, request.base_url, verification_code
         )
         logger.debug("Check your email for verification code.")
-        await repository_users.write_verification_code(
+        await repository_person.write_verification_code(
             email=body.email, db=db, verification_code=verification_code
         )
 
@@ -196,7 +227,7 @@ async def confirm_email(body: VerificationModel, db: Session = Depends(get_db)):
 
     """
 
-    ver_code = await repository_users.verify_verification_code(
+    ver_code = await repository_person.verify_verification_code(
         body.email, db, body.verification_code
     )
     confirmation = False
@@ -226,7 +257,7 @@ async def forgot_password_send_verification_code(
     """
 
     verification_code = randint(100000, 999999)
-    exist_user = await repository_users.get_user_by_email(body.email, db)
+    exist_user = await repository_person.get_user_by_email(body.email, db)
     if exist_user == None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
@@ -238,64 +269,11 @@ async def forgot_password_send_verification_code(
             request.base_url,
             verification_code,
         )
-        await repository_users.write_verification_code(
+        await repository_person.write_verification_code(
             email=body.email, db=db, verification_code=verification_code
         )
         logger.debug(f"{body.email} - Check your email for verification code.")
     return {"message": "Check your email for verification code."}
-
-
-@router.patch("/change_password")
-async def change_password(body: ChangePasswordModel, db: Session = Depends(get_db)):
-    """
-    **Смена пароля** \n
-
-    """
-
-    user = await repository_users.get_user_by_email(body.email, db)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-    else:
-        if body.password:
-            await repository_users.change_user_password(body.email, body.password, db)
-            logger.debug(f"{body.email} - changed his password")
-            return {"message": f"User '{body.email}' changed his password"}
-        else:
-            print("Incorrect password input")
-            raise HTTPException(
-                status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                detail="Incorrect password input",
-            )
-
-
-@router.patch("/change_email")
-async def change_email(
-    email: str,
-    current_user: User = Depends(auth_service.get_current_user),
-    db: Session = Depends(get_db),
-):
-    """
-    **Смена имейла авторизированного пользователя** \n
-
-    """
-    user = await repository_users.get_user_by_email(current_user.email, db)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-    else:
-        if email:
-            await repository_users.change_user_email(email, user, db)
-            logger.debug(f"{current_user.id} - changed his email to {email}")
-            return {"message": f"User '{current_user.id}' changed his email to {email}"}
-        else:
-            print("Incorrect email input")
-            raise HTTPException(
-                status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                detail="Incorrect email input",
-            )
 
 
 @router.post("/restore_account_by_text")
@@ -305,7 +283,7 @@ async def restore_account_by_text(
     """
     **Проверка кода восстановления с помощью текста**\n
     """
-    user = await repository_users.get_user_by_email(body.email, db)
+    user = await repository_person.get_user_by_email(body.email, db)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -327,14 +305,16 @@ async def restore_account_by_text(
         #     "message": "Recovery code is correct",  # Сообщение для JS о том что код востановления верный
         #     "confirmation": confirmation,
         # }
-        user.recovery_code=await encrypt_data(
+        user.recovery_code = await encrypt_data(
             data=user.recovery_code, key=await decrypt_user_key(user.unique_cipher_key)
         )
         access_token = await auth_service.create_access_token(
-        data={"oid": user.id}, expires_delta=3600
-    )
-        refresh_token = await auth_service.create_refresh_token(data={"oid": user.id})
-        await repository_users.update_token(user, refresh_token, db)
+            data={"oid": user.cor_id}, expires_delta=3600
+        )
+        refresh_token = await auth_service.create_refresh_token(
+            data={"oid": user.cor_id}
+        )
+        await repository_person.update_token(user, refresh_token, db)
         logger.debug(f"{user.email}  login success")
         return {
             "access_token": access_token,
@@ -359,11 +339,9 @@ async def upload_recovery_file(
     """
     **Загрузка и проверка файла восстановления**\n
     """
-    user = await repository_users.get_user_by_email(email, db)
+    user = await repository_person.get_user_by_email(email, db)
     confirmation = False
     file_content = await file.read()
-
-    
 
     recovery_code = await decrypt_data(
         encrypted_data=user.recovery_code,
@@ -377,14 +355,16 @@ async def upload_recovery_file(
         #     "message": "Recovery file is correct",  # Сообщение для JS о том что файл востановления верный
         #     "confirmation": confirmation,
         # }
-        recovery_code=await encrypt_data(
+        recovery_code = await encrypt_data(
             data=user.recovery_code, key=await decrypt_user_key(user.unique_cipher_key)
         )
         access_token = await auth_service.create_access_token(
-        data={"oid": user.id}, expires_delta=3600
-    )
-        refresh_token = await auth_service.create_refresh_token(data={"oid": user.id})
-        await repository_users.update_token(user, refresh_token, db)
+            data={"oid": user.cor_id}, expires_delta=3600
+        )
+        refresh_token = await auth_service.create_refresh_token(
+            data={"oid": user.cor_id}
+        )
+        await repository_person.update_token(user, refresh_token, db)
         logger.debug(f"{user.email}  login success")
         return {
             "access_token": access_token,

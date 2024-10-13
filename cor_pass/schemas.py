@@ -8,8 +8,16 @@ from cor_pass.database.models import Status
 
 
 class UserModel(BaseModel):
-    email: str
+    email: EmailStr
     password: str = Field(min_length=6, max_length=20)
+    birth: Optional[int] = Field(ge=1945, le=2100)
+    user_sex: Optional[str] = Field(max_length=1)
+
+    @field_validator("user_sex")
+    def user_sex_must_be_m_or_f(cls, v):
+        if v not in ["M", "F"]:
+            raise ValueError('user_sex must be "M" or "F"')
+        return v
 
 
 class UserDb(BaseModel):
@@ -144,3 +152,25 @@ class CreateCorIdModel(BaseModel):
 
 class ResponseCorIdModel(BaseModel):
     cor_id: str = None
+
+
+# OTP MODELS
+
+
+class CreateOTPRecordModel(BaseModel):
+    record_name: str = Field(max_length=25)
+    username: str = Field(max_length=25)
+    private_key: str = Field(max_length=25)
+
+
+class OTPRecordResponse(BaseModel):
+    record_id: int
+    record_name: str
+    username: str
+    otp_password: str
+    remaining_time: float
+
+
+class UpdateOTPRecordModel(BaseModel):
+    record_name: str = Field(max_length=25)
+    username: str = Field(max_length=25)

@@ -65,6 +65,7 @@ async def read_record(
     """
     record = await repository_record.get_record_by_id(user, db, record_id)
     if record is None:
+        logger.exception("Record not found")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Record not found"
         )
@@ -94,7 +95,6 @@ async def create_record(
     """
     if user.account_status.value == "basic":
         records = await repository_record.get_all_user_records(db, user.id, 0, 50)
-        print(len(records))
         if len(records) < settings.basic_account_records:
             record = await repository_record.create_record(body, db, user)
             return record

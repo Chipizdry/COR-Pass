@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <link rel="icon" type="image/png" href="static/favicon.png">
+        <link rel="icon" type="image/png" href="favicon.png">
         <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
         <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
         <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
@@ -17,7 +17,7 @@
         <meta name="theme-color" content="#ffffff">
     
         <title>Авторизация и регистрация</title>
-        <link rel="stylesheet" type="text/css" href="static/styles.css">
+        <link rel="stylesheet" type="text/css" href="styles.css">
         <meta name="google-signin-client_id" content="161352424929-s3ris9429m994vcm2m35epe6eu4538el.apps.googleusercontent.com">
         <!-- <script src="https://apis.google.com/js/platform.js" async defer></script> -->
         <meta name="facebook-sdk-version" content="v15.0" />
@@ -118,7 +118,7 @@
             </select>
         </div>
     </div>
-    <script src="static/translation.js"></script>
+    <script src="translation.js"></script>
     <h1 data-translate="title">Authorization and Registration</h1>
     <form id="login-form">
         <label for="email" data-translate="email-label">Email:</label>
@@ -577,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!state.id) {
             return state.text;
         }
-        var baseUrl = 'static/flags';
+        var baseUrl = 'flags';
         var $state = $(
             '<span><img src="' + baseUrl + '/' + state.element.getAttribute('data-icon') + '" class="flag-img" /> ' + state.text + '</span>'
         );
