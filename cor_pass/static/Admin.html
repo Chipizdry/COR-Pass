@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Page</title>
+    <style>
+        /* Добавьте свои стили для таблицы */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Таблица для отображения пользователей -->
+        <table id="userTable">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Registration Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Здесь будут добавлены пользователи -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Функция для заполнения таблицы пользователей
+        function populateTable(users) {
+            const tbody = document.querySelector('#userTable tbody');
+            tbody.innerHTML = ''; // Очистить таблицу перед заполнением
+
+            users.forEach(user => {
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>${user.email}</td>
+                    <td>${user.name || 'N/A'}</td>
+                    <td>${user.account_status || 'N/A'}</td>
+                    <td>${user.registration_date || 'N/A'}</td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        // Функция для загрузки пользователей с сервера
+        async function loadUsers() {
+            const token = localStorage.getItem('access_token');
+            try {
+                const response = await fetch('/api/admin/get_all', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Ошибка: ${response.statusText}`);
+                }
+
+                const users = await response.json();
+                console.log('Полученные пользователи:', users);
+                populateTable(users); // Заполняем таблицу полученными пользователями
+            } catch (error) {
+                console.error('Ошибка при загрузке пользователей:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUsers(); // Загружаем пользователей при загрузке страницы
+        });
+    </script>
+</body>
+</html>

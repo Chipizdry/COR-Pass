@@ -33,6 +33,7 @@ class="registration-button" data-translate="registration-button">Register</butto
             <button class="button" id="Cor-Id-Button">MY COR-ID</button>
             <button class="button" id="loginButton">COR-Platform</button>
         </div>
+        <div id="admin-button-container"></div> <!-- Контейнер для кнопки администратора -->
     </div>
     </div>
     <script src="/static/translation.js"></script>   
@@ -52,6 +53,23 @@ class="registration-button" data-translate="registration-button">Register</butto
             document.getElementById('loginButton').addEventListener('click', function() {
                 window.location.href = '/static/COR.html' + '?access_token=' + accessToken;
             });
+
+
+            document.addEventListener('DOMContentLoaded', function() {
+          const isAdmin = localStorage.getItem('isAdmin'); // Получаем значение из localStorage
+          const adminButtonContainer = document.getElementById('admin-button-container'); // Элемент, куда будет добавлена кнопка
+              // Логирование значения isAdmin
+            console.log("isAdmin from localStorage:", isAdmin); // Логируем значение
+            if (isAdmin === 'true') { // Проверяем, является ли пользователь администратором
+                const adminButton = document.createElement('button');
+                adminButton.innerText = 'Администрирование';
+                adminButton.className = 'admin-button'; // Добавьте класс для стилизации кнопки
+                adminButton.onclick = function() {
+                    window.location.href = '/static/Admin.html' + '?access_token=' + accessToken; // Переход на страницу администрирования
+                };
+                adminButtonContainer.appendChild(adminButton); // Добавляем кнопку в контейнер
+            }
+        });
         </script>
     </body>
     </html>

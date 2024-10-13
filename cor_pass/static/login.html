@@ -430,7 +430,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (xhr.status === 200) {
                         const response = JSON.parse(xhr.responseText);
                         console.log("Successful login.");
+                        console.log("Response from server:", response); // Логируем ответ от сервера
                         const userLang = localStorage.getItem('selectedLanguage');
+                        console.log("isAdmin from server:", response.is_admin);
+                        // Сохраняем информацию о том, является ли пользователь администратором
+                        localStorage.setItem('isAdmin', response.is_admin); // Сохраняем статус администратора
+                        // Проверяем, что мы сохранили значение правильно
+                        console.log("isAdmin stored in localStorage:", localStorage.getItem('isAdmin'));
                         // console.log("__________translation___________");
                         // console.log(translations); // Проверить объект translations в консоли
                         // console.log("_____________userLang____________");
@@ -447,6 +453,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         setTimeout(() => {
                             const refreshToken = response.refresh_token;
                             const accessToken = response.access_token;
+                            
 
                             urlParams.set('access_token', accessToken);
                             urlParams.set('refresh_token', refreshToken);
