@@ -274,3 +274,19 @@ async def get_recovery_file(
         media_type="application/octet-stream",
         headers={"Content-Disposition": "attachment; filename=recovery_key.bin"},
     )
+
+
+@router.delete("/delete_my_account")
+async def delete_my_account(
+     db: Session = Depends(get_db), user: User = Depends(auth_service.get_current_user)
+):
+    """
+    **Delete user account and all data. / Удаление пользовательского аккаунта и всех его данных**\n
+
+    """
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    else:
+        await person.delete_user_by_email(db=db, email=user.email)
+        logger.info("Account was deleted")
+        return {"message": f" user {user.email} - was deleted"}

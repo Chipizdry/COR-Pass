@@ -40,8 +40,8 @@ class="registration-button" data-translate="registration-button">Register</butto
     <script> function goBack() { window.history.back();  } </script>
         <script>
            const accessToken = new URLSearchParams(window.location.search).get('access_token');
-          //  const accessToken =localStorage.getItem('access_token')
-    
+         //   const accessToken =localStorage.getItem('access_token')
+            console.log("accessToken from localStorage:", accessToken);
             document.getElementById('passwordManagerButton').addEventListener('click', function() {
                 window.location.href = '/static/password_manager.html' + '?access_token=' + accessToken;
             });
@@ -63,9 +63,10 @@ class="registration-button" data-translate="registration-button">Register</butto
             if (isAdmin === 'true') { // Проверяем, является ли пользователь администратором
                 const adminButton = document.createElement('button');
                 adminButton.innerText = 'Администрирование';
-                adminButton.className = 'admin-button'; // Добавьте класс для стилизации кнопки
+                adminButton.className = 'admin-button'; 
                 adminButton.onclick = function() {
-                    window.location.href = '/static/Admin.html' + '?access_token=' + accessToken; // Переход на страницу администрирования
+                    window.location.href =  `/static/admin.html/?access_token=${accessToken}`// Переход на страницу администрирования
+                   
                 };
                 adminButtonContainer.appendChild(adminButton); // Добавляем кнопку в контейнер
             }

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Page</title>
     <style>
-        /* Добавьте свои стили для таблицы */
+        /*  свои стили для таблицы */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -26,10 +26,9 @@
         <table id="userTable">
             <thead>
                 <tr>
+                    <th>ID</th>
                     <th>Email</th>
-                    <th>Name</th>
                     <th>Status</th>
-                    <th>Registration Date</th>
                 </tr>
             </thead>
             <tbody>
@@ -48,42 +47,48 @@
                 const row = document.createElement('tr');
 
                 row.innerHTML = `
+                    <td>${user.id}</td>
                     <td>${user.email}</td>
-                    <td>${user.name || 'N/A'}</td>
-                    <td>${user.account_status || 'N/A'}</td>
-                    <td>${user.registration_date || 'N/A'}</td>
+                    <td>${user.account_status}</td>
                 `;
 
                 tbody.appendChild(row);
             });
         }
 
-        // Функция для загрузки пользователей с сервера
-        async function loadUsers() {
-            const token = localStorage.getItem('access_token');
+        async function getAllUsers(skip = 0, limit = 10) {
+            const token = localStorage.getItem('access_token'); // Получаем токен из localStorage
+          //  const url = `http://127.0.0.1:8000/api/admin/get_all?skip=${skip}&limit=${limit}`;
+            const url = `/api/admin/get_all?skip=${skip}&limit=${limit}`;
+
             try {
-                const response = await fetch('/api/admin/get_all', {
+                const response = await fetch(url, {
                     method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
                     }
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Ошибка: ${response.statusText}`);
+                    throw new Error(`Ошибка: ${response.status} ${response.statusText}`);
                 }
 
-                const users = await response.json();
-                console.log('Полученные пользователи:', users);
-                populateTable(users); // Заполняем таблицу полученными пользователями
+                const data = await response.json(); // Парсим JSON ответ
+                console.log(data); // Выводим полученные данные в консоль
+
+                // Заполняем таблицу данными о пользователях
+                populateTable(data);
+                
             } catch (error) {
                 console.error('Ошибка при загрузке пользователей:', error);
             }
         }
 
+        // Запуск функции после загрузки страницы
         document.addEventListener('DOMContentLoaded', function() {
-            loadUsers(); // Загружаем пользователей при загрузке страницы
+            console.log('Страница загружена. Запуск процесса загрузки пользователей...');
+            getAllUsers(); // По умолчанию загружаем 10 пользователей, начиная с 0
         });
     </script>
 </body>
