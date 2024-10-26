@@ -7,7 +7,9 @@ from cor_pass.schemas import CreateOTPRecordModel, UpdateOTPRecordModel
 from cor_pass.repository.person import get_user_by_uuid
 from cor_pass.config.config import settings
 from cor_pass.services.cipher import encrypt_data, decrypt_data, decrypt_user_key
+from cor_pass.services import cor_otp
 import os
+from cor_pass.services.logger import logger
 
 
 async def create_otp_record(body: CreateOTPRecordModel, db: Session, user: User) -> OTP:
@@ -17,16 +19,23 @@ async def create_otp_record(body: CreateOTPRecordModel, db: Session, user: User)
         record_name=body.record_name,
         user_id=user.id,
         username=body.username,
-        # private_key=await encrypt_data(
-        #     data=body.private_key, key=await decrypt_user_key(user.unique_cipher_key)
-        # ),
-        private_key=body.private_key,
+        private_key=await encrypt_data(
+            data=body.private_key, key=await decrypt_user_key(user.unique_cipher_key)
+        ),
+        # private_key=body.private_key,
     )
-
-    db.add(new_record)
-    db.commit()
-    db.refresh(new_record)
-    return new_record
+    try:
+        otp_password, remaining_time = await cor_otp.generate_and_verify_otp(
+            new_record.private_key, user
+        )
+        db.add(new_record)
+        db.commit()
+        db.refresh(new_record)
+        return new_record
+    except Exception as e:
+        logger.error(f"Failed to create otp record: {e}")
+        db.rollback()
+        raise e
 
 
 async def get_otp_record_by_id(user: User, db: Session, record_id: int):

@@ -52,8 +52,8 @@ async def read_otp_records(
         raise HTTPException(status_code=500, detail="Internal server error")
     otp_records_with_codes = []
     for record in otp_records:
-        otp_password, remaining_time = cor_otp.generate_and_verify_otp(
-            record.private_key
+        otp_password, remaining_time = await cor_otp.generate_and_verify_otp(
+            record.private_key, user
         )
         otp_record_response = OTPRecordResponse(
             record_id=record.record_id,
@@ -93,8 +93,8 @@ async def read_otp_record(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Record not found"
         )
-    otp_password, remaining_time = cor_otp.generate_and_verify_otp(
-        otp_record.private_key
+    otp_password, remaining_time = await cor_otp.generate_and_verify_otp(
+        otp_record.private_key, user
     )
 
     return OTPRecordResponse(
@@ -128,8 +128,8 @@ async def create_otp_record(
     :rtype: OTPRecordResponse
     """
     otp_record = await repository_otp_auth.create_otp_record(body, db, user)
-    otp_password, remaining_time = cor_otp.generate_and_verify_otp(
-        otp_record.private_key
+    otp_password, remaining_time = await cor_otp.generate_and_verify_otp(
+        otp_record.private_key, user
     )
 
     return OTPRecordResponse(
@@ -177,8 +177,8 @@ async def update_otp_record(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Record not found"
         )
-    otp_password, remaining_time = cor_otp.generate_and_verify_otp(
-        otp_record.private_key
+    otp_password, remaining_time = await cor_otp.generate_and_verify_otp(
+        otp_record.private_key, user
     )
 
     return OTPRecordResponse(

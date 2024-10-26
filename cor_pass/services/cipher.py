@@ -56,7 +56,7 @@ async def generate_recovery_code():
     random_key = secrets.token_urlsafe(64)
     sha256 = hashlib.sha256()
     sha256.update(random_key.encode())
-    recovery_code = sha256.hexdigest()[:150]
+    recovery_code = sha256.hexdigest()[:64]
     return recovery_code
 
 

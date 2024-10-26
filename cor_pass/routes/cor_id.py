@@ -33,4 +33,3 @@ async def read_cor_id(
             status_code=status.HTTP_404_NOT_FOUND, detail="COR-Id not found"
         )
     return cor_id
-

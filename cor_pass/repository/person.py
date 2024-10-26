@@ -84,9 +84,6 @@ async def create_user(body: UserModel, db: Session) -> User:
     )
 
     new_user.unique_cipher_key = await encrypt_user_key(new_user.unique_cipher_key)
-
-    # new_user.recovery_code = auth_service.get_password_hash(new_user.recovery_code)
-
     new_user.recovery_code = encrypted_recovery_code
 
     try:
@@ -243,17 +240,17 @@ async def add_user_backup_email(email, current_user: User, db: Session) -> None:
     except Exception as e:
         db.rollback()
         raise e
-    
+
 
 async def delete_user_by_email(db: Session, email: str):
     try:
-        user = db.query(User).filter(User.email == email).one()  
-        db.delete(user)  
-        db.commit()  
+        user = db.query(User).filter(User.email == email).one()
+        db.delete(user)
+        db.commit()
     except NoResultFound:
         print("Пользователь не найден.")
     except Exception as e:
-        db.rollback()  
+        db.rollback()
         print(f"Произошла ошибка при удалении пользователя: {e}")
 
 

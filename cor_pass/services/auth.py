@@ -131,7 +131,8 @@ class Auth:
     ):
         """
         The get_current_user function is a dependency that will be used in the protected routes.
-        It takes an access token as input and returns the user object if it's valid, otherwise raises an exception.
+        It takes an access token as input and returns the user object if it's valid.
+        If the token is expired, it raises token_expired exception.
 
         :param self: Represent the instance of the class
         :param token: str: Get the token from the request header
@@ -143,22 +144,39 @@ class Auth:
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-        try:
 
-            payload = jwt.decode(token, key=self.SECRET_KEY, algorithms=self.ALGORITHM)
+        token_expired_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired. Please refresh the token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+        try:
+            payload = jwt.decode(
+                token, key=self.SECRET_KEY, algorithms=[self.ALGORITHM]
+            )
+            # Проверяем, есть ли время истечения
+            exp = payload.get("exp")
+            if exp is None:
+                raise credentials_exception
+
+            # Сравниваем текущее время с временем истечения токена
+            if datetime.fromtimestamp(exp) < datetime.now():
+                raise token_expired_exception
 
             if payload["scp"] == "access_token":
                 cor_id = payload["oid"]
-                if id is None:
+                if cor_id is None:
                     raise credentials_exception
             else:
                 raise credentials_exception
-        except JWTError as e:
-            raise credentials_exception
+        except JWTError:
+            raise token_expired_exception
 
         user = await repository_users.get_user_by_corid(cor_id, db)
         if user is None:
             raise credentials_exception
+
         return user
 
     # Функция для проверки допустимости редирект URL

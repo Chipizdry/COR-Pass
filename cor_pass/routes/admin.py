@@ -13,7 +13,9 @@ from pydantic import EmailStr
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
-@router.get("/get_all", response_model=list[UserDb], dependencies=[Depends(admin_access)])
+@router.get(
+    "/get_all", response_model=list[UserDb], dependencies=[Depends(admin_access)]
+)
 async def get_all_users(
     skip: int = 0,
     limit: int = 10,
@@ -63,16 +65,14 @@ async def assign_status(
     else:
         await person.make_user_status(email, account_status, db)
         return {"message": f"{email} - {account_status.value}"}
-    
+
 
 @router.delete("/{email}", dependencies=[Depends(admin_access)])
-async def delete_user(
-    email: EmailStr, db: Session = Depends(get_db)
-):
+async def delete_user(email: EmailStr, db: Session = Depends(get_db)):
     """
-    **Delete user by email. / Удаление пользователя по имейлу**\n
+        **Delete user by email. / Удаление пользователя по имейлу**\n
 
-=
+    =
     """
     user = await person.get_user_by_email(email, db)
     if not user:

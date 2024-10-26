@@ -8,10 +8,22 @@ services:
     image: massivecapybara/corid_api:latest
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app
+    # volumes:
+    #   - .:/app
     depends_on:
       - prometheus
+      - postgres  
+    env_file:
+      - development.env
+
+  postgres:
+    image: postgres:latest
+    env_file:
+      - development.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  
 
   prometheus:
     image: prom/prometheus:latest
@@ -50,6 +62,7 @@ services:
       - loki
 
 volumes:
+  postgres_data:
   grafana-storage:
   loki-data:
   compactor-data:

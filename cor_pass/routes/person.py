@@ -278,7 +278,7 @@ async def get_recovery_file(
 
 @router.delete("/delete_my_account")
 async def delete_my_account(
-     db: Session = Depends(get_db), user: User = Depends(auth_service.get_current_user)
+    db: Session = Depends(get_db), user: User = Depends(auth_service.get_current_user)
 ):
     """
     **Delete user account and all data. / Удаление пользовательского аккаунта и всех его данных**\n

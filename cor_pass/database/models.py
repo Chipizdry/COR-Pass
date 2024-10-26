@@ -33,10 +33,13 @@ class User(Base):
     email = Column(String(250), unique=True, nullable=False)
     backup_email = Column(String(250), unique=True, nullable=True)
     password = Column(String(250), nullable=False)
+    last_password_change = Column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
     access_token = Column(String(250), nullable=True)
     refresh_token = Column(String(250), nullable=True)
     recovery_code = Column(
-        String(250), nullable=True
+        LargeBinary, nullable=True
     )  # Уникальный код восстановление пользователя
     is_active = Column(Boolean, default=True)
     account_status: Mapped[Enum] = Column(
@@ -51,8 +54,12 @@ class User(Base):
         Integer, unique=True
     )  # индекс пользователя, используется в создании cor_id
 
-    user_records = relationship("Record", back_populates="user", cascade="all, delete-orphan")
-    user_settings = relationship("UserSettings", back_populates="user", cascade="all, delete-orphan")
+    user_records = relationship(
+        "Record", back_populates="user", cascade="all, delete-orphan"
+    )
+    user_settings = relationship(
+        "UserSettings", back_populates="user", cascade="all, delete-orphan"
+    )
     user_otp = relationship("OTP", back_populates="user", cascade="all, delete-orphan")
 
 
@@ -71,8 +78,8 @@ class Record(Base):
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
     record_name = Column(String(250), nullable=False)
     website = Column(String(250), nullable=True)
-    username = Column(String(250), nullable=True)
-    password = Column(String(250), nullable=True)
+    username = Column(LargeBinary, nullable=True)
+    password = Column(LargeBinary, nullable=True)
     created_at = Column(DateTime, nullable=False, default=func.now())
     edited_at = Column(
         DateTime, nullable=False, default=func.now(), onupdate=func.now()
@@ -118,7 +125,7 @@ class OTP(Base):
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
     record_name = Column(String(250), nullable=False)
     username = Column(String(250), nullable=True)
-    private_key = Column(String(250), nullable=True)
+    private_key = Column(LargeBinary, nullable=True)
     created_at = Column(DateTime, nullable=False, default=func.now())
     edited_at = Column(
         DateTime, nullable=False, default=func.now(), onupdate=func.now()

@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, EmailStr, conint, field_validator
 from typing import List, Optional
 from datetime import datetime
 from cor_pass.database.models import Status
-
+import re
 
 # AUTH MODELS
 
@@ -31,7 +31,7 @@ class UserDb(BaseModel):
 
 class ResponseUser(BaseModel):
     user: UserDb
-    detatil: str = "User successfully created"
+    detail: str = "User successfully created"
 
 
 class TokenModel(BaseModel):
@@ -159,9 +159,15 @@ class ResponseCorIdModel(BaseModel):
 
 
 class CreateOTPRecordModel(BaseModel):
-    record_name: str = Field(max_length=25)
-    username: str = Field(max_length=25)
-    private_key: str = Field(max_length=25)
+    record_name: str = Field(max_length=50)
+    username: str = Field(max_length=50)
+    private_key: str = Field(max_length=50)
+
+    @field_validator("private_key")
+    def validate_private_key(cls, v):
+        if not re.match(r"^[A-Z2-7]*$", v):
+            raise ValueError("private_key must be a valid Base32 encoded string")
+        return v
 
 
 class OTPRecordResponse(BaseModel):
@@ -173,5 +179,5 @@ class OTPRecordResponse(BaseModel):
 
 
 class UpdateOTPRecordModel(BaseModel):
-    record_name: str = Field(max_length=25)
-    username: str = Field(max_length=25)
+    record_name: str = Field(max_length=50)
+    username: str = Field(max_length=50)

@@ -16,7 +16,7 @@ class UserAccess:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden operation"
             )
-        
+
 
 class AdminAccess:
     def __init__(self, email):

@@ -1,27 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+        <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
+        <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
+        <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
+        <link rel="apple-touch-icon" sizes="76x76" href="/apple-icon-76x76.png">
+        <link rel="apple-touch-icon" sizes="114x114" href="/apple-icon-114x114.png">
+        <link rel="apple-touch-icon" sizes="120x120" href="/apple-icon-120x120.png">
+        <link rel="apple-touch-icon" sizes="144x144" href="/apple-icon-144x144.png">
+        <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">
+       
+        <meta name="msapplication-TileColor" content="#ffffff">
+        <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+        <meta name="theme-color" content="#ffffff">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Page</title>
     <style>
-        /*  свои стили для таблицы */
+        /* Основные стили для контейнера и таблицы */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #333;
+        }
+        
+        /* Стили для таблицы */
         table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 14px; /* Уменьшенный шрифт */
+            margin-top: 10px;
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 6px;
+            text-align: left;
         }
         th {
             background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .delete-icon {
+            cursor: pointer;
+            color: #ff4d4d;
+            font-size: 16px; 
+        }
+        .delete-icon:hover {
+            color: #cc0000;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <h1>Пользователи</h1>
+        
         <!-- Таблица для отображения пользователей -->
         <table id="userTable">
             <thead>
@@ -29,6 +85,7 @@
                     <th>ID</th>
                     <th>Email</th>
                     <th>Status</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -49,7 +106,12 @@
                 row.innerHTML = `
                     <td>${user.id}</td>
                     <td>${user.email}</td>
-                    <td>${user.account_status}</td>
+                    <td> <select onchange="confirmStatusChange('${user.email}', this.value)">
+                            <option value="basic" ${user.account_status === 'basic' ? 'selected' : ''}>basic</option>
+                            <option value="premium" ${user.account_status === 'premium' ? 'selected' : ''}>premium</option>
+                        </select>
+                    </td>
+                    <td> <span class="delete-icon" onclick="deleteUser('${user.email}')">🗑️</span></td>
                 `;
 
                 tbody.appendChild(row);
@@ -58,15 +120,16 @@
 
         async function getAllUsers(skip = 0, limit = 10) {
             const token = localStorage.getItem('access_token'); // Получаем токен из localStorage
-          //  const url = `http://127.0.0.1:8000/api/admin/get_all?skip=${skip}&limit=${limit}`;
+
+            const accessToken = new URLSearchParams(window.location.search).get('access_token');
             const url = `/api/admin/get_all?skip=${skip}&limit=${limit}`;
 
             try {
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: {
-                        'Accept': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + accessToken
                     }
                 });
 
@@ -85,6 +148,69 @@
             }
         }
 
+
+
+          // Функция для удаления пользователя
+          async function deleteUser(email) {
+            const accessToken = new URLSearchParams(window.location.search).get('access_token');
+            const url = `/api/admin/${email}`;
+
+            if (confirm(`Вы уверены, что хотите удалить пользователя с email: ${email}?`)) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + accessToken
+                        }
+                    });
+
+                    if (response.ok) {
+                        alert(`Пользователь ${email} успешно удален.`);
+                        getAllUsers(); // Обновить таблицу после удаления
+                    } else {
+                        const errorData = await response.json();
+                        alert(`Ошибка удаления: ${errorData.message || response.statusText}`);
+                    }
+                } catch (error) {
+                    console.error('Ошибка при удалении пользователя:', error);
+                    alert('Произошла ошибка при удалении пользователя.');
+                }
+            }
+        }
+
+
+        // Функция для изменения статуса пользователя
+        async function confirmStatusChange(email, newStatus) {
+            const confirmChange = confirm(`Вы уверены, что хотите изменить статус пользователя с email: ${email} на ${newStatus}?`);
+
+            if (!confirmChange) return;
+
+            const accessToken = new URLSearchParams(window.location.search).get('access_token');
+            const url = `/api/admin/asign_status/${newStatus}?email=${encodeURIComponent(email)}`;
+
+            try {
+                const response = await fetch(url, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + accessToken
+                    }
+                });
+
+                if (response.ok) {
+                    alert(`Статус пользователя ${email} успешно изменен на ${newStatus}.`);
+                    getAllUsers(); // Обновить таблицу после изменения статуса
+                } else {
+                    const errorData = await response.json();
+                    alert(`Ошибка изменения статуса: ${errorData.message || response.statusText}`);
+                }
+            } catch (error) {
+                console.error('Ошибка при изменении статуса пользователя:', error);
+                alert('Произошла ошибка при изменении статуса пользователя.');
+            }
+        }
+
         // Запуск функции после загрузки страницы
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Страница загружена. Запуск процесса загрузки пользователей...');
@@ -93,3 +219,4 @@
     </script>
 </body>
 </html>
+
