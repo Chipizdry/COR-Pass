@@ -2,15 +2,6 @@
 <html lang="en">
 <head>
     <link rel="icon" type="image/png" href="/static/favicon.png">
-        <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
-        <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
-        <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
-        <link rel="apple-touch-icon" sizes="76x76" href="/apple-icon-76x76.png">
-        <link rel="apple-touch-icon" sizes="114x114" href="/apple-icon-114x114.png">
-        <link rel="apple-touch-icon" sizes="120x120" href="/apple-icon-120x120.png">
-        <link rel="apple-touch-icon" sizes="144x144" href="/apple-icon-144x144.png">
-        <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png">
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">
        
         <meta name="msapplication-TileColor" content="#ffffff">
         <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
@@ -72,12 +63,30 @@
         .delete-icon:hover {
             color: #cc0000;
         }
+
+         /* Стили для пагинации */
+         .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .pagination button {
+            margin: 0 5px;
+            padding: 5px 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <button class="link-button" onclick="goBack()" data-translate="back-link-text"><<<назад<<<</button>
         <h1>Пользователи</h1>
-        
+         <!-- Поля для поиска -->
+         <div>
+            <label for="searchId">Поиск по ID:</label>
+            <input type="text" id="searchId" placeholder="Введите ID" oninput="filterTable()">
+            
+            <label for="searchEmail">Поиск по Email:</label>
+            <input type="text" id="searchEmail" placeholder="Введите Email" oninput="filterTable()">
+        </div>
         <!-- Таблица для отображения пользователей -->
         <table id="userTable">
             <thead>
@@ -92,9 +101,27 @@
                 <!-- Здесь будут добавлены пользователи -->
             </tbody>
         </table>
+
+        <!-- Пагинация -->
+        <div class="pagination" id="pagination">
+            <button onclick="goToFirstPage()">« Первый</button>
+            <button onclick="prevPage()">« Назад</button>
+            <span id="page-info">Страница 1</span> <!-- Отображение текущей страницы -->
+            <button onclick="nextPage()">Вперед »</button>
+            <button onclick="goToLastPage()">Последний »»</button>
+        </div>
     </div>
 
+    <script> function goBack() { window.history.back();  } </script>
     <script>
+
+        let currentPage = 1;
+        let rowsPerPage = 5;
+        let totalRows = 0;
+
+        
+        let allFilteredUsers = []; // Хранение всех отфильтрованных данных
+        let isFiltering = false; // Флаг для отслеживания процесса фильтрации
         // Функция для заполнения таблицы пользователей
         function populateTable(users) {
             const tbody = document.querySelector('#userTable tbody');
@@ -118,37 +145,42 @@
             });
         }
 
-        async function getAllUsers(skip = 0, limit = 10) {
-            const token = localStorage.getItem('access_token'); // Получаем токен из localStorage
+        
 
-            const accessToken = new URLSearchParams(window.location.search).get('access_token');
-            const url = `/api/admin/get_all?skip=${skip}&limit=${limit}`;
+async function getAllUsers(skip = 0, limit = rowsPerPage) {
+    const token = localStorage.getItem('access_token');
+    const accessToken = new URLSearchParams(window.location.search).get('access_token');
+    const url = `/api/admin/get_all?skip=${skip}&limit=${limit}`;
 
-            try {
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + accessToken
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Ошибка: ${response.status} ${response.statusText}`);
-                }
-
-                const data = await response.json(); // Парсим JSON ответ
-                console.log(data); // Выводим полученные данные в консоль
-
-                // Заполняем таблицу данными о пользователях
-                populateTable(data);
-                
-            } catch (error) {
-                console.error('Ошибка при загрузке пользователей:', error);
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
             }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ошибка: ${response.status} ${response.statusText}`);
         }
 
-
+        const data = await response.json();
+        console.log(data); // Выводим полученные данные в консоль
+       
+             // Проверяем, вернулась ли пустая страница
+             const users = data.users || data; // Если пользователей нет в data.users, используем data как массив
+        if (Array.isArray(users) && users.length > 0) {
+            populateTable(data); // Заполняем таблицу данными о пользователях
+            return users; // Данные получены успешно
+        } else {
+            return false; // Пустая страница, данных больше нет
+        }
+    } catch (error) {
+        console.error('Ошибка при загрузке пользователей:', error);
+        return false;
+    }
+}
 
           // Функция для удаления пользователя
           async function deleteUser(email) {
@@ -210,6 +242,120 @@
                 alert('Произошла ошибка при изменении статуса пользователя.');
             }
         }
+
+
+        async function filterTable() {
+        if (isFiltering) {
+            console.log("Фильтрация уже выполняется, отмена повторного запуска");
+            return;
+        }
+        isFiltering = true;
+
+        const idFilter = document.getElementById("searchId").value.toLowerCase();
+        const emailFilter = document.getElementById("searchEmail").value.toLowerCase();
+        console.log(`Фильтр по ID: ${idFilter}, Фильтр по Email: ${emailFilter}`);
+
+        allFilteredUsers = [];
+        let skip = 0;
+        let hasMoreData = true;
+
+        while (hasMoreData) {
+                console.log(`Запрос данных с пропуском: ${skip}, лимит: ${rowsPerPage}`);
+              //  const data = await getAllUsers(skip, rowsPerPage);
+                const users = await getAllUsers(skip, rowsPerPage);            
+                  
+
+                    console.log("Полученные данные:",users);
+
+                    if (Array.isArray(users) && users.length > 0) {
+                    console.log(`Получено пользователей: ${users.length}`); // Измените data на users
+                    const filteredUsers = users.filter(user => {
+                        const idMatch = user.id.toLowerCase().includes(idFilter);
+                        const emailMatch = user.email.toLowerCase().includes(emailFilter);
+                        return idMatch && emailMatch;
+                    });
+                    console.log(`Отфильтровано пользователей: ${filteredUsers.length}`);
+                    allFilteredUsers = allFilteredUsers.concat(filteredUsers);
+                    skip += rowsPerPage;
+                } else {
+                    hasMoreData = false;
+                    console.log("Нет больше данных");
+                }
+            }
+
+        populateTable(allFilteredUsers.slice(0, rowsPerPage)); // Отображаем первую страницу отфильтрованных данных
+        isFiltering = false;
+    }
+
+            // Обновляем информацию о текущей странице
+        function updatePageInfo() {
+            document.getElementById('page-info').innerText = `Страница ${currentPage}`;
+        }
+
+
+        // Функция перехода на следующую страницу
+            async function nextPage() {
+                const skip = currentPage * rowsPerPage;
+                const dataAvailable = await getAllUsers(skip, rowsPerPage);
+
+                // Увеличиваем currentPage, только если данные доступны
+                if (dataAvailable) {
+                    currentPage++;
+                    updatePageInfo();
+                }
+            }
+
+            // Перемотка на предыдущую страницу
+            function prevPage() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updatePageInfo();
+                    const skip = (currentPage - 1) * rowsPerPage;
+                    getAllUsers(skip, rowsPerPage); // Обновляем данные для предыдущей страницы
+                }
+            }
+
+
+        function goToFirstPage() {
+            currentPage = 1;
+            updatePageInfo();
+            loadPage();
+        }
+
+        async function goToLastPage() {
+            let totalUsers = 0; // Общее количество пользователей
+
+            // Запрашиваем пользователей до тех пор, пока есть данные
+            let skip = 0;
+            let hasMoreData = true;
+
+            while (hasMoreData) {
+                console.log(`Запрос данных с пропуском: ${skip}, лимит: ${rowsPerPage}`);
+                const users = await getAllUsers(skip, rowsPerPage); // Получаем пользователей
+
+                if (Array.isArray(users) && users.length > 0) {
+                    totalUsers += users.length; // Увеличиваем общее количество пользователей
+                    skip += rowsPerPage; // Увеличиваем пропуск для следующего запроса
+                } else {
+                    hasMoreData = false; // Прекращаем цикл, если нет больше данных
+                    console.log("Нет больше данных");
+                }
+            }
+
+            // Вычисляем общее количество страниц
+            const totalPages = Math.ceil(totalUsers / rowsPerPage);
+            currentPage = totalPages; // Устанавливаем текущую страницу на последнюю
+
+            updatePageInfo(); // Обновляем информацию о текущей странице
+            loadPage(); // Загружаем данные для последней страницы
+        }
+
+        function loadPage() {
+            const skip = (currentPage - 1) * rowsPerPage;
+            getAllUsers(skip, rowsPerPage);
+        }
+
+     
 
         // Запуск функции после загрузки страницы
         document.addEventListener('DOMContentLoaded', function() {
