@@ -39,12 +39,12 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px; /* Уменьшенный шрифт */
+            font-size: 12px; /* Уменьшенный шрифт */
             margin-top: 10px;
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 6px;
+            padding: 4px;
             text-align: left;
         }
         th {
@@ -87,14 +87,35 @@
             <label for="searchEmail">Поиск по Email:</label>
             <input type="text" id="searchEmail" placeholder="Введите Email" oninput="filterTable()">
         </div>
+        <!-- Модальное окно -->
+<div id="columnSelectModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; z-index: 1000;">
+    <h3>Выберите поля для отображения:</h3>
+    <label><input type="checkbox" onchange="toggleColumn('user_index')" checked>Индекс пользователя</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('id')" checked>ID</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('cor_id')" checked>COR-ID</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('user_sex')" checked>Пол</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('birth')" checked>Год рождения</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('email')" checked>Email</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('created_at')" checked>Дата регистрации</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('last_password_change')" checked>Последнее изменение пароля</label><br>
+   
+    <button onclick="closeModal()">Закрыть</button>
+</div>
+<button id="openModalBtn">Выбрать вывод</button>
         <!-- Таблица для отображения пользователей -->
         <table id="userTable">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Email</th>
-                    <th>Status</th>
-                    <th>Actions</th>
+                    <th id="header-user_index">Индекс пользователя</th>
+                    <th id="header-id">ID</th>
+                    <th id="header-cor_id">COR-ID</th>
+                    <th id="header-user_sex">Пол</th>
+                    <th id="header-birth">Год рождения</th>
+                    <th id="header-email">Email</th>                
+                    <th id="header-created_at">Дата регистрации</th>
+                    <th id="header-last_password_change">Последнее изменение пароля</th>
+                    <th id="header-account_status">Статус аккаунта</th> 
+                    <th>Действия</th>
                 </tr>
             </thead>
             <tbody>
@@ -113,6 +134,9 @@
     </div>
 
     <script> function goBack() { window.history.back();  } </script>
+
+   
+
     <script>
 
         let currentPage = 1;
@@ -131,15 +155,21 @@
                 const row = document.createElement('tr');
 
                 row.innerHTML = `
-                    <td>${user.id}</td>
-                    <td>${user.email}</td>
+                ${document.getElementById('header-user_index').style.display !== 'none' ? `<td>${user.user_index}</td>` : ''}
+                ${document.getElementById('header-id').style.display !== 'none' ? `<td>${user.id}</td>` : ''}
+                ${document.getElementById('header-cor_id').style.display !== 'none' ? `<td>${user.cor_id}</td>` : ''}
+                ${document.getElementById('header-user_sex').style.display !== 'none' ? `<td>${user.user_sex}</td>` : ''}
+                ${document.getElementById('header-birth').style.display !== 'none' ? `<td>${user.birth}</td>` : ''}
+                ${document.getElementById('header-email').style.display !== 'none' ? `<td>${user.email}</td>` : ''}
+                ${document.getElementById('header-created_at').style.display !== 'none' ? `<td>${new Date(user.created_at).toLocaleString()}</td>` : ''}
+                ${document.getElementById('header-last_password_change').style.display !== 'none' ? `<td>${new Date(user.last_password_change).toLocaleString()}</td>` : ''}      
+               
                     <td> <select onchange="confirmStatusChange('${user.email}', this.value)">
                             <option value="basic" ${user.account_status === 'basic' ? 'selected' : ''}>basic</option>
                             <option value="premium" ${user.account_status === 'premium' ? 'selected' : ''}>premium</option>
                         </select>
                     </td>
                     <td> <span class="delete-icon" onclick="deleteUser('${user.email}')">🗑️</span>
-                        <span class="toggle-status-icon" onclick="toggleUserStatus('${user.email}', true)">🔓</span>
                         <span class="toggle-status-icon" onclick="toggleUserStatus('${user.email}', ${user.is_active ?? true})">
                          ${user.is_active !== false ? '🔓' : '🔒'}
                              </span>
@@ -251,30 +281,42 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
 
  // Функция для отправки запроса на активацию/деактивацию пользователя
  async function toggleUserStatus(email, isActive) {
-        const url = isActive 
-            ? `/deactivate/${email}` 
-            : `/activate/${email}`;
-        
-        try {
-            const response = await fetch(url, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            const result = await response.json();
-
-            if (response.ok) {
-                alert(result.message);
-                loadUsers(); // Обновление таблицы после изменения статуса
-            } else {
-                alert(`Ошибка: ${result.message}`);
-            }
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Произошла ошибка при попытке изменить статус пользователя.');
-        }
+    // Получение accessToken из параметров URL
+    const accessToken = new URLSearchParams(window.location.search).get('access_token');
+    
+    // Проверка на наличие accessToken
+    if (!accessToken) {
+        alert("Токен доступа не найден в URL.");
+        return;
     }
+
+    // Установка URL в зависимости от статуса isActive
+    const url = isActive 
+        ? `/api/admin/deactivate/${encodeURIComponent(email)}` 
+        : `/api/admin/activate/${encodeURIComponent(email)}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + accessToken
+            }
+        });
+        
+        const result = await response.json();
+
+        if (response.ok) {
+            alert(result.message);
+            getAllUsers(); // Обновить таблицу после изменения статуса
+        } else {
+            alert(`Ошибка: ${result.message}`);
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при попытке изменить статус пользователя.');
+    }
+}
 
         async function filterTable() {
         if (isFiltering) {
@@ -387,11 +429,41 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
             getAllUsers(skip, rowsPerPage);
         }
 
-     
+            // Функция для закрытия модального окна
+            function closeModal() {
+                document.getElementById('columnSelectModal').style.display = 'none';
+            }
+
+            // Функция для переключения отображения колонок
+            function toggleColumn(column) {
+                const header = document.getElementById(`header-${column}`);
+                header.style.display = header.style.display === 'none' ? '' : 'none';
+                const cells = document.querySelectorAll(`tbody td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`);
+                cells.forEach(cell => {
+                    cell.style.display = header.style.display;
+                });
+                 loadPage();
+            }
+
+           // Функция для переключения отображения колонок и обновления таблицы
+           /*
+    function toggleColumn(column, isChecked) {
+        const header = document.getElementById(`header-${column}`);
+        header.style.display = isChecked ? '' : 'none';
+        loadPage(); // Обновить таблицу при изменении состояния чекбокса
+    }
+*/
 
         // Запуск функции после загрузки страницы
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Страница загружена. Запуск процесса загрузки пользователей...');
+             // Функция для отображения модального окна
+    document.getElementById('openModalBtn').onclick = function() {
+        document.getElementById('columnSelectModal').style.display = 'block';
+    };
+
+    
+
             getAllUsers(); // По умолчанию загружаем 10 пользователей, начиная с 0
         });
     </script>
