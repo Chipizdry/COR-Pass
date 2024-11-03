@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
-
+from datetime import datetime, timedelta
 from cor_pass.database.db import get_db
 from cor_pass.services.auth import auth_service
 from cor_pass.services.cipher import decrypt_data, decrypt_user_key
@@ -290,3 +290,31 @@ async def delete_my_account(
         await person.delete_user_by_email(db=db, email=user.email)
         logger.info("Account was deleted")
         return {"message": f" user {user.email} - was deleted"}
+
+
+@router.get("/get_last_password_change")
+async def get_last_password_change(
+    user: User = Depends(auth_service.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    **Получение времени до требования смены пароля**\n
+    Level of Access:
+    - Current authorized user
+    """
+
+    last_password_change = await person.get_last_password_change(user.email, db)
+    if last_password_change:
+        change_period = timedelta(days=180)  
+        next_password_change = last_password_change + change_period
+        days_remaining = (next_password_change - datetime.now()).days
+        if days_remaining > 0:
+            message = f"Your password was last changed on {last_password_change}. You need to change it in {days_remaining} days."
+        else:
+            message = "Your password has expired. You need to change it immediately."
+    else:
+        message = "Last password change date is not available."
+
+    return {
+        "message": message,
+    }

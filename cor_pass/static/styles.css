@@ -401,8 +401,8 @@ a:hover {
     margin-right: 10px;
 }
 
-select#birth-year,
-select#gender {
+select#birth,
+select#user_sex {
     width: 200px;          /* Ширина для обоих полей */
     padding: 10px;         /* Внутренние отступы */
     font-size: 14px;       /* Размер шрифта */
@@ -414,8 +414,8 @@ select#gender {
     margin-bottom: 10px;   /* Отступ снизу для разделения полей */
 }
 
-select#birth-year:focus,
-select#gender:focus {
+select#birth:focus,
+select#user_sex:focus {
     outline: none;         /* Убираем обводку при фокусе */
     border-color: #021020; /* Цвет рамки при фокусе */
 }

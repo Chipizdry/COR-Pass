@@ -22,8 +22,15 @@ class UserModel(BaseModel):
 
 class UserDb(BaseModel):
     id: str
+    cor_id: str
     email: str
     account_status: Status
+    is_active: bool
+    last_password_change: datetime
+    user_sex: str
+    birth: int
+    user_index: int
+    created_at: datetime
 
     class Config:
         from_attributes = True

@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.future import select
 from sqlalchemy import func
 import uuid
-
+from datetime import datetime
 from cor_pass.database.models import User, Status, Verification, UserSettings
 from cor_pass.schemas import UserModel, PasswordStorageSettings, MedicalStorageSettings
 from cor_pass.services.auth import auth_service
@@ -214,6 +214,7 @@ async def change_user_password(email: str, password: str, db: Session) -> None:
     user = await get_user_by_email(email, db)
     password = auth_service.get_password_hash(password)
     user.password = password
+    user.last_password_change = datetime.now()
     try:
         db.commit()
         logger.debug("Password has changed")
@@ -341,3 +342,54 @@ async def change_medical_storage_settings(
             db.rollback()
             raise e
     return user_settings
+
+
+
+
+async def deactivate_user(email: str, db: Session) -> None:
+    """
+    The deactivate_user function takes in an email, and then deactivate users account.
+    Args:
+    email (str): The user's email address.
+
+    :param email: str: Get the user by email
+    :param db: Session: Pass the database session to the function
+    :return: None
+    """
+
+    user = await get_user_by_email(email, db)
+    user.is_active = False
+    try:
+        db.commit()
+        db.refresh(user)
+    except Exception as e:
+        db.rollback()
+        raise e
+    
+
+async def activate_user(email: str, db: Session) -> None:
+    """
+    The activate_user function takes in an email, and then activate users account.
+    Args:
+    email (str): The user's email address.
+
+    :param email: str: Get the user by email
+    :param db: Session: Pass the database session to the function
+    :return: None
+    """
+
+    user = await get_user_by_email(email, db)
+    user.is_active = True
+    try:
+        db.commit()
+        db.refresh(user)
+    except Exception as e:
+        db.rollback()
+        raise e
+    
+
+async def get_last_password_change(email: str, db: Session):
+
+    user = await get_user_by_email(email, db)
+    last_password_change = user.last_password_change
+    return last_password_change

@@ -35,8 +35,8 @@
 
             <!-- Поле для выбора пола -->
                 <div id="gender-field">
-                    <label for="gender" data-translate="gender-label">Пол:</label>
-                    <select id="gender" name="gender" required>
+                    <label for="user_sex" data-translate="gender-label">Пол:</label>
+                    <select id="user_sex" name="user_sex" required>
                         <option value="" disabled selected>Выберите пол</option>
                         <option value="M" data-translate="male-option">Мужской</option>
                         <option value="F" data-translate="female-option">Женский</option>
@@ -45,14 +45,14 @@
 
                 <!-- Поле для выбора года рождения -->
                 <div id="birth-year-field">
-                    <label for="birth-year" data-translate="birth-year-label">Год рождения:</label>
-                    <select id="birth-year" name="birth-year" required>
+                    <label for="birth" data-translate="birth-year-label">Год рождения:</label>
+                    <select id="birth" name="birth" required>
                         <option value="" disabled selected>Выберите год рождения</option>
                     </select>
                 </div>
 
                 <script>
-                    const birthYearSelect = document.getElementById('birth-year');
+                    const birthYearSelect = document.getElementById('birth');
                     const currentYear = new Date().getFullYear();
                     for (let year = currentYear; year >= 1900; year--) {
                         const option = document.createElement('option');
@@ -238,8 +238,8 @@ if (passwordInput.value.length > 0 || confirmPasswordInput.value.length > 0) {
                 formDataJson[key] = value;
             });
          // Получаем значения пола и года рождения
-         const gender = document.getElementById('gender').value;
-        const birthYear = document.getElementById('birth-year').value;
+        const gender = document.getElementById('user_sex').value;
+        const birthYear = document.getElementById('birth').value;
 
         // Проверяем, что оба поля заполнены
         if (!gender || !birthYear) {
@@ -249,7 +249,7 @@ if (passwordInput.value.length > 0 || confirmPasswordInput.value.length > 0) {
 
         // Преобразуем данные в нужный формат для запроса
         formDataJson['user_sex'] = gender;             // Пол в виде строки
-        formDataJson['birth'] = parseInt(birthYear);   // Год рождения как число
+        formDataJson['birth'] = parseInt(document.getElementById('birth').value);   // Год рождения как число
 
             const xhr = new XMLHttpRequest();
             xhr.open("POST", "/api/auth/signup");
@@ -341,8 +341,8 @@ var messageDiv = document.getElementById("message");
 var confirmationMessageDiv = document.getElementById("confirmationMessage");
 var messageDivErr = document.getElementById('messageDivErr');
 var email = emailInput.value;
-const gender = document.getElementById('gender').value;       
-const birthYear = document.getElementById('birth-year').value;
+const gender = document.getElementById('user_sex').value;       
+const birthYear = document.getElementById('birth').value;
 
         // Проверяем заполнены ли поля
         if (!gender || !birthYear) {

@@ -6,7 +6,7 @@
         <meta name="msapplication-TileColor" content="#ffffff">
         <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
         <meta name="theme-color" content="#ffffff">
-    <meta charset="UTF-8">
+        <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Page</title>
     <style>
@@ -55,7 +55,7 @@
             background-color: #f9f9f9;
         }
 
-        .delete-icon {
+        .delete-icon, .toggle-status-icon  {
             cursor: pointer;
             color: #ff4d4d;
             font-size: 16px; 
@@ -138,7 +138,12 @@
                             <option value="premium" ${user.account_status === 'premium' ? 'selected' : ''}>premium</option>
                         </select>
                     </td>
-                    <td> <span class="delete-icon" onclick="deleteUser('${user.email}')">🗑️</span></td>
+                    <td> <span class="delete-icon" onclick="deleteUser('${user.email}')">🗑️</span>
+                        <span class="toggle-status-icon" onclick="toggleUserStatus('${user.email}', true)">🔓</span>
+                        <span class="toggle-status-icon" onclick="toggleUserStatus('${user.email}', ${user.is_active ?? true})">
+                         ${user.is_active !== false ? '🔓' : '🔒'}
+                             </span>
+                    </td>
                 `;
 
                 tbody.appendChild(row);
@@ -243,6 +248,33 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
             }
         }
 
+
+ // Функция для отправки запроса на активацию/деактивацию пользователя
+ async function toggleUserStatus(email, isActive) {
+        const url = isActive 
+            ? `/deactivate/${email}` 
+            : `/activate/${email}`;
+        
+        try {
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            const result = await response.json();
+
+            if (response.ok) {
+                alert(result.message);
+                loadUsers(); // Обновление таблицы после изменения статуса
+            } else {
+                alert(`Ошибка: ${result.message}`);
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при попытке изменить статус пользователя.');
+        }
+    }
 
         async function filterTable() {
         if (isFiltering) {

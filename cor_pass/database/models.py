@@ -34,7 +34,7 @@ class User(Base):
     backup_email = Column(String(250), unique=True, nullable=True)
     password = Column(String(250), nullable=False)
     last_password_change = Column(
-        DateTime, server_default=func.now(), onupdate=func.now()
+        DateTime, server_default=func.now()
     )
     access_token = Column(String(250), nullable=True)
     refresh_token = Column(String(250), nullable=True)
@@ -53,7 +53,7 @@ class User(Base):
     user_index = Column(
         Integer, unique=True
     )  # индекс пользователя, используется в создании cor_id
-
+    created_at = Column(DateTime, nullable=False, default=func.now())
     user_records = relationship(
         "Record", back_populates="user", cascade="all, delete-orphan"
     )

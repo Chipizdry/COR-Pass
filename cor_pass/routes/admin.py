@@ -80,3 +80,64 @@ async def delete_user(email: EmailStr, db: Session = Depends(get_db)):
     else:
         await person.delete_user_by_email(db=db, email=email)
         return {"message": f" user {email} - was deleted"}
+
+
+
+@router.patch("/deactivate/{email}", dependencies=[Depends(admin_access)])
+async def deactivate_user(
+    email: EmailStr, db: Session = Depends(get_db)
+):
+    """
+    **Deactivate user by email. / Деактивация аккаунта пользователя**\n
+
+    This route allows to assign the selected account_status to a user by their email.
+
+    :param email: EmailStr: Email of the user to whom you want to assign the status.
+
+    :param account_status: Status: The selected account_status for the assignment (Premium, Basic).
+
+    :param db: Session: Database Session.
+
+    :return: Message about successful status change.
+
+    :rtype: dict
+    """
+    user = await person.get_user_by_email(email, db)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    if not user.is_active:
+        return {"message": f"The {user.email} account is already deactivated"}
+    else:
+        await person.deactivate_user(email, db)
+        return {"message": f"{user.email} - account is deactivated"}
+
+
+@router.patch("/activate/{email}", dependencies=[Depends(admin_access)])
+async def activate_user(
+    email: EmailStr, db: Session = Depends(get_db)
+):
+    """
+    **Activate user by email. / Активация аккаунта пользователя**\n
+
+    This route allows to assign the selected account_status to a user by their email.
+
+    :param email: EmailStr: Email of the user to whom you want to assign the status.
+
+    :param account_status: Status: The selected account_status for the assignment (Premium, Basic).
+
+    :param db: Session: Database Session.
+
+    :return: Message about successful status change.
+
+    :rtype: dict
+    """
+    user = await person.get_user_by_email(email, db)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    if user.is_active:
+        return {"message": f"The {user.email} account is already active"}
+    else:
+        await person.activate_user(email, db)
+        return {"message": f"{user.email} - account is activated"}
+    
+
