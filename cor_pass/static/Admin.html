@@ -22,7 +22,7 @@
         }
         .container {
             width: 90%;
-            max-width: 800px;
+            max-width: 850px;
             background-color: #fff;
             padding: 20px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -39,7 +39,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12px; /* Уменьшенный шрифт */
+            font-size: 10px; /* Уменьшенный шрифт */
             margin-top: 10px;
         }
         th, td {
@@ -73,6 +73,19 @@
             margin: 0 5px;
             padding: 5px 10px;
         }
+                /* Стили для ячеек с COR-ID */
+        .cor-id-cell {
+            cursor: pointer; /* Указатель мыши при наведении */
+            text-decoration: none; /* Убираем подчеркивание по умолчанию */
+        }
+
+        /* Подчеркивание при наведении */
+        .cor-id-cell:hover {
+            text-decoration: underline; /* Подчеркивание при наведении */
+            color: blue; /* Можно изменить цвет текста на синий, если нужно */
+        }
+
+
     </style>
 </head>
 <body>
@@ -88,25 +101,60 @@
             <input type="text" id="searchEmail" placeholder="Введите Email" oninput="filterTable()">
         </div>
         <!-- Модальное окно -->
-<div id="columnSelectModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; z-index: 1000;">
+        
+<div id="columnSelectModal" style="display: none; position: fixed; font-size: 12px;top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgb(249, 249, 249); border: 1px solid #979292; border-radius: 5px; padding: 20px; z-index: 1000;">
     <h3>Выберите поля для отображения:</h3>
-    <label><input type="checkbox" onchange="toggleColumn('user_index')" checked>Индекс пользователя</label><br>
-    <label><input type="checkbox" onchange="toggleColumn('id')" checked>ID</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('user_index')"checked >Индекс</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('id')"checked >ID</label><br>
     <label><input type="checkbox" onchange="toggleColumn('cor_id')" checked>COR-ID</label><br>
     <label><input type="checkbox" onchange="toggleColumn('user_sex')" checked>Пол</label><br>
     <label><input type="checkbox" onchange="toggleColumn('birth')" checked>Год рождения</label><br>
     <label><input type="checkbox" onchange="toggleColumn('email')" checked>Email</label><br>
     <label><input type="checkbox" onchange="toggleColumn('created_at')" checked>Дата регистрации</label><br>
     <label><input type="checkbox" onchange="toggleColumn('last_password_change')" checked>Последнее изменение пароля</label><br>
-   
-    <button onclick="closeModal()">Закрыть</button>
+       
+    <div style="text-align: center; margin-top: 20px;">
+           <button onclick="closeModal()">Закрыть</button>
+    </div>
 </div>
+        <!-- Модальное окно для отображения информации о COR-ID -->
+        <div id="corIdModal" class="modal"style="display: none; position: fixed;font-size: 12px; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgb(249, 249, 249); border: 1px solid #ccc; border-radius: 5px; padding: 20px; z-index: 1000;">
+            <div class="modal-content">
+                <div style="text-align: center; margin-top: 20px;">
+                <h3>Информация о COR-ID:<br> <span id="corIdValue"></span></h3> <!-- Место для вывода COR-ID --></div>
+                <div id="corIdInfo">
+                    <!-- Здесь информация о COR-ID -->
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="closeCorIdModal()">Закрыть</button>
+                </div>
+            </div>
+        </div>
+        <!-- Модальное окно -->
+       <!--  
+        <div id="columnSelectModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; border-radius: 5px; padding: 20px; z-index: 1000;">
+                <h3>Выберите поля для отображения:</h3>
+                <label><input type="checkbox" onchange="toggleColumn(this, 'user_index')"> Индекс</label><br>
+                <label><input type="checkbox" onchange="toggleColumn(this, 'id')"> ID</label><br>
+                <label><input type="checkbox" onchange="toggleColumn(this, 'cor_id')" checked> COR-ID</label><br>
+                <label><input type="checkbox" onchange="toggleColumn(this, 'user_sex')" checked> Пол</label><br>
+                <label><input type="checkbox" onchange="toggleColumn(this, 'birth')"> Год рождения</label><br>
+                <label><input type="checkbox" onchange="toggleColumn(this, 'email')" checked> Email</label><br>
+                <label><input type="checkbox" onchange="toggleColumn(this, 'created_at')"> Дата регистрации</label><br>
+                <label><input type="checkbox" onchange="toggleColumn(this, 'last_password_change')"> Последнее изменение пароля</label><br>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="closeModal()">Закрыть</button>
+                </div>
+        </div>  --> 
+
+
 <button id="openModalBtn">Выбрать вывод</button>
         <!-- Таблица для отображения пользователей -->
         <table id="userTable">
             <thead>
                 <tr>
-                    <th id="header-user_index">Индекс пользователя</th>
+                    <th id="header-user_index">Индекс</th>
                     <th id="header-id">ID</th>
                     <th id="header-cor_id">COR-ID</th>
                     <th id="header-user_sex">Пол</th>
@@ -117,6 +165,18 @@
                     <th id="header-account_status">Статус аккаунта</th> 
                     <th>Действия</th>
                 </tr>
+          <!--     <tr>
+                    <th><input type="text" id="searchUserIndex" oninput="filterTable()"></th>
+                    <th><input type="text" id="searchId" placeholder="Поиск по ID" oninput="filterTable()"></th>
+                    <th><input type="text" id="searchCorId" placeholder="Поиск по COR-ID" oninput="filterTable()"></th>
+                    <th><input type="text" id="searchUserSex" placeholder="Поиск по полу" oninput="filterTable()"></th>
+                    <th><input type="text" id="searchBirth" placeholder="Поиск по году" oninput="filterTable()"></th>
+                    <th><input type="text" id="searchEmail" placeholder="Поиск по Email" oninput="filterTable()"></th>
+                    <th><input type="text" id="searchCreatedAt" placeholder="Поиск по дате" oninput="filterTable()"></th>
+                    <th><input type="text" id="searchLastPasswordChange" placeholder="Поиск по дате" oninput="filterTable()"></th>
+                    <th><input type="text" id="searchAccountStatus" placeholder="Поиск по статусу" oninput="filterTable()"></th>
+                    <th></th> 
+                </tr>--> 
             </thead>
             <tbody>
                 <!-- Здесь будут добавлены пользователи -->
@@ -135,9 +195,51 @@
 
     <script> function goBack() { window.history.back();  } </script>
 
-   
+    <!--<script>
+          // Функция для отображения/скрытия столбцов и сохранения выбора в localStorage
+    function toggleColumn(checkbox, column) {
+        // Сохранение состояния чекбокса в localStorage
+        localStorage.setItem(column, checkbox.checked);
+        
+        // Поиск всех элементов с указанным классом
+        const columnElements = document.querySelectorAll(`.${column}`);
+        if (columnElements.length === 0) {
+            console.warn(`Элементы с классом .${column} не найдены.`);
+            return;
+        }
 
-    <script>
+        // Отображение или скрытие элементов столбца в зависимости от состояния чекбокса
+        columnElements.forEach(el => {
+            el.style.display = checkbox.checked ? '' : 'none';
+        });
+    }
+
+    // Восстановление настроек отображения столбцов при загрузке страницы
+    function restoreColumnSettings() {
+        // Список классов столбцов, которые можно управлять
+        const columns = ["user_index", "id", "cor_id", "user_sex", "birth", "email", "created_at", "last_password_change"];
+        columns.forEach(column => {
+            // Получение состояния чекбокса из localStorage
+            const isChecked = localStorage.getItem(column) === "true";
+            
+            // Поиск соответствующего чекбокса по его уникальному атрибуту
+            const checkbox = document.querySelector(`input[type="checkbox"][data-column="${column}"]`);
+            if (checkbox) {
+                checkbox.checked = isChecked;
+                toggleColumn(checkbox, column);
+            } else {
+                console.warn(`Чекбокс для столбца ${column} не найден.`);
+            }
+        });
+    }
+
+    // Инициализация после загрузки страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        restoreColumnSettings();
+    });
+    </script> -->
+
+    <script> 
 
         let currentPage = 1;
         let rowsPerPage = 5;
@@ -157,7 +259,7 @@
                 row.innerHTML = `
                 ${document.getElementById('header-user_index').style.display !== 'none' ? `<td>${user.user_index}</td>` : ''}
                 ${document.getElementById('header-id').style.display !== 'none' ? `<td>${user.id}</td>` : ''}
-                ${document.getElementById('header-cor_id').style.display !== 'none' ? `<td>${user.cor_id}</td>` : ''}
+                ${document.getElementById('header-cor_id').style.display !== 'none' ? `<td class="cor-id-cell">${user.cor_id}</td>` : ''}
                 ${document.getElementById('header-user_sex').style.display !== 'none' ? `<td>${user.user_sex}</td>` : ''}
                 ${document.getElementById('header-birth').style.display !== 'none' ? `<td>${user.birth}</td>` : ''}
                 ${document.getElementById('header-email').style.display !== 'none' ? `<td>${user.email}</td>` : ''}
@@ -429,10 +531,72 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
             getAllUsers(skip, rowsPerPage);
         }
 
+                // Функции для открытия и закрытия модального окна
+            function openModal() {
+                document.getElementById("corIdModal").style.display = "block";
+            }
+
+            function closeCorIdModal() {
+                document.getElementById("corIdModal").style.display = "none";
+            }
+
             // Функция для закрытия модального окна
             function closeModal() {
                 document.getElementById('columnSelectModal').style.display = 'none';
             }
+
+            document.addEventListener('DOMContentLoaded', function () {
+           const tableBody = document.querySelector("#userTable tbody");
+
+                // Пример добавления обработчика события на ячейки с COR-ID
+                tableBody.addEventListener('click', function (event) {
+                    if (event.target && event.target.classList.contains('cor-id-cell')) {
+                        const corId = event.target.textContent;
+                        showCorIdInfo(corId);
+                    }
+                });
+            });
+
+            function showCorIdInfo(corId) {
+            const accessToken = new URLSearchParams(window.location.search).get('access_token');
+            if (!accessToken) {
+                console.error('Токен не найден!');
+                return;
+            }
+
+                fetch("/api/medical/cor_id/show_corid_info", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({ cor_id: corId })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        console.error('Ошибка на сервере:', response.statusText);
+                        throw new Error("COR-Id не найден");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Отображение данных в модальном окне
+                    document.getElementById("corIdValue").textContent = corId;
+                    const corIdInfo = `
+                        <p>Дней с 1 января 2024: ${data.n_days_since_first_jan_2024}</p>
+                        <p>Номер учреждения: ${data.n_facility}</p>
+                        <p>Номер пациента: ${data.n_patient}</p>
+                        <p>Год рождения: ${data.birth_year}</p>
+                        <p>Пол: ${data.sex}</p>
+                    `;
+                    document.getElementById("corIdInfo").innerHTML = corIdInfo;
+                    openModal();
+                })
+                .catch(error => {
+                    console.error("Ошибка:", error);
+                    alert("Ошибка при загрузке информации о COR-ID");
+                });}
+
 
             // Функция для переключения отображения колонок
             function toggleColumn(column) {
@@ -445,14 +609,7 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
                  loadPage();
             }
 
-           // Функция для переключения отображения колонок и обновления таблицы
-           /*
-    function toggleColumn(column, isChecked) {
-        const header = document.getElementById(`header-${column}`);
-        header.style.display = isChecked ? '' : 'none';
-        loadPage(); // Обновить таблицу при изменении состояния чекбокса
-    }
-*/
+        
 
         // Запуск функции после загрузки страницы
         document.addEventListener('DOMContentLoaded', function() {
