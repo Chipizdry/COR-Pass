@@ -103,7 +103,7 @@
         <!-- Модальное окно -->
         
 <div id="columnSelectModal" style="display: none; position: fixed; font-size: 12px;top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgb(249, 249, 249); border: 1px solid #979292; border-radius: 5px; padding: 20px; z-index: 1000;">
-    <h3>Выберите поля для отображения:</h3>
+    <h3>Выберите поля для отображения:</h3> <!--
     <label><input type="checkbox" onchange="toggleColumn('user_index')"checked >Индекс</label><br>
     <label><input type="checkbox" onchange="toggleColumn('id')"checked >ID</label><br>
     <label><input type="checkbox" onchange="toggleColumn('cor_id')" checked>COR-ID</label><br>
@@ -112,7 +112,16 @@
     <label><input type="checkbox" onchange="toggleColumn('email')" checked>Email</label><br>
     <label><input type="checkbox" onchange="toggleColumn('created_at')" checked>Дата регистрации</label><br>
     <label><input type="checkbox" onchange="toggleColumn('last_password_change')" checked>Последнее изменение пароля</label><br>
-       
+       -->
+    <label><input type="checkbox" onchange="toggleColumn('user_index')" id="checkbox-user_index" checked >Индекс</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('id')" id="checkbox-id" checked >ID</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('cor_id')" id="checkbox-cor_id" checked >COR-ID</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('user_sex')" id="checkbox-user_sex" checked >Пол</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('birth')" id="checkbox-birth" checked >Год рождения</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('email')" id="checkbox-email" checked >Email</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('created_at')" id="checkbox-created_at" checked >Дата регистрации</label><br>
+    <label><input type="checkbox" onchange="toggleColumn('last_password_change')" id="checkbox-last_password_change" checked >Последнее изменение пароля</label><br>
+
     <div style="text-align: center; margin-top: 20px;">
            <button onclick="closeModal()">Закрыть</button>
     </div>
@@ -195,50 +204,7 @@
 
     <script> function goBack() { window.history.back();  } </script>
 
-    <!--<script>
-          // Функция для отображения/скрытия столбцов и сохранения выбора в localStorage
-    function toggleColumn(checkbox, column) {
-        // Сохранение состояния чекбокса в localStorage
-        localStorage.setItem(column, checkbox.checked);
-        
-        // Поиск всех элементов с указанным классом
-        const columnElements = document.querySelectorAll(`.${column}`);
-        if (columnElements.length === 0) {
-            console.warn(`Элементы с классом .${column} не найдены.`);
-            return;
-        }
-
-        // Отображение или скрытие элементов столбца в зависимости от состояния чекбокса
-        columnElements.forEach(el => {
-            el.style.display = checkbox.checked ? '' : 'none';
-        });
-    }
-
-    // Восстановление настроек отображения столбцов при загрузке страницы
-    function restoreColumnSettings() {
-        // Список классов столбцов, которые можно управлять
-        const columns = ["user_index", "id", "cor_id", "user_sex", "birth", "email", "created_at", "last_password_change"];
-        columns.forEach(column => {
-            // Получение состояния чекбокса из localStorage
-            const isChecked = localStorage.getItem(column) === "true";
-            
-            // Поиск соответствующего чекбокса по его уникальному атрибуту
-            const checkbox = document.querySelector(`input[type="checkbox"][data-column="${column}"]`);
-            if (checkbox) {
-                checkbox.checked = isChecked;
-                toggleColumn(checkbox, column);
-            } else {
-                console.warn(`Чекбокс для столбца ${column} не найден.`);
-            }
-        });
-    }
-
-    // Инициализация после загрузки страницы
-    document.addEventListener('DOMContentLoaded', function() {
-        restoreColumnSettings();
-    });
-    </script> -->
-
+    
     <script> 
 
         let currentPage = 1;
@@ -597,32 +563,102 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
                     alert("Ошибка при загрузке информации о COR-ID");
                 });}
 
-
             // Функция для переключения отображения колонок
             function toggleColumn(column) {
                 const header = document.getElementById(`header-${column}`);
-                header.style.display = header.style.display === 'none' ? '' : 'none';
+                const isVisible = header.style.display !== 'none';
+                
+                // Переключение видимости колонки
+                header.style.display = isVisible ? 'none' : '';
+                
+                // Сохранение состояния в localStorage
+                const columnState = JSON.parse(localStorage.getItem('columnsState') || '{}');
+                columnState[column] = !isVisible; // Сохраняем новое состояние видимости колонки
+                localStorage.setItem('columnsState', JSON.stringify(columnState));
+                console.log('Записываем состояние в localStorage:', columnState);
+                initializeCheckboxes();
+                // Обновление видимости ячеек на основе нового состояния
                 const cells = document.querySelectorAll(`tbody td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`);
                 cells.forEach(cell => {
                     cell.style.display = header.style.display;
                 });
-                 loadPage();
+
+                loadPage(); // Загружаем страницу, если нужно
+            }
+                    
+           // Функция для инициализации видимости колонок из localStorage
+            function initializeColumns() {
+                const columnState = JSON.parse(localStorage.getItem('columnsState') || '{}');
+
+                // Применяем состояние для каждой колонки
+                Object.keys(columnState).forEach(column => {
+                    const header = document.getElementById(`header-${column}`);
+                    if (header) {
+                        const isVisible = columnState[column];
+                        header.style.display = isVisible ? '' : 'none'; // Устанавливаем видимость
+
+                        // Обновляем видимость ячеек в таблице
+                        const cells = document.querySelectorAll(`tbody td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`);
+                        cells.forEach(cell => {
+                            cell.style.display = header.style.display;
+                        });
+                    }
+                });
             }
 
-        
+  /*          function initializeCheckboxes() {
+    const columnState = JSON.parse(localStorage.getItem('columnsState') || '{}');
+    console.log('Состояние колонок из localStorage:', columnState);
+    // Пробегаемся по всем чекбоксам и обновляем их состояние
+    const checkboxes = document.querySelectorAll('#columnSelectModal input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        const label = checkbox.closest('label'); // Находим родительский label
+        const column = label ? label.textContent.trim().toLowerCase() : ''; // Извлекаем текст внутри label
+        console.log('Имя колонки:', column);
+        // Проверяем и устанавливаем состояние чекбокса
+        if (columnState[column] !== undefined) {
+            checkbox.checked = columnState[column];
+            console.log(`Состояние для ${column}: ${columnState[column]}`);
+        }
+        else {
+            console.log(`Нет состояния для ${column}, устанавливаем по умолчанию`); 
+        }
+    });
+}       
+*/
+function initializeCheckboxes() {
+    const columnState = JSON.parse(localStorage.getItem('columnsState') || '{}');
+    console.log('Состояние колонок из localStorage:', columnState);
+
+    // Пробегаемся по всем чекбоксам и обновляем их состояние
+    const checkboxes = document.querySelectorAll('#columnSelectModal input[type="checkbox"]');
+    checkboxes.forEach(checkbox => {
+        const columnId = checkbox.id.replace('checkbox-', ''); // Извлекаем ID колонки без префикса
+        console.log('ID колонки:', columnId);
+
+        // Проверяем и устанавливаем состояние чекбокса
+        if (columnState[columnId] !== undefined) {
+            checkbox.checked = columnState[columnId];
+            console.log(`Состояние для ${columnId}: ${columnState[columnId]}`);
+        } else {
+            console.log(`Нет состояния для ${columnId}, устанавливаем по умолчанию`);
+        }
+    });
+}
 
         // Запуск функции после загрузки страницы
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Страница загружена. Запуск процесса загрузки пользователей...');
+             document.addEventListener('DOMContentLoaded', function() {
+             console.log('Страница загружена. Запуск процесса загрузки пользователей...');
+             initializeColumns();
+             initializeCheckboxes();
              // Функция для отображения модального окна
-    document.getElementById('openModalBtn').onclick = function() {
-        document.getElementById('columnSelectModal').style.display = 'block';
-    };
-
-    
-
-            getAllUsers(); // По умолчанию загружаем 10 пользователей, начиная с 0
-        });
+             document.getElementById('openModalBtn').onclick = function() {
+                initializeCheckboxes();
+             document.getElementById('columnSelectModal').style.display = 'block';
+             //document.getElementById('columnSelectModal').addEventListener('show', initializeCheckboxes);
+             };
+              getAllUsers(); // По умолчанию загружаем 5 пользователей, начиная с 0
+             });
     </script>
 </body>
 </html>
