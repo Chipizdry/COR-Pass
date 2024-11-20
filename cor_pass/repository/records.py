@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 
 from cor_pass.database.models import User, Record, Tag
-from cor_pass.schemas import CreateRecordModel
+from cor_pass.schemas import CreateRecordModel, UpdateRecordModel
 from cor_pass.repository.person import get_user_by_uuid
 from cor_pass.config.config import settings
 from cor_pass.services.cipher import encrypt_data, decrypt_data, decrypt_user_key
@@ -62,15 +62,11 @@ async def get_all_user_records(db: Session, user_id: str, skip: int, limit: int)
     records = (
         db.query(Record).filter_by(user_id=user_id).offset(skip).limit(limit).all()
     )
-    # current_user = await get_user_by_uuid(uuid=user_id, db=db)
-    # for record in records:
-    #     print(record)
-    #     # record.username = await decrypt_data(encrypted_data=record.username, key=await decrypt_user_key(current_user.unique_cipher_key))
     return records
 
 
 async def update_record(
-    record_id: int, body: CreateRecordModel, user: User, db: Session
+    record_id: int, body: UpdateRecordModel, user: User, db: Session
 ):
     record = (
         db.query(Record)
@@ -99,6 +95,20 @@ async def update_record(
                 if not tag:
                     tag = Tag(name=tag_name)
                 record.tags.append(tag)
+        db.commit()
+        db.refresh(record)
+    return record
+
+
+async def make_favorite(record_id: int, is_favorite: bool, user: User, db: Session):
+    record = (
+        db.query(Record)
+        .join(User, Record.user_id == User.id)
+        .filter(and_(Record.record_id == record_id, User.id == user.id))
+        .first()
+    )
+    if record:
+        record.is_favorite = is_favorite
         db.commit()
         db.refresh(record)
     return record

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, status
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-
+import time
 from cor_pass.database.db import get_db
 from cor_pass.services.auth import auth_service
 from cor_pass.database.models import User, Status
@@ -8,10 +9,58 @@ from cor_pass.services.access import user_access, admin_access
 from cor_pass.schemas import UserDb
 from cor_pass.repository import person
 from pydantic import EmailStr
-
+from cor_pass.database.redis_db import redis_client
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
+
+# @router.get(
+#     "/get_all", response_model=list[UserDb], dependencies=[Depends(admin_access)]
+# )
+# async def get_all_users(
+#     skip: int = 0,
+#     limit: int = 10,
+#     user: User = Depends(auth_service.get_current_user),
+#     db: Session = Depends(get_db),
+# ):
+#     """
+#     **Get a list of users. / Получение списка всех пользователей**\n
+#     This route allows to get a list of pagination-aware users.
+#     Level of Access:
+#     - Current authorized user
+#     :param skip: int: Number of users to skip.
+#     :param limit: int: Maximum number of users to return.
+#     :param current_user: User: Current authenticated user.
+#     :param db: Session: Database session.
+#     :return: List of users.
+#     :rtype: List[UserDb]
+#     """
+#     list_users = await person.get_users(skip, limit, db)
+#     active_time_threshold = time.time() - 600  # 10 минут
+#     active_users_dict = {}
+#     for user in list_users:
+#         for key in redis_client.keys():
+#             last_active = float(redis_client.get(key))
+#             if last_active > active_time_threshold:
+#                 token = key.decode("utf-8")
+#                 try:
+#                     decoded_token = jwt.decode(
+#                         token.split(" ")[1],
+#                         options={"verify_signature": False},
+#                         key=auth_service.SECRET_KEY,
+#                         algorithms=auth_service.ALGORITHM,
+#                     )
+#                     cor_id = decoded_token.get("oid")
+#                     active_users_dict[cor_id] = last_active
+#                 except JWTError:
+#                     continue
+
+#         active_users_list = [
+#             {"cor_id": cor_id, "last_active": last_active}
+#             for cor_id, last_active in active_users_dict.items()
+#         ]
+
+#     return list_users
 
 @router.get(
     "/get_all", response_model=list[UserDb], dependencies=[Depends(admin_access)]
@@ -31,11 +80,94 @@ async def get_all_users(
     :param limit: int: Maximum number of users to return.
     :param current_user: User: Current authenticated user.
     :param db: Session: Database session.
-    :return: List of users.
+    :return: List of users with their last activity.
     :rtype: List[UserDb]
     """
+
     list_users = await person.get_users(skip, limit, db)
-    return list_users
+    # active_time_threshold = time.time() - 600  # 10 минут
+    active_users_dict = {}
+    for key in redis_client.keys():
+        last_active = redis_client.get(key)
+        # if last_active > active_time_threshold:
+        if last_active:
+            token = key.decode("utf-8")
+            try:
+                decoded_token = jwt.decode(
+                    token.split(" ")[1],
+                    options={"verify_signature": False},
+                    key=auth_service.SECRET_KEY,
+                    algorithms=[auth_service.ALGORITHM],
+                )
+                cor_id = decoded_token.get("oid")
+                if cor_id:
+                    active_users_dict[cor_id] = last_active
+            except JWTError:
+                continue
+
+    users_list_with_activity = []
+    for user in list_users:
+        cor_id = user.cor_id
+        if cor_id in active_users_dict:
+            users_last_activity = active_users_dict[cor_id]
+            user_responce = UserDb(
+                            id=user.id,
+                            cor_id=user.cor_id,
+                            email=user.email,
+                            account_status=user.account_status,
+                            is_active=user.is_active,
+                            last_password_change=user.last_password_change,
+                            user_sex=user.user_sex,
+                            birth=user.birth,
+                            user_index=user.user_index,
+                            created_at=user.created_at,
+                            last_active=users_last_activity,
+                            )
+        else:
+            user_responce = UserDb(
+                            id=user.id,
+                            cor_id=user.cor_id,
+                            email=user.email,
+                            account_status=user.account_status,
+                            is_active=user.is_active,
+                            last_password_change=user.last_password_change,
+                            user_sex=user.user_sex,
+                            birth=user.birth,
+                            user_index=user.user_index,
+                            created_at=user.created_at,
+                            )
+        users_list_with_activity.append(user_responce)
+
+    return users_list_with_activity
+
+
+# @router.get("/active-users", dependencies=[Depends(admin_access)])
+# async def active_users(db: Session = Depends(get_db)):
+#     active_time_threshold = time.time() - 600  # 10 минут
+#     active_users_dict = {}
+#     for key in redis_client.keys():
+#         last_active = float(redis_client.get(key))
+#         if last_active > active_time_threshold:
+#             token = key.decode("utf-8")
+#             try:
+#                 decoded_token = jwt.decode(
+#                     token.split(" ")[1],
+#                     options={"verify_signature": False},
+#                     key=auth_service.SECRET_KEY,
+#                     algorithms=auth_service.ALGORITHM,
+#                 )
+#                 cor_id = decoded_token.get("oid")
+#                 active_users_dict[cor_id] = last_active
+#             except JWTError:
+#                 continue
+
+#     active_users_list = [
+#         {"cor_id": cor_id, "last_active": last_active}
+#         for cor_id, last_active in active_users_dict.items()
+#     ]
+
+#     return {"active_users": active_users_list}
+
 
 
 @router.patch("/asign_status/{account_status}", dependencies=[Depends(admin_access)])
@@ -82,11 +214,8 @@ async def delete_user(email: EmailStr, db: Session = Depends(get_db)):
         return {"message": f" user {email} - was deleted"}
 
 
-
 @router.patch("/deactivate/{email}", dependencies=[Depends(admin_access)])
-async def deactivate_user(
-    email: EmailStr, db: Session = Depends(get_db)
-):
+async def deactivate_user(email: EmailStr, db: Session = Depends(get_db)):
     """
     **Deactivate user by email. / Деактивация аккаунта пользователя**\n
 
@@ -113,9 +242,7 @@ async def deactivate_user(
 
 
 @router.patch("/activate/{email}", dependencies=[Depends(admin_access)])
-async def activate_user(
-    email: EmailStr, db: Session = Depends(get_db)
-):
+async def activate_user(email: EmailStr, db: Session = Depends(get_db)):
     """
     **Activate user by email. / Активация аккаунта пользователя**\n
 
@@ -139,5 +266,6 @@ async def activate_user(
     else:
         await person.activate_user(email, db)
         return {"message": f"{user.email} - account is activated"}
-    
+
+
 

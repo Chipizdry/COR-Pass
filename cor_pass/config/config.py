@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     basic_account_records: int = "NUMBER_OF_RECORDS"
     facility_key: int = "1"
     admin_accounts: list = json.loads(os.getenv("ETERNAL_ACCOUNTS", "[]"))
+    redis_host: str = "REDIS_HOST"
+    redis_port: int = 5432
+    redis_db: int = 123
 
     class Config:
 

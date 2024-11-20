@@ -30,6 +30,7 @@ requests = "^2.32.3"
 prometheus-client = "^0.21.0"
 loguru = "^0.7.2"
 psycopg = {extras = ["binary", "pool"], version = "^3.2.3"}
+redis = "^5.2.0"
 
 
 [build-system]

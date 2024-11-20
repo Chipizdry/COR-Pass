@@ -15,6 +15,7 @@ from starlette.responses import Response
 
 from cor_pass.routes import auth, person
 from cor_pass.database.db import get_db
+from cor_pass.database.redis_db import redis_client
 from cor_pass.routes import (
     auth,
     records,
@@ -31,16 +32,15 @@ from fastapi.responses import JSONResponse
 from collections import defaultdict
 
 
-from datetime import datetime, timedelta
-
-
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="cor_pass/static"), name="static")
+
 
 origins = [
     "http://192.168.153.203:8000" "http://localhost:3000",
     "http://192.168.153.21:3000",
-    "http://localhost:8000", "http://195.8.40.51:8080"
+    "http://localhost:8000",
+    "http://195.8.40.51:8080",
 ]
 
 
@@ -95,7 +95,6 @@ def read_config():
 
 @app.get("/", name="Корень")
 def read_root(request: Request):
-    logger.info("This is a test log message")
     REQUEST_COUNT.inc()
     with REQUEST_LATENCY.time():
         return FileResponse("cor_pass/static/login.html")
@@ -127,6 +126,16 @@ async def add_process_time_header(request: Request, call_next):
     response = await call_next(request)
     process_time = time.time() - start_time
     response.headers["My-Process-Time"] = str(process_time)
+    return response
+
+
+# Middleware для фиксирования активных пользователей
+@app.middleware("http")
+async def track_active_users(request: Request, call_next):
+    user_id = request.headers.get("Authorization")
+    if user_id:
+        redis_client.set(user_id, time.time())
+    response = await call_next(request)
     return response
 
 

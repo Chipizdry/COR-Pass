@@ -1,8 +1,8 @@
-"""last_password_change
+"""fix favotite flag
 
-Revision ID: 152eb2e2f061
-Revises: 63c1b26ff55b
-Create Date: 2024-11-01 14:50:09.882491
+Revision ID: 2ad78f6b3c51
+Revises: d17edc5eba47
+Create Date: 2024-11-05 13:46:11.852502
 
 """
 
@@ -13,8 +13,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "152eb2e2f061"
-down_revision: Union[str, None] = "63c1b26ff55b"
+revision: str = "2ad78f6b3c51"
+down_revision: Union[str, None] = "d17edc5eba47"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

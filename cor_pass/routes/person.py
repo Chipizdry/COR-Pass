@@ -305,7 +305,7 @@ async def get_last_password_change(
 
     last_password_change = await person.get_last_password_change(user.email, db)
     if last_password_change:
-        change_period = timedelta(days=180)  
+        change_period = timedelta(days=180)
         next_password_change = last_password_change + change_period
         days_remaining = (next_password_change - datetime.now()).days
         if days_remaining > 0:

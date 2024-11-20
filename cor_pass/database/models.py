@@ -33,9 +33,7 @@ class User(Base):
     email = Column(String(250), unique=True, nullable=False)
     backup_email = Column(String(250), unique=True, nullable=True)
     password = Column(String(250), nullable=False)
-    last_password_change = Column(
-        DateTime, server_default=func.now()
-    )
+    last_password_change = Column(DateTime, server_default=func.now())
     access_token = Column(String(250), nullable=True)
     refresh_token = Column(String(250), nullable=True)
     recovery_code = Column(
@@ -85,6 +83,7 @@ class Record(Base):
         DateTime, nullable=False, default=func.now(), onupdate=func.now()
     )
     notes = Column(Text, nullable=True)
+    is_favorite = Column(Boolean, default=False, nullable=True)
 
     user = relationship("User", back_populates="user_records")
     tags = relationship("Tag", secondary="records_tags")

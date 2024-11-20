@@ -344,8 +344,6 @@ async def change_medical_storage_settings(
     return user_settings
 
 
-
-
 async def deactivate_user(email: str, db: Session) -> None:
     """
     The deactivate_user function takes in an email, and then deactivate users account.
@@ -365,7 +363,7 @@ async def deactivate_user(email: str, db: Session) -> None:
     except Exception as e:
         db.rollback()
         raise e
-    
+
 
 async def activate_user(email: str, db: Session) -> None:
     """
@@ -386,7 +384,7 @@ async def activate_user(email: str, db: Session) -> None:
     except Exception as e:
         db.rollback()
         raise e
-    
+
 
 async def get_last_password_change(email: str, db: Session):
 
