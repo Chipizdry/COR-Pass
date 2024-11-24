@@ -177,7 +177,8 @@
             <button onclick="goToLastPage()">Последний »»</button>
         </div>
     </div>
-
+    <script src="/static/translation.js"></script>
+    <script src="/static/general_fun.js"></script>
     <script> function goBack() { window.history.back();  } </script>
 
     
@@ -200,26 +201,24 @@
                 const row = document.createElement('tr');
 
                 // Рассчитываем разницу во времени
+              // Рассчитываем разницу во времени
                 const currentTime = new Date();
                 const lastActiveTime = user.last_active ? new Date(user.last_active) : null;
                 const timeDiff = lastActiveTime ? (currentTime - lastActiveTime) / (1000 * 60 * 60) : null; // Разница в часах
                 let activityColor = 'gray'; // По умолчанию - серый
 
                 if (timeDiff !== null) {
-                    // Рассчитываем коэффициент для градиента от 0 до 1
-                    let gradientFactor = 0;
+                    if (timeDiff <= 24) {
+                        // Рассчитываем коэффициент для интерполяции цвета (от 0 до 1)
+                        const gradientFactor = timeDiff / 24;
 
-                    if (timeDiff <= 1) {
-                        gradientFactor = 0; // Активность менее часа
-                    } else if (timeDiff <= 12) {
-                        gradientFactor = (timeDiff - 1) / 11; // От 1 до 12 часов
-                    } else if (timeDiff <= 24) {
-                        gradientFactor = (timeDiff - 12) / 12; // От 12 до 24 часов
+                        // Вычисляем цвет от зелёного (0, 255, 0) к красному (255, 0, 0)
+                        const red = Math.round(gradientFactor * 255); // Увеличивается с течением времени
+                        const green = Math.round((1 - gradientFactor) * 255); // Уменьшается с течением времени
+                        activityColor = `rgb(${red}, ${green}, 0)`; // Получаем итоговый цвет
                     }
-
-                    // Генерируем плавный градиент от зеленого (активность) до красного (неактивность)
-                    activityColor = `linear-gradient(to right, green ${100 - gradientFactor * 100}%, red ${gradientFactor * 100}%)`;
                 }
+
 
                 row.innerHTML = `
                 ${document.getElementById('header-user_index').style.display !== 'none' ? `<td>${user.user_index}</td>` : ''}
@@ -636,33 +635,7 @@ function initializeCheckboxes() {
 }
 
 
-        function makeModalDraggable(modalId) {
-            const modal = document.getElementById(modalId);
-            const header = modal.querySelector('.modal-header');
-            let isDragging = false;
-            let offsetX = 0, offsetY = 0;
 
-            header.onmousedown = function(e) {
-                isDragging = true;
-                // Вычисляем начальное смещение курсора относительно модального окна
-                offsetX = e.clientX - modal.offsetLeft;
-                offsetY = e.clientY - modal.offsetTop;
-
-                // Добавляем события перемещения и отпускания мыши
-                document.onmousemove = function(e) {
-                    if (isDragging) {
-                        modal.style.left = `${e.clientX - offsetX}px`;
-                        modal.style.top = `${e.clientY - offsetY}px`;
-                    }
-                };
-
-                document.onmouseup = function() {
-                    isDragging = false;
-                    document.onmousemove = null;
-                    document.onmouseup = null;
-                };
-            };
-        }
         // Запуск функции после загрузки страницы
              document.addEventListener('DOMContentLoaded', function() {
              console.log('Страница загружена. Запуск процесса загрузки пользователей...');

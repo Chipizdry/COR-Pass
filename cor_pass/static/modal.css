@@ -1,0 +1,67 @@
+/* Основные стили модального окна */
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    background: #f9f9f9;
+    border: 1px solid #979292;
+    border-radius: 5px;
+    z-index: 1000;
+    font-size: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Верхняя панель заголовка */
+.modal-header {
+    background-color: #0078d7;
+    color: white;
+    padding: 5px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: grab;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+/* Заголовок окна */
+.modal-header h1 {
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Кнопки управления */
+.modal-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.modal-button {
+    width: 20px;
+    height: 20px;
+    background-color: #f0f0f0;
+    border: 1px solid #cccccc;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    color: black;
+}
+
+.modal-button:hover {
+    background-color: #e0e0e0;
+}
+
+/* Содержимое модального окна */
+.modal-content {
+    padding: 10px;
+}
+
+.modal.minimized {
+    height: 40px;
+    overflow: hidden;
+}
