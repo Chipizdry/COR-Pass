@@ -8,6 +8,8 @@
         <meta name="theme-color" content="#ffffff">
         <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/static/modal.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <title>Admin Page</title>
     <style>
         /* Основные стили для контейнера и таблицы */
@@ -107,42 +109,61 @@
             <label for="searchEmail">Поиск по Email:</label>
             <input type="text" id="searchEmail" placeholder="Введите Email" oninput="filterTable()">
         </div>
-        <!-- Модальное окно -->
-            
-<div id="columnSelectModal" style="display: none; position: fixed; font-size: 12px;top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgb(249, 249, 249); border: 1px solid #979292; border-radius: 5px; padding: 20px; z-index: 1000;">
-      <div class="modal-header"> 
-        <h3>Выберите поля для отображения:</h3>
-   
-    <label><input type="checkbox" onchange="toggleColumn('user_index')" id="checkbox-user_index" checked >Индекс</label><br>
-    <label><input type="checkbox" onchange="toggleColumn('id')" id="checkbox-id" checked >ID</label><br>
-    <label><input type="checkbox" onchange="toggleColumn('cor_id')" id="checkbox-cor_id" checked >COR-ID</label><br>
-    <label><input type="checkbox" onchange="toggleColumn('user_sex')" id="checkbox-user_sex" checked >Пол</label><br>
-    <label><input type="checkbox" onchange="toggleColumn('birth')" id="checkbox-birth" checked >Год рождения</label><br>
-    <label><input type="checkbox" onchange="toggleColumn('email')" id="checkbox-email" checked >Email</label><br>
-    <label><input type="checkbox" onchange="toggleColumn('created_at')" id="checkbox-created_at" checked >Дата регистрации</label><br>
-    <label><input type="checkbox" onchange="toggleColumn('last_password_change')" id="checkbox-last_password_change" checked >Последнее изменение пароля</label><br>
-    <label><input type="checkbox" onchange="toggleColumn('last_active')" id="checkbox-last_active" checked >Последняя активность</label><br>
-                <div style="text-align: center; margin-top: 20px;">
-                    <button onclick="closeModal()">Закрыть</button>
-                </div> 
-      </div>         
+
+<!-- Модальное окно выбора отображения колонок --> 
+<div id="columnSelectModal" class="modal" style="display: none;">
+    <div class="modal-header">
+        <h1>Поля для отображения </h1>
+        <div class="modal-buttons">
+            <button class="modal-button" data-action="minimize" id="minimizeColumnSelectModal">🗕</button>
+            <button class="modal-button" data-action="maximize" id="maximizeColumnSelectModal">🗖</button>
+            <button class="modal-button close" data-action="close" id="closeColumnSelectModal">✖</button>
+        </div>
+    </div>
+    <div class="modal-content">
+        <label><input type="checkbox" onchange="toggleColumn('user_index')" id="checkbox-user_index" checked >Индекс</label><br>
+        <label><input type="checkbox" onchange="toggleColumn('id')" id="checkbox-id" checked >ID</label><br>
+        <label><input type="checkbox" onchange="toggleColumn('cor_id')" id="checkbox-cor_id" checked >COR-ID</label><br>
+        <label><input type="checkbox" onchange="toggleColumn('user_sex')" id="checkbox-user_sex" checked >Пол</label><br>
+        <label><input type="checkbox" onchange="toggleColumn('birth')" id="checkbox-birth" checked >Год рождения</label><br>
+        <label><input type="checkbox" onchange="toggleColumn('email')" id="checkbox-email" checked >Email</label><br>
+        <label><input type="checkbox" onchange="toggleColumn('created_at')" id="checkbox-created_at" checked >Дата регистрации</label><br>
+        <label><input type="checkbox" onchange="toggleColumn('last_password_change')" id="checkbox-last_password_change" checked >Последнее изменение пароля</label><br>
+        <label><input type="checkbox" onchange="toggleColumn('last_active')" id="checkbox-last_active" checked >Последняя активность</label><br>
+    </div>
+    <div class="modal-footer" style="text-align: center; margin-top: 20px;">
+        <button onclick="closeModal('columnSelectModal')" class="modal-button">ОК</button>
+    </div>
 </div>
+
         <!-- Модальное окно для отображения информации о COR-ID -->
-        <div id="corIdModal" class="modal"style="display: none; position: fixed;font-size: 12px; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgb(249, 249, 249); border: 1px solid #ccc; border-radius: 5px; padding: 20px; z-index: 1000;">
+        <div id="corIdModal" class="modal">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <h1>Информация о COR-ID:</h1>
+                    <span id="corIdValue"></span>
+                </div>
+                <div class="modal-buttons">
+                    <button class="modal-button" data-action="minimize" id="minimizeCorIDModal">🗕</button>
+                    <button class="modal-button"data-action="maximize" id="maximizeCorIDModal">🗖</button>
+                    <button class="modal-button close" data-action="close" id="closeCorIDModal">✖</button>
+                </div>
+            </div>
             <div class="modal-content">
-             <div class="modal-header">
-                <div style="text-align: center; margin-top: 20px;">
-                <h3>Информация о COR-ID:<br> <span id="corIdValue"></span></h3> <!-- Место для вывода COR-ID --></div>
-                    <div id="corIdInfo">
-                        <!-- Здесь информация о COR-ID -->
-                    </div>
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button onclick="closeCorIdModal()">Закрыть</button>
-                    </div>
-             </div>
+                <div id="corIdInfo">
+                    <!-- Здесь информация о COR-ID -->
+                    
+                       
+                        
+                   
+                </div>
+                <div id="qrcode"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-button" onclick="closeCorIdModal()">Закрыть</button>
             </div>
         </div>
-     
+ 
 
 <button id="openModalBtn">Выбрать вывод</button>
         <!-- Таблица для отображения пользователей -->
@@ -507,6 +528,7 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
                 // Функции для открытия и закрытия модального окна
             function openModal() {
                 document.getElementById("corIdModal").style.display = "block";
+                
             }
 
             function closeCorIdModal() {
@@ -518,6 +540,11 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
                 document.getElementById('columnSelectModal').style.display = 'none';
             }
 
+
+                    // Закрытие модального окна
+            document.getElementById('closeCorIDModal').addEventListener('click', function() {
+                document.getElementById('corIdModal').style.display = 'none';
+            });
             document.addEventListener('DOMContentLoaded', function () {
            const tableBody = document.querySelector("#userTable tbody");
 
@@ -564,6 +591,10 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
                     `;
                     document.getElementById("corIdInfo").innerHTML = corIdInfo;
                     openModal();
+          // Генерация QR-кода только после открытия модального окна    
+            generateQrCodeFromText(corId); // Генерация QR-кода
+     
+             
                 })
                 .catch(error => {
                     console.error("Ошибка:", error);
@@ -634,8 +665,22 @@ function initializeCheckboxes() {
     });
 }
 
+       
+                function generateQrCodeFromText(corId) {
+                    const qrCodeDiv = document.getElementById("qrcode"); // Получаем элемент с ID 'qrcode'
+                    if (!qrCodeDiv) {
+                        console.error("Элемент с ID 'qrcode' не найден.");
+                        return;
+                    }
 
-
+                    // Очистка предыдущего QR-кода и генерация нового
+                    qrCodeDiv.innerHTML = ''; // Очищаем старый QR-код
+                    new QRCode(qrCodeDiv, {
+                        text: corId,
+                        width: 200,
+                        height: 200
+                    });
+                }
         // Запуск функции после загрузки страницы
              document.addEventListener('DOMContentLoaded', function() {
              console.log('Страница загружена. Запуск процесса загрузки пользователей...');
@@ -643,11 +688,12 @@ function initializeCheckboxes() {
              initializeCheckboxes();
              makeModalDraggable('columnSelectModal');
              makeModalDraggable('corIdModal');
+         
              // Функция для отображения модального окна
              document.getElementById('openModalBtn').onclick = function() {
              initializeCheckboxes();
              document.getElementById('columnSelectModal').style.display = 'block';
-             //document.getElementById('columnSelectModal').addEventListener('show', initializeCheckboxes);
+            
              };
               getAllUsers(); // По умолчанию загружаем 5 пользователей, начиная с 0
              });

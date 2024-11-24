@@ -29,43 +29,13 @@ function makeModalDraggable(modalId) {
     };
 }
 
-/*
-document.getElementById('closeModal').addEventListener('click', function () {
-    document.getElementById('myModal').style.display = 'none';
-});
 
-let isMaximized = false;
-
-document.getElementById('maximizeModal').addEventListener('click', function () {
-    const modal = document.getElementById('myModal');
-    if (isMaximized) {
-        modal.style.width = '400px';
-        modal.style.height = 'auto';
-        modal.style.top = '50%';
-        modal.style.left = '50%';
-        modal.style.transform = 'translate(-50%, -50%)';
-    } else {
-        modal.style.width = '100%';
-        modal.style.height = '100%';
-        modal.style.top = '0';
-        modal.style.left = '0';
-        modal.style.transform = 'none';
-    }
-    isMaximized = !isMaximized;
-});
-
-document.getElementById('minimizeModal').addEventListener('click', function () {
-    const modal = document.getElementById('myModal');
-    modal.style.display = 'none';
-    setTimeout(() => (modal.style.display = 'block'), 1000); // Пример восстановления окна
-});
-
-*/
 // Объект для хранения состояния каждого модального окна
 const modalStates = {};
 
 // Универсальная функция для закрытия модального окна
 function closeModal(modalId) {
+    console.log(`Закрытие модального окна: ${modalId}`); 
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'none';
@@ -78,7 +48,7 @@ function closeModal(modalId) {
 function minimizeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-        modal.style.display = 'none'; // Скрываем окно (или используем другой механизм минимизации)
+        modal.classList.add('minimized'); // Добавляем класс минимизированного состояния
         modalStates[modalId] = { ...modalStates[modalId], minimized: true };
     } else {
         console.error(`Модальное окно с id "${modalId}" не найдено.`);
@@ -90,7 +60,7 @@ function maximizeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         const isMaximized = modalStates[modalId]?.maximized || false;
-
+        modal.classList.remove('minimized'); // Убираем класс минимизации
         if (isMaximized) {
             // Восстановление окна до исходного состояния
             modal.style.width = '';
