@@ -106,18 +106,21 @@ function maximizeModal(modalId) {
             modalStates[modalId].minimized = false;
 
             // Изменяем иконку кнопки на двойной квадрат
-            if (maximizeButton) maximizeButton.textContent = '🗗';
+            if (maximizeButton) maximizeButton.textContent = '🗖';
         } else if (isMaximized) {
-            // Восстановление окна до исходного состояния
-            modal.style.width = modalStates[modalId].width;
-            modal.style.height = modalStates[modalId].height;
-            modal.style.top = modalStates[modalId].top;
-            modal.style.left = modalStates[modalId].left;
-            modal.style.transform = 'none';
+            // Восстановление окна до исходного состояния из modalConfigs
+            const defaultConfig = modalConfigs[modalId];
+            if (defaultConfig) {
+                modal.style.width = defaultConfig.width;
+                modal.style.height = defaultConfig.height;
+                modal.style.top = defaultConfig.top;
+                modal.style.left = defaultConfig.left;
+                modal.style.transform = 'none';
+            }
             modalStates[modalId].maximized = false;
 
             // Изменяем иконку кнопки на двойной квадрат
-            if (maximizeButton) maximizeButton.textContent = '🗗';
+            if (maximizeButton) maximizeButton.textContent = '🗖';
         } else {
             // Максимизация окна
             modalStates[modalId] = {
@@ -136,7 +139,7 @@ function maximizeModal(modalId) {
             modalStates[modalId].maximized = true;
 
             // Изменяем иконку кнопки на одинарный квадрат
-            if (maximizeButton) maximizeButton.textContent = '🗖';
+            if (maximizeButton) maximizeButton.textContent = '🗗';
         }
     } else {
         console.error(`Модальное окно с id "${modalId}" не найдено.`);
@@ -166,7 +169,11 @@ function initModalControls(modalId) {
         }
 
         // Сохраняем начальное состояние окна
-        modalStates[modalId] = { maximized: false, minimized: false };
+        modalStates[modalId] = {
+            maximized: false,
+            minimized: false,
+            ...config // Сохраняем параметры для восстановления
+        };
     } else {
         console.error(`Модальное окно с id "${modalId}" не найдено.`);
     }

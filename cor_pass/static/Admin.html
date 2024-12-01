@@ -151,11 +151,7 @@
             </div>
             <div class="modal-content">
                 <div id="corIdInfo">
-                    <!-- Здесь информация о COR-ID -->
-                    
-                       
-                        
-                   
+                    <!-- Здесь информация о COR-ID -->               
                 </div>
                 <div id="qrcode"></div>
             </div>
@@ -580,10 +576,20 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
                     return response.json();
                 })
                 .then(data => {
+                    // Преобразуем количество дней в дату
+                    const baseDate = new Date(2024, 0, 1); // 1 января 2024 года
+                    const registrationDate = new Date(baseDate);
+                    registrationDate.setDate(baseDate.getDate() + data.n_days_since_first_jan_2024);
+
+                    // Форматируем дату для отображения
+                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                    const formattedDate = registrationDate.toLocaleDateString('ru-RU', options);
+
                     // Отображение данных в модальном окне
                     document.getElementById("corIdValue").textContent = corId;
                     const corIdInfo = `
-                        <p>Дней с 1 января 2024: ${data.n_days_since_first_jan_2024}</p>
+                        <p>Дата регистрации: ${formattedDate}</p>
+                     
                         <p>Номер учреждения: ${data.n_facility}</p>
                         <p>Номер пациента: ${data.n_patient}</p>
                         <p>Год рождения: ${data.birth_year}</p>
@@ -591,10 +597,9 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
                     `;
                     document.getElementById("corIdInfo").innerHTML = corIdInfo;
                     openModal();
-          // Генерация QR-кода только после открытия модального окна    
-            generateQrCodeFromText(corId); // Генерация QR-кода
-     
-             
+
+                    // Генерация QR-кода только после открытия модального окна    
+                    generateQrCodeFromText(corId); // Генерация QR-кода
                 })
                 .catch(error => {
                     console.error("Ошибка:", error);

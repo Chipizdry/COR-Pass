@@ -422,3 +422,14 @@ select#user_sex:focus {
 .hidden {
     display: none;
 }
+
+.star {
+    font-size: 20px; /* Размер звезды */
+    color: gray; /* Цвет неактивной звезды */
+    cursor: pointer; /* Курсор в виде руки */
+    transition: color 0.3s; /* Плавный переход */
+}
+
+.star.favorite {
+    color: gold; /* Цвет активной звезды */
+}
