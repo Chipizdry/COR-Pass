@@ -37,22 +37,42 @@
             color: #333;
         }
         
-        /* Стили для таблицы */
+       
+       /* Стили для таблицы */
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 10px; /* Уменьшенный шрифт */
             margin-top: 8px;
+            table-layout: auto; /* Динамическая ширина колонок */
         }
+
         th, td {
             border: 1px solid #ddd;
             padding: 4px;
             text-align: left;
+            white-space: nowrap; /* Исключаем перенос текста */
         }
+
+        thead input[type="text"] {
+            width: calc(100% - 8px); /* Поля ввода занимают ширину данных с учётом отступов */
+            box-sizing: border-box; /* Учитываем padding и border */
+            padding: 2px; /* Минимальные отступы для компактности */
+            font-size: 10px; /* Размер текста для компактности */
+            margin: 0; /* Убираем внешние отступы */
+        }
+
+        thead th {
+            position: relative; /* Для контроля над содержимым ячеек */
+            padding: 4px; /* Сужаем padding */
+        }
+
         th {
             background-color: #f2f2f2;
             font-weight: bold;
+            white-space: nowrap; /* Текст в одной строке */
         }
+
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
@@ -101,15 +121,6 @@
     <div class="container">
         <button class="link-button" onclick="goBack()" data-translate="back-link-text"><<<назад<<<</button>
         <h1>Пользователи</h1>
-         <!-- Поля для поиска -->
-         <div>
-            <label for="searchId">Поиск по ID:</label>
-            <input type="text" id="searchId" placeholder="Введите ID" oninput="filterTable()">
-            
-            <label for="searchEmail">Поиск по Email:</label>
-            <input type="text" id="searchEmail" placeholder="Введите Email" oninput="filterTable()">
-        </div>
-
 <!-- Модальное окно выбора отображения колонок --> 
 <div id="columnSelectModal" class="modal" style="display: none;">
     <div class="modal-header">
@@ -166,17 +177,18 @@
         <table id="userTable">
             <thead>
                 <tr>
-                    <th id="header-user_index">Индекс</th>
-                    <th id="header-id">ID</th>
-                    <th id="header-cor_id">COR-ID</th>
-                    <th id="header-user_sex">Пол</th>
-                    <th id="header-birth">Год рождения</th>
-                    <th id="header-email">Email</th>                
-                    <th id="header-created_at">Дата регистрации</th>
-                    <th id="header-last_password_change">Последнее изменение пароля</th>
-                    <th id="header-last_active">Последняя активность</th> 
-                    <th id="header-account_status">Статус аккаунта</th> 
+                    <th id="header-user_index">Индекс<br><input type="text" oninput="filterTable()" data-column="user_index"></th>
+                    <th id="header-id">ID<br><input type="text" oninput="filterTable()" data-column="id"></th>
+                    <th id="header-cor_id">COR-ID<br><input type="text" oninput="filterTable()" data-column="cor_id"></th>
+                    <th id="header-user_sex">Пол<br><input type="text" oninput="filterTable()" data-column="user_sex"></th>
+                    <th id="header-birth">Год рождения<br><input type="text" oninput="filterTable()" data-column="birth"></th>
+                    <th id="header-email">Email<br><input type="text" oninput="filterTable()" data-column="email"></th>
+                    <th id="header-created_at">Дата регистрации<br><input type="text" oninput="filterTable()" data-column="created_at"></th>
+                    <th id="header-last_password_change">Последнее изменение пароля<br><input type="text" oninput="filterTable()" data-column="last_password_change"></th>
+                    <th id="header-last_active">Последняя активность<br><input type="text" oninput="filterTable()" data-column="last_active"></th>
+                    <th id="header-account_status">Статус аккаунта<br><input type="text" oninput="filterTable()" data-column="account_status"></th>
                     <th>Действия</th>
+                   
                 </tr>
         
             </thead>
@@ -222,6 +234,13 @@
                 const currentTime = new Date();
                 const lastActiveTime = user.last_active ? new Date(user.last_active) : null;
                 const timeDiff = lastActiveTime ? (currentTime - lastActiveTime) / (1000 * 60 * 60) : null; // Разница в часах
+
+                const activityTitle = lastActiveTime
+                ? (timeDiff >= 1 
+                    ? `${Math.floor(timeDiff)} ч ${Math.floor((timeDiff % 1) * 60)} мин назад` // Часы и минуты
+                    : `${Math.floor(timeDiff * 60)} минут назад`) // Только минуты
+                : 'Неактивен';
+
                 let activityColor = 'gray'; // По умолчанию - серый
 
                 if (timeDiff !== null) {
@@ -256,7 +275,9 @@
                         <span class="toggle-status-icon" onclick="toggleUserStatus('${user.email}', ${user.is_active ?? true})">
                          ${user.is_active !== false ? '🔓' : '🔒'}
                              </span>
-                             <span class="activity-indicator" style="background: ${activityColor}; display: inline-block; width: 12px; height: 12px;" title="Активность: ${lastActiveTime ? `${Math.floor(timeDiff * 60)} минут назад` : 'Неактивен'}"></span>
+                            
+                             <span class="activity-indicator" style="background: ${activityColor}; display: inline-block; width: 12px; height: 12px;" title="Активность: ${activityTitle}">
+        </span>
                     </td>
                 `;
 
@@ -410,49 +431,56 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
     }
 }
 
-        async function filterTable() {
-        if (isFiltering) {
-            console.log("Фильтрация уже выполняется, отмена повторного запуска");
-            return;
+async function filterTable() {
+    if (isFiltering) {
+        console.log("Фильтрация уже выполняется, отмена повторного запуска");
+        return;
+    }
+    isFiltering = true;
+
+    // Собираем значения фильтров из полей ввода
+    const filters = {};
+    document.querySelectorAll('thead input[type="text"]').forEach(input => {
+        const column = input.getAttribute('data-column');
+        const value = input.value.trim().toLowerCase();
+        if (value) {
+            filters[column] = value; // Добавляем в фильтры только непустые значения
         }
-        isFiltering = true;
+    });
 
-        const idFilter = document.getElementById("searchId").value.toLowerCase();
-        const emailFilter = document.getElementById("searchEmail").value.toLowerCase();
-        console.log(`Фильтр по ID: ${idFilter}, Фильтр по Email: ${emailFilter}`);
+    console.log("Активные фильтры:", filters);
 
-        allFilteredUsers = [];
-        let skip = 0;
-        let hasMoreData = true;
+    allFilteredUsers = [];
+    let skip = 0;
+    let hasMoreData = true;
 
-        while (hasMoreData) {
-                console.log(`Запрос данных с пропуском: ${skip}, лимит: ${rowsPerPage}`);
-              //  const data = await getAllUsers(skip, rowsPerPage);
-                const users = await getAllUsers(skip, rowsPerPage);            
-                  
+    while (hasMoreData) {
+        console.log(`Запрос данных с пропуском: ${skip}, лимит: ${rowsPerPage}`);
+        const users = await getAllUsers(skip, rowsPerPage);
 
-                    console.log("Полученные данные:",users);
+        if (Array.isArray(users) && users.length > 0) {
+            console.log(`Получено пользователей: ${users.length}`);
+            const filteredUsers = users.filter(user => {
+                // Проверяем соответствие всех активных фильтров
+                return Object.keys(filters).every(column => {
+                    return user[column]?.toString().toLowerCase().includes(filters[column]);
+                });
+            });
 
-                    if (Array.isArray(users) && users.length > 0) {
-                    console.log(`Получено пользователей: ${users.length}`); // Измените data на users
-                    const filteredUsers = users.filter(user => {
-                        const idMatch = user.id.toLowerCase().includes(idFilter);
-                        const emailMatch = user.email.toLowerCase().includes(emailFilter);
-                        return idMatch && emailMatch;
-                    });
-                    console.log(`Отфильтровано пользователей: ${filteredUsers.length}`);
-                    allFilteredUsers = allFilteredUsers.concat(filteredUsers);
-                    skip += rowsPerPage;
-                } else {
-                    hasMoreData = false;
-                    console.log("Нет больше данных");
-                }
-            }
-
-        populateTable(allFilteredUsers.slice(0, rowsPerPage)); // Отображаем первую страницу отфильтрованных данных
-        isFiltering = false;
+            console.log(`Отфильтровано пользователей: ${filteredUsers.length}`);
+            allFilteredUsers = allFilteredUsers.concat(filteredUsers);
+            skip += rowsPerPage;
+        } else {
+            hasMoreData = false;
+            console.log("Нет больше данных");
+        }
     }
 
+    // Отображаем первую страницу отфильтрованных данных
+    populateTable(allFilteredUsers.slice(0, rowsPerPage));
+    isFiltering = false;
+}
+  
             // Обновляем информацию о текущей странице
         function updatePageInfo() {
             document.getElementById('page-info').innerText = `Страница ${currentPage}`;
