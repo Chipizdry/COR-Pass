@@ -27,7 +27,7 @@ async def read_cor_id(
 
     """
     if cor_id:
-        cor_id = repository_cor_id.display_corid_info(cor_id.cor_id)
+        cor_id = repository_cor_id.decode_corid(cor_id.cor_id)
     if cor_id is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="COR-Id not found"

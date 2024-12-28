@@ -27,11 +27,25 @@ class Settings(BaseSettings):
     reload: bool = "False"
     aes_key: str = "key"
     basic_account_records: int = "NUMBER_OF_RECORDS"
-    facility_key: int = "1"
+    corid_facility_key: int = "1"
     admin_accounts: list = json.loads(os.getenv("ETERNAL_ACCOUNTS", "[]"))
     redis_host: str = "REDIS_HOST"
     redis_port: int = 5432
     redis_db: int = 123
+    corid_version: int = 0
+    corid_version_bit: int = 1
+    corid_days_since_bit: int = 16
+    corid_facility_bit: int = 16
+    corid_patient_bit: int = 16
+    corid_charset: str = "0123456789ABCDEFGHJKLMNPRSTUVWXYZ"
+    eternal_accounts: list = json.loads(os.getenv("ETERNAL_ACCOUNTS", "[]"))
+    access_token_expiration: int = 1 
+    refresh_token_expiration: int = 1
+    eternal_token_expiration: int = 1
+    authorization_via_email: bool = "True"
+    authorization_via_google: bool = "True"
+    authorization_via_facebook: bool = "True"
+    allowed_redirect_urls: list = json.loads(os.getenv("ALLOWED_REDIRECT_URLS", "[]"))
 
     class Config:
 

@@ -26,7 +26,8 @@ async def get_user_by_email(email: str, db: Session) -> User | None:
     :param db: Session: Pass the database session to the function
     :return: The first user found with the email specified
     """
-    return db.query(User).filter(User.email == email).first()
+    email_lower = email.lower()
+    return db.query(User).filter(User.email.ilike(email_lower)).first()
 
 
 async def get_user_by_uuid(uuid: str, db: Session) -> User | None:
