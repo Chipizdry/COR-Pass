@@ -48,7 +48,8 @@
             border-collapse: collapse;
             font-size: 10px; /* Уменьшенный шрифт */
             margin-top: 8px;
-            table-layout: auto; /* Динамическая ширина колонок */
+          
+           /* table-layout: auto; /* Динамическая ширина колонок */
         }
 
 
@@ -63,7 +64,7 @@
             width: calc(100% - 8px); /* Поля ввода занимают ширину данных с учётом отступов */
             max-width: 210px; /* Ограничиваем максимальную ширину */
             box-sizing: border-box; /* Учитываем padding и border */
-            padding: 2px; /* Минимальные отступы для компактности */
+            padding: 4px; /* Минимальные отступы для компактности */
             font-size: 10px; /* Размер текста для компактности */
             margin: 0; /* Убираем внешние отступы */
         }
@@ -74,8 +75,7 @@
         #header-user_sex,
         #header-account_status, 
         #header-birth {
-            width: auto; /* Автоматическая ширина */
-            max-width: 130px; /* Ограничение максимальной ширины */
+            max-width: 65px; /* Ограничение максимальной ширины */
         }
 
         /* Для конкретных полей поиска */
@@ -310,7 +310,7 @@
 
              // Подгонка размеров после заполнения
             adjustContainerWidth();
-            adjustColumnWidths();
+          //  adjustColumnWidths();
         }
 
         
@@ -349,7 +349,7 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
             console.log('Полученные пользователи:', users); // Логируем массив пользователей
             populateTable(users); // Передаём массив пользователей
             adjustContainerWidth(); // Убедитесь, что размеры обновлены
-            adjustColumnWidths();
+           // adjustColumnWidths();
             return users; // Данные успешно получены
         } else {
             console.log('Пользователи отсутствуют.');
@@ -690,7 +690,7 @@ async function filterTable() {
 
                 // Подгонка размеров
                 adjustContainerWidth();
-                adjustColumnWidths();
+              //  adjustColumnWidths();
             }
                     
            // Функция для инициализации видимости колонок из localStorage
@@ -786,7 +786,7 @@ async function filterTable() {
              initializeColumns();
              initializeCheckboxes();
              adjustContainerWidth(); // Установить начальную ширину контейнера
-             adjustColumnWidths();
+          //   adjustColumnWidths();
              makeModalDraggable('columnSelectModal');
              makeModalDraggable('corIdModal');
          
@@ -798,7 +798,7 @@ async function filterTable() {
             
              };
              window.addEventListener('resize', adjustContainerWidth); // Подгонка ширины при изменении размеров окна
-              window.addEventListener('resize', adjustColumnWidths); // Перепроверка при изменении размера окна
+           //   window.addEventListener('resize', adjustColumnWidths); // Перепроверка при изменении размера окна
               getAllUsers(); // По умолчанию загружаем 5 пользователей, начиная с 0            
               
              });

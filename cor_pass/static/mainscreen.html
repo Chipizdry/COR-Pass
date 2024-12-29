@@ -20,7 +20,7 @@ class="registration-button" data-translate="registration-button">Register</butto
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>User Records</title>
         <link rel="stylesheet" type="text/css" href="/static/styles.css">
-
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
       
     </head>
     <body>
@@ -29,8 +29,10 @@ class="registration-button" data-translate="registration-button">Register</butto
         <div class="top-panel">
         <div class="panel">
             <h1>COR-ID</h1>
+            <h4 id="userCorId" class="clickable">Загрузка...</h4>
+            <div id="qrCodeContainer" style="display: none;margin-top: 10px;"></div> 
             <button class="button" id="passwordManagerButton">Password manager</button>
-            <button class="button" id="Cor-Id-Button">COR-Auth</button>
+            <button class="button" id="Cor-Auth">COR-Auth</button>
             <button class="button" id="loginButton">COR-Platform</button>
         </div>
         <div id="admin-button-container"></div> <!-- Контейнер для кнопки администратора -->
@@ -46,7 +48,7 @@ class="registration-button" data-translate="registration-button">Register</butto
                 window.location.href = '/static/password_manager.html' + '?access_token=' + accessToken;
             });
     
-            document.getElementById('Cor-Id-Button').addEventListener('click', function() {
+            document.getElementById('Cor-Auth').addEventListener('click', function() {
                 window.location.href = '/static/Cor-Id.html' + '?access_token=' + accessToken;
             });
     
@@ -54,7 +56,64 @@ class="registration-button" data-translate="registration-button">Register</butto
                 window.location.href = '/static/COR.html' + '?access_token=' + accessToken;
             });
 
+            function toggleQrCode(corId) {
+                const qrCodeContainer = document.getElementById('qrCodeContainer');
 
+                if (qrCodeContainer.style.display === 'block') {
+                    // Скрываем QR-код, если он уже отображается
+                    qrCodeContainer.style.display = 'none';
+                    qrCodeContainer.innerHTML = ''; // Очищаем контейнер
+                } else {
+                    // Показываем QR-код
+                    qrCodeContainer.style.display = 'block';
+
+                    // Очищаем предыдущий QR-код (если есть)
+                    qrCodeContainer.innerHTML = '';
+
+                    // Генерация нового QR-кода
+                    new QRCode(qrCodeContainer, {
+                        text: corId,
+                        width: 180,
+                        height: 180
+                    });
+                }
+            }
+            async function fetchCorId() {
+                const accessToken = new URLSearchParams(window.location.search).get('access_token');
+                if (!accessToken) {
+                    console.error("Токен доступа не найден.");
+                    document.getElementById('userCorId').textContent = "Ошибка: токен не найден.";
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/user/my_core_id', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        console.error("Ошибка получения COR-ID:", errorData);
+                        document.getElementById('userCorId').textContent = "Ошибка получения COR-ID.";
+                        return;
+                    }
+
+                    const corId = await response.json();
+                    const userCorIdElement = document.getElementById('userCorId');
+                    userCorIdElement.textContent = `${corId}`;
+                     // Добавляем обработчик клика для отображения QR-кода
+                     userCorIdElement.addEventListener('click', () => toggleQrCode(corId));
+                } catch (error) {
+                    console.error("Ошибка при запросе COR-ID:", error);
+                    document.getElementById('userCorId').textContent = "Ошибка при загрузке COR-ID.";
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', fetchCorId);
             document.addEventListener('DOMContentLoaded', function() {
           const isAdmin = localStorage.getItem('isAdmin'); // Получаем значение из localStorage
           const adminButtonContainer = document.getElementById('admin-button-container'); // Элемент, куда будет добавлена кнопка
@@ -70,6 +129,7 @@ class="registration-button" data-translate="registration-button">Register</butto
                 };
                 adminButtonContainer.appendChild(adminButton); // Добавляем кнопку в контейнер
             }
+
         });
         </script>
     </body>

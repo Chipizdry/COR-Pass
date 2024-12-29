@@ -20,6 +20,7 @@ body, html {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     background-color: #fff;
     text-align: center;
+    align-items: center;
 }
 
 #back-link {
@@ -432,4 +433,32 @@ select#user_sex:focus {
 
 .star.favorite {
     color: gold; /* Цвет активной звезды */
+}
+
+
+#qrCodeContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 180px; /* Устанавливаем ширину контейнера */
+    height: 180px; /* Устанавливаем высоту контейнера */
+    margin: 0 auto;
+}
+
+#qrcode {
+    display: block; /* Убираем побочные отступы inline-элементов */
+    margin: 0 auto; /* Центрируем элемент внутри родителя */
+    text-align: center; /* Если в HTML-коде есть текст, он центрируется */
+    max-width: 100%;
+    display: inline-block;
+}
+
+#userCorId.clickable {
+    cursor: pointer; /* Изменяет курсор на "руку" при наведении */
+    color: blue; /* Цвет текста */
+   /* text-decoration: underline; /* Подчеркивание текста */
+}
+
+#userCorId.clickable:hover {
+    color: darkblue; /* Темный цвет при наведении */
 }
