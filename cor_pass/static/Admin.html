@@ -10,6 +10,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" type="text/css" href="/static/modal.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Подключаем стили flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <!-- Подключаем скрипт flatpickr -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>      
     <title>Admin Page</title>
     <style>
         /* Основные стили для контейнера и таблицы */
@@ -100,6 +104,22 @@
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+
+
+
+        .date-range {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .date-range input[type="date"] {
+        width: 150px;
+    }
+
+    .date-range span {
+        margin: 0 5px;
+    }
 
         .delete-icon, .toggle-status-icon  {
             cursor: pointer;
@@ -209,7 +229,13 @@
                     <th id="header-email">Email<br><input type="text" oninput="filterTable()" data-column="email"></th>
                     <th id="header-created_at">Дата регистрации<br><input type="text" oninput="filterTable()" data-column="created_at"></th>
                     <th id="header-last_password_change">Последнее изм. пароля<br><input type="text" oninput="filterTable()" data-column="last_password_change"></th>
-                    <th id="header-last_active">Последняя активность<br><input type="text" oninput="filterTable()" data-column="last_active"></th>
+                 <!--   <th id="header-last_active">Последняя активность<br><input type="text" oninput="filterTable()" data-column="last_active"></th> -->
+                 <th id="header-last_active">
+                    Последняя активность<br>
+                    <div class="date-range">
+                        <input type="text" id="dateRangeActive" onchange="filterByDateRange()" placeholder="Выберите диапазон дат">
+                    </div>
+                </th> 
                     <th id="header-account_status">Статус аккаунта<br><input type="text" oninput="filterTable()" data-column="account_status"></th>
                     <th>Действия</th>
                    
@@ -779,6 +805,28 @@ async function filterTable() {
                     }
                 });
             }
+
+
+            // Инициализация для выбора диапазона дат (календарик)
+                document.addEventListener('DOMContentLoaded', () => {
+                    const dateInputs = document.querySelectorAll('input[id*="Range"]');
+                    dateInputs.forEach(input => {
+                        input.addEventListener('focus', () => {
+                            // Открытие календаря, чтобы пользователь мог выбрать диапазон дат
+                            const datePicker = new flatpickr(input, {
+                                mode: "range", 
+                                dateFormat: "Y-m-d",
+                                onClose: function(selectedDates) {
+                                    // После выбора диапазона дат отображаем его в поле ввода
+                                    if (selectedDates.length === 2) {
+                                        input.value = `${selectedDates[0].toLocaleDateString()} - ${selectedDates[1].toLocaleDateString()}`;
+                                    }
+                                }
+                            });
+                        });
+                    });
+                });
+
 
         // Запуск функции после загрузки страницы
              document.addEventListener('DOMContentLoaded', function() {

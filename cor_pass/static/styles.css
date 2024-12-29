@@ -440,8 +440,8 @@ select#user_sex:focus {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 180px; /* Устанавливаем ширину контейнера */
-    height: 180px; /* Устанавливаем высоту контейнера */
+    width: 160px; /* Устанавливаем ширину контейнера */
+    height: 160px; /* Устанавливаем высоту контейнера */
     margin: 0 auto;
 }
 
@@ -461,4 +461,7 @@ select#user_sex:focus {
 
 #userCorId.clickable:hover {
     color: darkblue; /* Темный цвет при наведении */
+}
+#userCorId {
+    margin-top: 0; /* уменьшенный отступ */
 }

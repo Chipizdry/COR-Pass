@@ -1,16 +1,4 @@
 
-
-
-
-<!-- 
-Можно сделать по такому принципу, как было с редиректом - после того как мы достали токен на странице login.html или mainscreen.html, мы его добавляем в квери параметр для последующих переходах на другие страницы -->
-<!-- </button>
-<h3 data-translate="registration">Registration</h3>
-<button onclick="window.location.href='/static/signup.html' -> тут новая страница 
-+ '?access_token=' + access_token;" -> а тут добавляем квери параметр со старой страницы 
-class="registration-button" data-translate="registration-button">Register</button>
-<br><button onclick="window.location.href='/static/forgot-password.html' + '?access_token=' + access_token;" class="registration-button"><span data-translate="forgot-password-button">Forgot password?</span></a><br> -->
-
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -28,8 +16,8 @@ class="registration-button" data-translate="registration-button">Register</butto
         <button class="link-button" onclick="goBack()" data-translate="back-link-text"><<<назад<<<</button>
         <div class="top-panel">
         <div class="panel">
-            <h1>COR-ID</h1>
-            <h4 id="userCorId" class="clickable">Загрузка...</h4>
+            <h1 style=margin-top:0;>COR-ID</h1>
+            <h4 id="userCorId" class="clickable" style=margin-top:0;>Загрузка...</h4>
             <div id="qrCodeContainer" style="display: none;margin-top: 10px;"></div> 
             <button class="button" id="passwordManagerButton">Password manager</button>
             <button class="button" id="Cor-Auth">COR-Auth</button>
@@ -42,7 +30,6 @@ class="registration-button" data-translate="registration-button">Register</butto
     <script> function goBack() { window.history.back();  } </script>
         <script>
            const accessToken = new URLSearchParams(window.location.search).get('access_token');
-         //   const accessToken =localStorage.getItem('access_token')
             console.log("accessToken from localStorage:", accessToken);
             document.getElementById('passwordManagerButton').addEventListener('click', function() {
                 window.location.href = '/static/password_manager.html' + '?access_token=' + accessToken;
@@ -52,9 +39,24 @@ class="registration-button" data-translate="registration-button">Register</butto
                 window.location.href = '/static/Cor-Id.html' + '?access_token=' + accessToken;
             });
     
-            document.getElementById('loginButton').addEventListener('click', function() {
-                window.location.href = '/static/COR.html' + '?access_token=' + accessToken;
-            });
+         //   document.getElementById('loginButton').addEventListener('click', function() {
+         //       window.location.href = '/static/COR.html' + '?access_token=' + accessToken;
+         //   });
+
+            // Обработчик для кнопки "COR-Platform"
+        document.getElementById('loginButton').addEventListener('click', function() {
+            const accessToken = new URLSearchParams(window.location.search).get('access_token');
+            const savedRedirectUrl = localStorage.getItem('redirect_url');
+
+            if (savedRedirectUrl && corId && accessToken) {
+                // Перенаправляем на savedRedirectUrl с access_token и cor_id
+                window.location.href = `${savedRedirectUrl}?access_token=${accessToken}&cor_id=${corId}`;
+            } else {
+                console.error("Ошибка: Не найдены параметры redirect_url или cor_id.");
+            }
+        });
+
+
 
             function toggleQrCode(corId) {
                 const qrCodeContainer = document.getElementById('qrCodeContainer');
@@ -73,8 +75,8 @@ class="registration-button" data-translate="registration-button">Register</butto
                     // Генерация нового QR-кода
                     new QRCode(qrCodeContainer, {
                         text: corId,
-                        width: 180,
-                        height: 180
+                        width: 160,
+                        height: 160
                     });
                 }
             }
@@ -105,8 +107,14 @@ class="registration-button" data-translate="registration-button">Register</butto
                     const corId = await response.json();
                     const userCorIdElement = document.getElementById('userCorId');
                     userCorIdElement.textContent = `${corId}`;
-                     // Добавляем обработчик клика для отображения QR-кода
+                     // Jбработчик клика для отображения QR-кода
                      userCorIdElement.addEventListener('click', () => toggleQrCode(corId));
+                     // Jбработчик клика на сам QR-код для его скрытия
+                    const qrCodeContainer = document.getElementById('qrCodeContainer');
+                    qrCodeContainer.addEventListener('click', () => {
+                        qrCodeContainer.style.display = 'none'; // Скрываем QR-код
+                        qrCodeContainer.innerHTML = ''; // Очищаем контейнер
+                    });
                 } catch (error) {
                     console.error("Ошибка при запросе COR-ID:", error);
                     document.getElementById('userCorId').textContent = "Ошибка при загрузке COR-ID.";
