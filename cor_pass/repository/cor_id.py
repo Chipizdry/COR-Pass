@@ -105,7 +105,6 @@ async def get_cor_id(user: User, db: Session):
 #         raise e
 
 
-
 """
 Алгоритм Юры
 
@@ -123,9 +122,11 @@ def custom_base32_encode(value, charset):
     encoded = []
     while num > 0:
         num, remainder = divmod(num, base)  # Остаток от деления на основание
-        encoded.append(charset[remainder])  # Добавляем соответствующий символ из алфавита
+        encoded.append(
+            charset[remainder]
+        )  # Добавляем соответствующий символ из алфавита
 
-    return ''.join(reversed(encoded))  # Переворачиваем и возвращаем строку
+    return "".join(reversed(encoded))  # Переворачиваем и возвращаем строку
 
 
 def from_custom_base32(encoded_str, charset):
@@ -136,15 +137,18 @@ def from_custom_base32(encoded_str, charset):
         num = num * base + charset.index(char)  # Умножаем и добавляем индекс символа
     return num
 
+
 # Расшифровка cor_id
 def decode_corid(cor_id):
-    encoded_corid, birth_year_gender = cor_id.split('-')
+    encoded_corid, birth_year_gender = cor_id.split("-")
 
     decoded_num = from_custom_base32(encoded_corid, charset)
 
     # Извлечение данных из числа
     version = (decoded_num >> (patient_bit + facility_bit + days_since_bit)) & 1
-    n_days_since = (decoded_num >> (patient_bit + facility_bit)) & ((1 << days_since_bit) - 1)
+    n_days_since = (decoded_num >> (patient_bit + facility_bit)) & (
+        (1 << days_since_bit) - 1
+    )
     facility_number = (decoded_num >> patient_bit) & ((1 << facility_bit) - 1)
     register_per_day = decoded_num & ((1 << patient_bit) - 1)
     birth_year = birth_year_gender[:-1]
@@ -156,8 +160,9 @@ def decode_corid(cor_id):
         "facility_number": facility_number,
         "register_per_day": register_per_day,
         "birth_year": birth_year,
-        "gender": gender
+        "gender": gender,
     }
+
 
 # Создание cor_id
 async def create_new_corid(user: User, db: Session):
@@ -165,9 +170,13 @@ async def create_new_corid(user: User, db: Session):
     jan_first_2024 = datetime(2024, 1, 1).date()
     today = datetime.now().date()
     n_days_since_first_jan_2024 = (today - jan_first_2024).days
-    term1 = version * (2 ** (days_since_bit + facility_bit + patient_bit)) * (1 if version_bit > 0 else 0)
+    term1 = (
+        version
+        * (2 ** (days_since_bit + facility_bit + patient_bit))
+        * (1 if version_bit > 0 else 0)
+    )
     term2 = n_days_since_first_jan_2024 * (2 ** (patient_bit + facility_bit))
-    term3 = n_facility * (2 ** patient_bit)
+    term3 = n_facility * (2**patient_bit)
     term4 = get_register_per_day(n_facility)
 
     new_corid_decimal = term1 + term2 + term3 + term4
@@ -187,13 +196,12 @@ def get_register_per_day(facility_number):
     # Генерируем уникальный ключ на основе facility_number и текущей даты
     date_str = datetime.now().strftime("%Y-%m-%d")  # Текущая дата в формате ГГГГ-ММ-ДД
     register_key = f"register:{facility_number}:{date_str}"
-    
+
     if redis_client.exists(register_key):
         register_number = redis_client.incr(register_key)
     else:
         redis_client.set(register_key, 1)
         redis_client.expire(register_key, 24 * 60 * 60)
         register_number = 1
-    
-    return register_number
 
+    return register_number

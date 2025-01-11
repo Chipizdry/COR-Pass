@@ -10,8 +10,9 @@ import re
 class UserModel(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6, max_length=20)
-    birth: Optional[int] = Field(ge=1945, le=2100)
-    user_sex: Optional[str] = Field(max_length=1)
+    birth: Optional[int] = Field(None, ge=1945, le=2100)
+    user_sex: Optional[str] = Field(None, max_length=1)
+    cor_id: Optional[str] = Field(None, max_length=15)
 
     @field_validator("user_sex")
     def user_sex_must_be_m_or_f(cls, v):
@@ -22,13 +23,13 @@ class UserModel(BaseModel):
 
 class UserDb(BaseModel):
     id: str
-    cor_id: str
+    cor_id: Optional[str] = Field(None, max_length=15)
     email: str
     account_status: Status
     is_active: bool
     last_password_change: datetime
-    user_sex: str
-    birth: int
+    user_sex: Optional[str] = Field(None, max_length=1)
+    birth: Optional[int] = Field(None, ge=1945, le=2100)
     user_index: int
     created_at: datetime
     last_active: Optional[datetime] = None

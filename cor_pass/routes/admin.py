@@ -13,6 +13,7 @@ from cor_pass.database.redis_db import redis_client
 from datetime import datetime
 
 from cor_pass.services.logger import logger
+
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
@@ -42,9 +43,9 @@ async def get_all_users(
 
     users_list_with_activity = []
     for user in list_users:
-        cor_id = user.cor_id
-        if redis_client.exists(cor_id):
-            users_last_activity = redis_client.get(cor_id)
+        oid = user.id
+        if redis_client.exists(oid):
+            users_last_activity = redis_client.get(oid)
             user_response = UserDb(
                 id=user.id,
                 cor_id=user.cor_id,
@@ -56,7 +57,7 @@ async def get_all_users(
                 birth=user.birth,
                 user_index=user.user_index,
                 created_at=user.created_at,
-                last_active=users_last_activity.decode('utf-8'),
+                last_active=users_last_activity.decode("utf-8"),
             )
         else:
             user_response = UserDb(
@@ -75,7 +76,6 @@ async def get_all_users(
         users_list_with_activity.append(user_response)
 
     return users_list_with_activity
-
 
 
 @router.patch("/asign_status/{account_status}", dependencies=[Depends(admin_access)])
@@ -177,9 +177,7 @@ async def activate_user(email: EmailStr, db: Session = Depends(get_db)):
 
 
 @router.patch("/kickout/{email}", dependencies=[Depends(admin_access)])
-async def kickout_user(
-    email: EmailStr, db: Session = Depends(get_db)
-):
+async def kickout_user(email: EmailStr, db: Session = Depends(get_db)):
     """
     **Kickout user by email (delete refresh token). / Удаление рефрещ токена пользователя**\n
 
@@ -189,6 +187,5 @@ async def kickout_user(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     else:
         new_token = None
-        await person.update_token(user = user, token = new_token, db = db)
+        await person.update_token(user=user, token=new_token, db=db)
         return {"message": f"{email} - delete refresh token"}
-

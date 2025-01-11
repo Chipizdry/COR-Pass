@@ -46,10 +46,10 @@ class User(Base):
     unique_cipher_key = Column(
         String(250), nullable=False
     )  # уникальный ключ шифрования конкретного пользователя, в базе в зашифрованном виде, шифруется с помошью AES key переменной окружения
-    user_sex = Column(String(10), nullable=False)
-    birth = Column(Integer, nullable=False)
+    user_sex = Column(String(10), nullable=True)
+    birth = Column(Integer, nullable=True)
     user_index = Column(
-        Integer, unique=True
+        Integer, unique=True, nullable=True
     )  # индекс пользователя, используется в создании cor_id
     created_at = Column(DateTime, nullable=False, default=func.now())
     user_records = relationship(

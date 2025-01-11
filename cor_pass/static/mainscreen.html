@@ -39,18 +39,15 @@
                 window.location.href = '/static/Cor-Id.html' + '?access_token=' + accessToken;
             });
     
-         //   document.getElementById('loginButton').addEventListener('click', function() {
-         //       window.location.href = '/static/COR.html' + '?access_token=' + accessToken;
-         //   });
-
             // Обработчик для кнопки "COR-Platform"
         document.getElementById('loginButton').addEventListener('click', function() {
             const accessToken = new URLSearchParams(window.location.search).get('access_token');
-            const savedRedirectUrl = localStorage.getItem('redirect_url');
+            const refreshToken = new URLSearchParams(window.location.search).get('refresh_token');
+            const savedRedirectUrl = localStorage.getItem('redirectUrl');
 
-            if (savedRedirectUrl && corId && accessToken) {
+            if (savedRedirectUrl && accessToken) {
                 // Перенаправляем на savedRedirectUrl с access_token и cor_id
-                window.location.href = `${savedRedirectUrl}?access_token=${accessToken}&cor_id=${corId}`;
+                window.location.href = `${savedRedirectUrl}?access_token=${accessToken}&refresh_token=${refreshToken}`;
             } else {
                 console.error("Ошибка: Не найдены параметры redirect_url или cor_id.");
             }

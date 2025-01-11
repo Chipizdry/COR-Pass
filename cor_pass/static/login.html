@@ -410,6 +410,34 @@ document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('login-form');
         const messageDiv = document.getElementById('message');
 
+                    // Получаем текущий URL
+            const currentUrl = window.location.href;
+
+            // Создаем объект URL
+            const url = new URL(currentUrl);
+
+            // Извлекаем параметры из строки запроса
+            const searchParams = url.searchParams;
+
+            // Получаем значения redirect_url и cor-id
+            const redirectUrl = searchParams.get('redirectUrl'); // Указываем ключ 'redirectUrl'
+            const corId = searchParams.get('corId'); // Указываем ключ 'cor_id'
+
+            // Сохраняем их в localStorage
+            if (redirectUrl) {
+                localStorage.setItem('redirectUrl', redirectUrl);
+                console.log('Redirect URL сохранен в localStorage:', redirectUrl);
+            } else {
+                console.warn('Redirect URL отсутствует в строке запроса.');
+            }
+
+            if (corId) {
+                localStorage.setItem('cor_id', corId);
+                console.log('COR-ID сохранен в localStorage:', corId);
+            } else {
+                console.warn('COR-ID отсутствует в строке запроса.');
+            }
+
         form.addEventListener('submit', (event) => {
             event.preventDefault();
 

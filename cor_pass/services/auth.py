@@ -56,7 +56,9 @@ class Auth:
         if expires_delta:
             expire = datetime.now(timezone.utc) + timedelta(hours=expires_delta)
         else:
-            expire = datetime.now(timezone.utc) + timedelta(seconds=settings.access_token_expiration)
+            expire = datetime.now(timezone.utc) + timedelta(
+                seconds=settings.access_token_expiration
+            )
         to_encode.update(
             {"iat": datetime.now(timezone.utc), "exp": expire, "scp": "access_token"}
         )
@@ -85,7 +87,9 @@ class Auth:
         if expires_delta:
             expire = datetime.now(timezone.utc) + timedelta(hours=expires_delta)
         else:
-            expire = datetime.now(timezone.utc) + timedelta(hours=settings.refresh_token_expiration)
+            expire = datetime.now(timezone.utc) + timedelta(
+                hours=settings.refresh_token_expiration
+            )
         to_encode.update(
             {"iat": datetime.now(timezone.utc), "exp": expire, "scp": "refresh_token"}
         )
@@ -165,15 +169,16 @@ class Auth:
                 raise token_expired_exception
 
             if payload["scp"] == "access_token":
-                cor_id = payload["corid"]
-                if cor_id is None:
+                oid = payload["oid"]
+                if oid is None:
                     raise credentials_exception
             else:
                 raise credentials_exception
         except JWTError:
             raise token_expired_exception
 
-        user = await repository_users.get_user_by_corid(cor_id, db)
+        # user = await repository_users.get_user_by_corid(cor_id, db)
+        user = await repository_users.get_user_by_uuid(oid, db)
         if user is None:
             raise credentials_exception
 

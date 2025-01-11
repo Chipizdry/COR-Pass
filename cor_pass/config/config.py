@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     corid_patient_bit: int = 16
     corid_charset: str = "0123456789ABCDEFGHJKLMNPRSTUVWXYZ"
     eternal_accounts: list = json.loads(os.getenv("ETERNAL_ACCOUNTS", "[]"))
-    access_token_expiration: int = 1 
+    access_token_expiration: int = 1
     refresh_token_expiration: int = 1
     eternal_token_expiration: int = 1
     authorization_via_email: bool = "True"

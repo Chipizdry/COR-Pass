@@ -1,8 +1,8 @@
-"""change token size
+"""add user sex, age and index nullable True
 
-Revision ID: 7062e2477f80
-Revises: 5c9accbc0516
-Create Date: 2024-12-10 11:38:11.733596
+Revision ID: 8dd0a16a23f4
+Revises: 977efb343b96
+Create Date: 2024-12-30 10:32:54.085945
 
 """
 
@@ -13,8 +13,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "7062e2477f80"
-down_revision: Union[str, None] = "5c9accbc0516"
+revision: str = "8dd0a16a23f4"
+down_revision: Union[str, None] = "977efb343b96"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

@@ -214,7 +214,23 @@
                 <button class="modal-button" onclick="closeCorIdModal()">Закрыть</button>
             </div>
         </div>
- 
+
+   <!-- Модальное окно Срок действия сессии истёк -->
+<div id="tokenExpiredModal" class="modal" style="display: none;">
+    <div class="modal-header">
+        <h1>Срок действия сессии истёк</h1>
+        <div class="modal-buttons">
+            <button class="modal-button close" id="closeTokenExpiredModal">✖</button>
+        </div>
+    </div>
+    <div class="modal-content">
+        <p>Пожалуйста, войдите снова, чтобы продолжить.</p>
+    </div>
+    <div class="modal-footer">
+        <button id="loginRedirectButton" class="modal-button">Войти</button>
+    </div>
+</div>
+
 
 <button id="openModalBtn">Выбрать вывод</button>
         <!-- Таблица для отображения пользователей -->
@@ -807,6 +823,32 @@ async function filterTable() {
             }
 
 
+            function decodeToken(token) {
+                try {
+                    const payloadBase64 = token.split('.')[1]; // Вторая часть JWT — это payload
+                    const payload = atob(payloadBase64); // Декодируем из base64
+                    return JSON.parse(payload); // Преобразуем JSON-строку в объект
+                } catch (error) {
+                    console.error("Ошибка декодирования токена:", error);
+                    return null;
+                }
+            }
+
+            function isTokenExpired(token) {
+                const payload = decodeToken(token);
+                if (payload && payload.exp) {
+                    const currentTime = Math.floor(Date.now() / 1000); // Текущее время в секундах
+                    return currentTime > payload.exp; // Сравниваем с временем истечения
+                }
+                return true; // Если нет exp или ошибка, считаем токен истёкшим
+            }
+
+
+            function showTokenExpiredModal() {
+                const modal = document.getElementById('tokenExpiredModal');
+                modal.style.display = 'block';
+            }
+
             // Инициализация для выбора диапазона дат (календарик)
                 document.addEventListener('DOMContentLoaded', () => {
                     const dateInputs = document.querySelectorAll('input[id*="Range"]');
@@ -839,6 +881,89 @@ async function filterTable() {
              makeModalDraggable('corIdModal');
          
 
+             const accessToken = new URLSearchParams(window.location.search).get('access_token');
+
+            if (!accessToken || isTokenExpired(accessToken)) {
+                showTokenExpiredModal();
+
+            }
+
+
+            const originalFetch = window.fetch;
+            window.fetch = async function (...args) {
+                // Печатаем аргументы вызова fetch для отладки
+                console.log("Fetch arguments:", args);
+
+                // Проверяем наличие токена в заголовках
+                const requestOptions = args[1] || {};
+                const headers = requestOptions.headers || {};
+
+                if (headers.Authorization) {
+                    const token = headers.Authorization.replace("Bearer ", ""); // Убираем "Bearer"
+                    console.log("Extracted token:", token);
+
+                    // Парсим токен и выводим его в консоль
+                    const decodedToken = decodeToken(token);
+                    if (decodedToken) {
+                        console.log("Decoded token:", decodedToken);
+
+                        // Вычисляем оставшееся время жизни токена
+                        const remainingTime = calculateTokenLifetime(decodedToken);
+                        if (remainingTime !== null) {
+                            console.log(`Оставшееся время жизни токена: ${remainingTime} секунд`);
+                            console.log(`Форматированное время: ${formatTime(remainingTime)}`);
+                        }
+                    } else {
+                        console.error("Failed to decode token.");
+                    }
+                } else {
+                    console.warn("Authorization header is missing.");
+                }
+
+                // Выполняем оригинальный запрос
+                const response = await originalFetch(...args);
+
+                // Обрабатываем ошибки 401
+                if (response.status === 401) { // Неавторизован
+                    console.warn("Unauthorized: Token might be expired.");
+                    showTokenExpiredModal();
+                }
+
+                return response;
+            };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Функция вычисления оставшегося времени жизни токена
+function calculateTokenLifetime(decodedToken) {
+    if (!decodedToken.exp) {
+        console.warn("Token does not have an 'exp' field.");
+        return null;
+    }
+
+    const currentTime = Math.floor(Date.now() / 1000); // Текущее время в секундах
+    const remainingTime = decodedToken.exp - currentTime;
+
+    if (remainingTime <= 0) {
+        console.warn("Token has already expired.");
+        return 0;
+    }
+
+    return remainingTime; // В секундах
+}
+
+// Функция форматирования времени
+function formatTime(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    return `${hours}ч ${minutes}м ${secs}с`;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            document.getElementById('loginRedirectButton').addEventListener('click', function () {
+                window.location.href='/';});
+
              // Функция для отображения модального окна
              document.getElementById('openModalBtn').onclick = function() {
              initializeCheckboxes();
@@ -851,6 +976,7 @@ async function filterTable() {
               
              });
            
+
     </script>
 </body>
 </html>

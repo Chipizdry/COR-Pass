@@ -225,7 +225,7 @@ if (passwordInput.value.length > 0 || confirmPasswordInput.value.length > 0) {
     // Проверка полей при вводе данных
     passwordInput.addEventListener('input', checkFields);
     confirmPasswordInput.addEventListener('input', checkFields);
-
+/*
     registrationButton.addEventListener('click', () => {
         if (passwordInput.value !== confirmPasswordInput.value) {
           //  alert('Пароли не совпадают!');
@@ -275,6 +275,74 @@ if (passwordInput.value.length > 0 || confirmPasswordInput.value.length > 0) {
             xhr.send(JSON.stringify(formDataJson));
         }
     });
+*/
+
+    registrationButton.addEventListener('click', () => {
+    if (passwordInput.value !== confirmPasswordInput.value) {
+        console.error('Пароли не совпадают.');
+        return;
+    }
+
+    const formData = new FormData(form);
+    const formDataJson = {};
+
+    formData.forEach((value, key) => {
+        formDataJson[key] = value;
+    });
+
+    // Получаем значения пола и года рождения
+    const gender = document.getElementById('user_sex').value;
+    const birthYear = document.getElementById('birth').value;
+
+    // Проверяем, что оба поля заполнены
+    if (!gender || !birthYear) {
+        console.error('Пол и год рождения должны быть заполнены.');
+        return;
+    }
+
+    // Преобразуем данные в нужный формат для запроса
+    formDataJson['user_sex'] = gender;
+    formDataJson['birth'] = parseInt(birthYear);
+
+    // // Распарсить redirectUrl
+    // const urlParams = new URLSearchParams(window.location.search);
+    // const corId = urlParams.get('cor_id'); // Получаем corId
+
+    // if (corId) {
+
+    const corId = localStorage.getItem('cor_id');
+    console.log('COR-ID:', corId); 
+    formDataJson['cor_id'] = corId; // Добавляем corId в запрос
+    // } else {
+    //     console.warn('COR-ID отсутствует.');
+    // }
+
+    // Отправка данных на сервер
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/auth/signup');
+    xhr.setRequestHeader('Content-Type', 'application/json');
+
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (xhr.status === 201) {
+                const response = JSON.parse(xhr.responseText);
+                console.log('Регистрация прошла успешно.');
+                messageDiv.innerText = translations[userLang]['registrationSuccess'];
+                messageDiv.style.color = 'green';
+
+                registrationButton.style.display = 'none';
+                loginButton.style.display = 'block';
+            } else {
+                console.error('Произошла ошибка при регистрации.');
+            }
+        }
+    };
+
+    xhr.send(JSON.stringify(formDataJson));
+});
+
+
+
 
     loginButton.addEventListener('click', () => {
         const email = document.getElementById('email').value;

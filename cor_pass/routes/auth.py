@@ -132,14 +132,20 @@ async def login(
         )
     if user.email in settings.eternal_accounts:
         access_token = await auth_service.create_access_token(
-            data={"oid": user.id, "corid": user.cor_id}, expires_delta=settings.eternal_token_expiration
+            data={"oid": user.id, "corid": user.cor_id},
+            expires_delta=settings.eternal_token_expiration,
         )
-        refresh_token = await auth_service.create_refresh_token(data={"oid": user.id, "corid": user.cor_id}, expires_delta=settings.eternal_token_expiration)
+        refresh_token = await auth_service.create_refresh_token(
+            data={"oid": user.id, "corid": user.cor_id},
+            expires_delta=settings.eternal_token_expiration,
+        )
     else:
         access_token = await auth_service.create_access_token(
             data={"oid": user.id, "corid": user.cor_id}
         )
-        refresh_token = await auth_service.create_refresh_token(data={"oid": user.id, "corid": user.cor_id})
+        refresh_token = await auth_service.create_refresh_token(
+            data={"oid": user.id, "corid": user.cor_id}
+        )
     await repository_person.update_token(user, refresh_token, db)
     is_admin = False
     if user.email in settings.admin_accounts:
@@ -183,11 +189,21 @@ async def refresh_token(
         )
 
     if user.email in settings.eternal_accounts:
-        access_token = await auth_service.create_access_token(data={"oid": user.id, "corid": user.cor_id}, expires_delta=settings.eternal_token_expiration)
-        refresh_token = await auth_service.create_refresh_token(data={"oid": user.id, "corid": user.cor_id}, expires_delta=settings.eternal_token_expiration)
+        access_token = await auth_service.create_access_token(
+            data={"oid": user.id, "corid": user.cor_id},
+            expires_delta=settings.eternal_token_expiration,
+        )
+        refresh_token = await auth_service.create_refresh_token(
+            data={"oid": user.id, "corid": user.cor_id},
+            expires_delta=settings.eternal_token_expiration,
+        )
     else:
-        access_token = await auth_service.create_access_token(data={"oid": user.id, "corid": user.cor_id})
-        refresh_token = await auth_service.create_refresh_token(data={"oid": user.id, "corid": user.cor_id})
+        access_token = await auth_service.create_access_token(
+            data={"oid": user.id, "corid": user.cor_id}
+        )
+        refresh_token = await auth_service.create_refresh_token(
+            data={"oid": user.id, "corid": user.cor_id}
+        )
     user.refresh_token = refresh_token
     db.commit()
     await repository_person.update_token(user, refresh_token, db)
