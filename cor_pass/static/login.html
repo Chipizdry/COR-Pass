@@ -142,38 +142,35 @@
     <br><button onclick="window.location.href='/static/forgot-password.html' + '?redirectUrl=' + redirectUrl;" class="registration-button"><span data-translate="forgot-password-button">Forgot password?</span>
     </button><br>
            <!-- Кнопка "Восстановить доступ" -->
-              <button id="recovery-btn" class="link-button"  >Восстановить доступ</button>
-
+        <button id="recovery-btn" class="link-button" data-translate="recovery-button">Восстановить доступ</button>
     <!-- Модальное окно для восстановления доступа -->
-    <div id="recovery-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" id="close-modal">&times;</span>
-            <h2>Восстановление доступа</h2>
-            <p>Выберите способ восстановления:</p>
-            <button id="super-password-btn">Ввести супер-пароль</button> <br>
-            <button id="file-upload-btn">Прикрепить файл восстановления</button>
-            <label for="email" id="email-recovery-label" data-translate="email-label" >Email:</label>
-            <input type="email" id="email-recovery" name="username" required ><br>
+<div id="recovery-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" id="close-modal">&times;</span>
+        <h2 data-translate="recovery-modal-title">Восстановление доступа</h2>
+        <p data-translate="recovery-modal-select-method">Выберите способ восстановления:</p>
+        <button id="super-password-btn" data-translate="recovery-modal-super-password-btn">Ввести супер-пароль</button><br>
+        <button id="file-upload-btn" data-translate="recovery-modal-file-upload-btn">Прикрепить файл восстановления</button>
+        <label for="email" id="email-recovery-label" data-translate="recovery-modal-email-label">Email:</label>
+        <input type="email" id="email-recovery" name="username" required><br>
 
-            <!-- Поле для ввода супер-пароля -->
-            <div id="super-password-field" style="display:none;">
-                <label for="super-password">Супер-пароль:</label>
-                <input type="password" id="super-password" name="super-password">
-            </div>
-
-
-              <!-- Поле для загрузки файла восстановления -->
-           
-            <div id="file-upload-field" style="display:none;">
-                <label for="recovery-file">Файл восстановления:</label>
-                <input type="file" id="recovery-file" name="recovery-file">
-            </div>
-            <button id="send-recovery-btn">Отправить</button>
+        <!-- Поле для ввода супер-пароля -->
+        <div id="super-password-field" style="display:none;">
+            <label for="super-password" data-translate="recovery-modal-super-password-label">Супер-пароль:</label>
+            <input type="password" id="super-password" name="super-password">
         </div>
+        <!-- Поле для прикрепления файла восстановления  -->
+        <div id="file-upload-field" style="display:none;width: 180px;border-radius: 5px; border: 1px solid #ccc; padding: 10px;">
+            <label for="recovery-file" data-translate="recovery-modal-recovery-file-label">Файл восстановления:</label>
+            <input type="file" id="recovery-file" name="recovery-file" style="display:none;">
+            <button id="custom-file-upload-btn" data-translate="recovery-modal-choose-file">Выберите файл</button><br>
+            <span id="file-name" data-translate="recovery-modal-no-file">Файл не выбран</span>
+        </div>
+
+
+        <button id="send-recovery-btn" data-translate="recovery-modal-send-btn">Отправить</button>
     </div>
 </div>
-
-
 
 <script>
     // Открытие модального окна
@@ -210,6 +207,18 @@
         document.getElementById('send-recovery-btn').style.display = 'block';
     }
 
+
+
+
+
+    document.getElementById('custom-file-upload-btn').addEventListener('click', function () {
+    document.getElementById('recovery-file').click(); // Открыть окно выбора файла
+});
+
+document.getElementById('recovery-file').addEventListener('change', function () {
+    const fileName = this.files[0] ? this.files[0].name : translations[selectedLanguage]["recovery-modal-no-file"];
+    document.getElementById('file-name').textContent = fileName;
+});
     // Закрытие модального окна при клике вне его
     window.onclick = function(event) {
         if (event.target == document.getElementById('recovery-modal')) {

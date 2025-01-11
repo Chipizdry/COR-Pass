@@ -99,7 +99,18 @@ const translations = {
         'loginSuccess': 'Вход выполнен успешно!',
         'password-changed': 'Пароль изменён!',
         'fillAllFields': "Заполните все поля",
-        'login-error': 'Ошибка входа.'
+        'login-error': 'Ошибка входа.',
+        'recovery-button': 'Восстановить доступ',
+        "recovery-modal-title": "Восстановление доступа",
+        "recovery-modal-select-method": "Выберите способ восстановления:",
+        "recovery-modal-super-password-btn": "Ввести супер-пароль",
+        "recovery-modal-file-upload-btn": "Прикрепить файл восстановления",
+        "recovery-modal-email-label": "Email:",
+        "recovery-modal-super-password-label": "Супер-пароль:",
+        "recovery-modal-recovery-file-label": "Файл восстановления:",
+        "recovery-modal-send-btn": "Отправить",
+        "recovery-modal-choose-file": "Выберите файл",
+        "recovery-modal-no-file": "Файл не выбран"
     },
     en: {
         title: "Authorization",
@@ -138,7 +149,18 @@ const translations = {
         'loginSuccess': 'Login successful!',
         'password-changed': 'Password has been changed!',
         'fillAllFields': "Please fill out all fields",
-        'login-error': 'Login error.'
+        'login-error': 'Login error.',
+        'recovery-button': 'Recover Access',
+        "recovery-modal-title": "Access Recovery",
+        "recovery-modal-select-method": "Choose a recovery method:",
+        "recovery-modal-super-password-btn": "Enter Super Password",
+        "recovery-modal-file-upload-btn": "Attach Recovery File",
+        "recovery-modal-email-label": "Email:",
+        "recovery-modal-super-password-label": "Super Password:",
+        "recovery-modal-recovery-file-label": "Recovery File:",
+        "recovery-modal-send-btn": "Send",
+        "recovery-modal-choose-file": "Choose File",
+        "recovery-modal-no-file": "No file selected"
     },
     zh: {
         title: "授权",
@@ -177,7 +199,18 @@ const translations = {
         'loginSuccess': '登录成功！',
         'password-changed': '密码已更改。',
         'fillAllFields': "请填写所有字段",
-        'login-error': '登录错误。'
+        'login-error': '登录错误。',
+        'recovery-button': '恢复访问权限',
+        "recovery-modal-title": "访问恢复",
+        "recovery-modal-select-method": "选择恢复方式：",
+        "recovery-modal-super-password-btn": "输入超级密码",
+        "recovery-modal-file-upload-btn": "附加恢复文件",
+        "recovery-modal-email-label": "电子邮件：",
+        "recovery-modal-super-password-label": "超级密码：",
+        "recovery-modal-recovery-file-label": "恢复文件：",
+        "recovery-modal-send-btn": "发送",
+        "recovery-modal-choose-file": "选择文件",
+        "recovery-modal-no-file": "未选择文件"
     },
     uk: {
         title: "Авторизація",
@@ -215,5 +248,16 @@ const translations = {
         "heading" : "Скидання пароля",
         'loginSuccess': 'Вхід виконано успішно!',
         'password-changed': 'Пароль змінено!',
-        'login-error': 'Помилка входу.'
+        'login-error': 'Помилка входу.',
+        'recovery-button': 'Восстановить доступ',
+        "recovery-modal-title": "Відновлення доступу",
+        "recovery-modal-select-method": "Виберіть спосіб відновлення:",
+        "recovery-modal-super-password-btn": "Ввести супер-пароль",
+        "recovery-modal-file-upload-btn": "Прикріпити файл відновлення",
+        "recovery-modal-email-label": "Електронна пошта:",
+        "recovery-modal-super-password-label": "Супер-пароль:",
+        "recovery-modal-recovery-file-label": "Файл відновлення:",
+        "recovery-modal-send-btn": "Надіслати",
+        "recovery-modal-choose-file": "Оберіть файл",
+        "recovery-modal-no-file": "Файл не вибран"
     },}
