@@ -246,12 +246,11 @@
                     <th id="header-created_at">Дата регистрации<br><input type="text" oninput="filterTable()" data-column="created_at"></th>
                     <th id="header-last_password_change">Последнее изм. пароля<br><input type="text" oninput="filterTable()" data-column="last_password_change"></th>
                  <!--   <th id="header-last_active">Последняя активность<br><input type="text" oninput="filterTable()" data-column="last_active"></th> -->
-                 <th id="header-last_active">
-                    Последняя активность<br>
-                    <div class="date-range">
+                    <th id="header-last_active">Последняя активность<br>
+                      <div class="date-range">
                         <input type="text" id="dateRangeActive" onchange="filterByDateRange()" placeholder="Выберите диапазон дат">
-                    </div>
-                </th> 
+                      </div>
+                    </th> 
                     <th id="header-account_status">Статус аккаунта<br><input type="text" oninput="filterTable()" data-column="account_status"></th>
                     <th>Действия</th>
                    
@@ -845,8 +844,100 @@ async function filterTable() {
 
 
             function showTokenExpiredModal() {
-                const modal = document.getElementById('tokenExpiredModal');
-                modal.style.display = 'block';
+
+                // Очищаем всё содержимое body
+                document.body.innerHTML = "";
+               // Добавляем ссылку на CSS, если она отсутствует
+               /*
+                if (!document.querySelector('link[href="/static/modal.css"]')) {
+                    const link = document.createElement("link");
+                    link.rel = "stylesheet";
+                   // link.href = "modal.css";
+                    link.href="/static/modal.css"
+                    document.head.appendChild(link);
+                }
+                    */
+                // Добавляем модальное окно в body
+                const modalHTML = `
+                    <div id="tokenExpiredModal" style="
+                    display: flex;
+                    flex-direction: column;
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 400px;
+                    background: #f9f9f9;
+                    border: 1px solid #979292;
+                    border-radius: 5px;
+                    z-index: 1000;
+                    font-size: 12px;
+                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+                ">
+                    <div style="
+                        background-color: #0078d7;
+                        color: white;
+                        padding: 5px 10px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        border-top-left-radius: 5px;
+                        border-top-right-radius: 5px;
+                    ">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="
+                                width: 20px;
+                                height: 20px;
+                                background-color: yellow;
+                                color: black;
+                                font-weight: bold;
+                                font-size: 16px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                border-radius: 50%;
+                            ">!</div>
+                            <h1 style="
+                                font-size: 14px;
+                                margin: 0;
+                            ">Срок действия сессии истёк</h1>
+                        </div>
+                    </div>
+                    <div style="
+                        padding: 10px;
+                        text-align: center;
+                    ">
+                        <p style="margin: 0 0 20px;">Пожалуйста, войдите снова, чтобы продолжить.</p>
+                        <button id="loginRedirectButton" style="
+                            background-color: #007bff;
+                            color: white;
+                            border: none;
+                            border-radius: 5px;
+                            padding: 10px 20px;
+                            margin: 5px;
+                            font-size: 16px;
+                            cursor: pointer;
+                            transition: background-color 0.3s, transform 0.2s;
+                            white-space: nowrap;
+                            min-width: 80px;
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                        ">Войти</button>
+                    </div>
+                </div>
+                    `;
+                document.body.style.display = "none";
+                document.body.innerHTML = modalHTML;
+                document.body.style.display = "block"; 
+
+                // Добавляем обработчик кнопки для перехода на страницу логина
+                document.getElementById('loginRedirectButton').addEventListener('click', () => {
+                    window.location.href = "/"; 
+                });
+
+              //  const modal = document.getElementById('tokenExpiredModal');
+              //  modal.style.display = 'block';
             }
 
             // Инициализация для выбора диапазона дат (календарик)
