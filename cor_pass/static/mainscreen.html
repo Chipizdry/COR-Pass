@@ -24,6 +24,8 @@
             <button class="button" id="loginButton">COR-Platform</button>
         </div>
         <div id="admin-button-container"></div> <!-- Контейнер для кнопки администратора -->
+         <!-- Кнопка "Выйти" -->
+         <button id="LogOut-btn" class="link-button" style="color: #e60f0f;" data-translate="LogOut-button">Выйти</button>
     </div>
     </div>
     <script src="/static/translation.js"></script>   
@@ -53,6 +55,27 @@
             }
         });
 
+
+
+
+        document.getElementById('LogOut-btn').addEventListener('click', function () {
+                // Удаление токенов из localStorage
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('isAdmin');
+                localStorage.removeItem('redirectUrl');
+
+
+                // Очистка кэша страницы
+                if ('caches' in window) {
+                    caches.keys().then(names => {
+                        for (let name of names) caches.delete(name);
+                    });
+                }
+
+                    // Переадресация на страницу login.html
+                    window.location.href = '/';
+                });
 
 
             function toggleQrCode(corId) {

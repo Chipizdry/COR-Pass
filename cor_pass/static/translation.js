@@ -150,7 +150,7 @@ const translations = {
         'password-changed': 'Password has been changed!',
         'fillAllFields': "Please fill out all fields",
         'login-error': 'Login error.',
-        'recovery-button': 'Recover Access',
+        'recovery-button': 'Access Recovery',
         "recovery-modal-title": "Access Recovery",
         "recovery-modal-select-method": "Choose a recovery method:",
         "recovery-modal-super-password-btn": "Enter Super Password",
