@@ -24,7 +24,6 @@ body, html {
     border: 1px solid #ccc;
     border-radius: 30px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  /*  background-color: #fff;*/
     background-color: rgba(255, 255, 255, 0.5); /* Белый фон с 70% непрозрачности */
     text-align: center;
     align-items: center;
@@ -60,11 +59,11 @@ input[type="text"] {
     padding: 10px;
     margin-bottom: 10px;
     border: 1px solid #f0f0f0;
-    border-radius: 16px;
+    border-radius: 12px;
     width: 100%;
     box-sizing: border-box;
 }
-
+/*
 input[type="button"],
 input[type="submit"],
 button {
@@ -82,7 +81,7 @@ input[type="submit"]:hover,
 button:hover {
     background-color: #0056b3;
 }
-
+*/
  .toggle-password {
     position: absolute;
     right: 10px;
@@ -103,24 +102,32 @@ button:hover {
 button, input[type="submit"], input[type="button"] {
     padding: 10px;
     border: none;
-    background-color: #D2CAE8;
+    margin: 10px 0;
+    background-color: #7527B2;
     color: white;
     cursor: pointer;
-    border-radius: 16px;
+    border-radius: 12px;
     width: 100%;
     max-width: 200px;
 }
 button:hover, input[type="submit"]:hover, input[type="button"]:hover {
    /* background-color: #dc56a8;*/
-    background-color: #7f69bd;
+    background-color: #7B43F2;
 }
 
+button:active {
+    background-color: #5F41B2; /* Цвет фона при нажатии */
+    transform: translateY(2px); /* Эффект "нажатия" */
+}
 
-
-
+button:disabled {
+    background-color: #D2CAE8; /* Цвет для неактивной кнопки */
+    color: #ffffff;
+}
 
 h1 {
-    color: #333;
+    color:#291161;
+    font-size: 24px;
     margin-bottom: 20px;
     text-align: center;
 
@@ -148,7 +155,7 @@ input[type="password"] {
     padding: 10px;
     margin-bottom: 10px;
     border: 1px solid #f0f0f0;
-    border-radius: 16px;
+    border-radius: 12px;
 }
 
 input[type="submit"] {
@@ -175,12 +182,25 @@ input[type="submit"]:hover {
     display: block;
 }
 
+/*
 .password-container {
     display: flex;
     flex-direction: column;
+}  */
+
+.password-container {
+    position: relative;
+    width: 100%; /* Убедитесь, что контейнер занимает всю ширину */
 }
 
-
+.password-input {
+    width: 100%;
+    padding: 12px 45px 12px 15px; /* Увеличиваем отступ справа для иконки */
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px; /* Скругляем углы */
+    box-sizing: border-box; /* Учитываем padding в ширине */
+}
 
 .hidden {
     display: none;
@@ -472,3 +492,13 @@ select#user_sex:focus {
     margin-top: 0; /* уменьшенный отступ */
 }
 
+.eye-icon {
+    position: absolute;
+    right: 35px; /* Расстояние от правого края поля */
+    top: 40%; /* Выравнивание по центру по вертикали */
+    transform: translateY(-50%);
+    cursor: pointer;
+    width: 20px; /* Размер иконки */
+    height: 20px;
+    color: #5B4296; /* Цвет иконки */
+}

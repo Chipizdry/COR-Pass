@@ -30,7 +30,7 @@ function setLanguage(language) {
     elements.forEach(element => {
         const key = element.getAttribute("data-translate");
         if (translations[language] && translations[language][key]) {
-            if (element.tagName === 'INPUT') {
+            if ((element.tagName === 'INPUT')||(element.tagName === 'password')) {
                 if (element.type === 'text' || element.type === 'password') {
                     element.placeholder = translations[language][key];
                 } else if (element.type === 'button') {
@@ -111,7 +111,8 @@ const translations = {
         "recovery-modal-send-btn": "Отправить",
         "recovery-modal-choose-file": "Выберите файл",
         "recovery-modal-no-file": "Файл не выбран",
-        "no-account-text":"Нет аккаунта?"
+        "no-account-text":"Нет аккаунта?",
+        "password_placeholder": "Пароль"
     },
     en: {
         title: "Authorization",
@@ -162,7 +163,8 @@ const translations = {
         "recovery-modal-send-btn": "Send",
         "recovery-modal-choose-file": "Choose File",
         "recovery-modal-no-file": "No file selected",
-        "no-account-text":"Have no account?"
+        "no-account-text":"Have no account?",
+        "password_placeholder": "Password"
     },
     zh: {
         title: "授权",
@@ -213,7 +215,8 @@ const translations = {
         "recovery-modal-send-btn": "发送",
         "recovery-modal-choose-file": "选择文件",
         "recovery-modal-no-file": "未选择文件",
-        "no-account-text": "没有账户？"
+        "no-account-text": "没有账户？",
+        "password_placeholder": "密码"
     },
     uk: {
         title: "Авторизація",
@@ -263,5 +266,6 @@ const translations = {
         "recovery-modal-send-btn": "Надіслати",
         "recovery-modal-choose-file": "Оберіть файл",
         "recovery-modal-no-file": "Файл не вибран",
-        "no-account-text":"Немає акаунта?"
+        "no-account-text":"Немає акаунта?",
+        "password_placeholder": "Пароль"
     },}
