@@ -110,7 +110,8 @@ const translations = {
         "recovery-modal-recovery-file-label": "Файл восстановления:",
         "recovery-modal-send-btn": "Отправить",
         "recovery-modal-choose-file": "Выберите файл",
-        "recovery-modal-no-file": "Файл не выбран"
+        "recovery-modal-no-file": "Файл не выбран",
+        "no-account-text":"Нет аккаунта?"
     },
     en: {
         title: "Authorization",
@@ -160,7 +161,8 @@ const translations = {
         "recovery-modal-recovery-file-label": "Recovery File:",
         "recovery-modal-send-btn": "Send",
         "recovery-modal-choose-file": "Choose File",
-        "recovery-modal-no-file": "No file selected"
+        "recovery-modal-no-file": "No file selected",
+        "no-account-text":"Have no account?"
     },
     zh: {
         title: "授权",
@@ -210,7 +212,8 @@ const translations = {
         "recovery-modal-recovery-file-label": "恢复文件：",
         "recovery-modal-send-btn": "发送",
         "recovery-modal-choose-file": "选择文件",
-        "recovery-modal-no-file": "未选择文件"
+        "recovery-modal-no-file": "未选择文件",
+        "no-account-text": "没有账户？"
     },
     uk: {
         title: "Авторизація",
@@ -259,5 +262,6 @@ const translations = {
         "recovery-modal-recovery-file-label": "Файл відновлення:",
         "recovery-modal-send-btn": "Надіслати",
         "recovery-modal-choose-file": "Оберіть файл",
-        "recovery-modal-no-file": "Файл не вибран"
+        "recovery-modal-no-file": "Файл не вибран",
+        "no-account-text":"Немає акаунта?"
     },}

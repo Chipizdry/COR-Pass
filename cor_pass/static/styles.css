@@ -8,6 +8,12 @@ body, html {
     justify-content: center;
     align-items: center;
     font-family: Arial, sans-serif;
+
+        background-image:url('/static/background.jpg'); /* Путь к вашему изображению */
+        background-size: cover; /* Масштабирует изображение, чтобы оно покрывало весь экран */
+        background-position: center; /* Центрирует изображение */
+        background-repeat: no-repeat; /* Отключает повторение изображения */
+        background-attachment: fixed; /* Фиксирует фон, чтобы он не прокручивался */
 }
 
 
@@ -16,9 +22,10 @@ body, html {
     margin: 0 auto;
     padding: 20px;
     border: 1px solid #ccc;
-    border-radius: 5px;
+    border-radius: 30px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    background-color: #fff;
+  /*  background-color: #fff;*/
+    background-color: rgba(255, 255, 255, 0.5); /* Белый фон с 70% непрозрачности */
     text-align: center;
     align-items: center;
 }
@@ -52,8 +59,8 @@ input[type="password"],
 input[type="text"] {
     padding: 10px;
     margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    border: 1px solid #f0f0f0;
+    border-radius: 16px;
     width: 100%;
     box-sizing: border-box;
 }
@@ -77,7 +84,7 @@ button:hover {
 }
 
  .toggle-password {
-        position: absolute;
+    position: absolute;
     right: 10px;
     top: 40%;
     transform: translateY(-50%);
@@ -96,16 +103,16 @@ button:hover {
 button, input[type="submit"], input[type="button"] {
     padding: 10px;
     border: none;
-    background-color: #dc56a8;
+    background-color: #D2CAE8;
     color: white;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: 16px;
     width: 100%;
     max-width: 200px;
 }
 button:hover, input[type="submit"]:hover, input[type="button"]:hover {
    /* background-color: #dc56a8;*/
-    background-color: #981666;
+    background-color: #7f69bd;
 }
 
 
@@ -140,14 +147,13 @@ input[type="password"] {
     width: 200px;
     padding: 10px;
     margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
+    border: 1px solid #f0f0f0;
+    border-radius: 16px;
 }
 
 input[type="submit"] {
     width: 200px;  /*фиксированная ширина */
-    background-color: #dc56a8; 
-   /* background-color: #981666; */
+    background-color: #D2CAE8; 
     color: #fff;
     padding: 10px 20px;
     border: none;
@@ -161,7 +167,7 @@ input[type="submit"]:hover {
 }
 
 .registration-button {
-    background-color: #dc56a8; 
+    background-color: #D2CAE8; 
   /*  background-color: #981666; */
     color: white;
     padding: 10px 20px;
@@ -312,7 +318,7 @@ a:hover {
  
  .language-switcher {
             position: relative;
-            margin-left: -109px; /* Отступ справа от панели */
+            margin-left: center ; /*-109px; /* Отступ справа от панели */
             /*width: 54px; */
         }
 
@@ -328,7 +334,7 @@ a:hover {
             background-position: center left;
             background-size: 14px; /* Размер иконок */
             font-size: 10px; /* Уменьшение размера шрифта */
-            border-radius: 4px;
+            border-radius: 12px;
         }
 
 .select2-container--default .select2-selection--single .select2-selection__rendered {
@@ -358,7 +364,7 @@ a:hover {
 .link-button {
      background: none;
      border: none;
-    color: blue;
+    color: #7B43F2;
             
     cursor: pointer;
     font-size: 16px;
@@ -465,3 +471,4 @@ select#user_sex:focus {
 #userCorId {
     margin-top: 0; /* уменьшенный отступ */
 }
+
