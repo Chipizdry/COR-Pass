@@ -327,7 +327,9 @@ a:hover {
 .error-message {
     color: red;
     font-size: 9px;
-    margin-top: 1px; }
+    margin-top: 3px; 
+    margin-bottom: 3px; 
+}
 
 
 
@@ -433,8 +435,9 @@ select#user_sex {
     width: 200px;          /* Ширина для обоих полей */
     padding: 10px;         /* Внутренние отступы */
     font-size: 14px;       /* Размер шрифта */
+    color: #5B4296;
     border: 1px solid #ccc;/* Рамка вокруг */
-    border-radius: 5px;    /* Скругленные углы */
+    border-radius: 12px;    /* Скругленные углы */
     box-sizing: border-box;/* Учитываем отступы и границы при расчете ширины */
     background-color: white;/* Цвет фона */
     appearance: none;      /* Скрываем стандартный стиль стрелки */

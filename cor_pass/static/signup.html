@@ -37,7 +37,7 @@
                 <div id="gender-field">
                     <label for="user_sex" data-translate="gender-label">Пол:</label>
                     <select id="user_sex" name="user_sex" required>
-                        <option value="" disabled selected>Выберите пол</option>
+                        <option value="" disabled selected data-translate="gender-label">Выберите пол</option>
                         <option value="M" data-translate="male-option">Мужской</option>
                         <option value="F" data-translate="female-option">Женский</option>
                     </select>
@@ -47,7 +47,7 @@
                 <div id="birth-year-field">
                     <label for="birth" data-translate="birth-year-label">Год рождения:</label>
                     <select id="birth" name="birth" required>
-                        <option value="" disabled selected>Выберите год рождения</option>
+                    <option value="" disabled selected data-translate="birth-year-placeholder">Выберите год рождения</option>
                     </select>
                 </div>
 
@@ -70,9 +70,10 @@
             <div class="password-container hidden">
                 <label for="password" data-translate="password-label">Пароль:</label>
                 <div class="input-wrapper">
-                    <div id="password-message" class="error-message" data-translate="password-message"></div>
+                   <!-- <div id="password-message" class="error-message" data-translate="password-message"></div>-->
                     <input type="password" id="password" name="password" placeholder="Введите пароль"   data-translate="password-placeholder" minlength="5" maxlength="21" required>
-                    <span class="toggle-password" data-target="#password">👁️</span>
+                    <span id="eyeIcon" class="eye-icon" onclick="togglePassword('password', 'eyeIcon')"></span>
+                    <div id="password-message" class="error-message" data-translate="password-message"></div>
                 </div>
             </div>
 
@@ -80,7 +81,7 @@
                 <label for="confirm-password" data-translate="confirm-password-label">Повторите пароль:</label>
                 <div class="input-wrapper">
                     <input type="password" id="confirm-password" placeholder="Подтвердите пароль"  data-translate="confirm-password-placeholder" minlength="5" maxlength="21" required>
-                    <span class="toggle-password" data-target="#confirm-password">👁️</span>
+                    <span id="eyeIcon1" class="eye-icon" onclick="togglePassword('confirm-password', 'eyeIcon1')"></span> 
                 </div>
             </div>
 
@@ -99,9 +100,11 @@
     </div>
   
     <script src="translation.js"></script>   
+    <script src="general_fun.js"></script>
+
     <script> function goBack() { window.history.back();  } </script>
     <script>
-      
+    
 const urlParams = new URLSearchParams(window.location.search);
 let redirectUrl = urlParams.get('redirectUrl');
 if (redirectUrl == null) {
@@ -124,22 +127,12 @@ document.addEventListener('DOMContentLoaded', function() {
     setLanguage(userLang);
     console.log('Selected Language from localStorage:', userLang);
 
-    document.querySelectorAll('.toggle-password').forEach(function(element) {
-        element.addEventListener('click', function() {
-            const targetInput = document.querySelector(this.dataset.target);
-            if (targetInput.type === 'password') {
-                targetInput.type = 'text';
-                this.innerText = '🙈'; // Измените иконку на "скрыть"
-            } else {
-                targetInput.type = 'password';
-                this.innerText = '👁️'; // Измените иконку на "показать"
-            }
-        });
-    });
-
-   
-          
-
+    
+    const eyeIcon = document.getElementById('eyeIcon');
+    const eyeIcon1 = document.getElementById('eyeIcon1');
+    updateEyeIcon(eyeIcon, false); // false = закрытый глаз
+    updateEyeIcon(eyeIcon1, false);
+    
     const confirmationMessageDiv = document.getElementById('confirmationMessage');
     const messageDivErr = document.getElementById('messageDivErr');
     const passwordInput = document.getElementById('password');
@@ -164,10 +157,6 @@ if (isPasswordEmpty || isConfirmPasswordEmpty || !isPasswordValidLength) {
 
    
     if (!isPasswordValidLength) {
-
-
-       // passwordMessageDiv.innerText = 'Пароль должен содержать от 6 до 20 символов';
-        // passwordMessageDiv.innerText = "Password must be between 8 and 15 characters long"
         passwordMessageDiv.innerText = translations[userLang]['password-message'];
         passwordMessageDiv.style.color = 'red';
     } else {
@@ -191,12 +180,10 @@ else {
     passwordMessageDiv.innerText = '';
 
     if (passwordInput.value !== confirmPasswordInput.value) {
-      //  messageDiv.innerText = 'Пароли не совпадают!!!';
         console.log("Пароли не совпадают!(((");
         messageDiv.innerText =  translations[userLang]['passwordsDoNotMatch'];
         messageDiv.style.color = 'red';
     } else {
-     //   messageDiv.innerText = 'Пароли совпадают!';
         console.log("Пароли совпадают!))");
         messageDiv.innerText =  translations[userLang]['passwordsMatch'];
         messageDiv.style.color = 'green';
