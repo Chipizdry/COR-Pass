@@ -156,7 +156,8 @@ const translations = {
         "gender-label": "Пол:",
         "female-option":"Женский",
         "male-option":"Мужской",
-        "birth-year-placeholder":"Выберите год рождения"
+        "birth-year-placeholder":"Выберите год рождения",
+        "LogOut-button": "Выйти"
     },
     en: {
         title: "Authorization",
@@ -212,7 +213,8 @@ const translations = {
         "gender-label": "Gender:",
         "female-option":"Female",
         "male-option":"Male",
-        "birth-year-placeholder":"Select year of birth" 
+        "birth-year-placeholder":"Select year of birth" ,
+        "LogOut-button": "Log Out"
     },
     zh: {
         title: "授权",
@@ -268,7 +270,8 @@ const translations = {
         "gender-label": "性别:",
         "female-option":"女性",
         "male-option":"男性",
-        "birth-year-placeholder":"选择出生年份" 
+        "birth-year-placeholder":"选择出生年份" ,
+        "LogOut-button": "退出"
     },
     uk: {
         title: "Авторизація",
@@ -323,5 +326,6 @@ const translations = {
         "gender-label": "Стать:",
         "female-option":"Жіночий",
         "male-option":"Чоловічий",
-        "birth-year-placeholder":"Оберіть рік народження" 
+        "birth-year-placeholder":"Оберіть рік народження" ,
+        "LogOut-button": "Вийти"
     },}

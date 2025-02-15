@@ -63,25 +63,7 @@ input[type="text"] {
     width: 100%;
     box-sizing: border-box;
 }
-/*
-input[type="button"],
-input[type="submit"],
-button {
-    padding: 10px;
-    margin: 10px 0;
-    border: none;
-    border-radius: 5px;
-    background-color: #007BFF;
-    color: white;
-    cursor: pointer;
-}
 
-input[type="button"]:hover,
-input[type="submit"]:hover,
-button:hover {
-    background-color: #0056b3;
-}
-*/
  .toggle-password {
     position: absolute;
     right: 10px;
@@ -124,6 +106,20 @@ button:disabled {
     background-color: #D2CAE8; /* Цвет для неактивной кнопки */
     color: #ffffff;
 }
+
+.button span {
+    flex-grow: 1; /* Заставляем текст занимать всю доступную ширину */
+    text-align: left;
+    padding-left: 10px;
+    position: relative;
+    top: -5px; /* Немного поднимаем текст */
+}
+
+.button svg {
+  /*  flex-shrink: 0;*/
+    margin-left: 20px; /* Отодвигаем иконку вправо */
+}
+
 
 h1 {
     color:#291161;
@@ -181,12 +177,6 @@ input[type="submit"]:hover {
     margin: 0 auto;
     display: block;
 }
-
-/*
-.password-container {
-    display: flex;
-    flex-direction: column;
-}  */
 
 .password-container {
     position: relative;
@@ -271,13 +261,6 @@ input[type="submit"]:hover {
 input[type="button"].registration-button:hover {
     background-color: #dc56a8;
 }
-/*
-.g-signin2,
-.fb-login-button {
-    /* Задайте требуемый размер 
-    width: 150px;
-    height: 30px; /* Выберите подходящую высоту 
-}*/
 
 .custom-btn {
     display: flex;
