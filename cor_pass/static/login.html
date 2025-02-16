@@ -68,7 +68,8 @@
                 top: 0;
                 width: 100%;
                 height: 100%;
-                background-color: rgba(0, 0, 0, 0.5);
+                background-color: rgba(0, 0, 0, 0.3); /* Затемнённый фон */
+                backdrop-filter: blur(5px); /* Размытие заднего фона */
             }
        
             .modal-content {
@@ -77,13 +78,45 @@
                 flex-direction: column;
                 align-items: center; /* Центрирование по горизонтали */
                 justify-content: center; /* Центрирование по вертикали */
-                background-color: #fff;
+                background: linear-gradient(135deg, #f8e8ff, #f0f4ff); /* Градиентный фон */
                 margin: 5% auto;
                 padding: 20px;
                 border: 1px solid #888;
                 width: 30%;
                 border-radius: 30px;
             }
+
+
+/*
+            .modal {
+                display: none; /* По умолчанию скрыто */
+/*                position: fixed;
+                z-index: 10;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.3); /* Затемнённый фон */
+ /*               backdrop-filter: blur(5px); /* Размытие заднего фона */
+ /*               display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+*/
+    /*        .modal-content {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, #f8e8ff, #f0f4ff); /* Градиентный фон */
+       /*         padding: 25px;
+                border-radius: 20px;
+                width: 350px; /* Фиксированная ширина */
+    /*            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2); /* Тень для объёма */
+    /*            text-align: center;
+            }
+*/
 
             .close-btn {
                 position: absolute;
@@ -205,7 +238,7 @@
         <h1 data-translate="recovery-modal-title">Восстановление доступа</h1>
         <p data-translate="recovery-modal-select-method">Выберите способ восстановления:</p>
         <button id="super-password-btn" data-translate="recovery-modal-super-password-btn">Ввести супер-пароль</button><br>
-        <button id="file-upload-btn" data-translate="recovery-modal-file-upload-btn">Прикрепить файл восстановления</button>
+        <button id="file-upload-btn" data-translate="recovery-modal-file-upload-btn">Прикрепить файл </button>
         <label for="email" id="email-recovery-label" data-translate="recovery-modal-email-label">Email:</label>
         <input type="email" id="email-recovery" name="username" required><br>
 

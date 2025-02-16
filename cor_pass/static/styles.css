@@ -91,6 +91,7 @@ button, input[type="submit"], input[type="button"] {
     border-radius: 12px;
     width: 100%;
     max-width: 200px;
+    height: 40px;
 }
 button:hover, input[type="submit"]:hover, input[type="button"]:hover {
    /* background-color: #dc56a8;*/
@@ -112,12 +113,13 @@ button:disabled {
     text-align: left;
     padding-left: 10px;
     position: relative;
-    top: -5px; /* Немного поднимаем текст */
+    top: -10px; /* Немного поднимаем текст */
 }
 
 .button svg {
-  /*  flex-shrink: 0;*/
-    margin-left: 20px; /* Отодвигаем иконку вправо */
+
+    margin-left: 80px; /* Отодвигаем иконку вправо */
+    top: -16px;
 }
 
 
