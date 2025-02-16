@@ -79,7 +79,7 @@ input[type="text"] {
     color: red;
 }
 #messageOk {
-    color: green;
+    color:#5B4296;
 }
 button, input[type="submit"], input[type="button"] {
     padding: 10px;
@@ -200,6 +200,7 @@ input[type="submit"]:hover {
 
 
 .message {
+    color: #5B4296;
     font-size: 14px; /* Уменьшите размер шрифта по необходимости */
     text-align: center; /* Центрируйте текст */
     margin-top: 10px; /* Дополнительный отступ сверху для лучшей читаемости */
@@ -319,7 +320,7 @@ a:hover {
 
 
 .confirmationMessage {
-    color: green;
+    color: #5B4296;
     font-size: 14px;
     margin-top: 10px;}
  
@@ -489,4 +490,31 @@ select#user_sex:focus {
     width: 20px; /* Размер иконки */
     height: 20px;
     color: #5B4296; /* Цвет иконки */
+}
+
+.otp-container {
+    display: none; /* Изначально скрываем */
+    justify-content: center;
+    gap: 10px;
+    margin: 10px 0;
+    max-width: 200px; /* Ограничиваем ширину */
+}
+
+.otp-input {
+    width: 35px;
+    height: 35px;
+    font-size: 14px;
+    text-align: center;
+    border: 2px solid #5B4296;
+    border-radius: 10px;
+    background-color: #ffffff;
+    outline: none;
+    transition: border-color 0.3s ease-in-out;
+    max-width: 32px; /* Ограничиваем ширину */
+}
+
+.otp-input:focus {
+    border: 2px solid #5B4296;
+    border-color: #a067ff;
+    background-color: #fff;
 }

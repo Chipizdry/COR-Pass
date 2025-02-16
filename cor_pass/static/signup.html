@@ -16,9 +16,7 @@
     <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/android-icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
@@ -90,9 +88,17 @@
             <div id="messageDivErr" data-translate="error-message"style="display: none;"></div>
             <div id="confirmationMessage" class="confirmationMessage" data-translate="confirmation-message"style="display: none;"></div>
             <div id="verificationCodeWindow" class="hidden">
-                <input type="text" id="verificationCodeInput" class="hidden" placeholder="Введите код" data-translate="verification-code-placeholder">
+                <div class="otp-container">
+                    <input type="text" class="otp-input" maxlength="1" disabled>
+                    <input type="text" class="otp-input" maxlength="1" disabled>
+                    <input type="text" class="otp-input" maxlength="1" disabled>
+                    <input type="text" class="otp-input" maxlength="1" disabled>
+                    <input type="text" class="otp-input" maxlength="1" disabled>
+                    <input type="text" class="otp-input" maxlength="1" disabled>
+                </div>
+                <input type="hidden" id="verificationCodeInput">
                 <input type="button" id="ConfirmationCodeInput" value="Подтвердить" class="hidden" onclick="verifyVerificationCode()" data-translate="confirm-button">
-            </div>
+            </div> 
         </form>
         <div id="messageOk" class="messageOk"></div>
     </div>
@@ -158,6 +164,39 @@ document.addEventListener('DOMContentLoaded', function() {
         genderSelect.addEventListener("change", checkFormCompletion);
         birthYearSelect.addEventListener("change", checkFormCompletion);
         emailInput.addEventListener("input", checkFormCompletion);
+
+
+        let hiddenInput = document.getElementById("verificationCodeInput");
+        let otpInputs = document.querySelectorAll(".otp-input");
+
+    if (otpInputs.length > 0) {
+        // Фокус на первом поле при загрузке
+        otpInputs[0].disabled = false;
+        otpInputs[0].focus();
+
+        otpInputs.forEach((input, index) => {
+            input.addEventListener("input", (e) => {
+                if (e.inputType === "deleteContentBackward") {
+                    // Если удаляем, фокус уходит назад
+                    if (index > 0) otpInputs[index - 1].focus();
+                } else {
+                    // Перемещаемся к следующему полю
+                    if (index < otpInputs.length - 1 && input.value !== "") {
+                        otpInputs[index + 1].disabled = false;
+                        otpInputs[index + 1].focus();
+                    }
+                }
+                updateHiddenInput();
+            });
+        });
+
+        function updateHiddenInput() {
+            let code = Array.from(otpInputs).map(input => input.value).join("");
+            hiddenInput.value = code;
+        }
+    }
+
+
 
 
     function checkFields() {
@@ -339,11 +378,7 @@ if (passwordInput.value.length > 0 || confirmPasswordInput.value.length > 0) {
     });
 });
 
-/*
-window.switchLanguage = function(userLang) {
-setLanguage(userLang);
-}
-*/
+
 document.addEventListener('DOMContentLoaded', function() {
 var sendCodeButton = document.getElementById('sendVerifCode');
 sendCodeButton.addEventListener('click', sendVerificationCode);
@@ -375,14 +410,13 @@ xhr.onreadystatechange = function() {
         if (xhr.status === 200) {
             console.log("Код подтверждения отправлен на вашу электронную почту.");
             confirmationMessageDiv.textContent = translations[userLang]["confirmation-message"];
-            confirmationMessageDiv.style.color = 'green';
+            confirmationMessageDiv.style.color = "#5B4296";
             confirmationMessageDiv.style.display = 'block';
 
             showVerificationCodeInput();
             messageDivErr.style.display = 'none';
             messageDiv.style.display = 'none';
             document.getElementById('ConfirmationCodeInput').style.display = 'block';
-            document.getElementById('verificationCodeInput').style.display = 'block';
             document.getElementById('gender-field').style.display = 'none';
             document.getElementById('birth-year-field').style.display = 'none';
             startCountdown(sendCodeButton, userLang);
@@ -424,11 +458,39 @@ const interval = setInterval(function() {
 function showVerificationCodeInput() {
     var verificationCodeWindow = document.getElementById("verificationCodeWindow");
     verificationCodeWindow.style.display = "block";
+    document.querySelector(".otp-container").style.display = "flex";
 }
+
+
+// Функция обновления скрытого поля с кодом
+function updateHiddenInput() {
+    let otpInputs = document.querySelectorAll(".otp-input");
+    let hiddenInput = document.getElementById("verificationCodeInput");
+
+    if (!hiddenInput) {
+        console.error("Ошибка: скрытое поле для кода не найдено.");
+        return;
+    }
+
+    let code = Array.from(otpInputs).map(input => input.value).join("");
+    hiddenInput.value = code;
+}
+
+
 
 function verifyVerificationCode() {
     const userLang = localStorage.getItem('selectedLanguage');
     var verificationCodeInput = document.getElementById("verificationCodeInput");
+
+    let hiddenInput = document.getElementById("verificationCodeInput"); // Убедимся, что он есть
+    let otpInputs = document.querySelectorAll(".otp-input");
+
+    // Обновляем значение кода перед проверкой
+    updateHiddenInput();
+
+    var verificationCode = hiddenInput.value;
+
+
     var emailInput = document.getElementById("email");
     var confirmationMessageDiv = document.getElementById("confirmationMessage");
     var email = emailInput.value;
@@ -452,10 +514,10 @@ function verifyVerificationCode() {
                 document.getElementById('registration-button').style.display = 'block';
                 document.getElementById('ConfirmationCodeInput').style.display = 'none';
                 document.getElementById('verificationCodeInput').style.display = 'none';
+                document.getElementById('verificationCodeWindow').style.display = 'none';
                 document.getElementById('message').style.display = 'none';
             } else {
                 console.error("Неверный код подтверждения.");
-              //  confirmationMessageDiv.innerText = "НЕВЕРНЫЙ КОД ПОДТВЕРЖДЕНИЯ!!!";
                 confirmationMessageDiv.innerText =  translations[userLang]["invalid-code"];
                 confirmationMessageDiv.style.color = 'red';
                 confirmationMessageDiv.style.display = 'block';
