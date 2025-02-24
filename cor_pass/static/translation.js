@@ -157,7 +157,8 @@ const translations = {
         "female-option":"Женский",
         "male-option":"Мужской",
         "birth-year-placeholder":"Выберите год рождения",
-        "LogOut-button": "Выйти"
+        "LogOut-button": "Выйти",
+        "welcome-message": "Приветствуем в COR-ID"
     },
     en: {
         title: "Authorization",
@@ -214,7 +215,8 @@ const translations = {
         "female-option":"Female",
         "male-option":"Male",
         "birth-year-placeholder":"Select year of birth" ,
-        "LogOut-button": "Log Out"
+        "LogOut-button": "Log Out",
+        "welcome-message": "Welcome to COR-ID"
     },
     zh: {
         title: "授权",
@@ -271,7 +273,8 @@ const translations = {
         "female-option":"女性",
         "male-option":"男性",
         "birth-year-placeholder":"选择出生年份" ,
-        "LogOut-button": "退出"
+        "LogOut-button": "退出",
+        "welcome-message": "欢迎来到 COR-ID"
     },
     uk: {
         title: "Авторизація",
@@ -324,8 +327,9 @@ const translations = {
         "no-account-text":"Немає акаунта?",
         "password_placeholder": "Пароль",
         "gender-label": "Стать:",
-        "female-option":"Жіночий",
-        "male-option":"Чоловічий",
+        "female-option":"Жіноча",
+        "male-option":"Чоловіча",
         "birth-year-placeholder":"Оберіть рік народження" ,
-        "LogOut-button": "Вийти"
+        "LogOut-button": "Вийти",
+        "welcome-message": "Вітаємо в COR-ID"
     },}

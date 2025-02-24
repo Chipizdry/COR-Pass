@@ -1,17 +1,17 @@
 /* Основные стили модального окна */
+
+
 .modal {
-    display: none;
+    display: none; /* Скрыто по умолчанию */
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 400px;
-    background: #f9f9f9;
-    border: 1px solid #979292;
-    border-radius: 5px;
-    z-index: 1000;
-    font-size: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3); /* Полупрозрачный фон */
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 /* Верхняя панель заголовка */
@@ -75,6 +75,7 @@
 }
 
 
+
 #qrcode {
     display: flex;
     align-items: center;
@@ -88,67 +89,25 @@
     max-height: 100%;
     margin: auto;
 }
+
+
 /* Минимизированное состояние модального окна */
-.modal.minimized .modal-content {
+/*.modal.minimized .modal-content {
     display: none; /* Скрываем содержимое */
-}
+/*}
 
 .modal.minimized {
     height: 40px; /* Высота только для верхней панели */
-    overflow: hidden; /* Скрываем всё, что выходит за пределы */
-}
+/*    overflow: hidden; /* Скрываем всё, что выходит за пределы */
+/*}
 
 .modal.minimized .modal-header {
     padding: 10px; /* Увеличиваем отступ, чтобы шапка выглядела нормально */
-}
+/* }
+
+
 
 .modal-button.close {
     z-index: 1001; /* Должно быть выше, чем у остальных элементов */
-    position: relative;
-}
-
-/* Стили для кнопок внутри модального окна (не в шапке) */
-.modal-content .modal-button,
-.modal-footer .modal-button {
-    background-color: #007bff; /* Синий фон */
-    color: white; /* Белый текст */
-    border: none; /* Без рамки */
-    padding: 10px 20px; /* Отступы внутри кнопки */
-    margin: 5px; /* Отступы между кнопками */
-    border-radius: 5px; /* Скругленные углы */
-    font-size: 16px; /* Размер шрифта */
-    cursor: pointer; /* Курсор в виде руки */
-    transition: background-color 0.3s, transform 0.2s; /* Плавный переход */
-    white-space: nowrap; /* Чтобы текст не переносился */
-    min-width: 80px; /* Минимальная ширина кнопки */
-    height: auto; /* Высота подстраивается под содержимое */
-    display: inline-flex; /* Обеспечивает гибкость кнопки */
-    align-items: center; /* Выравнивание по вертикали */
-    justify-content: center; /* Выравнивание по горизонтали */
-}
-
-/* Эффект при наведении на кнопку */
-.modal-content .modal-button:hover,
-.modal-footer .modal-button:hover {
-    background-color: #0056b3; /* Темный синий цвет при наведении */
-    transform: scale(1.05); /* Легкое увеличение при наведении */
-}
-
-/* Эффект при нажатии на кнопку */
-.modal-content .modal-button:active,
-.modal-footer .modal-button:active {
-    background-color: #003d80; /* Еще более темный синий при нажатии */
-    transform: scale(1); /* Восстановление размера при нажатии */
-}
-
-
-.recovery-options button:hover {
-    background-color: #003d80;
-}
-
-
-.modal-footer {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
+  /*  position: relative;
 }

@@ -194,11 +194,10 @@
     
         <button onclick="window.location.href='/static/forgot-password.html' + '?redirectUrl=' + redirectUrl;" 
             style="text-align: left; display: block; font-size: 12px; margin: 0px;"  
-            class="link-button">
-            <span data-translate="forgot-password-button">Forgot password?</span>
+            class="link-button" data-translate="forgot-password-button">Forgot password?
         </button>
         
-        <button type="submit" data-translate="login-button">Login</button>
+        <button type="submit" id="login-button" data-translate="login-button">Login</button>
     </form>
     <div id="message"></div>
       <!-- Кнопка "Восстановить доступ" -->
@@ -530,6 +529,23 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('login-form');
         const messageDiv = document.getElementById('message');
+
+
+        const loginInput = document.getElementById("email");  // ID поля логина
+        const passwordInput = document.getElementById("password"); // ID поля пароля
+        const loginButton = document.getElementById("login-button"); // ID кнопки LOGIN
+
+
+        function handleEnterKey(event) {
+        if (event.key === "Enter") {
+            event.preventDefault(); // Предотвращает стандартное поведение
+            loginButton.click(); // Симулируем нажатие кнопки LOGIN
+        }
+        }
+
+            // Вешаем обработчик на оба поля ввода
+            loginInput.addEventListener("keydown", handleEnterKey);
+            passwordInput.addEventListener("keydown", handleEnterKey);
 
                     // Получаем текущий URL
             const currentUrl = window.location.href;
