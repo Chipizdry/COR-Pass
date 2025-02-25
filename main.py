@@ -33,6 +33,25 @@ from fastapi.responses import JSONResponse
 from collections import defaultdict
 from jose import JWTError, jwt
 
+import logging
+
+# Создание обработчика для логирования с временными метками
+class CustomFormatter(logging.Formatter):
+    def format(self, record):
+        record.asctime = self.formatTime(record, self.datefmt)
+        return super().format(record)
+
+# Настройка логирования
+log_formatter = CustomFormatter('%(asctime)s - %(levelname)s - %(message)s')
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(log_formatter)
+
+logging.basicConfig(
+    handlers=[console_handler],
+    level=logging.INFO
+)
+
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="cor_pass/static"), name="static")
 
@@ -204,6 +223,9 @@ app.include_router(otp_auth.router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run(
-        app="main:app", host="192.168.153.203", port=8000, reload=settings.reload
+        app="main:app", host="192.168.153.203", port=8000, 
+        log_level="info",
+        access_log=True,
+        reload=settings.reload
     )
 # 192.168.153.203

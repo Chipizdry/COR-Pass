@@ -6,6 +6,7 @@ from cor_pass.services.auth import auth_service
 from cor_pass.services.cipher import decrypt_data, decrypt_user_key
 from cor_pass.services.qr_code import generate_qr_code
 from cor_pass.services.recovery_file import generate_recovery_file
+from cor_pass.services.email import send_email_code_with_qr
 from cor_pass.database.models import User, Status
 from cor_pass.services.access import user_access
 from cor_pass.services.logger import logger
@@ -16,6 +17,7 @@ from cor_pass.schemas import (
     EmailSchema,
     ChangePasswordModel,
     ResponseCorIdModel,
+    ChangeMyPasswordModel
 )
 from cor_pass.repository import person
 from cor_pass.repository import cor_id as repository_cor_id
@@ -191,23 +193,45 @@ async def add_backup_email(
             )
 
 
-@router.patch("/change_password")
-async def change_password(body: ChangePasswordModel, db: Session = Depends(get_db)):
+@router.patch("/change_password", dependencies=[Depends(user_access)])
+async def change_password(body: ChangePasswordModel, user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
     """
-    **Смена пароля** \n
+    **Смена пароля в сценарии "Забыли пароль"** \n
 
     """
 
-    user = await person.get_user_by_email(body.email, db)
+    # user = await person.get_user_by_email(body.email, db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     else:
         if body.password:
-            await person.change_user_password(body.email, body.password, db)
-            logger.debug(f"{body.email} - changed his password")
-            return {"message": f"User '{body.email}' changed his password"}
+            await person.change_user_password(user.email, body.password, db)
+            logger.debug(f"{user.email} - changed his password")
+            return {"message": f"User '{user.email}' changed his password"}
+        else:
+            print("Incorrect password input")
+            raise HTTPException(
+                status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                detail="Incorrect password input",
+            )
+        
+@router.patch("/change_my_password", dependencies=[Depends(user_access)])
+async def change_my_password(body: ChangeMyPasswordModel, user: User = Depends(auth_service.get_current_user), db: Session = Depends(get_db)):
+    """
+    **Смена пароля в сценарии "Изменить свой пароль"** \n
+    """
+
+    if not auth_service.verify_password(body.old_password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid old password"
+        )
+    else:
+        if body.new_password:
+            await person.change_user_password(user.email, body.new_password, db)
+            logger.debug(f"{user.email} - changed his password")
+            return {"message": f"User '{user.email}' changed his password"}
         else:
             print("Incorrect password input")
             raise HTTPException(
@@ -233,13 +257,34 @@ async def get_recovery_code(
     return {"users recovery code": recovery_code}
 
 
+# @router.get("/get_recovery_qr_code")
+# async def get_recovery_qr_code(
+#     user: User = Depends(auth_service.get_current_user),
+#     db: Session = Depends(get_db),
+# ):
+#     """
+#     **Получения QR с кодом восстановления авторизированного пользователя**\n
+#     Level of Access:
+#     - Current authorized user
+#     """
+
+#     recovery_code = await decrypt_data(
+#         encrypted_data=user.recovery_code,
+#         key=await decrypt_user_key(user.unique_cipher_key),
+#     )
+#     recovery_qr_bytes = generate_qr_code(recovery_code)
+#     recovery_qr = BytesIO(recovery_qr_bytes)
+#     return StreamingResponse(recovery_qr, media_type="image/png")
+
+import base64
+from fastapi.responses import JSONResponse
 @router.get("/get_recovery_qr_code")
 async def get_recovery_qr_code(
     user: User = Depends(auth_service.get_current_user),
     db: Session = Depends(get_db),
 ):
     """
-    **Получения QR с кодом восстановления авторизированного пользователя**\n
+    **Получение QR с кодом восстановления авторизированного пользователя**\n
     Level of Access:
     - Current authorized user
     """
@@ -249,8 +294,12 @@ async def get_recovery_qr_code(
         key=await decrypt_user_key(user.unique_cipher_key),
     )
     recovery_qr_bytes = generate_qr_code(recovery_code)
-    recovery_qr = BytesIO(recovery_qr_bytes)
-    return StreamingResponse(recovery_qr, media_type="image/png")
+
+    # Конвертация QR-кода в Base64
+    encoded_qr = base64.b64encode(recovery_qr_bytes).decode('utf-8')
+    qr_code_data_url = f"data:image/png;base64,{encoded_qr}"
+
+    return JSONResponse(content={"qr_code_url": qr_code_data_url})
 
 
 @router.get("/get_recovery_file")
@@ -318,3 +367,23 @@ async def get_last_password_change(
     return {
         "message": message,
     }
+
+
+@router.get("/send_recovery_keys_email")
+async def send_recovery_keys_email(
+    user: User = Depends(auth_service.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    **Отправка имейла с ключами восстановления**\n
+    Level of Access:
+    - Current authorized user
+    """
+    recovery_code = await decrypt_data(
+        encrypted_data=user.recovery_code,
+        key=await decrypt_user_key(user.unique_cipher_key),
+    )
+    await send_email_code_with_qr(
+        user.email, host=None, recovery_code=recovery_code
+    )
+    return {f"sending keys to {user.email} done."}

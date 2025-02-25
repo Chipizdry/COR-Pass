@@ -1,0 +1,41 @@
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  detailed:
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    datefmt: '%Y-%m-%d %H:%M:%S'
+  simple:
+    format: '%(levelname)s - %(message)s'
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: detailed
+    level: DEBUG  # Измените уровень логирования для консольного обработчика
+
+loggers:
+  uvicorn:
+    level: DEBUG  # Измените уровень логирования для uvicorn
+    handlers: [console]
+    propagate: no
+  uvicorn.error:
+    level: ERROR  # Уровень для ошибок Uvicorn
+    handlers: [console]
+    propagate: no
+  uvicorn.access:
+    level: INFO  # Уровень для логов доступа
+    handlers: [console]
+    propagate: no
+  passlib:
+    level: ERROR  # Изменяем уровень для passlib на ERROR, чтобы подавить WARNING
+    handlers: [console]
+    propagate: no
+  myapp:  # Добавьте собственный логгер для вашего приложения
+    level: DEBUG
+    handlers: [console]
+    propagate: no
+
+root:
+  level: INFO
+  handlers: [console]

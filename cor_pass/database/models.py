@@ -133,4 +133,4 @@ class OTP(Base):
     user = relationship("User", back_populates="user_otp")
 
 
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)

@@ -66,8 +66,12 @@ class VerificationModel(BaseModel):
 
 
 class ChangePasswordModel(BaseModel):
-    email: str
-    password: str = Field(min_length=4, max_length=20)
+    email: Optional[str]
+    password: str = Field(min_length=6, max_length=20)
+
+class ChangeMyPasswordModel(BaseModel):
+    old_password: str = Field(min_length=6, max_length=20)
+    new_password: str = Field(min_length=6, max_length=20)
 
 
 class RecoveryCodeModel(BaseModel):
