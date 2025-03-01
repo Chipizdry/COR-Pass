@@ -2,76 +2,59 @@
 
 
 .modal {
-    display: none; /* Скрыто по умолчанию */
+    display: none;
     position: fixed;
+   /* background: linear-gradient(to bottom, #ffffff, #ece1fb, #fef2e5);*/
+    background: radial-gradient(circle, #ffffff, #f1e9fc, #fcf7f2);
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ccc;
+    border-radius: 30px;
     top: 0;
     left: 0;
-    width: 100%;
+    width: 400px;
     height: 100%;
-    background: rgba(0, 0, 0, 0.3); /* Полупрозрачный фон */
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-/* Верхняя панель заголовка */
-.modal-header {
-    background-color: #0078d7;
-    color: white;
-    padding: 5px 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: grab;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
+
+.modal-content {
+    /* background: linear-gradient(to bottom, #ffffff, #ece1fb, #fef2e5);*/
+    background: radial-gradient(circle, #ffffff, #ece1fb, #fef8f1);
+    border-radius: 30px;
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    width: 400px;
+    max-width: 90%;
 }
 
-/* Заголовок окна */
-.modal-header h1 {
-    font-size: 14px;
-    margin: 0;
-}
 
 /* Кнопки управления */
 .modal-buttons {
     display: flex;
     gap: 5px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
 }
 
 .modal-button {
-    width: 20px;
-    height: 20px;
+    width: 25px;
+    height: 25px;
     background-color: #f0f0f0;
     border: 1px solid #cccccc;
-    border-radius: 3px;
+    border-radius: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 14px;
     cursor: pointer;
-    color: black;
+    color: #7B43F2;
 }
 
 .modal-button:hover {
     background-color: #e0e0e0;
-}
-
-
-
-/* Содержимое модального окна */
-.modal-content {
-    position: relative; /* Добавьте это свойство */
-                display: flex;
-                flex-direction: column;
-                align-items: center; /* Центрирование по горизонтали */
-                justify-content: center; /* Центрирование по вертикали */
-                background-color: #fff;
-                margin: 5% auto;
-                padding: 20px;
-                border: 1px solid #888;
-                width: 30%;
-                border-radius: 30px;
 }
 
 
@@ -90,24 +73,3 @@
     margin: auto;
 }
 
-
-/* Минимизированное состояние модального окна */
-/*.modal.minimized .modal-content {
-    display: none; /* Скрываем содержимое */
-/*}
-
-.modal.minimized {
-    height: 40px; /* Высота только для верхней панели */
-/*    overflow: hidden; /* Скрываем всё, что выходит за пределы */
-/*}
-
-.modal.minimized .modal-header {
-    padding: 10px; /* Увеличиваем отступ, чтобы шапка выглядела нормально */
-/* }
-
-
-
-.modal-button.close {
-    z-index: 1001; /* Должно быть выше, чем у остальных элементов */
-  /*  position: relative;
-}
