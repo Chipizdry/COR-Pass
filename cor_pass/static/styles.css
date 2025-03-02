@@ -74,6 +74,22 @@ input[type="text"] {
     user-select: none;
     }
 
+/* Основной цвет placeholder */
+::placeholder {
+    color: #B1A1DA; /* Фиолетовый оттенок */
+    opacity: 1; /* Убирает полупрозрачность */
+}
+
+/* Для браузеров, использующих `:-ms-input-placeholder` */
+:-ms-input-placeholder {
+    color: #B1A1DA;
+}
+
+/* Для Edge */
+::-ms-input-placeholder {
+    color: #B1A1DA;
+}
+
 
 #message {
     color: red;

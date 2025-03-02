@@ -3,7 +3,7 @@ const modalConfigs = {
     columnSelectModal: { width: '250px', height: '300px', top: '300px', left: '200px' },
     corIdModal: { width: '300px', height: '500px', top: '300px', left: '250px' },
     editModal: { width: '250px', height: '500px', top: '50px', left: '50px' },
-    myModal: { width: '250px', height: '500px', top: '50px', left: '250px' },
+    myModal: { width: '250px', height: '450px', top: '50px', left: '250px' },
     settingsModal: { width: '500px', height: '560px', top: '50px', left: '450px' },
 };
 
