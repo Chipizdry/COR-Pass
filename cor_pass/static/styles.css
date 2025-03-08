@@ -527,33 +527,24 @@ select#user_sex:focus {
 
 .card {
     border: 1px solid #ffffff;
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.6); /* Белый фон с прозрачностью 60% */
     border-radius: 12px;
     padding: 10px;
-    width: 300px;
+    width: 300px; /* Ширина карточки */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex; /* Используем flexbox для расположения иконки и контента */
+    gap: 10px; /* Отступ между иконкой и контентом */
+    align-items: center; /* Выравнивание по вертикали */
+    position: relative; /* Для позиционирования звездочки */
 }
 
-.card-header {
+.icon-container {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    align-items: center; /* Выравнивание иконки по центру по вертикали */
+    justify-content: center; /* Выравнивание иконки по центру по горизонтали */
+    width: 40px; /* Ширина контейнера для иконки */
+    height: 100%; /* Иконка занимает всю высоту карточки */
 }
-
-.card-header h3 {
-    margin: 0;
-}
-
-.star {
-    cursor: pointer;
-}
-
-.icon-text-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
 
 .icon-placeholder {
     width: 36px;
@@ -561,15 +552,51 @@ select#user_sex:focus {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #D2CAE8; /* Цвет фона для заглушки */
+    background-color: #FFFFFF; /* Цвет фона для заглушки */
     border-radius: 50%; /* Круглая форма */
-    font-size: 14px;
-    color: #5B4296; /* Цвет текста */
+    font-size: 24px;
+    font-weight: bold; /* Жирный шрифт */
+    color: #291161; /* Цвет текста */
 }
-
 
 .favicon {
     width: 36px;
     height: 36px;
     border-radius: 50%; /* Круглая форма для иконки */
+}
+
+.content {
+    flex: 1; /* Контент занимает оставшееся пространство */
+    display: flex;
+    flex-direction: column;
+    gap: 4px; /* Отступ между заголовком и логином */
+}
+
+.card-header h3 {
+    margin: 0;
+    color: #291161;
+    font-size: 17px;
+}
+
+.card-body span {
+    color: #5B4296;
+    font-size: 12px;
+}
+
+.star-container {
+    display: flex;
+    align-items: center; /* Выравнивание звездочки по вертикали */
+    justify-content: flex-end; /* Звездочка справа */
+    margin-left: auto; /* Звездочка прижимается к правому краю */
+}
+
+.star {
+    font-size: 20px; /* Размер звездочки */
+    cursor: pointer; /* Курсор в виде руки */
+    color: gray; /* Цвет неактивной звездочки */
+    transition: color 0.3s; /* Плавный переход */
+}
+
+.star.favorite {
+    color: gold; /* Цвет активной звездочки */
 }
