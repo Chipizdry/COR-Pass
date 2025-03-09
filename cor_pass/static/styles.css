@@ -570,6 +570,7 @@ select#user_sex:focus {
     display: flex;
     flex-direction: column;
     gap: 4px; /* Отступ между заголовком и логином */
+    align-items: flex-start; /* Выравнивание по левому краю */
 }
 
 .card-header h3 {
@@ -598,5 +599,5 @@ select#user_sex:focus {
 }
 
 .star.favorite {
-    color: gold; /* Цвет активной звездочки */
+    color: #7527B2; /* Цвет активной звездочки */
 }
