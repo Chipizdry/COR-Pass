@@ -530,7 +530,7 @@ select#user_sex:focus {
     background-color: rgba(255, 255, 255, 0.6); /* Белый фон с прозрачностью 60% */
     border-radius: 12px;
     padding: 10px;
-    width: 300px; /* Ширина карточки */
+    width: 420px; /* Ширина карточки */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     display: flex; /* Используем flexbox для расположения иконки и контента */
     gap: 10px; /* Отступ между иконкой и контентом */
@@ -591,13 +591,12 @@ select#user_sex:focus {
     margin-left: auto; /* Звездочка прижимается к правому краю */
 }
 
-.star {
-    font-size: 20px; /* Размер звездочки */
-    cursor: pointer; /* Курсор в виде руки */
-    color: gray; /* Цвет неактивной звездочки */
-    transition: color 0.3s; /* Плавный переход */
+
+.star svg {
+    transition: transform 0.3s ease;
+    cursor: pointer;
 }
 
-.star.favorite {
-    color: #7527B2; /* Цвет активной звездочки */
+.star.favorite svg {
+    transform: scale(1.0); /* Увеличение звездочки при активации */
 }
