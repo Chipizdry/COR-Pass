@@ -124,6 +124,39 @@ button:disabled {
     color: #ffffff;
 }
 
+
+
+.delete-button {
+    padding: 10px;
+    border: 2px solid #DF1125; /* Красный контур 2 пикселя */
+    margin: 10px 0;
+    background-color: white; /* Белый фон */
+    color: #DF1125; /* Красный текст */
+    cursor: pointer;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 200px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px; /* Отступ между иконкой и текстом */
+    font-size: 13px; /* Размер текста */
+    transition: background-color 0.3s, color 0.3s, transform 0.2s; /* Плавные переходы */
+}
+
+.delete-button:hover {
+    background-color: #ffffff; /* Красный фон при наведении */
+    color: #830714; 
+}
+
+.delete-button:active {
+    background-color: #ffffff; /* Темно-красный фон при нажатии */
+    transform: translateY(2px); /* Эффект "нажатия" */
+    color: #c22e3d;
+}
+
+
 .button span {
     flex-grow: 1; /* Заставляем текст занимать всю доступную ширину */
     text-align: left;
@@ -271,13 +304,7 @@ input[type="submit"]:hover {
     background-position: center;
   }
   
-  /* Текст кнопки */
-  .buttonText {
-    font-size: 16px;
-    font-weight: bold;
-  }
-
-
+ 
 
 
 #verificationCodeWindow {
