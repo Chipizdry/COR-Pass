@@ -130,7 +130,7 @@ const translations = {
         "send-again-countdown": "Отправить ещё через {countdown}с",
         "send-code-email": "Отправить код на имейл",
         "error-message": "Произошла ошибка при отправке кода подтверждения на почту.",
-        "back-link-text": "<<<назад<<<",
+        "back-link-text": "<назад",
         "password-placeholder": "Введите пароль",
         "confirm-password-placeholder": "Подтвердите пароль",
         "confirmationMessage": "Ваша почта успешно подтверждена!",

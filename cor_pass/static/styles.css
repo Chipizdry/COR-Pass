@@ -29,6 +29,23 @@ body, html {
     align-items: center;
 }
 
+.header-container {
+    display: flex; /* Используем flexbox для выравнивания */
+    align-items: center; /* Выравниваем элементы по вертикали */
+    justify-content: space-between; /* Распределяем пространство между элементами */
+    margin-bottom: 20px; /* Отступ снизу для разделения с другими элементами */
+    gap: 40px;
+}
+
+.settings-container {
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 90px;
+}
+
+
 #back-link {
   /*  position: absolute; */
   text-align: left;
@@ -128,7 +145,7 @@ button:disabled {
 
 .delete-button {
     padding: 10px;
-    border: 2px solid #DF1125; /* Красный контур 2 пикселя */
+    border: 1px solid #DF1125; 
     margin: 10px 0;
     background-color: white; /* Белый фон */
     color: #DF1125; /* Красный текст */
@@ -148,6 +165,8 @@ button:disabled {
 .delete-button:hover {
     background-color: #ffffff; /* Красный фон при наведении */
     color: #830714; 
+    transform: translateY(-2px); /* Слегка поднимаем карточку */
+    cursor: pointer; /* Меняем курсор на указатель */
 }
 
 .delete-button:active {
@@ -155,6 +174,23 @@ button:disabled {
     transform: translateY(2px); /* Эффект "нажатия" */
     color: #c22e3d;
 }
+
+.plus-button {
+    background-color: #7527B2; /* Цвет фона кнопки */
+    color: white; /* Цвет текста */
+    border: none; /* Убираем границу */
+    padding: 10px 5px; /* Внутренние отступы */
+    border-radius: 12px; /* Скругление углов */
+    cursor: pointer; /* Курсор в виде руки */
+    font-size: 13px; /* Размер шрифта */
+    transition: background-color 0.3s, transform 0.2s; /* Плавные переходы */
+    max-width: 100px;
+    height: 40px; /* Фиксированная высота кнопки */
+    display: flex; /* Включаем flexbox для выравнивания текста внутри кнопки */
+    align-items: center; /* Выравниваем текст по вертикали внутри кнопки */
+    justify-content: center; /* Выравниваем текст по горизонтали внутри кнопки */
+}
+
 
 
 .button span {
@@ -293,19 +329,6 @@ input[type="submit"]:hover {
   }
 
 
-  
-  /* Иконка Google */
-  .icon {
-    width: 18px;
-    height: 18px;
-    margin-right: 5px;
-    background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 533.5 544.3"><path fill="%23FFF" d="M533.5 278.4c0 145.2-117.3 262.5-262.5 262.5s-262.5-117.3-262.5-262.5 117.3-262.5 262.5-262.5S533.5 133.2 533.5 278.4z"/><path fill="%23FFF" d="M213.9 336.3h-133.8V171.8h133.8v164.5z"/><path fill="%23FFF" d="M266.8 336.3h-133.8V196.1h133.8v140.2z"/><path fill="%23FFF" d="M319.6 336.3h-133.8V220.4h133.8v115.9z"/><path fill="%23FFF" d="M213.9 171.8c-14.9 0-27 12.1-27 27v164.5c0 14.9 12.1 27 27 27h133.8c14.9 0 27-12.1 27-27V198.8c0-14.9-12.1-27-27-27h-133.8z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: center;
-  }
-  
- 
-
 
 #verificationCodeWindow {
     display: flex;
@@ -394,10 +417,10 @@ a:hover {
         }  
 
 .link-button {
-     background: none;
-     border: none;
+    background: none;
+    border: none;
     color: #7B43F2;
-            
+    width: 100px;     
     cursor: pointer;
     font-size: 16px;
     padding: 0;
@@ -564,6 +587,14 @@ select#user_sex:focus {
     align-items: center; /* Выравнивание по вертикали */
     position: relative; /* Для позиционирования звездочки */
 }
+
+.card:hover {
+    background-color: rgba(255, 255, 255, 0.8); /* Увеличиваем прозрачность фона */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Увеличиваем тень */
+    transform: translateY(-2px); /* Слегка поднимаем карточку */
+    cursor: pointer; /* Меняем курсор на указатель */
+}
+
 
 .icon-container {
     display: flex;
