@@ -1,10 +1,9 @@
 import pyotp
-import requests
 import time
-from cor_pass.services.cipher import encrypt_data, decrypt_data, decrypt_user_key
-from cor_pass.database.models import User, OTP
+from cor_pass.services.cipher import decrypt_data, decrypt_user_key
+from cor_pass.database.models import User
 from cor_pass.services.logger import logger
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import HTTPException, status
 
 
 async def generate_and_verify_otp(secret: bytes, user: User):

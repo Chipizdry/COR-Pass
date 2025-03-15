@@ -160,3 +160,5 @@ cython_debug/
 #.idea/
 *.env
 *.db
+docker-compose.yml
+Dockerfile

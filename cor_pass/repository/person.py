@@ -1,10 +1,23 @@
+from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy.future import select
 from sqlalchemy import func
 import uuid
 from datetime import datetime
-from cor_pass.database.models import User, Status, Verification, UserSettings
-from cor_pass.schemas import UserModel, PasswordStorageSettings, MedicalStorageSettings
+from cor_pass.database.models import (
+    User,
+    Status,
+    Verification,
+    UserSettings,
+    UserSession,
+)
+from cor_pass.schemas import (
+    UserModel,
+    PasswordStorageSettings,
+    MedicalStorageSettings,
+    UserSessionDBModel,
+    UserSessionModel,
+)
 from cor_pass.services.auth import auth_service
 from cor_pass.services.logger import logger
 from cor_pass.services.cipher import (
@@ -12,6 +25,7 @@ from cor_pass.services.cipher import (
     encrypt_user_key,
     generate_recovery_code,
     encrypt_data,
+    decrypt_user_key,
 )
 from cor_pass.services.email import send_email_code_with_qr
 from sqlalchemy.exc import NoResultFound

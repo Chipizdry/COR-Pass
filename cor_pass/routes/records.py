@@ -17,7 +17,7 @@ from cor_pass.services.logger import logger
 from cor_pass.services.access import user_access
 
 from cor_pass.services.cipher import encrypt_data, decrypt_data, decrypt_user_key
-import datetime
+
 
 router = APIRouter(prefix="/records", tags=["Records"])
 encryption_key = settings.encryption_key

@@ -27,11 +27,15 @@ from cor_pass.schemas import (
     ChangePasswordModel,
     LoginResponseModel,
     RecoveryCodeModel,
+    UserSessionDBModel,
+    UserSessionModel,
 )
-from cor_pass.database.models import User
+from cor_pass.database.models import User, UserSession
 from cor_pass.repository import person as repository_person
+from cor_pass.repository import user_session as repository_session
 from cor_pass.repository import cor_id as repository_cor_id
 from cor_pass.services.auth import auth_service
+from cor_pass.services import device_info as di
 from cor_pass.services.email import (
     send_email_code,
     send_email_code_forgot_password,
@@ -44,6 +48,7 @@ from fastapi import UploadFile
 
 from collections import defaultdict
 from datetime import datetime, timedelta
+import re
 
 auth_attempts = defaultdict(list)
 blocked_ips = {}
@@ -92,6 +97,7 @@ async def signup(
 async def login(
     request: Request,
     body: OAuth2PasswordRequestForm = Depends(),
+    device_info: dict = Depends(di.get_device_header),
     db: Session = Depends(get_db),
 ):
     """
@@ -99,28 +105,30 @@ async def login(
 
     :param body: OAuth2PasswordRequestForm: Get the username and password from the request body
     :param db: Session: Get the database session
-    :return: A dictionary with the access_token, refresh_token and token type
+    :return: A dictionary with the access_token, refresh_token, token type, and session info
     """
+    # Получаем пользователя по email
     user = await repository_person.get_user_by_email(body.username, db)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found / invalid email",
         )
+
+    # Проверяем пароль
     if not auth_service.verify_password(body.password, user.password):
         client_ip = request.client.host
         auth_attempts[client_ip].append(datetime.now())
 
         if client_ip in blocked_ips and blocked_ips[client_ip] > datetime.now():
-            print(f"IP-адрес {client_ip} заблокирован")
+            logger.warning(f"IP-адрес {client_ip} заблокирован")
             raise HTTPException(status_code=429, detail="IP-адрес заблокирован")
 
         if len(auth_attempts[client_ip]) >= 15 and auth_attempts[client_ip][
             -1
         ] - auth_attempts[client_ip][0] <= timedelta(minutes=15):
-
             blocked_ips[client_ip] = datetime.now() + timedelta(minutes=15)
-            print(
+            logger.warning(
                 f"Слишком много попыток авторизации, IP-адрес {client_ip} заблокирован на 15 минут"
             )
             raise HTTPException(
@@ -130,6 +138,22 @@ async def login(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password"
         )
+
+    # Получаем информацию об устройстве
+    device_information = di.get_device_info(request)
+
+    # Если устройство мобильное, проверяем, есть ли у пользователя сессии на этом устройстве
+    if device_information["device_type"] == "Mobile":
+        existing_sessions = await repository_session.get_user_sessions_by_device_info(
+            user.cor_id, device_information["device_info"], db
+        )
+        if not existing_sessions:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Нужен ввод мастер-ключа",
+            )
+
+    # Создаём токены
     if user.email in settings.eternal_accounts:
         access_token = await auth_service.create_access_token(
             data={"oid": user.id, "corid": user.cor_id},
@@ -146,17 +170,40 @@ async def login(
         refresh_token = await auth_service.create_refresh_token(
             data={"oid": user.id, "corid": user.cor_id}
         )
-    await repository_person.update_token(user, refresh_token, db)
-    is_admin = False
-    if user.email in settings.admin_accounts:
-        is_admin = True
+
+    # Обновляем refresh_token в базе данных
+    # await repository_person.update_token(user, refresh_token, db)
+    # await repository_person.update_session_token(user, refresh_token, device_info["device_info"], db)
+
+    # Создаём новую сессию
+    session_data = {
+        "user_id": user.cor_id,
+        "refresh_token": refresh_token,
+        "device_type": device_information["device_type"],  # Тип устройства
+        "device_info": device_information["device_info"],  # Информация об устройстве
+        "ip_address": device_information["ip_address"],  # IP-адрес
+        "device_os": device_information["device_os"],  # Операционная система
+    }
+    new_session = await repository_session.create_user_session(
+        body=UserSessionModel(**session_data),  # Передаём данные для сессии
+        user=user,
+        db=db,
+    )
+
+    # Проверяем, является ли пользователь администратором
+    is_admin = user.email in settings.admin_accounts
+
+    # Логируем успешный вход
     logger.info("login success")
     logger.info(f"is_admin - {is_admin}")
+
+    # Возвращаем ответ
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
         "is_admin": is_admin,
+        "session_id": new_session.id,  # Добавляем ID сессии в ответ
     }
 
 
@@ -165,8 +212,10 @@ async def login(
     response_model=TokenModel,
 )
 async def refresh_token(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Security(security),
     db: Session = Depends(get_db),
+    device_info: dict = Depends(di.get_device_header),
 ):
     """
     **The refresh_token function is used to refresh the access token. / Маршрут для рефреш токена, обновление токенов по рефрешу **\n
@@ -186,12 +235,32 @@ async def refresh_token(
     user = await repository_person.get_user_by_uuid(id, db)
     # cor_id = await auth_service.decode_refresh_token(token)
     # user = await repository_person.get_user_by_corid(cor_id, db)
-    
+
     # if user.refresh_token != token:
     #     await repository_person.update_token(user, None, db)
     #     raise HTTPException(
     #         status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
     #     )
+
+    # Получаем информацию об устройстве
+    device_information = di.get_device_info(request)
+    # Если устройство мобильное, проверяем, есть ли у пользователя сессии на этом устройстве
+    existing_sessions = await repository_session.get_user_sessions_by_device_info(
+            user.cor_id, device_information["device_info"], db
+        )
+    if device_information["device_type"] == "Mobile" and not existing_sessions:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Нужен ввод мастер-ключа",
+        )
+    for session in existing_sessions:
+        session_token = await decrypt_data(encrypted_data=session.refresh_token,key=await decrypt_user_key(user.unique_cipher_key))
+        if session_token != token and device_information["device_type"] == "Mobile":
+            # await repository_person.update_token(user, None, db)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
+            )
+
 
     if user.email in settings.eternal_accounts:
         access_token = await auth_service.create_access_token(
@@ -209,9 +278,13 @@ async def refresh_token(
         refresh_token = await auth_service.create_refresh_token(
             data={"oid": user.id, "corid": user.cor_id}
         )
-    user.refresh_token = refresh_token
-    db.commit()
-    await repository_person.update_token(user, refresh_token, db)
+    # user.refresh_token = refresh_token
+    
+    await repository_session.update_session_token(
+        user, refresh_token, device_info["device_info"], db
+    )
+    # db.commit()
+    # await repository_person.update_token(user, refresh_token, db)
     logger.debug(f"{user.email}'s refresh token updated")
     return {
         "access_token": access_token,
@@ -275,15 +348,18 @@ async def confirm_email(body: VerificationModel, db: Session = Depends(get_db)):
         confirmation = True
         logger.debug(f"Your {body.email} is confirmed")
         return {
-            "message": "Your email is confirmed",  # Сообщение для JS о том что имейл подтвержден
+            "message": "Your email is confirmed",
+            "detail": "Confirmation sucess",  # Сообщение для JS о том что имейл подтвержден
             "confirmation": confirmation,
-            "access_token" : access_token
+            "access_token": access_token,
         }
     if ver_code:
         confirmation = True
         logger.debug(f"Your {body.email} is confirmed")
+        status.HTTP_200_OK
         return {
-            "message": "Your email is confirmed",  # Сообщение для JS о том что имейл подтвержден
+            "message": "Your email is confirmed",
+            "detail": "Confirmation sucess",  # Сообщение для JS о том что имейл подтвержден
             "confirmation": confirmation,
         }
     else:
@@ -326,63 +402,89 @@ async def forgot_password_send_verification_code(
 
 @router.post("/restore_account_by_text")
 async def restore_account_by_text(
-    body: RecoveryCodeModel, db: Session = Depends(get_db)
+    body: RecoveryCodeModel,
+    request: Request,
+    device_info: dict = Depends(
+        di.get_device_header
+    ),  # Добавляем request для получения User-Agent
+    db: Session = Depends(get_db),
 ):
     """
     **Проверка кода восстановления с помощью текста**\n
     """
+    # Получаем пользователя по email
     user = await repository_person.get_user_by_email(body.email, db)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found / invalid email",
         )
+
+    # Расшифровываем recovery_code
     user.recovery_code = await decrypt_data(
         encrypted_data=user.recovery_code,
         key=await decrypt_user_key(user.unique_cipher_key),
     )
-    if not user.recovery_code == body.recovery_code:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid recovery code"
-        )
-    confirmation = False
-    if user.recovery_code == body.recovery_code:
-        confirmation = True
-        # logger.debug(f"Recovery code is correct")
-        # return {
-        #     "message": "Recovery code is correct",  # Сообщение для JS о том что код востановления верный
-        #     "confirmation": confirmation,
-        # }
-        user.recovery_code = await encrypt_data(
-            data=user.recovery_code, key=await decrypt_user_key(user.unique_cipher_key)
-        )
-        access_token = await auth_service.create_access_token(
-            data={"oid": user.cor_id}, expires_delta=3600
-        )
-        refresh_token = await auth_service.create_refresh_token(
-            data={"oid": user.cor_id}
-        )
-        await repository_person.update_token(user, refresh_token, db)
-        logger.debug(f"{user.email}  login success")
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "token_type": "bearer",
-            "message": "Recovery code is correct",  # Сообщение для JS о том что код востановления верный
-            "confirmation": confirmation,
-        }
-    else:
+
+    # Проверяем recovery_code
+    if user.recovery_code != body.recovery_code:
         logger.debug(f"{body.email} - Invalid recovery code")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid recovery code"
         )
 
+    # Если recovery_code верный
+    confirmation = True
+    user.recovery_code = await encrypt_data(
+        data=user.recovery_code, key=await decrypt_user_key(user.unique_cipher_key)
+    )
+
+    # Создаём токены
+    access_token = await auth_service.create_access_token(
+        data={"oid": user.cor_id}, expires_delta=3600
+    )
+    refresh_token = await auth_service.create_refresh_token(data={"oid": user.cor_id})
+
+    # Обновляем refresh_token в базе данных
+    # await repository_person.update_token(user, refresh_token, db)
+
+    # Создаём новую сессию
+    device_information = di.get_device_info(request)
+    session_data = {
+        "user_id": user.cor_id,
+        "refresh_token": refresh_token,
+        "device_type": device_information["device_type"],  # Тип устройства
+        "device_info": device_information["device_info"],  # Информация об устройстве
+        "ip_address": device_information["ip_address"],  # IP-адрес
+        "device_os": device_information["device_os"],  # Операционная система
+    }
+    new_session = await repository_session.create_user_session(
+        body=UserSession(**session_data),  # Передаём данные для сессии
+        user=user,
+        db=db,
+    )
+
+    # Логируем успешный вход
+    logger.debug(f"{user.email} login success")
+
+    # Возвращаем ответ
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "message": "Recovery code is correct",  # Сообщение для JS о том что код восстановления верный
+        "confirmation": confirmation,
+        "session_id": new_session.id,  # Добавляем ID сессии в ответ
+    }
+
 
 @router.post("/restore_account_by_recovery_file")
 async def upload_recovery_file(
+    request: Request,
     file: UploadFile = File(...),
     email: str = Form(...),
     db: Session = Depends(get_db),
+    device_info: dict = Depends(di.get_device_header),
 ):
     """
     **Загрузка и проверка файла восстановления**\n
@@ -412,14 +514,32 @@ async def upload_recovery_file(
         refresh_token = await auth_service.create_refresh_token(
             data={"oid": user.cor_id}
         )
-        await repository_person.update_token(user, refresh_token, db)
+        # await repository_person.update_token(user, refresh_token, db)
+        # Создаём новую сессию
+        device_information = di.get_device_info(request)
+        session_data = {
+            "user_id": user.cor_id,
+            "refresh_token": refresh_token,
+            "device_type": device_information["device_type"],  # Тип устройства
+            "device_info": device_information[
+                "device_info"
+            ],  # Информация об устройстве
+            "ip_address": device_information["ip_address"],  # IP-адрес
+            "device_os": device_information["device_os"],  # Операционная система
+        }
+        new_session = await repository_session.create_user_session(
+            body=UserSession(**session_data),  # Передаём данные для сессии
+            user=user,
+            db=db,
+        )
         logger.debug(f"{user.email}  login success")
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer",
-            "message": "Recovery file is correct",  # Сообщение для JS о том что файл востановления верный
+            "message": "Recovery code is correct",  # Сообщение для JS о том что код восстановления верный
             "confirmation": confirmation,
+            "session_id": new_session.id,  # Добавляем ID сессии в ответ
         }
     else:
         logger.debug(f"{email} - Invalid recovery code")

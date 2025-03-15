@@ -3,12 +3,10 @@ import time
 import uvicorn
 from sqlalchemy.orm import Session
 from sqlalchemy import text
-from fastapi import FastAPI, Request, Depends, HTTPException, status, Request, Query
+from fastapi import FastAPI, Request, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-import hashlib
-import hmac
 from prometheus_client import Counter, Histogram
 from prometheus_client import generate_latest
 from starlette.responses import Response
@@ -35,21 +33,20 @@ from jose import JWTError, jwt
 
 import logging
 
+
 # Создание обработчика для логирования с временными метками
 class CustomFormatter(logging.Formatter):
     def format(self, record):
         record.asctime = self.formatTime(record, self.datefmt)
         return super().format(record)
 
+
 # Настройка логирования
-log_formatter = CustomFormatter('%(asctime)s - %(levelname)s - %(message)s')
+log_formatter = CustomFormatter("%(asctime)s - %(levelname)s - %(message)s")
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(log_formatter)
 
-logging.basicConfig(
-    handlers=[console_handler],
-    level=logging.INFO
-)
+logging.basicConfig(handlers=[console_handler], level=logging.INFO)
 
 
 app = FastAPI()
@@ -175,42 +172,6 @@ async def startup():
 auth_attempts = defaultdict(list)
 blocked_ips = {}
 
-
-# @app.middleware("http")
-# async def auth_attempt_middleware(request: Request, call_next):
-#     # Получите IP-адрес клиента
-#     client_ip = request.client.host
-
-#     try:
-#         # Выполните авторизацию
-#         response = await call_next(request)
-#     except HTTPException as e:
-#         if e.status_code == 401:  # Неудачная авторизация
-#             # Добавьте попытку авторизации в словарь
-#             auth_attempts[client_ip].append(datetime.now())
-#             print(client_ip)
-#             print("client_ip")
-#             # Проверьте, не заблокирован ли этот IP-адрес
-#             if client_ip in blocked_ips and blocked_ips[client_ip] > datetime.now():
-#                 raise HTTPException(status_code=429, detail="IP-адрес заблокирован")
-
-#             # Проверьте, если было 5 неудачных попыток за последние 15 минут
-#             if len(auth_attempts[client_ip]) >= 5 and auth_attempts[client_ip][
-#                 -1
-#             ] - auth_attempts[client_ip][0] <= timedelta(minutes=15):
-#                 # Заблокируйте IP-адрес на 15 минут
-#                 blocked_ips[client_ip] = datetime.now() + timedelta(minutes=15)
-#                 raise HTTPException(
-#                     status_code=429,
-#                     detail="Слишком много попыток авторизации, IP-адрес заблокирован на 15 минут",
-#                 )
-
-#         # Если произошло что-то другое, просто вернем исключение
-#         raise e
-
-#     return response
-
-
 app.include_router(auth.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 app.include_router(records.router, prefix="/api")
@@ -223,9 +184,11 @@ app.include_router(otp_auth.router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run(
-        app="main:app", host="192.168.153.203", port=8000, 
+        app="main:app",
+        host="192.168.153.203",
+        port=8000,
         log_level="info",
         access_log=True,
-        reload=settings.reload
+        reload=settings.reload,
     )
 # 192.168.153.203

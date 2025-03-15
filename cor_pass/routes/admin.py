@@ -1,16 +1,14 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-import time
 from cor_pass.database.db import get_db
 from cor_pass.services.auth import auth_service
 from cor_pass.database.models import User, Status
-from cor_pass.services.access import user_access, admin_access
+from cor_pass.services.access import admin_access
 from cor_pass.schemas import UserDb
 from cor_pass.repository import person
 from pydantic import EmailStr
 from cor_pass.database.redis_db import redis_client
-from datetime import datetime
+
 
 from cor_pass.services.logger import logger
 

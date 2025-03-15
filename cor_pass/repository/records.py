@@ -4,10 +4,7 @@ from sqlalchemy.orm import Session
 
 from cor_pass.database.models import User, Record, Tag
 from cor_pass.schemas import CreateRecordModel, UpdateRecordModel
-from cor_pass.repository.person import get_user_by_uuid
-from cor_pass.config.config import settings
 from cor_pass.services.cipher import encrypt_data, decrypt_data, decrypt_user_key
-import os
 
 
 async def create_record(body: CreateRecordModel, db: Session, user: User) -> Record:

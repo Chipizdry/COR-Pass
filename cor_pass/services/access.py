@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import Depends, HTTPException, status
 
 from cor_pass.database.models import User

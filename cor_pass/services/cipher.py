@@ -2,21 +2,15 @@ import asyncio
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 import base64
-import hashlib
 import secrets
-
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 import os
-import base64
 from Crypto.Util.Padding import pad as crypto_pad
 
 from cor_pass.config.config import settings
-
-
-from Crypto.Util.Padding import pad, unpad
 
 
 def pad(data: bytes, block_size: int) -> bytes:
@@ -44,8 +38,8 @@ async def encrypt_data(data: bytes, key: bytes) -> bytes:
     Данные шифруются.
     IV и зашифрованные данные кодируются в Base64 и возвращаются.
     """
-    aes_key = key
-    cipher = AES.new(aes_key, AES.MODE_CBC)
+
+    cipher = AES.new(key, AES.MODE_CBC)
     encrypted_data = cipher.encrypt(pad(data, AES.block_size))
     encoded_data = base64.b64encode(cipher.iv + encrypted_data)
     return encoded_data
@@ -63,59 +57,41 @@ async def decrypt_data(encrypted_data: bytes, key: bytes) -> str:
     Извлекается IV и зашифрованные данные.
     Данные дешифруются и возвращаются в виде строки.
     """
-    aes_key = key
-    decoded_data = base64.b64decode(encrypted_data)
-    iv = decoded_data[: AES.block_size]
-    ciphertext = decoded_data[AES.block_size :]
 
-    cipher = AES.new(aes_key, AES.MODE_CBC, iv)
-    decrypted_data = unpad(cipher.decrypt(ciphertext), AES.block_size)
-    return decrypted_data.decode()
+    if len(key) not in [16, 24, 32]:
+        raise ValueError("Key must be 16, 24, or 32 bytes long.")
+
+    try:
+        decoded_data = base64.b64decode(encrypted_data)
+        iv = decoded_data[: AES.block_size]
+        ciphertext = decoded_data[AES.block_size :]
+
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        decrypted_data = unpad(cipher.decrypt(ciphertext), AES.block_size)
+        return decrypted_data.decode("utf-8")
+    except (ValueError, KeyError):
+        raise ValueError("Decryption failed. Invalid key or corrupted data.")
 
 
-async def generate_aes_key() -> bytes:
+async def generate_aes_key(key_size: int = 16) -> bytes:
     """
-    Эта функция генерирует новый ключ для AES.
-
-    Процесс:
-    Генерируется случайный ключ с помощью secrets.token_urlsafe.
-    Ключ хешируется с использованием SHA256 и обрезается до 16 байт.
-    Возвращает: ключ AES (в байтах).
+    Генерирует новый ключ для AES.
     """
-    random_key = secrets.token_urlsafe(16)
-    sha256 = hashlib.sha256()
-    sha256.update(random_key.encode())
-    aes_key = sha256.digest()[:16]
-    return aes_key
+    if key_size not in [16, 24, 32]:
+        raise ValueError("Key size must be 16, 24, or 32 bytes.")
+    return secrets.token_bytes(key_size)
 
 
-async def generate_recovery_code():
+async def generate_recovery_code() -> str:
     """
-    Эта функция генерирует код восстановления.
-
-    Процесс:
-    Генерируется случайный ключ с помощью secrets.token_urlsafe.
-    Ключ хешируется с использованием SHA256 и обрезается до 64 символов.
-    Возвращает: код восстановления (в виде строки).
+    Генерирует код восстановления.
     """
-    random_key = secrets.token_urlsafe(64)
-    sha256 = hashlib.sha256()
-    sha256.update(random_key.encode())
-    recovery_code = sha256.hexdigest()[:64]
-    return recovery_code
+    return secrets.token_urlsafe(64)
 
 
 async def encrypt_user_key(key: bytes) -> str:
     """
-    Эта функция шифрует пользовательский ключ.
-
-    Параметры:
-    key: ключ пользователя (в байтах).
-    Процесс:
-    Генерируется случайная "соль".
-    Производится KDF (Key Derivation Function) с использованием PBKDF2HMAC.
-    Ключ шифруется с использованием Fernet и кодируется в Base64.
-    Возвращает: зашифрованный ключ пользователя (в виде строки).
+    Шифрует пользовательский ключ.
     """
     salt = os.urandom(16)
     kdf = PBKDF2HMAC(
@@ -134,16 +110,7 @@ async def encrypt_user_key(key: bytes) -> str:
 
 async def decrypt_user_key(encrypted_key: str) -> bytes:
     """
-    Эта функция дешифрует зашифрованный пользовательский ключ.
-
-    Параметры:
-    encrypted_key: зашифрованный ключ пользователя (в виде строки).
-    Процесс:
-    Декодируется ключ из Base64.
-    Извлекается соль и зашифрованный текст.
-    Производится KDF для получения AES-ключа.
-    Данные дешифруются и возвращаются.
-    Возвращает: расшифрованный пользовательский ключ (в байтах).
+    Дешифрует зашифрованный пользовательский ключ.
     """
     encrypted_data = base64.urlsafe_b64decode(encrypted_key)
     salt = encrypted_data[:16]
@@ -159,4 +126,7 @@ async def decrypt_user_key(encrypted_key: str) -> bytes:
     aes_key = await asyncio.to_thread(kdf.derive, settings.aes_key.encode())
 
     cipher = Fernet(base64.urlsafe_b64encode(aes_key))
-    return cipher.decrypt(ciphertext)
+    try:
+        return cipher.decrypt(ciphertext)
+    except Exception as e:
+        raise ValueError("Decryption failed. Invalid key or corrupted data.") from e
