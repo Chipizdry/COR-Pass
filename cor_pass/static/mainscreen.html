@@ -8,6 +8,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>User Records</title>
         <link rel="stylesheet" type="text/css" href="/static/styles.css">
+        <link rel="stylesheet" type="text/css" href="/static/modal.css">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
       
     </head>
@@ -248,18 +249,42 @@
                 </defs>
               </svg>        
             </button>
+            <button id="Sessions" class="link-button" type="button" 
+            style="  text-align: left; font-size: 12px;float: left;
+            white-space: nowrap;max-width:60px;width:60px;
+            max-height: 20px;height: 20px;margin-top: 0px;
+            margin-bottom: 0px;margin-left:25px">Сессии</button>          
     </div>
-    <script src="/static/translation.js"></script>   
+
+       
+    <!-- Модальное окно -->
+<div id="sessionsModal" class="modal" style="display: none;">
+    <div class="modal-header">
+        <div class="modal-buttons">
+            <button class="modal-button close" data-action="close" onclick="closeModal('sessionsModal')">✖</button>
+        </div>
+        <br><br>
+        <h3 style="margin-top:0; color:#291161;font-size: 17px;">Информация о сессиях</h3>
+    </div>
+    <div class="cards-container" id="sessionCardsContainer">
+        <!-- Здесь будут отображаться карточки с сессиями -->
+    </div>
+</div>
+
+
+
+    <script src="/static/translation.js"></script>  
+    <script src="/static/general_fun.js"></script>   
     <script> function goBack() { window.history.back();  } </script>
         <script>
            const accessToken = new URLSearchParams(window.location.search).get('access_token');
             console.log("accessToken from localStorage:", accessToken);
             document.getElementById('passwordManagerButton').addEventListener('click', function() {
-                window.location.href = '/static/password_manager.html' + '?access_token=' + accessToken;
+                window.location.href = '/static/password_manager.html' + '?access_token=' + accessToken;   
             });
     
             document.getElementById('COR-MED').addEventListener('click', function() {
-                window.location.href = '/static/Cor-Id.html' + '?access_token=' + accessToken;
+                window.location.href = '/static/Medical.html' + '?access_token=' + accessToken;
             });
     
             // Обработчик для кнопки "COR-Platform"
@@ -364,6 +389,7 @@
 
             document.addEventListener('DOMContentLoaded', fetchCorId);
             document.addEventListener('DOMContentLoaded', function() {
+                initModalControls('sessionsModal');
           const isAdmin = localStorage.getItem('isAdmin'); // Получаем значение из localStorage
           const adminButtonContainer = document.getElementById('admin-button-container'); // Элемент, куда будет добавлена кнопка
               // Логирование значения isAdmin
@@ -380,6 +406,62 @@
             }
 
         });
+
+                // Находим элементы
+            const sessionsButton = document.getElementById("Sessions"); // Кнопка "Сессии"
+            const modal = document.getElementById("sessionsModal"); // Модальное окно
+
+            // Открываем модальное окно и загружаем данные при клике на кнопку "Сессии"
+            sessionsButton.addEventListener("click", async function () {
+                modal.style.display = "block"; // Открываем модальное окно
+                await getSessions(); // Загружаем данные о сессиях
+            });
+
+            makeModalDraggable('sessionsModal');
+
+// Функция для получения данных о сессиях
+async function getSessions() {
+    try {
+        const token = localStorage.getItem("access_token"); // Берем токен из localStorage
+        const response = await fetch("/api/user/sessions/all?skip=0&limit=150", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ошибка: ${response.status}`);
+        }
+
+        const sessions = await response.json();
+        console.log("Список сессий:", sessions);
+
+        const cardsContainer = document.getElementById("sessionCardsContainer");
+        cardsContainer.innerHTML = ""; // Очистка перед вставкой новых данных
+
+        sessions.forEach(session => {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.innerHTML = `
+                <div class="card-content">
+                    <p><strong>ID сессии:</strong> ${session.id}</p>
+                    <p><strong>Тип устройства:</strong> ${session.device_type || "Неизвестно"}</p>
+                    <p><strong>IP-адрес:</strong> ${session.ip_address || "Нет данных"}</p>
+                    <p><strong>Операционная система:</strong> ${session.device_os || "Неизвестно"}</p>
+                    <p><strong>Дата создания:</strong> ${new Date(session.created_at).toLocaleString()}</p>
+                    <p><strong>Дата обновления:</strong> ${new Date(session.updated_at).toLocaleString()}</p>
+                </div>
+            `;
+            cardsContainer.appendChild(card);
+        });
+
+    } catch (error) {
+        console.error("Ошибка при получении сессий:", error);
+    }
+}
+
         </script>
     </body>
     </html>

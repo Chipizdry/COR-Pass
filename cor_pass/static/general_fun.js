@@ -5,6 +5,7 @@ const modalConfigs = {
     editModal: { width: '250px', height: '500px', top: '50px', left: '50px' },
     myModal: { width: '250px', height: '450px', top: '50px', left: '250px' },
     settingsModal: { width: '550px', height: '600px', top: '50px', left: '450px' },
+    sessionsModal: { width: '400px', height: '300px', top: '100px', left: '100px' },
 };
 
 function makeModalDraggable(modalId) {
