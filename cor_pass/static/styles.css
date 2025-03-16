@@ -312,7 +312,7 @@ input[type="submit"] {
 
 .password-container {
     position: relative;
-    width: 100%; /* Убедитесь, что контейнер занимает всю ширину */
+    width: 100%; 
 }
 
 .password-input {
@@ -599,6 +599,32 @@ select#user_sex option:checked {
     gap: 10px; /* Отступ между иконкой и контентом */
     align-items: center; /* Выравнивание по вертикали */
     position: relative; /* Для позиционирования звездочки */
+}
+
+
+.session-card {
+    border: 1px solid #e0e0e0; /* Цвет границы */
+    background-color: rgba(255, 255, 255, 0.6); /* Белый фон с прозрачностью 60% */
+    border-radius: 8px; /* Скругление углов */
+    padding: 10px; /* Внутренние отступы */
+    width: 300px; /* Ширина карточки */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Тень */
+    display: flex;
+    flex-direction: column;
+    gap: 5px; /* Уменьшаем расстояние между элементами внутри карточки */
+}
+
+/* Стили для содержимого карточки сессии */
+.session-card .card-content {
+    font-size: 12px; /* Уменьшаем размер шрифта */
+    color: #291161; /* Цвет текста (цвет темы) */
+    line-height: 1.4; /* Уменьшаем высоту строки */
+}
+
+/* Стили для заголовков внутри карточки сессии */
+.session-card .card-content strong {
+    color: #7527B2; /* Цвет заголовков (другой оттенок темы) */
+    font-weight: 600; /* Увеличиваем жирность заголовков */
 }
 
 .card:hover {
