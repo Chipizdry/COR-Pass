@@ -217,6 +217,53 @@ button:disabled {
   .icon-button:hover {
     opacity: 0.7; /* Можно добавить эффект при наведении */
   }
+  .custom-button {
+    padding: 10px;
+    border: none;
+    margin: 10px auto;
+    background-color: white;
+    color: #7527B2;
+    cursor: pointer;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 200px;
+    height: 40px;
+    display: flex;
+    align-items: center; /* Выравнивание по вертикали */
+    justify-content: space-between; /* Распределение пространства между элементами */
+    font-size: 14px;
+    font-family: 'Montserrat', sans-serif; /* Подключение шрифта Montserrat */
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.icon-left,
+.icon-right {
+    width: 28px; /* Размер иконок */
+    height: 28px;
+    flex-shrink: 0; /* Запрет сжатия иконок */
+}
+
+.button-text {
+    flex-grow: 1; /* Текст занимает всё доступное пространство */
+    text-align: center; /* Центрирование текста */
+    margin: 0 8px; /* Отступы между текстом и иконками */
+}
+
+.custom-button:hover {
+    background-color: #eae8ef;
+}
+
+.custom-button:active {
+    transform: translateY(2px);
+}
+
+.icon-left,
+.icon-right {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
 
 h1 {
     color:#291161;
@@ -262,18 +309,6 @@ input[type="submit"] {
 }
 
 
-input[type="submit"]:hover {
-    background-color: #981666;
-}
-
-.registration-button {
-    background-color: #D2CAE8; 
-  /*  background-color: #981666; */
-    color: white;
-    padding: 10px 20px;
-    margin: 0 auto;
-    display: block;
-}
 
 .password-container {
     position: relative;
@@ -305,29 +340,6 @@ input[type="submit"]:hover {
 .registration-title, .forgot-password-link {
     text-align: center;
 }
-
-
-
-
-/* Кнопка Google */
-.customGPlusSignIn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 200px;
-    height: 50px;
-    background-color: #dd4b39;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-  }
-  
-  .customGPlusSignIn:hover {
-    background-color: #e74b37;
-  }
-
 
 
 #verificationCodeWindow {
@@ -420,7 +432,8 @@ a:hover {
     background: none;
     border: none;
     color: #7B43F2;
-    width: 100px;     
+    width: 200px;     
+    height:30;
     cursor: pointer;
     font-size: 16px;
     padding: 0;
@@ -463,6 +476,7 @@ a:hover {
     margin-right: 10px;
 }
 
+/* Стили для выпадающих списков */
 select#birth,
 select#user_sex {
     width: 200px;          /* Ширина для обоих полей */
@@ -470,33 +484,32 @@ select#user_sex {
     font-size: 14px;       /* Размер шрифта */
     color: #5B4296;
     border: 1px solid #ccc;/* Рамка вокруг */
-    border-radius: 12px;    /* Скругленные углы */
+    border-radius: 12px;   /* Скругленные углы */
     box-sizing: border-box;/* Учитываем отступы и границы при расчете ширины */
     background-color: white;/* Цвет фона */
     appearance: none;      /* Скрываем стандартный стиль стрелки */
     margin-bottom: 10px;   /* Отступ снизу для разделения полей */
 }
 
+/* Стили для фокуса на выпадающих списках */
 select#birth:focus,
 select#user_sex:focus {
     outline: none;         /* Убираем обводку при фокусе */
-    border-color: #021020; /* Цвет рамки при фокусе */
+    border-color: #7527B2; /* Цвет рамки при фокусе, как у кнопок */
+    background-color: #ffffff; /* Фон при фокусе, как у кнопок */
+    color: #7527B2;          /* Цвет текста при фокусе, как у кнопок */
+    box-shadow: 0 0 5px rgba(117, 39, 178, 0.5); /* Тень для акцента */
+}
+
+/* Стили для выбранной опции в выпадающем списке */
+select#birth option:checked,
+select#user_sex option:checked {
+    background-color: #5B4296; /* Цвет фона выбранной опции */
+    color: white;              /* Цвет текста выбранной опции */
 }
 .hidden {
     display: none;
 }
-
-.star {
-    font-size: 20px; /* Размер звезды */
-    color: gray; /* Цвет неактивной звезды */
-    cursor: pointer; /* Курсор в виде руки */
-    transition: color 0.3s; /* Плавный переход */
-}
-
-.star.favorite {
-    color: gold; /* Цвет активной звезды */
-}
-
 
 #qrCodeContainer {
     display: flex;

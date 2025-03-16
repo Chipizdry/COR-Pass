@@ -170,12 +170,9 @@
     <div class="modal-header">
         <h1>Поля для отображения </h1>
         <div class="modal-buttons">
-            <button class="modal-button" data-action="minimize" id="minimizeColumnSelectModal">🗕</button>
-            <button class="modal-button" data-action="maximize" id="maximizeColumnSelectModal">🗖</button>
             <button class="modal-button close" data-action="close" id="closeColumnSelectModal">✖</button>
         </div>
     </div>
-    <div class="modal-content">
         <label><input type="checkbox" onchange="toggleColumn('user_index')" id="checkbox-user_index" checked >Индекс</label><br>
         <label><input type="checkbox" onchange="toggleColumn('id')" id="checkbox-id" checked >ID</label><br>
         <label><input type="checkbox" onchange="toggleColumn('cor_id')" id="checkbox-cor_id" checked >COR-ID</label><br>
@@ -185,7 +182,7 @@
         <label><input type="checkbox" onchange="toggleColumn('created_at')" id="checkbox-created_at" checked >Дата регистрации</label><br>
         <label><input type="checkbox" onchange="toggleColumn('last_password_change')" id="checkbox-last_password_change" checked >Последнее изменение пароля</label><br>
         <label><input type="checkbox" onchange="toggleColumn('last_active')" id="checkbox-last_active" checked >Последняя активность</label><br>
-    </div>
+   
     <div class="modal-footer" style="text-align: center; margin-top: 20px;">
         <button onclick="closeModal('columnSelectModal')" class="modal-button">ОК</button>
     </div>
@@ -204,12 +201,12 @@
                     <button class="modal-button close" data-action="close" id="closeCorIDModal">✖</button>
                 </div>
             </div>
-            <div class="modal-content">
+            
                 <div id="corIdInfo">
                     <!-- Здесь информация о COR-ID -->               
                 </div>
                 <div id="qrcode"></div>
-            </div>
+           
             <div class="modal-footer">
                 <button class="modal-button" onclick="closeCorIdModal()">Закрыть</button>
             </div>
