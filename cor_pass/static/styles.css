@@ -440,6 +440,20 @@ a:hover {
     font-family: inherit;
     }
 
+
+.link-button-left{
+    text-align: left;
+    font-size: 12px;
+    float: left;
+    white-space: nowrap;
+    max-width:60px;width:60px;
+    max-height: 20px;
+    height: 20px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    margin-left:25px;
+}    
+
 .link-button:hover {
      color: darkblue;
      text-decoration: underline;
@@ -606,7 +620,7 @@ select#user_sex option:checked {
     border: 1px solid #e0e0e0; /* Цвет границы */
     background-color: rgba(255, 255, 255, 0.6); /* Белый фон с прозрачностью 60% */
     border-radius: 8px; /* Скругление углов */
-    padding: 10px; /* Внутренние отступы */
+    padding: 7px; /* Внутренние отступы */
     width: 300px; /* Ширина карточки */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Тень */
     display: flex;
@@ -614,11 +628,26 @@ select#user_sex option:checked {
     gap: 5px; /* Уменьшаем расстояние между элементами внутри карточки */
 }
 
+
+#sessionsModal {
+    display: none;
+    position: fixed;
+    background: radial-gradient(circle, #ffffff, #f1e9fc, #fcf7f2);
+    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ccc;
+    border-radius: 30px;
+    top: 100px;
+    left: 100px;
+    width: 400px;
+    overflow-y: auto; /* Добавляем прокрутку, если контент не помещается */
+    max-height: 90vh; /* Максимальная высота модального окна */
+    min-height: 200px; /* Минимальная высота модального окна */
+}
 /* Стили для содержимого карточки сессии */
 .session-card .card-content {
     font-size: 12px; /* Уменьшаем размер шрифта */
     color: #291161; /* Цвет текста (цвет темы) */
-    line-height: 1.4; /* Уменьшаем высоту строки */
+    line-height: 1.1; /* Уменьшаем высоту строки */
 }
 
 /* Стили для заголовков внутри карточки сессии */

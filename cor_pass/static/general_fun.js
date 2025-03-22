@@ -287,3 +287,239 @@ function updateEyeIcon(eyeIcon, isPasswordHidden) {
 }
 // Автоматическая инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', initAllModals);
+
+
+// Функция для проверки истечения срока действия токена
+function isTokenExpired(token) {
+    const decodedToken = decodeToken(token);
+    if (!decodedToken || !decodedToken.exp) {
+        return true;
+    }
+    const currentTime = Math.floor(Date.now() / 1000);
+    return decodedToken.exp < currentTime;
+}
+
+// Функция для декодирования токена
+function decodeToken(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (error) {
+        console.error("Failed to decode token:", error);
+        return null;
+    }
+}
+
+// Функция вычисления оставшегося времени жизни токена
+function calculateTokenLifetime(decodedToken) {
+    if (!decodedToken.exp) {
+        console.warn("Token does not have an 'exp' field.");
+        return null;
+    }
+
+    const currentTime = Math.floor(Date.now() / 1000); // Текущее время в секундах
+    const remainingTime = decodedToken.exp - currentTime;
+
+    if (remainingTime <= 0) {
+        console.warn("Token has already expired.");
+        return 0;
+    }
+    console.log(`Оставшееся время жизни токена: ${formatTime(remainingTime)}`);
+    return remainingTime; // В секундах
+}
+
+// Функция форматирования времени
+function formatTime(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    return `${hours}ч ${minutes}м ${secs}с`;
+}
+
+
+
+
+function showTokenExpiredModal() {
+
+    // Очищаем всё содержимое body
+    document.body.innerHTML = "";
+    // Добавляем модальное окно в body
+    const modalHTML = `
+        <div id="tokenExpiredModal" style="
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 400px;
+        background: #f9f9f9;
+        border: 1px solid #979292;
+        border-radius: 5px;
+        z-index: 1000;
+        font-size: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    ">
+        <div style="
+            background-color: #0078d7;
+            color: white;
+            padding: 5px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        ">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="
+                    width: 20px;
+                    height: 20px;
+                    background-color: yellow;
+                    color: black;
+                    font-weight: bold;
+                    font-size: 16px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 50%;
+                ">!</div>
+                <h1 style="
+                    font-size: 14px;
+                    margin: 0;
+                ">Срок действия сессии истёк</h1>
+            </div>
+        </div>
+        <div style="
+            padding: 10px;
+            text-align: center;
+        ">
+            <p style="margin: 0 0 20px;">Пожалуйста, войдите снова, чтобы продолжить.</p>
+            <button id="loginRedirectButton" style="
+                background-color: #007bff;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px 20px;
+                margin: 5px;
+                font-size: 16px;
+                cursor: pointer;
+                transition: background-color 0.3s, transform 0.2s;
+                white-space: nowrap;
+                min-width: 80px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            ">Войти</button>
+        </div>
+    </div>
+        `;
+    document.body.style.display = "none";
+    document.body.innerHTML = modalHTML;
+    document.body.style.display = "block"; 
+
+    // Добавляем обработчик кнопки для перехода на страницу логина
+    document.getElementById('loginRedirectButton').addEventListener('click', () => {
+        window.location.href = "/"; 
+    });
+
+}
+
+function getTokenFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('access_token'); // Извлекаем токен из URL
+}
+
+
+// Функция для проверки истечения токена
+function checkToken() {
+    const token = getTokenFromURL(); // Получаем токен из URL
+    if (!token) {
+        console.warn("Authorization token is missing.");
+        showTokenExpiredModal();
+        return false; // Токен отсутствует
+    }
+
+    // Парсим токен и проверяем, истёк ли он
+    const decodedToken = decodeToken(token);
+    calculateTokenLifetime(decodedToken);
+    if (!decodedToken) {
+        console.error("Failed to decode token.");
+        showTokenExpiredModal();
+        return false; // Токен не удалось декодировать
+    }
+
+    if (isTokenExpired(token)) {
+        console.warn("Token has expired.");
+        showTokenExpiredModal();
+        return false; // Токен истёк
+    }
+
+    return true; // Токен актуален
+}
+
+
+// Функция для прослушки всех событий с делегированием
+function setupTokenCheckOnActions() {
+    document.addEventListener('click', function(event) {
+        const target = event.target;
+
+        // Проверяем, был ли клик по кнопке или ссылке
+        if (target.tagName === 'BUTTON' || target.tagName === 'A') {
+            if (!checkToken()) {
+                event.preventDefault(); // Отменяем действие, если токен истёк
+            }
+        }
+    });
+}
+
+// Функция для активации перехватчика fetch
+function enableFetchInterceptor() {
+    const originalFetch = window.fetch;
+
+    window.fetch = async function (...args) {
+        // Печатаем аргументы вызова fetch для отладки
+        console.log("Fetch arguments:", args);
+
+        // Проверяем наличие токена в заголовках
+        const requestOptions = args[1] || {};
+        const headers = requestOptions.headers || {};
+
+        if (headers.Authorization) {
+            const token = headers.Authorization.replace("Bearer ", ""); // Убираем "Bearer"
+            console.log("Extracted token:", token);
+
+            // Парсим токен и выводим его в консоль
+            const decodedToken = decodeToken(token);
+            if (decodedToken) {
+                console.log("Decoded token:", decodedToken);
+
+                // Проверяем, истёк ли токен
+                if (isTokenExpired(token)) {
+                    console.warn("Token has expired.");
+                    showTokenExpiredModal();
+                    return; // Прекращаем выполнение запроса
+                }
+            } else {
+                console.error("Failed to decode token.");
+            }
+        } else {
+            console.warn("Authorization header is missing.");
+        }
+
+        // Выполняем оригинальный запрос
+        const response = await originalFetch(...args);
+
+        // Обрабатываем ошибки 401
+        if (response.status === 401) { // Неавторизован
+            console.warn("Unauthorized: Token might be expired.");
+            showTokenExpiredModal();
+        }
+
+        return response;
+    };
+}

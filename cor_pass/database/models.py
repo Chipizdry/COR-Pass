@@ -182,4 +182,4 @@ class OTP(Base):
     __table_args__ = (Index("idx_otp_records_user_id", "user_id"),)
 
 
-# Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
