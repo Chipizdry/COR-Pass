@@ -4,7 +4,6 @@
 .modal {
     display: none;
     position: fixed;
-   /* background: linear-gradient(to bottom, #ffffff, #ece1fb, #fef2e5);*/
     background: radial-gradient(circle, #ffffff, #f1e9fc, #fcf7f2);
     box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
     border: 1px solid #ccc;
@@ -13,8 +12,10 @@
     left: 0;
     width: 400px;
     height: 100%;
+    flex-direction: column;
     display: flex;
-    justify-content: center;
+    align-items: center;
+    justify-content: flex-start;
     align-items: center;
 }
 

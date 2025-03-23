@@ -27,6 +27,9 @@ body, html {
     background-color: rgba(255, 255, 255, 0.5); /* Белый фон с 70% непрозрачности */
     text-align: center;
     align-items: center;
+    display: flex; /* Включаем Flexbox */
+    flex-direction: column; /* Элементы располагаются вертикально */
+    justify-content: center; /* Выравнивание элементов по центру по вертикали */
 }
 
 .header-container {
@@ -133,7 +136,7 @@ button:hover, input[type="submit"]:hover, input[type="button"]:hover {
 
 button:active {
     background-color: #5F41B2; /* Цвет фона при нажатии */
-    transform: translateY(2px); /* Эффект "нажатия" */
+    transform: translateY(2px);
 }
 
 button:disabled {
@@ -142,6 +145,19 @@ button:disabled {
 }
 
 
+.button-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    align-self: stretch; 
+}
+
+#admin-button-container {
+    width: 100%; 
+    max-width: 200px; 
+}
 
 .delete-button {
     padding: 10px;
@@ -202,7 +218,6 @@ button:disabled {
 }
 
 .button svg {
-
     margin-left: 80px; /* Отодвигаем иконку вправо */
     top: -16px;
 }
@@ -270,7 +285,6 @@ h1 {
     font-size: 24px;
     margin-bottom: 20px;
     text-align: center;
-
 }
 
 
@@ -278,7 +292,6 @@ h3 {
     color: #333;
     margin-bottom: 20px;
     text-align: center;
-
 }
 
 
@@ -307,8 +320,6 @@ input[type="submit"] {
     border-radius: 3px;
     cursor: pointer;
 }
-
-
 
 .password-container {
     position: relative;
@@ -432,8 +443,8 @@ a:hover {
     background: none;
     border: none;
     color: #7B43F2;
-    width: 200px;     
-    height:30;
+    width: 80px;     
+    height:20px;
     cursor: pointer;
     font-size: 16px;
     padding: 0;
@@ -462,7 +473,11 @@ a:hover {
 
         }        
 
-
+.logo {
+    display: flex;
+    justify-content: center; /* Центрирование логотипа */
+    margin-top: 10px; /* Отступ сверху для логотипа */
+      }
 
 /* Стили для рамки вокруг генератора паролей */
 .password-generator {
@@ -725,4 +740,22 @@ select#user_sex option:checked {
 
 .star.favorite svg {
     transform: scale(1.0); /* Увеличение звездочки при активации */
+}
+
+
+.image-frame {
+    width: 200px;
+    height:200px;
+    border: 1px solid #e0e0e0;
+    position: relative;
+    overflow: hidden;
+}
+
+#previewImage {
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: grab;
+    max-width: none; /* Отключаем ограничение по ширине */
+    max-height: none; /* Отключаем ограничение по высоте */
 }

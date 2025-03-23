@@ -1,0 +1,245 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация врача</title>
+    <link rel="stylesheet" type="text/css" href="/static/styles.css">
+    <link rel="stylesheet" type="text/css" href="/static/modal.css">
+</head>
+<body>
+    
+        <!-- Модальные окна для регистрации -->
+         <!-- Модальное окно для первого шага -->
+         <div id="step1Modal" class="modal">
+              
+                <div class="button-container">
+                    <button class="link-button" onclick="goBack('/static/medical.html')" data-translate="back-link-text">&lt;&lt;назад</button>
+                    <button class="link-button" onclick="goForward()" data-translate="forward-link-text">вперёд&gt;&gt;</button>
+                </div>
+                <div class="modal-header">   
+                    <div class="logo">  
+                        <svg width="160" height="36" viewBox="0 0 200 46" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <g id="COR_Lab_LOGO">
+                        <g id="Vector">
+                        <path d="M184.92 46H117.734C109.82 46 103.389 39.5699 103.389 31.6559V14.3441C103.389 6.43011 
+                        109.82 0 117.734 0H184.92C192.834 0 199.264 6.43011 199.264 14.3441V31.7384C199.264 39.5699 
+                        192.834 46 184.92 46Z" fill="#D9D9DF"/>
+                        <path d="M125.317 30.8299V12.7761H121.443V34.4571H134.138V30.8299H125.317Z" fill="#323238"/>
+                        <path d="M180.468 25.1417C179.973 24.3174 179.314 23.6579 178.489 23.1632C179.149 22.6686 
+                        179.644 22.0091 180.056 21.2672C180.55 20.3604 180.715 19.4536 180.715 18.4643C180.715 
+                        16.8156 180.138 15.4966 178.902 14.4249C177.665 13.3532 176.181 12.7761 174.368 
+                        12.7761H165.629V34.4572H174.615C176.511 34.4572 178.077 33.8801 179.396 32.6435C180.715 
+                        31.4894 181.375 30.0055 181.375 28.2744C181.292 27.1202 181.045 26.0485 180.468 
+                        25.1417ZM169.421 21.5145V16.4034H174.12C174.945 16.4034 175.522 16.6507 176.099 
+                        17.1453C176.593 17.6399 176.841 18.217 176.841 18.9589C176.841 19.7009 176.593 
+                        20.2779 176.099 20.7726C175.604 21.2672 174.945 21.5145 174.12 21.5145L169.421 
+                        21.5145ZM177.335 27.9446C177.335 28.769 177.088 29.4285 176.511 29.9231C175.934 
+                        30.4177 175.192 30.7475 174.368 30.7475H169.421V25.1417H174.368C175.274 25.1417 
+                        175.934 25.389 176.511 25.9661C177.088 26.4607 177.335 27.1202 177.335 27.9446Z" fill="#323238"/>
+                        <path d="M156.479 34.4578H160.848L158.128 29.6765H152.44L151.368 27.5331H156.974L156.397 
+                        26.4614H148.483L146.01 31.5725H154.748L156.479 34.4578ZM148.4 18.5474C147.906 18.5474 
+                        147.411 19.0421 147.411 19.5367C147.411 20.1138 147.906 20.5259 148.4 20.5259C148.73 
+                        20.5259 149.06 20.3611 149.225 20.1138L148.4 18.5474ZM150.214 21.5976L149.554 20.4435C149.307 
+                        20.7732 148.895 20.9381 148.483 20.9381C147.741 20.9381 147.081 20.2786 147.081 
+                        19.5367C147.081 18.8772 147.576 18.3001 148.235 18.1353L147.741 17.2284C147.741 
+                        17.2284 144.443 19.5367 144.856 23.8234C144.856 23.8234 144.856 26.1317 146.669 
+                        28.1102L147.741 26.0492C146.175 24.1532 147.658 21.5152 150.214 21.5976ZM153.594 
+                        22.2571L154.171 21.8449L153.924 21.3503L151.203 22.9991L151.533 23.4112L152.028 
+                        23.1639L152.77 24.4005L154.336 23.5761L153.594 22.2571ZM149.472 14.0958L147.246 
+                        15.4148L151.286 22.5044L153.676 21.1854L149.472 14.0958ZM148.483 13.5188L147.329 
+                        11.5403L146.01 12.2822L147.164 14.2607L146.504 14.6729L146.834 15.1675L149.554 
+                        13.6012L149.225 13.1066L148.483 13.5188Z" fill="#ED1064"/>
+                        <path d="M143.538 34.4585H139.168L144.115 24.566C144.444 26.7094 145.269 27.8635 
+                        146.258 29.0177L143.538 34.4585Z" fill="#323238"/>
+                        <path d="M85.5952 23.1832H78.2611L88.7208 38.2697H96.8917L90.2959 28.7945C94.086 
+                        26.9733 96.7194 23.1832 96.7194 18.7286C96.7194 12.5512 91.6987 7.6044 85.5952 
+                        7.6044H70.3363V38.3682H77.0059V14.2002H85.5952C88.0563 14.2002 90.0498 16.169 
+                        90.0498 18.6548C90.0498 21.1405 88.0563 23.1832 85.5952 23.1832Z" fill="#ED1064"/>
+                        <path d="M16.512 32.0924C11.4914 32.0924 7.45514 27.9823 7.45514 23.0355C7.45514 
+                        18.0149 11.5652 13.9787 16.512 13.9787C18.9731 13.9787 21.2865 14.9631 22.9355 
+                        16.612L29.359 13.8064C26.4795 9.77017 21.7788 7.21062 16.4874 7.21062C7.82431 
+                        7.21062 0.736328 14.2986 0.736328 22.9617C0.736328 31.6986 7.82431 38.7128 
+                        16.4874 38.7128C21.7542 38.7128 26.4549 36.0794 29.359 32.117L22.9355 29.459C21.2865 
+                        31.1079 19.0469 32.0924 16.512 32.0924Z" fill="#ED1064"/>
+                        <path d="M57.1448 17.6703L54.8314 23.1832H51.2874L47.0789 33.003L40.9754 
+                        18.7286L38.7604 23.1832H32.6568C32.7307 31.7478 39.8187 38.762 48.4079 38.762C57.071 
+                        38.762 64.0605 31.8463 64.159 23.1832H59.4583L57.1448 17.6703Z" fill="#ED1064"/>
+                        <path d="M41.1477 12.7235L47.0051 26.6533L49.5646 20.7221H53.1824L57.0464 
+                        12.4036L60.9103 20.7221H63.8882C62.9038 13.0434 56.308 7.21062 48.3833 
+                        7.21062C40.4585 7.21062 33.8628 13.0681 32.8045 20.7221H37.2591L41.1477 12.7235Z" fill="#ED1064"/>
+                        </g>
+                        </g>
+                        </svg>          
+                    </div>  
+                    
+                    <h1>Регистрация</h1>
+
+                    <div class="upload-container">
+                        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                        <label for="fileInput" class="link-button">Загрузить фото</label>
+                        <div class="image-frame">
+                            <img id="previewImage" src="#" alt="Предпросмотр изображения" style="display: none;">
+                        </div>
+                    </div>
+
+            </div>
+                
+               
+
+                <!-- Форма для первого шага -->
+          <!--      <form id="step1Form">
+                    <label for="lastName">Фамилия:</label>
+                    <input type="text" id="lastName" name="lastName" required>
+
+                    <label for="firstName">Имя:</label>
+                    <input type="text" id="firstName" name="firstName" required>
+
+                    <label for="middleName">Отчество:</label>
+                    <input type="text" id="middleName" name="middleName">
+
+                    <label for="photo">Изменить фотографию:</label>
+                    <input type="file" id="photo" name="photo" accept="image/*">
+
+                    <label for="birthYear">Год рождения:</label>
+                    <input type="number" id="birthYear" name="birthYear" min="1900" max="2023" value="1994" required>
+
+                    <label for="gender">Пол:</label>
+                    <select id="gender" name="gender" required>
+                        <option value="male">Мужской</option>
+                        <option value="female">Женский</option>
+                    </select>
+
+                    <label for="workEmail">Рабочий email:</label>
+                    <input type="email" id="workEmail" name="workEmail" required>
+                    <p class="hint">Введите ваш рабочий имейл, под которым потом вы будете осуществлять вход в кабинет COR LAB.</p>
+
+                    <div class="modal-navigation">
+                        <button type="link-button" class="back-button" onclick="goBack('/static/medical.html')">Назад</button>
+                        <button type="link-button" class="next-button" onclick="nextStep(2)">Вперёд ></button>
+                    </div>
+                  
+                </form>-->
+           
+        </div>
+<!--
+        <div id="step2Modal" class="modal">
+            <div class="modal-content">
+                <h2>Шаг 2: Контактная информация</h2>
+                <form id="step2Form">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+
+                    <label for="phone">Телефон:</label>
+                    <input type="text" id="phone" name="phone" required>
+
+                    <div class="modal-navigation">
+                        <button type="button" onclick="prevStep(1)">Назад</button>
+                        <button type="button" onclick="nextStep(3)">Далее</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="step3Modal" class="modal">
+            <div class="modal-content">
+                <h2>Шаг 3: Профессиональная информация</h2>
+                <form id="step3Form">
+                    <label for="specialization">Специализация:</label>
+                    <input type="text" id="specialization" name="specialization" required>
+
+                    <label for="license">Номер лицензии:</label>
+                    <input type="text" id="license" name="license" required>
+
+                    <div class="modal-navigation">
+                        <button type="button" onclick="prevStep(2)">Назад</button>
+                        <button type="submit">Завершить регистрацию</button>
+                    </div>
+                </form>
+            </div>
+        </div> -->
+        <script src="/static/translation.js"></script>  
+        <script src="/static/general_fun.js"></script> 
+    <script>
+       
+       document.addEventListener('DOMContentLoaded', function () {
+   
+   makeModalDraggable('step1Modal');})
+
+
+        // Функция для перехода на следующий шаг
+        function nextStep(step) {
+            // Сохраняем данные текущего шага
+            saveFormData(1);
+           
+        }
+
+        // Функция для сохранения данных формы
+        function saveFormData(step) {
+            const form = document.getElementById(`step${step}Form`);
+            const inputs = form.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                console.log(`${input.name}: ${input.value}`); // Логируем данные
+            });
+        }
+
+
+
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = document.getElementById('previewImage');
+            img.src = e.target.result;
+            img.style.display = 'block';
+            initImageDragAndZoom(img);
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+function initImageDragAndZoom(img) {
+    let isDragging = false;
+    let startX, startY, translateX = 0, translateY = 0;
+    let scale = 1;
+
+    img.addEventListener('mousedown', function(e) {
+        isDragging = true;
+        startX = e.clientX - translateX;
+        startY = e.clientY - translateY;
+        img.style.cursor = 'grabbing';
+        e.stopPropagation(); // Останавливаем всплытие события
+    });
+
+    window.addEventListener('mousemove', function(e) {
+        if (isDragging) {
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        }
+    });
+
+    window.addEventListener('mouseup', function(e) {
+        isDragging = false;
+        img.style.cursor = 'grab';
+        e.stopPropagation(); // Останавливаем всплытие события
+    });
+
+    img.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+            scale *= 1.1; // Увеличение масштаба
+        } else {
+            scale /= 1.1; // Уменьшение масштаба
+        }
+        img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        e.stopPropagation(); // Останавливаем всплытие события
+    });
+}
+    </script>
+</body>
+</html>

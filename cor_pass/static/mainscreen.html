@@ -275,7 +275,7 @@
 
     <script src="/static/translation.js"></script>  
     <script src="/static/general_fun.js"></script>   
-    <script> function goBack() { window.history.back();  } </script>
+    
         <script>
            const accessToken = new URLSearchParams(window.location.search).get('access_token');
             console.log("accessToken from localStorage:", accessToken);
@@ -384,30 +384,42 @@
 
             document.addEventListener('DOMContentLoaded', fetchCorId);
             
-
             document.addEventListener('DOMContentLoaded', function() {
-                initModalControls('sessionsModal');
-                enableFetchInterceptor();
-                setupTokenCheckOnActions() ;
-                
-          const isAdmin = localStorage.getItem('isAdmin'); // Получаем значение из localStorage
-          const adminButtonContainer = document.getElementById('admin-button-container'); // Элемент, куда будет добавлена кнопка
-              // Логирование значения isAdmin
-            console.log("isAdmin from localStorage:", isAdmin); // Логируем значение
-            if (isAdmin === 'true') { // Проверяем, является ли пользователь администратором
+              initModalControls('sessionsModal');
+              enableFetchInterceptor();
+              setupTokenCheckOnActions();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const accessToken = urlParams.get('access_token'); // Получаем токен из URL
+
+    if (accessToken) {
+        try {
+            // Расшифровываем токен
+            const decodedToken = decodeToken(accessToken);
+
+            // Логируем расшифрованный токен
+            console.log("Decoded token:", decodedToken);
+
+            // Проверяем, является ли пользователь администратором
+            const isAdmin = localStorage.getItem('isAdmin');
+            const adminButtonContainer = document.getElementById('admin-button-container');
+            adminButtonContainer.innerHTML = '';
+            if (isAdmin === 'true') {
                 const adminButton = document.createElement('button');
                 adminButton.innerText = 'Администрирование';
-                adminButton.className = 'admin-button'; 
                 adminButton.onclick = function() {
-                    window.location.href =  `/static/admin.html/?access_token=${accessToken}`// Переход на страницу администрирования
-                   
+                    window.location.href = `/static/admin.html/?access_token=${accessToken}`;
                 };
-                adminButtonContainer.appendChild(adminButton); // Добавляем кнопку в контейнер
+                adminButtonContainer.appendChild(adminButton);
             }
+        } catch (error) {
+            console.error("Ошибка при расшифровке токена:", error);
+        }
+    } else {
+        console.error("Токен не найден в localStorage.");
+    }
+});
 
-        });
-
-                // Находим элементы
             const sessionsButton = document.getElementById("Sessions"); // Кнопка "Сессии"
             const modal = document.getElementById("sessionsModal"); // Модальное окно
 

@@ -13,7 +13,7 @@
 </head>
 <body>
     <div class="container">
-        <button class="link-button" onclick="goBack()" data-translate="back-link-text"><<<назад<<<</button>
+        <button class="link-button" onclick="goBack('/static/mainscreen.html')" data-translate="back-link-text"><<<назад<<<</button>
         <button class="delete-button" id="deleteRecordButton" >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path fill-rule="evenodd" clip-rule="evenodd" d="M1.70976 4.02322C2.16421 3.56878 
@@ -86,7 +86,16 @@
     </div>
 <script src="/static/translation.js"></script>  
 <script src="/static/general_fun.js"></script>      
-<script> function goBack() { window.history.back();  } </script>
+
+
+<script>
+const accessToken = new URLSearchParams(window.location.search).get('access_token');
+console.log("accessToken from localStorage:", accessToken);
+document.getElementById('I_am_a_doctor').addEventListener('click', function() {
+    if (checkToken()) {
+    window.location.href = '/static/doctor_registration.html' + '?access_token=' + accessToken;   }
+});
+</script>
     
 </body>
 </html>

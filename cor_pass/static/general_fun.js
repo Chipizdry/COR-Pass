@@ -6,6 +6,7 @@ const modalConfigs = {
     myModal: { width: '250px', height: '450px', top: '50px', left: '250px' },
     settingsModal: { width: '550px', height: '600px', top: '50px', left: '450px' },
     sessionsModal: { width: '400px', height: '300px', top: '100px', left: '100px' },
+    step1Modal: { width: '550px', height: '600px', top: '30px', left: '300px' },
 };
 
 function makeModalDraggable(modalId) {
@@ -341,9 +342,6 @@ function formatTime(seconds) {
     return `${hours}ч ${minutes}м ${secs}с`;
 }
 
-
-
-
 function showTokenExpiredModal() {
 
     // Очищаем всё содержимое body
@@ -351,19 +349,18 @@ function showTokenExpiredModal() {
     // Добавляем модальное окно в body
     const modalHTML = `
         <div id="tokenExpiredModal" style="
-        display: flex;
-        flex-direction: column;
         position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+        background: radial-gradient(circle, #ffffff, #f1e9fc, #fcf7f2);
+        box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
+        border: 1px solid #ccc;
+        border-radius: 30px;
+        top: 0;
+        left: 0;
         width: 400px;
-        background: #f9f9f9;
-        border: 1px solid #979292;
-        border-radius: 5px;
-        z-index: 1000;
-        font-size: 12px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     ">
         <div style="
             background-color: #0078d7;
@@ -421,6 +418,22 @@ function showTokenExpiredModal() {
     document.body.style.display = "none";
     document.body.innerHTML = modalHTML;
     document.body.style.display = "block"; 
+
+
+      // Удаление токенов из localStorage
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('isAdmin');
+      localStorage.removeItem('redirectUrl');
+
+
+      // Очистка кэша страницы
+      if ('caches' in window) {
+          caches.keys().then(names => {
+              for (let name of names) caches.delete(name);
+          });
+      }
+
 
     // Добавляем обработчик кнопки для перехода на страницу логина
     document.getElementById('loginRedirectButton').addEventListener('click', () => {
@@ -522,4 +535,18 @@ function enableFetchInterceptor() {
 
         return response;
     };
+}
+
+
+function goBack(url) {
+    // Проверяем токен
+    if (checkToken()) {
+        // Получаем токен из localStorage или из URL
+        const accessToken = localStorage.getItem('accessToken');
+        const urlParams = new URLSearchParams(window.location.search);
+        const tokenFromUrl = urlParams.get('access_token');
+        // Используем токен из URL, если он есть, иначе из localStorage
+        const token = tokenFromUrl || accessToken;
+        window.location.href = `${url}?access_token=${token}`;
+    } 
 }
