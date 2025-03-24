@@ -80,8 +80,15 @@
 
                     <div class="upload-container">
                         <input type="file" id="fileInput" accept="image/*" style="display: none;">
-                        <label for="fileInput" class="link-button">Загрузить фото</label>
+                        <label for="fileInput" class="upload-button">Загрузить фото</label>
                         <div class="image-frame">
+                            <!-- SVG-заглушка -->
+                            <svg id="placeholder" width="144" height="144" viewBox="0 0 144 144" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="1" y="1" width="142" height="142" rx="71" fill="white" fill-opacity="0.6"/>
+                                <rect x="1" y="1" width="142" height="142" rx="71" stroke="white" stroke-width="2"/>
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M72 37C67.3587 37 62.9075 38.8437 59.6256 42.1256C56.3437 45.4075 54.5 49.8587 54.5 54.5C54.5 59.1413 56.3437 63.5925 59.6256 66.8744C62.9075 70.1563 67.3587 72 72 72C76.6413 72 81.0925 70.1563 84.3744 66.8744C87.6563 63.5925 89.5 59.1413 89.5 54.5C89.5 49.8587 87.6563 45.4075 84.3744 42.1256C81.0925 38.8437 76.6413 37 72 37ZM63.25 76.375C58.6087 76.375 54.1575 78.2187 50.8756 81.5006C47.5937 84.7825 45.75 89.2337 45.75 93.875V98.25C45.75 100.571 46.6719 102.796 48.3128 104.437C49.9538 106.078 52.1794 107 54.5 107H89.5C91.8206 107 94.0462 106.078 95.6872 104.437C97.3281 102.796 98.25 100.571 98.25 98.25V93.875C98.25 89.2337 96.4062 84.7825 93.1244 81.5006C89.8425 78.2187 85.3913 76.375 80.75 76.375H63.25Z" fill="#D2CAE8"/>
+                            </svg>
+                            <!-- Загруженное изображение -->
                             <img id="previewImage" src="#" alt="Предпросмотр изображения" style="display: none;">
                         </div>
                     </div>
@@ -187,7 +194,7 @@
         }
 
 
-
+/*
         document.getElementById('fileInput').addEventListener('change', function(event) {
     const file = event.target.files[0];
     if (file) {
@@ -199,6 +206,32 @@
             initImageDragAndZoom(img);
         };
         reader.readAsDataURL(file);
+    }
+});
+
+*/
+document.getElementById('fileInput').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = document.getElementById('previewImage');
+            const placeholder = document.getElementById('placeholder');
+
+            img.src = e.target.result;
+            img.style.display = 'block';
+            placeholder.style.display = 'none';
+
+            initImageDragAndZoom(img);
+        };
+        reader.readAsDataURL(file);
+    } else {
+        // Если файл не выбран, показываем SVG-заглушку
+        const img = document.getElementById('previewImage');
+        const placeholder = document.getElementById('placeholder');
+
+        img.style.display = 'none';
+        placeholder.style.display = 'block';
     }
 });
 

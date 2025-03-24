@@ -747,8 +747,17 @@ select#user_sex option:checked {
     width: 200px;
     height:200px;
     border: 1px solid #e0e0e0;
+    border-radius: 12px;
     position: relative;
     overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#placeholder {
+    width: 144px; /* Ширина SVG */
+    height: 144px; /* Высота SVG */
 }
 
 #previewImage {
@@ -758,4 +767,5 @@ select#user_sex option:checked {
     cursor: grab;
     max-width: none; /* Отключаем ограничение по ширине */
     max-height: none; /* Отключаем ограничение по высоте */
+    display: none;
 }
