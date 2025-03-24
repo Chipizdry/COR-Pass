@@ -393,8 +393,7 @@ function showTokenExpiredModal() {
             width: 100%;
             max-width: 200px;
             height: 40px;
-            transition: background-color 0.3s;
-        ">Войти
+            transition: background-color 0.3s;">Войти
         </button>
     </div>
 </div>
