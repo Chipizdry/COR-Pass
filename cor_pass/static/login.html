@@ -171,7 +171,7 @@
     <div id="message"></div>
       <!-- Кнопка "Восстановить доступ" -->
     <button id="recovery-btn" class="link-button" data-translate="recovery-button">Восстановить доступ</button>
-   
+   <!--
     <p>
         <div class="g-signin2" data-onsuccess="onSignIn"></div>
         <button class="google-signin-btn" id='google-btn' onclick="signInWithGoogle()">
@@ -180,7 +180,7 @@
     </p>
     <button class="custom-btn facebook-btn" id='facebook-btn' onclick="signInWithFacebook()">
         <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook Icon" width="20" height="20"> <span data-translate="login-button-facebook"></span>
-    </button>
+    </button>-->
 
     <div style="display: flex; align-items: center; justify-content: center; gap: 1px; white-space: nowrap; color: #7f69bd; font-size: 14px;">
         <span data-translate="no-account-text">Нет аккаунта?</span> 
@@ -453,36 +453,12 @@ document.addEventListener('DOMContentLoaded', function() {
             checkFormValidity(); 
         
         console.log('DOM fully loaded and parsed');
-        
-        // Делаем AJAX-запрос к Python приложению для получения настроек
-        
-        fetch('/get_social_login_settings')
-            .then(response => response.json())
-            .then(data => {
-                // console.log('Settings received:', data);
-                // Приводим строковые значения к булевым
-                const googleLoginEnabled = data.google_login === 'True';
-                const facebookLoginEnabled = data.facebook_login === 'True';
-                // console.log('googleLoginEnabled:', googleLoginEnabled);
-                // console.log('facebookLoginEnabled:', facebookLoginEnabled);
-                // Показываем или скрываем кнопки в зависимости от настроек
-                if (!googleLoginEnabled) {
-                    // console.log('Hiding Google login button');
-                    GoogleBtn.style.display = 'none';
-                }
-                if (!facebookLoginEnabled) {
-                    // console.log('Hiding Facebook login button');
-                    FaceBookBtn.style.display = 'none';
-                }
-                
-                
-            })
-            .catch(error => console.error('Error fetching settings:', error));
         });
-        
-</script>
+      
+</script> 
 
-<script>
+
+<script> 
     const urlParams = new URLSearchParams(window.location.search);
     let redirectUrl = urlParams.get('redirectUrl');
 
@@ -533,6 +509,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
             // Сохраняем их в localStorage
+            /*
             if (redirectUrl) {
                 localStorage.setItem('redirectUrl', redirectUrl);
                 console.log('Redirect URL сохранен в localStorage:', redirectUrl);
@@ -546,6 +523,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 console.warn('COR-ID отсутствует в строке запроса.');
             }
+              */
 
         form.addEventListener('submit', (event) => {
             event.preventDefault();
