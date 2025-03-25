@@ -17,61 +17,12 @@
     
         <title>Авторизация и регистрация</title>
         <link rel="stylesheet" type="text/css" href="static/styles.css">
-        <link rel="stylesheet" type="text/css" href="/static/modal.css">
+        <link rel="stylesheet" type="text/css" href="static/modal.css">
         <meta name="google-signin-client_id" content="161352424929-s3ris9429m994vcm2m35epe6eu4538el.apps.googleusercontent.com">
         <meta name="facebook-sdk-version" content="v15.0" />
         <script src="https://connect.facebook.net/en_US/sdk.js"></script>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet" />
-       <style>
-
-/*
-            .modal {
-                display: none;
-                position: fixed;
-                
-                z-index: 1;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.3); 
-                backdrop-filter: blur(5px); 
-            }
-       
-            .modal-content {
-                position: relative; 
-                display: flex;
-                flex-direction: column;
-                align-items: center; 
-                justify-content: center; 
-                background: linear-gradient(135deg, #f8e8ff, #f0f4ff); 
-                margin: 5% auto;
-                padding: 20px;
-                border: 1px solid #888;
-                width: 30%;
-                border-radius: 30px;
-            }
-*/
-            .close-btn {
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                font-size: 28px;
-                font-weight: bold;
-                cursor: pointer;
-            }
-
-            .close-btn:hover, .close-btn:focus {
-                color: red;
-            }
-
-
-            #file-upload-field input[type="file"] {
-                display: block;
-                margin-top: 10px;
-                width: 100%;
-            }
-        </style> 
+ 
 </head>
 <body>
 <div class="container">
@@ -156,22 +107,18 @@
         </div>
     <!-- Модальное окно для восстановления доступа -->
 <div id="recovery-modal" class="modal" style="display:none;">
-     <!--   <span class="close-btn" id="close-modal">&times;</span>
-        <h1 data-translate="recovery-modal-title">Восстановление доступа</h1>  -->
-
         <div class="modal-header">          
             <div class="modal-buttons">
                 <button class="modal-button close" data-action="close" id="closeMyModal">✖</button>
             </div> <br><br><br>
             <h3 style=" margin-top:0; color:#291161;font-size: 17px; ">Восстановление доступа</h3>
         </div> 
-
-
         <p data-translate="recovery-modal-select-method">Выберите способ восстановления:</p>
-        <button id="super-password-btn" data-translate="recovery-modal-super-password-btn">Ввести супер-пароль</button><br>
+     <div class="modal-content">
+        <button id="super-password-btn" data-translate="recovery-modal-super-password-btn">Ввести супер-пароль</button>
         <button id="file-upload-btn" data-translate="recovery-modal-file-upload-btn">Прикрепить файл </button>
         <label for="email" id="email-recovery-label" data-translate="recovery-modal-email-label">Email:</label>
-        <input type="email" id="email-recovery" name="username" required><br>
+        <input type="email" id="email-recovery" name="username" required>
 
         <!-- Поле для ввода супер-пароля -->
         <div id="super-password-field" style="display:none;">
@@ -186,7 +133,7 @@
             <span id="file-name" data-translate="recovery-modal-no-file">Файл не выбран</span>
         </div>
         <button id="send-recovery-btn" data-translate="recovery-modal-send-btn">Отправить</button>
-    
+     </div>
 </div>
 
 
@@ -201,12 +148,6 @@
         document.getElementById('super-password-field').style.display = 'none';
 
     }
-
-    // Закрытие модального окна
-    /*
-    document.getElementById('close-modal').onclick = function() {
-        document.getElementById('recovery-modal').style.display = 'none';
-    } */
 
     // Ввод супер-пароля
     document.getElementById('super-password-btn').onclick = function() {

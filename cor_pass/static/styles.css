@@ -8,14 +8,12 @@ body, html {
     justify-content: center;
     align-items: center;
     font-family: Arial, sans-serif;
-
-        background-image:url('/static/background.jpg'); /* Путь к вашему изображению */
-        background-size: cover; /* Масштабирует изображение, чтобы оно покрывало весь экран */
-        background-position: center; /* Центрирует изображение */
-        background-repeat: no-repeat; /* Отключает повторение изображения */
-        background-attachment: fixed; /* Фиксирует фон, чтобы он не прокручивался */
+    background-image:url('/static/background.jpg');
+    background-size: cover; /* Масштабирует изображение, чтобы оно покрывало весь экран */
+    background-position: center; /* Центрирует изображение */
+    background-repeat: no-repeat;
+    background-attachment: fixed;
 }
-
 
 .container {
     width: 250px; /* Установите фиксированную ширину контейнера */
@@ -50,12 +48,11 @@ body, html {
 
 
 #back-link {
-  /*  position: absolute; */
   text-align: left;
-    top: 10px;
-    left: -50px;
-    text-decoration: none;
-    color: #007bff; /* цвет ссылки */
+  top: 10px;
+  left: -50px;
+  text-decoration: none;
+  color: #007bff; /* цвет ссылки */
 }
 
 #back-link:hover {
@@ -96,7 +93,7 @@ input[type="text"] {
 
 /* Основной цвет placeholder */
 ::placeholder {
-    color: #B1A1DA; /* Фиолетовый оттенок */
+    color: #B1A1DA;
     opacity: 1; /* Убирает полупрозрачность */
 }
 
@@ -130,12 +127,11 @@ button, input[type="submit"], input[type="button"] {
     height: 40px;
 }
 button:hover, input[type="submit"]:hover, input[type="button"]:hover {
-   /* background-color: #dc56a8;*/
     background-color: #7B43F2;
 }
 
 button:active {
-    background-color: #5F41B2; /* Цвет фона при нажатии */
+    background-color: #5F41B2;
     transform: translateY(2px);
 }
 
@@ -163,8 +159,8 @@ button:disabled {
     padding: 10px;
     border: 1px solid #DF1125; 
     margin: 10px 0;
-    background-color: white; /* Белый фон */
-    color: #DF1125; /* Красный текст */
+    background-color: white;
+    color: #DF1125;
     cursor: pointer;
     border-radius: 12px;
     width: 100%;
