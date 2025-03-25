@@ -17,47 +17,14 @@
     
         <title>Авторизация и регистрация</title>
         <link rel="stylesheet" type="text/css" href="static/styles.css">
+        <link rel="stylesheet" type="text/css" href="/static/modal.css">
         <meta name="google-signin-client_id" content="161352424929-s3ris9429m994vcm2m35epe6eu4538el.apps.googleusercontent.com">
         <meta name="facebook-sdk-version" content="v15.0" />
         <script src="https://connect.facebook.net/en_US/sdk.js"></script>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet" />
-        <style>
-            button,
-            .google-signin-btn,
-            .custom-btn {
-                font-family: inherit; /* Наследовать шрифт от родительского элемента */
-                font-size: 16px; /* Размер шрифта */
-            }
-    
-            .custom-btn img {
-                margin-right: 10px;
-                align-items: center;
-            }
-    
-            .g-signin2 {
-                display: none; /* Скрыть стандартную кнопку */
-            }
-    
-            .google-signin-btn {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                padding: 5px 10px;
-                border: none;
-                border-radius: 5px;
-                background-color: #4285f4;
-                color: white;
-                cursor: pointer;
-                margin-top: 10px;
-                width: 100%;
-                max-width: 200px;
-            }
-    
-            .google-signin-btn img {
-                margin-right: 10px;
-            }
+       <style>
 
-
+/*
             .modal {
                 display: none;
                 position: fixed;
@@ -67,26 +34,24 @@
                 top: 0;
                 width: 100%;
                 height: 100%;
-                background-color: rgba(0, 0, 0, 0.3); /* Затемнённый фон */
-                backdrop-filter: blur(5px); /* Размытие заднего фона */
+                background-color: rgba(0, 0, 0, 0.3); 
+                backdrop-filter: blur(5px); 
             }
        
             .modal-content {
-                position: relative; /* Добавьте это свойство */
+                position: relative; 
                 display: flex;
                 flex-direction: column;
-                align-items: center; /* Центрирование по горизонтали */
-                justify-content: center; /* Центрирование по вертикали */
-                background: linear-gradient(135deg, #f8e8ff, #f0f4ff); /* Градиентный фон */
+                align-items: center; 
+                justify-content: center; 
+                background: linear-gradient(135deg, #f8e8ff, #f0f4ff); 
                 margin: 5% auto;
                 padding: 20px;
                 border: 1px solid #888;
                 width: 30%;
                 border-radius: 30px;
             }
-
-
-
+*/
             .close-btn {
                 position: absolute;
                 top: 10px;
@@ -106,7 +71,7 @@
                 margin-top: 10px;
                 width: 100%;
             }
-        </style>
+        </style> 
 </head>
 <body>
 <div class="container">
@@ -171,17 +136,7 @@
     <div id="message"></div>
       <!-- Кнопка "Восстановить доступ" -->
     <button id="recovery-btn" class="link-button" data-translate="recovery-button">Восстановить доступ</button>
-   <!--
-    <p>
-        <div class="g-signin2" data-onsuccess="onSignIn"></div>
-        <button class="google-signin-btn" id='google-btn' onclick="signInWithGoogle()">
-            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Icon" width="20" height="20"> <span data-translate="login-button-google">Login</span>
-        </button>
-    </p>
-    <button class="custom-btn facebook-btn" id='facebook-btn' onclick="signInWithFacebook()">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook Icon" width="20" height="20"> <span data-translate="login-button-facebook"></span>
-    </button>-->
-
+   
     <div style="display: flex; align-items: center; justify-content: center; gap: 1px; white-space: nowrap; color: #7f69bd; font-size: 14px;">
         <span data-translate="no-account-text">Нет аккаунта?</span> 
         <button onclick="window.location.href='/static/signup.html' + '?redirectUrl=' + redirectUrl;"
@@ -200,10 +155,18 @@
             </div>
         </div>
     <!-- Модальное окно для восстановления доступа -->
-<div id="recovery-modal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn" id="close-modal">&times;</span>
-        <h1 data-translate="recovery-modal-title">Восстановление доступа</h1>
+<div id="recovery-modal" class="modal" style="display:none;">
+     <!--   <span class="close-btn" id="close-modal">&times;</span>
+        <h1 data-translate="recovery-modal-title">Восстановление доступа</h1>  -->
+
+        <div class="modal-header">          
+            <div class="modal-buttons">
+                <button class="modal-button close" data-action="close" id="closeMyModal">✖</button>
+            </div> <br><br><br>
+            <h3 style=" margin-top:0; color:#291161;font-size: 17px; ">Восстановление доступа</h3>
+        </div> 
+
+
         <p data-translate="recovery-modal-select-method">Выберите способ восстановления:</p>
         <button id="super-password-btn" data-translate="recovery-modal-super-password-btn">Ввести супер-пароль</button><br>
         <button id="file-upload-btn" data-translate="recovery-modal-file-upload-btn">Прикрепить файл </button>
@@ -222,10 +185,8 @@
             <button id="custom-file-upload-btn" data-translate="recovery-modal-choose-file">Выберите файл</button><br>
             <span id="file-name" data-translate="recovery-modal-no-file">Файл не выбран</span>
         </div>
-
-
         <button id="send-recovery-btn" data-translate="recovery-modal-send-btn">Отправить</button>
-    </div>
+    
 </div>
 
 
@@ -242,9 +203,10 @@
     }
 
     // Закрытие модального окна
+    /*
     document.getElementById('close-modal').onclick = function() {
         document.getElementById('recovery-modal').style.display = 'none';
-    }
+    } */
 
     // Ввод супер-пароля
     document.getElementById('super-password-btn').onclick = function() {
@@ -506,25 +468,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const redirectUrl = searchParams.get('redirectUrl'); // Указываем ключ 'redirectUrl'
             const corId = searchParams.get('corId'); // Указываем ключ 'cor_id'
 
-
-
-            // Сохраняем их в localStorage
-            /*
-            if (redirectUrl) {
-                localStorage.setItem('redirectUrl', redirectUrl);
-                console.log('Redirect URL сохранен в localStorage:', redirectUrl);
-            } else {
-                console.warn('Redirect URL отсутствует в строке запроса.');
-            }
-
-            if (corId) {
-                localStorage.setItem('cor_id', corId);
-                console.log('COR-ID сохранен в localStorage:', corId);
-            } else {
-                console.warn('COR-ID отсутствует в строке запроса.');
-            }
-              */
-
         form.addEventListener('submit', (event) => {
             event.preventDefault();
 
@@ -581,7 +524,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             urlParams.set('access_token', accessToken);
                             urlParams.set('refresh_token', refreshToken);
                             const queryString = urlParams.toString();
-                            // const url = `${redirectUrl}/?access_token=${accessToken}&refresh_token=${refreshToken}`;
                             const url = `/static/mainscreen.html/?access_token=${accessToken}&refresh_token=${refreshToken}`;
                             window.location.href = url;
                               }
@@ -626,78 +568,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function onSignIn(googleUser) {
-        var profile = googleUser.getBasicProfile();
-        console.log('ID: ' + profile.getId());
-        console.log('Name: ' + profile.getName());
-        console.log('Image URL: ' + profile.getImageUrl());
-        console.log('Email: ' + profile.getEmail());
-        // Здесь вы можете отправить данные на ваш сервер для аутентификации
-    }
-
-    function signInWithGoogle() {
-        console.log('Google sign-in button clicked');
-        var auth2 = gapi.auth2.getAuthInstance();
-        if (auth2) {
-            auth2.signIn().then(function(googleUser) {
-                onSignIn(googleUser);
-            }, function(error) {
-                console.error('Error signing in with Google: ', error);
-            });
-        } else {
-            console.error('Google API not initialized.');
-        }
-    }
-
-    window.fbAsyncInit = function() {
-        FB.init({
-            appId      : '1580389042741794',
-            cookie     : true,
-            xfbml      : true,
-            version    : 'v15.0'
-        });
-    };
-
-    (function(d, s, id){
-        var js, fjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) {return;}
-        js = d.createElement(s); js.id = id;
-        js.src = "https://connect.facebook.net/en_US/sdk.js";
-        fjs.parentNode.insertBefore(js, fjs);
-    }(document, 'script', 'facebook-jssdk'));
-
-    function signInWithFacebook() {
-        console.log('Facebook sign-in button clicked');
-        FB.login(function(response) {
-            if (response.status === 'connected') {
-                var accessToken = response.authResponse.accessToken;
-                FB.api('/me', {fields: 'name,email,picture'}, function(profile) {
-                    console.log('ID: ' + profile.id);
-                    console.log('Name: ' + profile.name);
-                    console.log('Image URL: ' + profile.picture.data.url);
-                    console.log('Email: ' + profile.email);
-                    // Здесь вы можете отправить данные на ваш сервер для аутентификации
-                });
-            } else {
-                console.log('Not authenticated with Facebook.');
-            }
-        }, {scope: 'public_profile,email'});
-    }
-
-    function loadGoogleAPI() {
-        gapi.load('auth2', function() {
-            gapi.auth2.init().then(function() {
-                console.log('Google API initialized');
-            }, function(error) {
-                console.error('Error initializing Google API: ', error);
-            });
-        });
-    }
-
-  //  window.onload = function() {
-  //      loadGoogleAPI();
-  //      setLanguage(defaultLang); // Установка языка при загрузке страницы
-  //  };
 </script>
 
 
