@@ -136,12 +136,13 @@ button:active {
 }
 
 button:disabled {
-    background-color: #D2CAE8; /* Цвет для неактивной кнопки */
+    background-color: #D2CAE8;
     color: #ffffff;
 }
 
 
 .button-container {
+    margin-top: 15px; 
     display: flex;
     justify-content: space-between;
     width: 100%;
@@ -170,20 +171,20 @@ button:disabled {
     align-items: center;
     justify-content: center;
     gap: 12px; /* Отступ между иконкой и текстом */
-    font-size: 13px; /* Размер текста */
-    transition: background-color 0.3s, color 0.3s, transform 0.2s; /* Плавные переходы */
+    font-size: 13px;
+    transition: background-color 0.3s, color 0.3s, transform 0.2s;
 }
 
 .delete-button:hover {
-    background-color: #ffffff; /* Красный фон при наведении */
+    background-color: #ffffff;
     color: #830714; 
-    transform: translateY(-2px); /* Слегка поднимаем карточку */
-    cursor: pointer; /* Меняем курсор на указатель */
+    transform: translateY(-2px);
+    cursor: pointer;
 }
 
 .delete-button:active {
-    background-color: #ffffff; /* Темно-красный фон при нажатии */
-    transform: translateY(2px); /* Эффект "нажатия" */
+    background-color: #ffffff;
+    transform: translateY(2px);
     color: #c22e3d;
 }
 
@@ -206,7 +207,7 @@ button:disabled {
 
 
 .button span {
-    flex-grow: 1; /* Заставляем текст занимать всю доступную ширину */
+    flex-grow: 1;
     text-align: left;
     padding-left: 10px;
     position: relative;
@@ -226,7 +227,7 @@ button:disabled {
   }
   
   .icon-button:hover {
-    opacity: 0.7; /* Можно добавить эффект при наведении */
+    opacity: 0.7;
   }
   .custom-button {
     padding: 10px;
@@ -283,13 +284,11 @@ h1 {
     text-align: center;
 }
 
-
 h3 {
     color: #333;
     margin-bottom: 20px;
     text-align: center;
 }
-
 
 label {
     display: block;
@@ -308,7 +307,7 @@ input[type="password"] {
 }
 
 input[type="submit"] {
-    width: 200px;  /*фиксированная ширина */
+    width: 200px;
     background-color: #D2CAE8; 
     color: #fff;
     padding: 10px 20px;
@@ -425,7 +424,7 @@ a:hover {
 
         /* Стили для уменьшения размера флагов и текста в выпадающем списке */
 .select2-dropdown .select2-results__option {
-            font-size: 10px; /* Уменьшение размера шрифта */
+            font-size: 10px;
         }
 
 .select2-dropdown .select2-results__option .flag-img {
@@ -439,7 +438,7 @@ a:hover {
     background: none;
     border: none;
     color: #7B43F2;
-    width: 80px;     
+    width: 100px;     
     height:20px;
     cursor: pointer;
     font-size: 16px;
@@ -504,14 +503,14 @@ a:hover {
 /* Стили для выпадающих списков */
 select#birth,
 select#user_sex {
-    width: 200px;          /* Ширина для обоих полей */
+    width: 200px;
     padding: 10px;         /* Внутренние отступы */
-    font-size: 14px;       /* Размер шрифта */
+    font-size: 14px;
     color: #5B4296;
     border: 1px solid #ccc;/* Рамка вокруг */
     border-radius: 12px;   /* Скругленные углы */
     box-sizing: border-box;/* Учитываем отступы и границы при расчете ширины */
-    background-color: white;/* Цвет фона */
+    background-color: white;
     appearance: none;      /* Скрываем стандартный стиль стрелки */
     margin-bottom: 10px;   /* Отступ снизу для разделения полей */
 }
@@ -540,8 +539,8 @@ select#user_sex option:checked {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 160px; /* Устанавливаем ширину контейнера */
-    height: 160px; /* Устанавливаем высоту контейнера */
+    width: 160px;
+    height: 160px;
     margin: 0 auto;
 }
 
@@ -572,9 +571,9 @@ select#user_sex option:checked {
     top: 40%; /* Выравнивание по центру по вертикали */
     transform: translateY(-50%);
     cursor: pointer;
-    width: 20px; /* Размер иконки */
+    width: 20px;
     height: 20px;
-    color: #5B4296; /* Цвет иконки */
+    color: #5B4296;
 }
 
 .otp-container {
@@ -615,10 +614,10 @@ select#user_sex option:checked {
 
 .card {
     border: 1px solid #ffffff;
-    background-color: rgba(255, 255, 255, 0.6); /* Белый фон с прозрачностью 60% */
+    background-color: rgba(255, 255, 255, 0.6);
     border-radius: 12px;
     padding: 10px;
-    width: 420px; /* Ширина карточки */
+    width: 420px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     display: flex; /* Используем flexbox для расположения иконки и контента */
     gap: 10px; /* Отступ между иконкой и контентом */

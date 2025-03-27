@@ -15,9 +15,8 @@
     height: 100%;
     flex-direction: column;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    align-items: center;
+  /*  justify-content: center;
+    align-items: center; */
 }
 
 /* Стили для внутреннего контента */
