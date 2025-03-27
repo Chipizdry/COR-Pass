@@ -81,7 +81,7 @@
         <div class="header-content">
             <div class="upload-container">
                 <input type="file" id="fileInput" accept="image/*" style="display: none;">
-                <label for="fileInput" class="upload-button">Загрузить фото</label>
+                <label for="fileInput" class="upload-button" style=" color:#7f69bd;font-size:14px;">Загрузить фото</label>
                 <div class="image-frame">
                     <svg id="placeholder" width="144" height="144" viewBox="0 0 144 144" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="1" y="1" width="142" height="142" rx="71" fill="white" fill-opacity="0.6"/>
@@ -96,20 +96,22 @@
                         106.078 95.6872 104.437C97.3281 102.796 98.25 100.571 98.25 98.25V93.875C98.25 89.2337 
                         96.4062 84.7825 93.1244 81.5006C89.8425 78.2187 85.3913 76.375 80.75 76.375H63.25Z" fill="#D2CAE8"/>
                     </svg>
+                    <img id="previewImage" src="#" alt="Предпросмотр изображения" 
+                    style="display: none; position: absolute; max-width: 100%; max-height: 100%;">
                 </div>
             </div>
             
             <div class="name-fields">
-                <div class="form-group">
-                    <label for="lastName">Фамилия:</label>
+                <div class="input-wrapper">
+                    <label for="lastName"   style=" color:#7f69bd;font-size:14px;" >Фамилия:</label>
                     <input type="text" id="lastName" name="lastName" required>
                 </div>
-                <div class="form-group">
-                    <label for="firstName">Имя:</label>
+                <div class="input-wrapper">
+                    <label for="firstName"   style=" color:#7f69bd;font-size:14px;">Имя:</label>
                     <input type="text" id="firstName" name="firstName" required>
                 </div>
-                <div class="form-group">
-                    <label for="middleName">Отчество:</label>
+                <div class="input-wrapper">
+                    <label for="middleName"   style=" color:#7f69bd;font-size:14px;">Отчество:</label>
                     <input type="text" id="middleName" name="middleName">
                 </div>
             </div>
