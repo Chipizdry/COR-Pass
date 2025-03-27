@@ -69,3 +69,41 @@
     max-height: 100%;
     margin: auto;
 }
+
+/* Новые стили для макета заголовка */
+.header-content {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+    margin-top: 20px;
+}
+
+.upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.name-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex: 1;
+}
+
+/* Настроим стили для групп полей */
+.name-fields .form-group {
+    margin-bottom: 0;
+}
+
+.name-fields .form-group input {
+    width: 100%;
+    min-width: 200px;
+}
+
+/* Настроим поле email на полную ширину */
+.registration-form .form-group {
+    margin-top: 20px;
+    width: 100%;
+}
