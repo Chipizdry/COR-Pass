@@ -128,55 +128,17 @@
             <input type="text" id="gender" name="gender" readonly>
         </div>
     </div>
-    
-    <!-- Форма с полями -->
-    <form id="step1Form" class="registration-form">
-        <div class="form-group">
-            <label for="workEmail">Рабочий email:</label>
-            <input type="email" id="workEmail" name="workEmail" required>
-            <p class="hint">Введите ваш рабочий имейл, под которым потом вы будете осуществлять вход в кабинет COR LAB.</p>
-        </div>
-    </form>
+
+    <div class="form-group">
+        <label for="workEmail" style="color:#7f69bd;font-size:14px;">Рабочий email:</label>
+        <input type="email" id="workEmail" name="workEmail" required>
+        <p class="hint" style="color:#7f69bd;font-size:13px;" 
+        >Введите ваш рабочий имейл, под которым потом вы будете осуществлять вход в кабинет COR LAB.</p>
+    </div>
+   
 </div>
 
 
-
-<!--
-        <div id="step2Modal" class="modal">
-            <div class="modal-content">
-                <h2>Шаг 2: Контактная информация</h2>
-                <form id="step2Form">
-                    <label for="email">Email:</label>
-                    <input type="email" id="email" name="email" required>
-
-                    <label for="phone">Телефон:</label>
-                    <input type="text" id="phone" name="phone" required>
-
-                    <div class="modal-navigation">
-                        <button type="button" onclick="prevStep(1)">Назад</button>
-                        <button type="button" onclick="nextStep(3)">Далее</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div id="step3Modal" class="modal">
-            <div class="modal-content">
-                <h2>Шаг 3: Профессиональная информация</h2>
-                <form id="step3Form">
-                    <label for="specialization">Специализация:</label>
-                    <input type="text" id="specialization" name="specialization" required>
-
-                    <label for="license">Номер лицензии:</label>
-                    <input type="text" id="license" name="license" required>
-
-                    <div class="modal-navigation">
-                        <button type="button" onclick="prevStep(2)">Назад</button>
-                        <button type="submit">Завершить регистрацию</button>
-                    </div>
-                </form>
-            </div>
-        </div> -->
         <script src="/static/translation.js"></script>  
         <script src="/static/general_fun.js"></script> 
     <script>
