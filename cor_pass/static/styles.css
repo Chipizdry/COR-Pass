@@ -144,6 +144,7 @@ button:disabled {
 .button-container {
     margin-top: 15px; 
     display: flex;
+    gap: 40px;
     justify-content: space-between;
     width: 100%;
     padding: 1px;
@@ -438,11 +439,8 @@ a:hover {
     background: none;
     border: none;
     color: #7B43F2;
-  /*  width: 100px;   */  
-    height:20px;
     cursor: pointer;
-    font-size: 16px;
-    padding: 0;
+    font-size: 14px;
     font-family: inherit;
     }
 
@@ -567,7 +565,7 @@ select#user_sex option:checked {
 
 .eye-icon {
     position: absolute;
-    right: 35px; /* Расстояние от правого края поля */
+    right: 15px; /* Расстояние от правого края поля */
     top: 40%; /* Выравнивание по центру по вертикали */
     transform: translateY(-50%);
     cursor: pointer;
@@ -627,11 +625,10 @@ select#user_sex option:checked {
 
 
 .session-card {
-    border: 1px solid #e0e0e0; /* Цвет границы */
     background-color: rgba(255, 255, 255, 0.6); /* Белый фон с прозрачностью 60% */
     border-radius: 8px; /* Скругление углов */
     padding: 7px; /* Внутренние отступы */
-    width: 300px; /* Ширина карточки */
+    width: 320px; /* Ширина карточки */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Тень */
     display: flex;
     flex-direction: column;
