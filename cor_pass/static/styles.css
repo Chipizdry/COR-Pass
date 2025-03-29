@@ -438,7 +438,7 @@ a:hover {
     background: none;
     border: none;
     color: #7B43F2;
-    width: 100px;     
+  /*  width: 100px;   */  
     height:20px;
     cursor: pointer;
     font-size: 16px;
@@ -739,9 +739,9 @@ select#user_sex option:checked {
 
 
 .image-frame {
-    width: 200px;
-    height:200px;
-    border: 1px solid #e0e0e0;
+    width: 190px;
+    height:190px;
+    border: 1px solid #5B4296;
     border-radius: 12px;
     position: relative;
     overflow: hidden;
