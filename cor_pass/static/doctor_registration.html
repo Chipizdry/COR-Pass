@@ -130,9 +130,9 @@
     </div>
 
     <div class="form-group">
-        <label for="workEmail" style="color:#7f69bd;font-size:14px;">Рабочий email:</label>
+        <label for="workEmail" style="color:#7f69bd;font-size:13px;">Рабочий email:</label>
         <input type="email" id="workEmail" name="workEmail" required>
-        <p class="hint" style="color:#7f69bd;font-size:13px;" 
+        <p class="hint" style="color:#7f69bd;font-size:12px;" 
         >Введите ваш рабочий имейл, под которым потом вы будете осуществлять вход в кабинет COR LAB.</p>
     </div>
    
@@ -334,50 +334,36 @@
         <h1>Регистрация</h1>
         
         <div class="form-group">
-            <label for="workEmail" style="color:#7f69bd;font-size:14px;">Название клиники:</label>
-            <input type="text" id="Clinick_Name" name="Clinick_Name" required>
+            <label for="diplomaFile" style="color:#7f69bd;font-size:13px;">Копия диплома</label>
+            <div class="file-upload-container">
+                <label class="file-upload-button">
+                    <input type="file" id="diplomaFile" name="diplomaFile" style="display: none;">
+                    <span>Выберите файл</span>
+                </label>
+                <span class="file-name" id="fileName" style="color:#7f69bd;font-size:13px;">Файл не выбран</span>
+            </div>
         </div>
 
         <div class="form-group">
-            <label for="workEmail" style="color:#7f69bd;font-size:14px;">Отделение:</label>
-            <input type="text" id="Department" name="Department" required>
+            <label for="date" style="color:#7f69bd;font-size:14px;" >Дата выдачи:</label>
+            <input type="date" id="date_id" name="date_id" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="Serial_number" style="color:#7f69bd;font-size:14px;">Серия:</label>
+            <input type="text" id="Serial_number" name="Serial_number" required>
         </div>
 
         <div class="form-group">
-            <label for="workEmail" style="color:#7f69bd;font-size:14px;">Должность:</label>
-            <input type="text" id="Job_title" name="Job_title" required>
+            <label for="Number" style="color:#7f69bd;font-size:14px;">Номер:</label>
+            <input type="text" id="Number" name="Number" required>
         </div>
         
         <div class="form-group">
-            <label for="specialization" style="color:#7f69bd;font-size:14px;">Специализация:</label>
-            <select id="specialization" name="specialization" style="width: 100%; padding: 10px; border: 1px solid #f0f0f0; border-radius: 12px; color: #5B4296;">
-                <option value="">Выберите специализацию</option>
-                <option value="therapist">Терапевт</option>
-                <option value="cardiologist">Кардиолог</option>
-                <option value="neurologist">Невролог</option>
-                <option value="pediatrician">Педиатр</option>
-                <option value="other">Другая</option>
-            </select>
+            <label for="University" style="color:#7f69bd;font-size:14px;">ВУЗ:</label>
+            <input type="text" id="University" name="University" required>
         </div>
-        
-        <div class="form-group">
-            <label for="degree" style="color:#7f69bd;font-size:14px;">Научная степень:</label>
-            <select id="degree" name="degree" style="width: 100%; padding: 10px; border: 1px solid #f0f0f0; border-radius: 12px; color: #5B4296;">
-                <option value="">Выберите научную степерь</option>
-                <option value="doctor">Доктор медицинских наук</option>
-                <option value="candidat">Кандидат медицинских наук</option>
-                <option value="aspirant">Аспирант</option>
-                <option value="junior">Младший медицинский сотрудник</option>
-                <option value="other">Другая</option>
-            </select>
-        </div>
-        
-        <div class="form-group">
-            <label for="birthdate" style="color:#7f69bd;font-size:14px;" >Дата последней атестации:</label>
-            <input type="date" id="birthdate" name="birthdate" required>
-        </div>
-        
-        
+             
     </div>
    
     <div class="progress-container">
@@ -646,6 +632,17 @@ function validateStep2() {
     
     return isValid;
 }
+
+document.getElementById('diplomaFile').addEventListener('change', function(e) {
+    const fileNameElement = document.getElementById('fileName');
+    if (this.files.length > 0) {
+        fileNameElement.textContent = this.files[0].name;
+        fileNameElement.classList.add('has-file');
+    } else {
+        fileNameElement.textContent = 'Файл не выбран';
+        fileNameElement.classList.remove('has-file');
+    }
+});
 
 // Функция для обновления прогресс бара
 function updateProgressBar(currentStep) {

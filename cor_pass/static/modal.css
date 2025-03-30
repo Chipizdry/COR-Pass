@@ -268,3 +268,50 @@
 .progress-step.active::after {
     background-color: #7B43F2;
 }
+
+
+
+.file-upload-container {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    background-color: white;
+    border-radius: 12px;
+    height: 90px;
+    gap: 5px;
+    width: 100%;
+}
+
+.file-upload-button {
+    padding: 10px 15px;
+    margin-top: 10px;
+    background-color: #ffffff;
+    border: 1px solid #5b4296;
+    border-radius: 12px;
+    color: #5B4296;
+    cursor: pointer;
+    font-size: 13px;
+    text-align: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    width: 360px;
+}
+
+.file-upload-button:hover {
+    background-color: #F0E8FF;
+    border-color: #D0C0F0;
+}
+
+.file-name {
+    color: #888;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-grow: 1;
+}
+
+/* Для отображения имени выбранного файла */
+.file-name.has-file {
+    color: #5B4296;
+}
