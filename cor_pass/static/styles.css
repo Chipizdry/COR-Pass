@@ -141,16 +141,29 @@ button:disabled {
 }
 
 
+/* Стили для контейнера кнопок навигации */
 .button-container {
-    margin-top: 15px; 
     display: flex;
-    gap: 40px;
-    justify-content: space-between;
-    width: 100%;
-    padding: 1px;
-    box-sizing: border-box;
-    align-self: stretch; 
+    justify-content: space-between; /* Размещает элементы по краям */
+    width: 100%; /* Ширина на всю доступную ширину */
+    padding: 0 20px; /* Отступы слева и справа */
+    box-sizing: border-box; /* Учитываем padding в ширине */
+    margin-top: 20px; /* Отступ сверху */
+    margin-bottom: 10px; /* Отступ снизу */
 }
+
+/* Стили для кнопок-ссылок внутри контейнера */
+.button-container .link-button {
+    background: none;
+    border: none;
+    color: #7B43F2;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+    padding: 5px 10px; /* Добавляем отступы для лучшего клика */
+    transition: color 0.3s ease; /* Плавное изменение цвета */
+}
+
 
 #admin-button-container {
     width: 100%; 
@@ -626,8 +639,8 @@ select#user_sex option:checked {
 
 .session-card {
     background-color: rgba(255, 255, 255, 0.6); /* Белый фон с прозрачностью 60% */
-    border-radius: 8px; /* Скругление углов */
-    padding: 7px; /* Внутренние отступы */
+    border-radius: 12px; 
+    padding: 7px; 
     width: 320px; /* Ширина карточки */
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Тень */
     display: flex;

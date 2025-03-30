@@ -56,6 +56,55 @@
     background-color: #B1A1DA;
 }
 
+/* Стили для контейнера кнопок навигации */
+/* Стили для контейнера навигации */
+.navigation-container {
+    display: flex;
+    justify-content: space-between; /* Распределяет кнопки по краям */
+    width: 100%;
+    padding: 0 20px;
+    box-sizing: border-box;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+/* Стили для кнопок внутри контейнера */
+.navigation-container .link-button {
+    background: none;
+    border: none;
+    color: #7B43F2;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+    padding: 5px 10px;
+    transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+}
+
+/* Стиль для кнопки "НАЗАД" - текст смещен влево */
+.navigation-container .link-button[data-translate="back-link-text"] {
+    justify-content: flex-start; /* Текст прижимается к левому краю */
+    margin-right: auto; /* Дополнительно прижимает к левому краю */
+}
+
+/* Стиль для кнопки "ВПЕРЁД" - текст смещен вправо */
+.navigation-container .link-button[data-translate="forward-link-text"] {
+    justify-content: flex-end; /* Текст прижимается к правому краю */
+    margin-left: auto; /* Дополнительно прижимает к правому краю */
+}
+
+/* Эффекты при наведении */
+.navigation-container .link-button:hover {
+    color: #5F41B2;
+    text-decoration: underline;
+}
+
+/* Эффекты при нажатии */
+.navigation-container .link-button:active {
+    color: #4A2D8C;
+}
+
 #qrcode {
     display: flex;
     align-items: center;
@@ -109,13 +158,38 @@
     box-sizing: border-box; /* Учитываем padding в ширине */
 }
 
-.form-group input[type="email"] {
+.form-group input[type="email"],
+             input[type="text"],
+             input[type="date"] {
     width: 100%;
     padding: 10px;
     margin-bottom: 10px;
     border: 1px solid #f0f0f0;
     border-radius: 12px;
     box-sizing: border-box;
+}
+
+.date-selector {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.date-selector select {
+    flex: 1;
+    padding: 12px 15px;
+    border: 1px solid #E0D6F5;
+    border-radius: 8px;
+    background: #FAF8FF url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235B4296' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") no-repeat right 10px center;
+    background-size: 15px;
+    color: #5B4296;
+    font-size: 14px;
+    appearance: none;
+}
+
+/* Для IE11 */
+.date-selector select::-ms-expand {
+    display: none;
 }
 
 .hint {
@@ -145,4 +219,52 @@
     box-sizing: border-box;
     color: #5B4296;
     cursor: not-allowed;
+}
+
+/* Стили для прогресс бара */
+.progress-container {
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    margin-top: auto; /* Прижимаем к низу модального окна */
+}
+
+.progress-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 4px;
+    background-color: #D2CAE8;
+    border-radius: 2px;
+    position: relative;
+}
+
+.progress-step {
+    width: 25%;
+    height: 100%;
+    background-color: #D2CAE8;
+    position: relative;
+}
+
+.progress-step.active {
+    background-color: #7B43F2;
+}
+
+.progress-step::after {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #D2CAE8;
+    border: 2px solid white;
+}
+
+.progress-step.active::after {
+    background-color: #7B43F2;
 }
