@@ -59,14 +59,16 @@
 /* Стили для контейнера кнопок навигации */
 /* Стили для контейнера навигации */
 .navigation-container {
-    display: flex;
-    justify-content: space-between; /* Распределяет кнопки по краям */
+    display: flex
+;
+    justify-content: space-between;
     width: 100%;
     padding: 0 20px;
     box-sizing: border-box;
     margin-top: 20px;
     margin-bottom: 10px;
     align-items: center;
+    height: 25px;
 }
 
 /* Стили для кнопок внутри контейнера */
@@ -202,12 +204,16 @@
 .additional-fields {
     display: flex;
     margin: 10px 0;
+    max-width: 420px;
     padding-left: 20px;
     justify-content: space-between;
 }
 
 .additional-fields .input-wrapper {
-    flex: 1;
+   
+        position: relative;
+        max-width: 200px;
+
 }
 
 .additional-fields input {
@@ -226,8 +232,11 @@
 .progress-container {
     width: 100%;
     padding: 20px;
+    position: sticky;
+    bottom: 20px;
     box-sizing: border-box;
-    margin-top: auto; /* Прижимаем к низу модального окна */
+    background-color: white;
+    border-top: 1px solid #f0f0f0;
 }
 
 .progress-bar {
@@ -238,9 +247,8 @@
     height: 4px;
     background-color: #D2CAE8;
     border-radius: 2px;
-    position: relative;
+    margin: 0 auto;
 }
-
 .progress-step {
     width: 25%;
     height: 100%;
