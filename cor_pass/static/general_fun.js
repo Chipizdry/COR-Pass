@@ -8,6 +8,8 @@ const modalConfigs = {
     sessionsModal: { width: '400px', height: '300px', top: '100px', left: '100px' },
     step1Modal: { width: '460px', height: '650px', top: '20px', left: '300px' },
     step2Modal: { width: '460px', height: '650px', top: '20px', left: '300px' },
+    step3Modal: { width: '460px', height: '650px', top: '20px', left: '300px' },
+    step4Modal: { width: '460px', height: '650px', top: '20px', left: '300px' },
 };
 
 function makeModalDraggable(modalId) {
