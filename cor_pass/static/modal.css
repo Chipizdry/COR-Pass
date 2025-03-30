@@ -66,6 +66,7 @@
     box-sizing: border-box;
     margin-top: 20px;
     margin-bottom: 10px;
+    align-items: center;
 }
 
 /* Стили для кнопок внутри контейнера */
@@ -277,7 +278,7 @@
     flex-direction: column;
     background-color: white;
     border-radius: 12px;
-    height: 90px;
+    height: 80px;
     gap: 5px;
     width: 100%;
 }
@@ -314,4 +315,17 @@
 /* Для отображения имени выбранного файла */
 .file-name.has-file {
     color: #5B4296;
+}
+
+/* Стили для кнопки отправки формы */
+.submit-button {
+    max-width: 420px;
+    padding: 12px;
+    background-color: #7B43F2;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
