@@ -65,3 +65,39 @@ async def get_dicom_file(filename: str):
         return FileResponse(file_path, media_type="application/dicom")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/series/{series_uid}")
+async def get_dicom_series(series_uid: str):
+    try:
+        print(f"Looking for series: {series_uid}")  # Логирование
+        series_files = []
+        
+        for filename in os.listdir(DICOM_DIR):
+            # Пропускаем DICOMDIR (регистронезависимая проверка)
+            if filename.upper() == 'DICOMDIR':
+                print(f"Skipping DICOMDIR file: {filename}")
+                continue
+                
+            file_path = os.path.join(DICOM_DIR, filename)
+            try:
+                ds = pydicom.dcmread(file_path)
+                print(f"Checking file: {filename}, SeriesInstanceUID: {ds.SeriesInstanceUID}")  # Логирование
+                
+                if ds.SeriesInstanceUID == series_uid:
+                    series_files.append(filename)
+            except Exception as e:
+                print(f"Error reading {filename}: {str(e)}")  # Логирование ошибок
+                continue
+        
+        if not series_files:
+            print("Series not found")  # Логирование
+            raise HTTPException(status_code=404, detail="Series not found")
+        
+        print(f"Found {len(series_files)} files for series")  # Логирование
+        return {"files": sorted(series_files)}
+        
+    except Exception as e:
+        print(f"Server error: {str(e)}")  # Логирование
+        raise HTTPException(status_code=500, detail=str(e))  
+

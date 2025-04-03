@@ -35,6 +35,27 @@
             max-height: 300px;
             overflow-y: auto;
         }
+
+
+                .multiplanar-view {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin: 20px auto;
+            width: 90%;
+        }
+        .view-container {
+            flex: 1;
+            min-width: 300px;
+        }
+        .dicom-view {
+            width: 100%;
+            height: 300px;
+            background-color: black;
+            position: relative;
+        }
+
+
     </style>
 </head>
 <body>
@@ -48,6 +69,23 @@
         <button id="wwc">Window Level</button>
         <button id="reset">Reset</button>
     </div>
+
+
+    <div class="multiplanar-view">
+        <div class="view-container">
+            <h4>Аксиальная</h4>
+            <div id="axialView" class="dicom-view"></div>
+        </div>
+        <div class="view-container">
+            <h4>Сагиттальная</h4>
+            <div id="sagittalView" class="dicom-view"></div>
+        </div>
+        <div class="view-container">
+            <h4>Коронарная</h4>
+            <div id="coronalView" class="dicom-view"></div>
+        </div>
+    </div>
+
     
     <div id="dicomContainer">
         <div id="dicomImage">
@@ -78,6 +116,20 @@
 
         async function initViewer() {
             console.log('Initializing viewer...');
+             // Инициализация трех плоскостей
+            const axialElement = document.getElementById('axialView');
+            const sagittalElement = document.getElementById('sagittalView');
+            const coronalElement = document.getElementById('coronalView');
+            
+            cornerstone.enable(axialElement);
+            cornerstone.enable(sagittalElement);
+            cornerstone.enable(coronalElement);
+
+             // Инструменты для каждой плоскости
+            initToolsForElement(axialElement);
+            initToolsForElement(sagittalElement);
+            initToolsForElement(coronalElement);
+    
             
             const element = document.getElementById('dicomImage');
             const canvas = document.createElement('canvas');
@@ -104,6 +156,19 @@
                 globalToolSyncEnabled: true
             });
         }
+
+
+        function initToolsForElement(element) {
+            cornerstoneTools.addTool(cornerstoneTools.PanTool);
+            cornerstoneTools.addTool(cornerstoneTools.ZoomTool);
+            cornerstoneTools.addTool(cornerstoneTools.WwwcTool);
+            
+            cornerstoneTools.setToolActive('Pan', { mouseButtonMask: 1 });
+            cornerstoneTools.setToolActive('Zoom', { mouseButtonMask: 2 });
+            cornerstoneTools.setToolActive('Wwwc', { mouseButtonMask: 4 });
+        }
+
+
 
         async function loadDicomFileList() {
             try {
@@ -163,6 +228,101 @@
                 console.error('Error loading DICOM image:', error);
                 alert('Failed to load DICOM image');
             }
+
+
+            try {
+                // Загружаем метаданные для получения SeriesInstanceUID
+                const metadataResponse = await fetch(`/api/dicom/${filename}/metadata`);
+                const metadata = await metadataResponse.json();
+                const seriesUid = metadata['Series Instance UID'];
+                
+                // Получаем все файлы серии
+                const seriesResponse = await fetch(`/api/dicom/series/${seriesUid}`);
+                const seriesData = await seriesResponse.json();
+                
+                // Загружаем все изображения серии
+                const imageIds = seriesData.files.map(file => 
+                    `wadouri:${window.location.origin}/api/dicom/${file}`
+                );
+                
+                // Создаем объем (stack) из изображений
+                const stack = {
+                    currentImageIdIndex: 0,
+                    imageIds: imageIds
+                };
+                
+                // Отображаем в разных плоскостях
+                displayMultiplanar(stack);
+                
+            } catch (error) {
+                console.error('Error loading DICOM series:', error);
+                alert('Failed to load DICOM series');
+            }
+        }
+
+        async function displayMultiplanar(stack) {
+    try {
+        // Получаем элементы для трех плоскостей
+        const axialElement = document.getElementById('axialView');
+        const sagittalElement = document.getElementById('sagittalView');
+        const coronalElement = document.getElementById('coronalView');
+        
+        // Загружаем первое изображение
+        const image = await cornerstone.loadImage(stack.imageIds[0]);
+        
+        // Отображаем аксиальную плоскость
+        cornerstone.displayImage(axialElement, image);
+        
+        // Создаем stack state
+        const stackToolState = {
+            currentImageIdIndex: 0,
+            imageIds: stack.imageIds,
+        };
+        
+        cornerstoneTools.addStackStateManager(axialElement, ['stack']);
+        cornerstoneTools.addToolState(axialElement, 'stack', stackToolState);
+        
+        // Для других плоскостей используем тот же image, но с разными viewport
+        const viewport = cornerstone.getViewport(axialElement);
+        
+        // Сагиттальная плоскость (поворот на 90 градусов)
+        const sagittalViewport = {...viewport, rotation: 90};
+        cornerstone.displayImage(sagittalElement, image, sagittalViewport);
+        
+        // Коронарная плоскость (поворот на 180 градусов)
+        const coronalViewport = {...viewport, rotation: 180};
+        cornerstone.displayImage(coronalElement, image, coronalViewport);
+        
+        // Добавляем возможность переключения срезов
+        setupSliceNavigation(stackToolState);
+        
+    } catch (error) {
+        console.error('Error displaying multiplanar views:', error);
+        alert('Failed to display multiplanar views');
+    }
+}
+
+                
+        function setupSliceNavigation(stack) {
+            document.addEventListener('keydown', (e) => {
+                const axialElement = document.getElementById('axialView');
+                
+                if (e.key === 'ArrowUp') {
+                    stack.currentImageIdIndex = Math.min(
+                        stack.currentImageIdIndex + 1, 
+                        stack.imageIds.length - 1
+                    );
+                    cornerstone.displayImage(axialElement, stack.imageIds[stack.currentImageIdIndex]);
+                }
+                
+                if (e.key === 'ArrowDown') {
+                    stack.currentImageIdIndex = Math.max(
+                        stack.currentImageIdIndex - 1, 
+                        0
+                    );
+                    cornerstone.displayImage(axialElement, stack.imageIds[stack.currentImageIdIndex]);
+                }
+            });
         }
 
         document.getElementById('fileSelector').addEventListener('change', (e) => {
