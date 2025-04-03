@@ -1,20 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DICOM Viewer</title>
-    
-    <link rel="stylesheet" href="https://unpkg.com/cornerstone-core@2.6.0/dist/cornerstone.css">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
     <style>
         #dicomContainer {
             width: 80%;
             height: 600px;
             margin: 20px auto;
             position: relative;
+            background-color: black;
         }
         #dicomImage {
             width: 100%;
             height: 100%;
+            position: relative;
         }
         .toolbar {
             text-align: center;
@@ -48,7 +50,9 @@
     </div>
     
     <div id="dicomContainer">
-        <div id="dicomImage"></div>
+        <div id="dicomImage">
+            <canvas></canvas>
+        </div>
     </div>
     
     <div class="metadata-panel">
@@ -58,151 +62,113 @@
     
     <!-- Подключаем библиотеки в правильном порядке -->
     <script src="https://unpkg.com/dicom-parser@1.8.3/dist/dicomParser.min.js"></script>
-    <script src="https://unpkg.com/cornerstone-core@2.6.0/dist/cornerstone.min.js"></script>
+    <script src="https://unpkg.com/cornerstone-core@2.6.1/dist/cornerstone.min.js"></script>
     <script src="https://unpkg.com/cornerstone-math@0.1.9/dist/cornerstoneMath.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/cornerstone-wado-image-loader@4.1.5/dist/cornerstoneWADOImageLoader.min.js"></script>
-    <script src="https://unpkg.com/cornerstone-tools@5.0.0/dist/cornerstoneTools.min.js"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-wado-image-loader@4.13.2/dist/cornerstoneWADOImageLoader.bundle.min.js"></script>
+    <script src="https://unpkg.com/cornerstone-tools@6.0.9/dist/cornerstoneTools.min.js"></script>
+
     <script>
-        // Сначала загружаем скрипт
-        var wadoLoaderScript = document.createElement('script');
-        wadoLoaderScript.src = 'https://cdn.jsdelivr.net/npm/cornerstone-wado-image-loader@4.13.2/dist/cornerstoneWADOImageLoader.bundle.min.js';
-        wadoLoaderScript.onload = function() {
-            // После загрузки делаем глобальную переменную доступной
-            window.cornerstoneWADOImageLoader = cornerstoneWADOImageLoader;
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('Cornerstone version:', cornerstone.version);
+            console.log('CornerstoneTools version:', cornerstoneTools.version);
             
-            // Затем загружаем cornerstone-tools
-            var toolsScript = document.createElement('script');
-            toolsScript.src = 'https://unpkg.com/cornerstone-tools@6.0.9/dist/cornerstoneTools.min.js';
-            toolsScript.onload = initViewer;
-            document.head.appendChild(toolsScript);
-        };
-        document.head.appendChild(wadoLoaderScript);
-
-
-        console.log('Versions:', {
-            cornerstone: cornerstone.version,
-            tools: cornerstoneTools.version,
-            wadoLoader: cornerstoneWADOImageLoader.version
+            await initViewer();
+            await loadDicomFileList();
         });
 
+        async function initViewer() {
+            console.log('Initializing viewer...');
+            
+            const element = document.getElementById('dicomImage');
+            const canvas = document.createElement('canvas');
+            element.appendChild(canvas);
 
-                    async function loadDicomFileList() {
-                try {
-                    const response = await fetch('/api/dicom/list');
-                    if (!response.ok) throw new Error('Failed to load DICOM list');
-                    
-                    const data = await response.json();
-                    const selector = document.getElementById('fileSelector');
-                    
-                    selector.innerHTML = '<option value="">Select DICOM file</option>';
-                    
-                    data.files.forEach(file => {
-                        const option = document.createElement('option');
-                        option.value = file;
-                        option.textContent = file;
-                        selector.appendChild(option);
-                    });
-                } catch (error) {
-                    console.error('Error loading DICOM list:', error);
-                    alert('Failed to load DICOM files list');
-                }
-            }
+            // Настраиваем загрузчик
+            cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
+            cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
 
-            // Загрузка метаданных
-            async function loadMetadata(filename) {
-                try {
-                    const response = await fetch(`/api/dicom/${filename}/metadata`);
-                    if (!response.ok) throw new Error('Failed to load metadata');
-                    
-                    const metadata = await response.json();
-                    const metadataDisplay = document.getElementById('metadataDisplay');
-                    
-                    let formattedMetadata = '';
-                    for (const [key, value] of Object.entries(metadata)) {
-                        formattedMetadata += `${key}: ${value}\n`;
+            cornerstoneWADOImageLoader.webWorkerManager.initialize({
+                maxWebWorkers: navigator.hardwareConcurrency || 1,
+                startWebWorkersOnDemand: true,
+                webWorkerPath: 'https://cdn.jsdelivr.net/npm/cornerstone-wado-image-loader@4.13.2/dist/cornerstoneWADOImageLoaderWebWorker.min.js',
+                taskConfiguration: {
+                    'decodeTask': {
+                        codecsPath: 'https://cdn.jsdelivr.net/npm/cornerstone-wado-image-loader@4.13.2/dist/cornerstoneWADOImageLoaderCodecs.min.js'
                     }
-                    
-                    metadataDisplay.textContent = formattedMetadata;
-                } catch (error) {
-                    console.error('Error loading metadata:', error);
-                    document.getElementById('metadataDisplay').textContent = 'Failed to load metadata';
                 }
-            }
-
-
-        
-        function initViewer() {
-            // Весь ваш код инициализации переносим сюда
-            console.log('All libraries loaded:', {
-                cornerstone: typeof cornerstone,
-                cornerstoneTools: typeof cornerstoneTools,
-                cornerstoneWADOImageLoader: typeof cornerstoneWADOImageLoader
             });
-            
-            // Конфигурация загрузчика
-            function configureLoader() {
-                cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
-                cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
-                
-                const config = {
-                    maxWebWorkers: navigator.hardwareConcurrency || 1,
-                    startWebWorkersOnDemand: true,
-                    webWorkerPath: 'https://unpkg.com/cornerstone-wado-image-loader@4.1.5/dist/cornerstoneWADOImageLoaderWebWorker.min.js',
-                    taskConfiguration: {
-                        'decodeTask': {
-                            codecsPath: 'https://unpkg.com/cornerstone-wado-image-loader@4.1.5/dist/cornerstoneWADOImageLoaderCodecs.min.js'
-                        }
-                    }
-                };
-                cornerstoneWADOImageLoader.webWorkerManager.initialize(config);
-            }
-            
-            // Остальные функции (loadDicomFileList, loadMetadata и т.д.) переносите сюда
-            
+
+            cornerstone.enable(element);
+            cornerstoneTools.init({
+                showSVGCursors: true,
+                globalToolSyncEnabled: true
+            });
+        }
+
+        async function loadDicomFileList() {
             try {
-                const element = document.getElementById('dicomImage');
-                configureLoader();
-                cornerstone.enable(element);
-                cornerstoneTools.init({
-                    showSVGCursors: true,
-                    globalToolSyncEnabled: true
+                const response = await fetch('/api/dicom/list');
+                if (!response.ok) throw new Error('Failed to load DICOM list');
+                
+                const data = await response.json();
+                const selector = document.getElementById('fileSelector');
+                
+                selector.innerHTML = '<option value="">Select DICOM file</option>';
+                
+                data.files.forEach(file => {
+                    const option = document.createElement('option');
+                    option.value = file;
+                    option.textContent = file;
+                    selector.appendChild(option);
                 });
-                loadDicomFileList();
             } catch (error) {
-                console.error('Initialization error:', error);
-                alert('Failed to initialize DICOM viewer: ' + error.message);
+                console.error('Error loading DICOM list:', error);
+                alert('Failed to load DICOM files list');
             }
         }
 
+        async function loadMetadata(filename) {
+            try {
+                const response = await fetch(`/api/dicom/${filename}/metadata`);
+                if (!response.ok) throw new Error('Failed to load metadata');
+                
+                const metadata = await response.json();
+                const metadataDisplay = document.getElementById('metadataDisplay');
+                
+                let formattedMetadata = '';
+                for (const [key, value] of Object.entries(metadata)) {
+                    formattedMetadata += `${key}: ${value}\n`;
+                }
+                
+                metadataDisplay.textContent = formattedMetadata;
+            } catch (error) {
+                console.error('Error loading metadata:', error);
+                document.getElementById('metadataDisplay').textContent = 'Failed to load metadata';
+            }
+        }
 
+        async function loadAndViewDicomFile(filename) {
+            if (!filename) return;
+            
+            try {
+                await loadMetadata(filename);
+                
+                const element = document.getElementById('dicomImage');
+                const imageId = `wadouri:${window.location.origin}/api/dicom/${filename}`;
+                
+                const image = await cornerstone.loadImage(imageId);
+                cornerstone.displayImage(element, image);
+                
+            } catch (error) {
+                console.error('Error loading DICOM image:', error);
+                alert('Failed to load DICOM image');
+            }
+        }
 
         document.getElementById('fileSelector').addEventListener('change', (e) => {
             loadAndViewDicomFile(e.target.value);
         });
 
-
-        async function loadAndViewDicomFile(filename) {
-    if (!filename) return;
-    
-    try {
-        await loadMetadata(filename);
-        
-        const element = document.getElementById('dicomImage');
-        const imageId = `wadouri:${window.location.origin}/api/dicom/${filename}`;
-        
-        cornerstone.disable(element);
-        cornerstone.enable(element);
-        
-        const image = await cornerstone.loadImage(imageId);
-        cornerstone.displayImage(element, image);
-        
-    } catch (error) {
-        console.error('Error loading DICOM image:', error);
-        alert('Failed to load DICOM image');
-    }
-}
-
-    </script>
+    </script> 
 </body>
 </html>
