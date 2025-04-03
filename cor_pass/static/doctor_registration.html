@@ -446,10 +446,10 @@
             <label for="diplomaFile" style="color:#7f69bd;font-size:13px;">Сертификат специалиста</label>
             <div class="file-upload-container">
                 <label class="file-upload-button">
-                    <input type="file" id="diplomaFile" name="diplomaFile" style="display: none;">
+                    <input type="file" id="certificateFile" name="certificateFile" style="display: none;">
                     <span>Выберите файл</span>
                 </label>
-                <span class="file-name" id="fileName" style="color:#7f69bd;font-size:13px;">Файл не выбран</span>
+                <span class="file-name" id="certificateFileName" style="color:#7f69bd;font-size:13px;">Файл не выбран</span>
             </div>
         </div>
 
@@ -819,7 +819,8 @@ function validateStep3() {
 } 
 
 function validateStep4() {
-    const requiredFields = ['diplomaFile', 'date_id', 'Serial_number', 'Number', 'University'];
+   
+    const requiredFields = ['certificateFile', 'date_id', 'Serial_number', 'Number', 'University'];
     let isValid = true;
     
     requiredFields.forEach(fieldId => {
@@ -851,6 +852,92 @@ function validateStep4() {
     return isValid;
 }
 
+
+// Функция для отправки формы
+async function submitForm() {
+    try {
+        const photoFile = document.getElementById('fileInput').files[0];
+        const diplomaFile = document.getElementById('diplomaFile').files[0];
+        const certificateFile = document.getElementById('certificateFile').files[0];
+        const doctorData = {
+            work_email: document.getElementById('workEmail').value,
+            first_name: document.getElementById('firstName').value,
+            surname: document.getElementById('lastName').value,
+            last_name: document.getElementById('middleName').value || null,
+            scientific_degree: document.getElementById('degree').value,
+            date_of_last_attestation: document.getElementById('birthdate').value,
+            diplomas: [{
+                date: document.getElementById('date_id').value,
+                series: document.getElementById('Serial_number').value,
+                number: document.getElementById('Number').value,
+                university: document.getElementById('University').value
+            }],
+            certificates: [{
+                date: document.getElementById('date_id').value,
+                series: document.getElementById('Serial_number').value,
+                number: document.getElementById('Number').value,
+                university: document.getElementById('University').value
+            }],
+            clinic_affiliations: [{
+                clinic_name: document.getElementById('Clinick_Name').value,
+                department: document.getElementById('Department').value,
+                position: document.getElementById('Job_title').value,
+                specialty: document.getElementById('specialization').value
+            }]
+        };
+
+        // Создаем объект FormData
+        const formData = new FormData();
+        
+        formData.append('doctor_data', JSON.stringify(doctorData));
+        
+        // Добавляем файлы, если они есть
+        if (photoFile) {
+            formData.append('doctors_photo', photoFile);
+        }
+        if (diplomaFile) {
+            formData.append('diploma_scan', diplomaFile);
+        }
+        if (certificateFile) {
+            formData.append('certificate_scan', certificateFile);
+        }
+
+        // Получаем токен 
+     //   const token = localStorage.getItem('access_token');
+        const token = new URLSearchParams(window.location.search).get('access_token');
+        // Отправляем запрос на сервер
+        const response = await fetch('/api/doctor/signup', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                // Не устанавливаем Content-Type вручную - браузер сам добавит с boundary
+            },
+            body: formData
+        });
+
+        // Обрабатываем ответ
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Ошибка сервера');
+        }
+
+        const result = await response.json();
+        console.log('Успешная регистрация:', result);
+        
+        // Показываем сообщение об успехе и перенаправляем
+        alert('Регистрация успешно завершена! Ожидайте подтверждения.');
+        window.location.href = '/registration_success.html';
+
+    } catch (error) {
+        console.error('Ошибка при отправке формы:', error);
+        alert(`Ошибка: ${error.message}`);
+    }
+}
+
+// Назначаем функцию на кнопку отправки
+document.getElementById('submitButton').addEventListener('click', submitForm);
+
+
 document.getElementById('diplomaFile').addEventListener('change', function(e) {
     const fileNameElement = document.getElementById('fileName');
     if (this.files.length > 0) {
@@ -862,6 +949,15 @@ document.getElementById('diplomaFile').addEventListener('change', function(e) {
     }
 });
 
+document.getElementById('certificateFile').addEventListener('change', function(e) {
+    const fileNameElement = document.getElementById('certificateFileName');
+    if (this.files.length > 0) {
+        fileNameElement.textContent = this.files[0].name;
+        fileNameElement.style.color = '#7f69bd';
+    } else {
+        fileNameElement.textContent = 'Файл не выбран';
+    }
+});
 // Функция для обновления прогресс бара
 function updateProgressBar(currentStep) {
     const visibleModal = document.querySelector('.modal[style*="display: block"]');

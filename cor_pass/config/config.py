@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     authorization_via_google: bool = "True"
     authorization_via_facebook: bool = "True"
     allowed_redirect_urls: list = json.loads(os.getenv("ALLOWED_REDIRECT_URLS", "[]"))
+    lawyer_accounts: list = json.loads(os.getenv("LAWYER_ACCOUNTS", "[]"))
 
     class Config:
 

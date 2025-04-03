@@ -25,6 +25,11 @@ class Status(enum.Enum):
     basic: str = "basic"
 
 
+class DoctorStatus(enum.Enum):
+    PENDING: str = "pending"
+    APPROVED: str = "approved"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -65,12 +70,80 @@ class User(Base):
     user_sessions = relationship(
         "UserSession", back_populates="user", cascade="all, delete-orphan"
     )
+    user_doctors = relationship(
+        "Doctor", back_populates="user", cascade="all, delete-orphan"
+    )
 
     # Индексы
     __table_args__ = (
         Index("idx_users_email", "email"),
         Index("idx_users_cor_id", "cor_id"),
     )
+
+
+class Doctor(Base):
+    __tablename__ = "doctors"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    doctor_id = Column(
+        String(36), ForeignKey("users.cor_id"), unique=True, nullable=False
+    )
+    work_email = Column(String(250), unique=True, nullable=False)
+    first_name = Column(String(100), nullable=True)
+    surname = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
+    doctors_photo = Column(LargeBinary, nullable=True)
+    scientific_degree = Column(String(100), nullable=True)
+    date_of_last_attestation = Column(Date, nullable=True)
+    status = Column(Enum(DoctorStatus), default=DoctorStatus.PENDING, nullable=False)
+
+    user = relationship("User", back_populates="user_doctors")
+    diplomas = relationship(
+        "Diploma", back_populates="doctor", cascade="all, delete-orphan"
+    )
+    certificates = relationship(
+        "Certificate", back_populates="doctor", cascade="all, delete-orphan"
+    )
+    clinic_affiliations = relationship(
+        "ClinicAffiliation", back_populates="doctor", cascade="all, delete-orphan"
+    )
+
+
+class Diploma(Base):
+    __tablename__ = "diplomas"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    doctor_id = Column(String(36), ForeignKey("doctors.doctor_id"), nullable=False)
+    scan = Column(LargeBinary, nullable=True)
+    date = Column(Date, nullable=False)
+    series = Column(String(50), nullable=False)
+    number = Column(String(50), nullable=False)
+    university = Column(String(250), nullable=False)
+
+    doctor = relationship("Doctor", back_populates="diplomas")
+
+
+class Certificate(Base):
+    __tablename__ = "certificates"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    doctor_id = Column(String(36), ForeignKey("doctors.doctor_id"), nullable=False)
+    scan = Column(LargeBinary, nullable=True)
+    date = Column(Date, nullable=False)
+    series = Column(String(50), nullable=False)
+    number = Column(String(50), nullable=False)
+    university = Column(String(250), nullable=False)
+
+    doctor = relationship("Doctor", back_populates="certificates")
+
+
+class ClinicAffiliation(Base):
+    __tablename__ = "clinic_affiliations"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    doctor_id = Column(String(36), ForeignKey("doctors.doctor_id"), nullable=False)
+    clinic_name = Column(String(250), nullable=False)
+    department = Column(String(250), nullable=True)
+    position = Column(String(250), nullable=True)
+    specialty = Column(String(250), nullable=True)
+
+    doctor = relationship("Doctor", back_populates="clinic_affiliations")
 
 
 class UserSession(Base):

@@ -246,21 +246,23 @@ async def refresh_token(
     device_information = di.get_device_info(request)
     # Если устройство мобильное, проверяем, есть ли у пользователя сессии на этом устройстве
     existing_sessions = await repository_session.get_user_sessions_by_device_info(
-            user.cor_id, device_information["device_info"], db
-        )
+        user.cor_id, device_information["device_info"], db
+    )
     if device_information["device_type"] == "Mobile" and not existing_sessions:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Нужен ввод мастер-ключа",
         )
     for session in existing_sessions:
-        session_token = await decrypt_data(encrypted_data=session.refresh_token,key=await decrypt_user_key(user.unique_cipher_key))
+        session_token = await decrypt_data(
+            encrypted_data=session.refresh_token,
+            key=await decrypt_user_key(user.unique_cipher_key),
+        )
         if session_token != token and device_information["device_type"] == "Mobile":
             # await repository_person.update_token(user, None, db)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
             )
-
 
     if user.email in settings.eternal_accounts:
         access_token = await auth_service.create_access_token(
@@ -279,7 +281,7 @@ async def refresh_token(
             data={"oid": user.id, "corid": user.cor_id}
         )
     # user.refresh_token = refresh_token
-    
+
     await repository_session.update_session_token(
         user, refresh_token, device_info["device_info"], db
     )

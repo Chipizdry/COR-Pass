@@ -27,5 +27,17 @@ class AdminAccess:
             )
 
 
+class LawyerAccess:
+    def __init__(self, email):
+        self.email = email
+
+    async def __call__(self, user: User = Depends(auth_service.get_current_user)):
+        if not user.email in settings.lawyer_accounts:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden operation"
+            )
+
+
 user_access = UserAccess([User.is_active])
 admin_access = AdminAccess([User.email])
+lawyer_access = LawyerAccess([User.email])

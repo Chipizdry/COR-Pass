@@ -72,3 +72,4 @@ volumes:
   grafana-storage:
   loki-data:
   compactor-data:
+  dicom_files:
