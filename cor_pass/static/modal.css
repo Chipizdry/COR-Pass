@@ -164,7 +164,7 @@
 .form-group input[type="email"],
              input[type="text"],
              input[type="date"] {
-    width: 100%;
+  /*  width: 100%; */
     padding: 10px;
     margin-bottom: 10px;
     border: 1px solid #f0f0f0;
@@ -336,4 +336,61 @@
     font-size: 16px;
     cursor: pointer;
     transition: background-color 0.3s ease;
+}
+
+
+/* Новый класс для контейнера радио-кнопок */
+.storage-options-container {
+    width: 200px;
+    height: 40px;
+    background-color: white;
+    border: 1px solid #f0f0f0;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+/* Остальные стили оставляем как есть */
+.storage-options {
+    width: 100%;
+    padding: 0 10px;
+}
+
+.storage-options > div {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.storage-options label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.storage-options input[type="radio"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #5B4296;
+    border-radius: 50%;
+    outline: none;
+    transition: 0.2s;
+    position: relative;
+    cursor: pointer;
+}
+
+.storage-options input[type="radio"]:checked {
+    background-color: #5B4296;
+}
+
+.storage-options span {
+    color: #291161;
+    font-size: 13px;
 }
