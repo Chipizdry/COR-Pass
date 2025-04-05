@@ -260,6 +260,8 @@
             }
         }
 
+
+      
         async function displayMultiplanar(stack) {
     try {
         // Получаем элементы для трех плоскостей
@@ -302,7 +304,47 @@
     }
 }
 
-                
+/*  
+async function displayMultiplanar(stack) {
+    try {
+        // Получаем элементы для плоскостей
+        const axialElement = document.getElementById('axialView');
+        const sagittalElement = document.getElementById('sagittalView');
+        const coronalElement = document.getElementById('coronalView');
+
+        // Загружаем первое изображение из стека
+        const image = await cornerstone.loadImage(stack.imageIds[0]);
+
+        // Настраиваем stack для навигации
+        const stackToolState = {
+            currentImageIdIndex: 0,
+            imageIds: stack.imageIds,
+        };
+
+        // Отображаем аксиальную плоскость (без поворота)
+        cornerstone.displayImage(axialElement, image);
+        cornerstoneTools.addStackStateManager(axialElement, ['stack']);
+        cornerstoneTools.addToolState(axialElement, 'stack', stackToolState);
+
+        // Сагиттальная плоскость (поворот на 90°)
+        const sagittalViewport = cornerstone.getViewport(sagittalElement);
+        sagittalViewport.rotation = 90;
+        cornerstone.displayImage(sagittalElement, image, sagittalViewport);
+
+        // Коронарная плоскость (поворот на 180°)
+        const coronalViewport = cornerstone.getViewport(coronalElement);
+        coronalViewport.rotation = 180;
+        cornerstone.displayImage(coronalElement, image, coronalViewport);
+
+        // Настраиваем переключение слоев
+        setupSliceNavigation(stackToolState);
+
+    } catch (error) {
+        console.error('Error in displayMultiplanar:', error);
+        alert('Failed to display DICOM series');
+    }
+}
+ */               
         function setupSliceNavigation(stack) {
             document.addEventListener('keydown', (e) => {
                 const axialElement = document.getElementById('axialView');

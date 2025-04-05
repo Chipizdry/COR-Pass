@@ -585,7 +585,7 @@ select#user_sex option:checked {
 
 .otp-input {
     width: 35px;
-    height: 35px;
+    height: 40px;
     font-size: 14px;
     text-align: center;
     border: 2px solid #5B4296;
@@ -593,7 +593,7 @@ select#user_sex option:checked {
     background-color: #ffffff;
     outline: none;
     transition: border-color 0.3s ease-in-out;
-    max-width: 32px; /* Ограничиваем ширину */
+    max-width: 29px; /* Ограничиваем ширину */
 }
 
 .otp-input:focus {
