@@ -321,7 +321,7 @@
 
             function toggleQrCode(corId) {
                 const qrCodeContainer = document.getElementById('qrCodeContainer');
-
+                if( checkToken()){
                 if (qrCodeContainer.style.display === 'block') {
                     // Скрываем QR-код, если он уже отображается
                     qrCodeContainer.style.display = 'none';
@@ -339,7 +339,7 @@
                         width: 160,
                         height: 160
                     });
-                }
+                }}
             }
             async function fetchCorId() {
                 const accessToken = new URLSearchParams(window.location.search).get('access_token');

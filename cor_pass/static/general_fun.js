@@ -4,7 +4,7 @@ const modalConfigs = {
     corIdModal: { width: '300px', height: '500px', top: '300px', left: '250px' },
     editModal: { width: '250px', height: '500px', top: '50px', left: '50px' },
     myModal: { width: '250px', height: '450px', top: '50px', left: '250px' },
-    settingsModal: { width: '550px', height: '600px', top: '50px', left: '450px' },
+    settingsModal: { width: '510px', height: '600px', top: '50px', left: '450px' },
     sessionsModal: { width: '400px', height: '300px', top: '100px', left: '100px' },
     step1Modal: { width: '460px', height: '650px', top: '20px', left: '300px' },
     step2Modal: { width: '460px', height: '650px', top: '20px', left: '300px' },

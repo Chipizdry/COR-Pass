@@ -129,7 +129,7 @@
         </div>
     </div>
 
-    <div class="form-group">
+    <div class="form-group-width">
         <label for="workEmail" style="color:#7f69bd;font-size:13px;">Рабочий email:</label>
         <input type="email" id="workEmail" name="workEmail" required>
         <p class="hint" style="color:#7f69bd;font-size:12px;" 
@@ -211,17 +211,17 @@
         </div>  
         <h1>Регистрация</h1>
         
-        <div class="form-group">
+        <div class="form-group-width">
             <label for="workEmail" style="color:#7f69bd;font-size:14px;">Название клиники:</label>
             <input type="text" id="Clinick_Name" name="Clinick_Name" required>
         </div>
 
-        <div class="form-group">
+        <div class="form-group-width">
             <label for="workEmail" style="color:#7f69bd;font-size:14px;">Отделение:</label>
             <input type="text" id="Department" name="Department" required>
         </div>
 
-        <div class="form-group">
+        <div class="form-group-width">
             <label for="workEmail" style="color:#7f69bd;font-size:14px;">Должность:</label>
             <input type="text" id="Job_title" name="Job_title" required>
         </div>
@@ -250,7 +250,7 @@
             </select>
         </div>
         
-        <div class="form-group">
+        <div class="form-group-width">
             <label for="birthdate" style="color:#7f69bd;font-size:14px;" >Дата последней атестации:</label>
             <input type="date" id="birthdate" name="birthdate" required>
         </div>
@@ -344,22 +344,22 @@
             </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group-width">
             <label for="date" style="color:#7f69bd;font-size:14px;" >Дата выдачи:</label>
             <input type="date" id="date_id" name="date_id" required>
         </div>
         
-        <div class="form-group">
+        <div class="form-group-width">
             <label for="Serial_number" style="color:#7f69bd;font-size:14px;">Серия:</label>
             <input type="text" id="Serial_number" name="Serial_number" required>
         </div>
 
-        <div class="form-group">
+        <div class="form-group-width">
             <label for="Number" style="color:#7f69bd;font-size:14px;">Номер:</label>
             <input type="text" id="Number" name="Number" required>
         </div>
         
-        <div class="form-group">
+        <div class="form-group-width">
             <label for="University" style="color:#7f69bd;font-size:14px;">ВУЗ:</label>
             <input type="text" id="University" name="University" required>
         </div>
@@ -453,27 +453,27 @@
             </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group-width">
             <label for="date" style="color:#7f69bd;font-size:14px;" >Дата выдачи:</label>
             <input type="date" id="date_id" name="date_id" required>
         </div>
         
-        <div class="form-group">
+        <div class="form-group-width">
             <label for="Serial_number" style="color:#7f69bd;font-size:14px;">Серия:</label>
             <input type="text" id="Serial_number" name="Serial_number" required>
         </div>
 
-        <div class="form-group">
+        <div class="form-group-width">
             <label for="Number" style="color:#7f69bd;font-size:14px;">Номер:</label>
             <input type="text" id="Number" name="Number" required>
         </div>
         
-        <div class="form-group">
+        <div class="form-group-width">
             <label for="University" style="color:#7f69bd;font-size:14px;">ВУЗ:</label>
             <input type="text" id="University" name="University" required>
         </div>
 
-        <div class="form-group">
+        <div class="form-group-width">
             <button id="submitButton" class="submit-button" onclick="submitForm()">Отправить на подтверждение</button>
         </div>
              
@@ -626,6 +626,8 @@ function goForward() {
 
 // Функция для перехода между шагами
 function navigateToStep(targetStep) {
+
+    if( checkToken()){
     // Скрываем все модальные окна
     document.querySelectorAll('.modal').forEach(modal => {
         modal.style.display = 'none';
@@ -641,7 +643,7 @@ function navigateToStep(targetStep) {
     }
     
     // Обновляем прогресс-бар
-    updateProgressBar(targetStep);
+    updateProgressBar(targetStep);}
 }
 
 // Функция для получения текущего шага
