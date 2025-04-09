@@ -1,6 +1,6 @@
 
 
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException,Query
 from fastapi.responses import HTMLResponse, FileResponse
 import os
 import pydicom
@@ -100,4 +100,35 @@ async def get_dicom_series(series_uid: str):
     except Exception as e:
         print(f"Server error: {str(e)}")  # Логирование
         raise HTTPException(status_code=500, detail=str(e))  
+
+
+@router.get("/reconstruct/{plane}")
+def reconstruct_plane(plane: str, index: int = Query(None)):
+    files = sorted([
+        os.path.join(DICOM_DIR, f)
+        for f in os.listdir(DICOM_DIR)
+        if f.endswith(".dcm")
+    ], key=lambda x: pydicom.dcmread(x).InstanceNumber)
+
+    slices = [pydicom.dcmread(f).pixel_array for f in files]
+    volume = np.stack(slices)
+
+    if plane == "axial":
+        z = index if index is not None else volume.shape[0] // 2
+        img = volume[z, :, :]
+    elif plane == "sagittal":
+        x = index if index is not None else volume.shape[2] // 2
+        img = volume[:, :, x]
+    elif plane == "coronal":
+        y = index if index is not None else volume.shape[1] // 2
+        img = volume[:, y, :]
+    else:
+        raise HTTPException(status_code=400, detail="Invalid plane")
+
+    img = ((img - img.min()) / img.ptp() * 255).astype(np.uint8)
+    pil_img = Image.fromarray(img)
+    buf = BytesIO()
+    pil_img.save(buf, format="PNG")
+    buf.seek(0)
+    return StreamingResponse(buf, media_type="image/png")
 
