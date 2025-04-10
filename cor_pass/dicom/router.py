@@ -1,9 +1,13 @@
 
 
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException,Query
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
+from skimage.transform import resize
+import numpy as np
 import os
 import pydicom
+from PIL import Image
+from io import BytesIO
 from pathlib import Path
 from typing import List
 
@@ -102,17 +106,46 @@ async def get_dicom_series(series_uid: str):
         raise HTTPException(status_code=500, detail=str(e))  
 
 
+
 @router.get("/reconstruct/{plane}")
 def reconstruct_plane(plane: str, index: int = Query(None)):
+    # Получаем список файлов и сортируем по InstanceNumber
     files = sorted([
         os.path.join(DICOM_DIR, f)
         for f in os.listdir(DICOM_DIR)
         if f.endswith(".dcm")
     ], key=lambda x: pydicom.dcmread(x).InstanceNumber)
 
-    slices = [pydicom.dcmread(f).pixel_array for f in files]
-    volume = np.stack(slices)
+    # Читаем все срезы и проверяем их размеры
+    slices = []
+    shapes = set()
+    for f in files:
+        ds = pydicom.dcmread(f)
+        slices.append(ds.pixel_array)
+        shapes.add(ds.pixel_array.shape)
+    
+    # Если все срезы одного размера - просто объединяем
+    if len(shapes) == 1:
+        volume = np.stack(slices)
+    else:
+        # Находим наиболее часто встречающийся размер
+        from collections import Counter
+        shape_counts = Counter([s.shape for s in slices])
+        target_shape = shape_counts.most_common(1)[0][0]
+        
+        print(f"Обнаружены срезы разного размера. Приводим к {target_shape}")
+        
+        # Приводим все срезы к целевому размеру
+        resized_slices = []
+        for i, slice in enumerate(slices):
+            if slice.shape != target_shape:
+                print(f"Изменяем размер среза {i} с {slice.shape} на {target_shape}")
+                slice = resize(slice, target_shape, preserve_range=True)
+            resized_slices.append(slice)
+        
+        volume = np.stack(resized_slices)
 
+    # Обработка плоскостей (осталось без изменений)
     if plane == "axial":
         z = index if index is not None else volume.shape[0] // 2
         img = volume[z, :, :]
@@ -125,7 +158,9 @@ def reconstruct_plane(plane: str, index: int = Query(None)):
     else:
         raise HTTPException(status_code=400, detail="Invalid plane")
 
-    img = ((img - img.min()) / img.ptp() * 255).astype(np.uint8)
+    # Нормализация и преобразование в изображение
+    #img = ((img - img.min()) / img.ptp() * 255).astype(np.uint8)
+    img = ((img - img.min()) / np.ptp(img) * 255).astype(np.uint8)
     pil_img = Image.fromarray(img)
     buf = BytesIO()
     pil_img.save(buf, format="PNG")
