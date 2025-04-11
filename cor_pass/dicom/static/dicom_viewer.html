@@ -37,7 +37,7 @@
         }
 
 
-                .multiplanar-view {
+        .multiplanar-view {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
@@ -45,12 +45,32 @@
             width: 90%;
         }
         .view-container {
-            flex: 1;
-            min-width: 600px;
+        flex: 1;
+        min-width: 300px;
+        margin-bottom: 20px;
+        text-align: center;
+       }
+    
+        .view-container img {
+            width: 100%;
+            max-width: 512px;
+            height: auto;
+            image-rendering: optimizeQuality;
         }
+        
+        .slider-container {
+            width: 100%;
+            max-width: 512px;
+            margin: 10px auto;
+        }
+        
+        .slider-container input {
+            width: 100%;
+        }
+
         .dicom-view {
             width: 100%;
-            height: 300px;
+            height: 500px;  /* Увеличьте высоту */
             background-color: black;
             position: relative;
         }
@@ -63,11 +83,11 @@
         <select id="fileSelector">
             <option value="">Select DICOM file</option>
         </select>
-        <button id="zoomIn">Zoom In</button>
-        <button id="zoomOut">Zoom Out</button>
+        <button id="zoomIn">Zoom In (+)</button>
+        <button id="zoomOut">Zoom Out (-)</button>
         <button id="pan">Pan</button>
         <button id="wwc">Window Level</button>
-        <button id="reset">Reset</button>
+        <button id="reset">Reset View</button>
     </div>
     <div id="loadingIndicator" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
           background: rgba(0,0,0,0.7); color: white; padding: 20px; border-radius: 5px;">
@@ -98,7 +118,7 @@
         </div>
     </div>
 
- <!--   <div class="multiplanar-view">
+  <div class="multiplanar-view">
         <div class="view-container">
             <h4>Аксиальная</h4>
             <div id="axialView" class="dicom-view"></div>
@@ -111,7 +131,7 @@
             <h4>Коронарная</h4>
             <div id="coronalView" class="dicom-view"></div>
         </div>
-    </div> -->
+    </div> 
 
     
     <div id="dicomContainer">
@@ -134,9 +154,9 @@
 
     <script>
         function updateImage(plane, value) {
-            const img = document.getElementById(`img${plane}`);
-            img.src = `/api/dicom/reconstruct/${plane.toLowerCase()}?index=${value}&t=${Date.now()}`;
-        }
+        const img = document.getElementById(`img${plane}`);
+        img.src = `/api/dicom/reconstruct/${plane.toLowerCase()}?index=${value}&size=512&t=${Date.now()}`;
+    }
 
         document.getElementById("sliderAxial").addEventListener("input", e => updateImage("Axial", e.target.value));
         document.getElementById("sliderSagittal").addEventListener("input", e => updateImage("Sagittal", e.target.value));
@@ -170,57 +190,44 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async function() {
-            console.log('Cornerstone version:', cornerstone.version);
-            console.log('CornerstoneTools version:', cornerstoneTools.version);
-            
-            await initViewer();
-            await loadDicomFileList();
+        // Инициализация Cornerstone
+        cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
+        cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
+        
+        cornerstoneWADOImageLoader.webWorkerManager.initialize({
+            maxWebWorkers: navigator.hardwareConcurrency || 1,
+            startWebWorkersOnDemand: true,
+            webWorkerPath: 'https://cdn.jsdelivr.net/npm/cornerstone-wado-image-loader@4.13.2/dist/cornerstoneWADOImageLoaderWebWorker.min.js',
+            taskConfiguration: {
+                'decodeTask': {
+                    codecsPath: 'https://cdn.jsdelivr.net/npm/cornerstone-wado-image-loader@4.13.2/dist/cornerstoneWADOImageLoaderCodecs.min.js'
+                }
+            }
         });
 
-  /*
-        async function initViewer() {
-            console.log('Initializing viewer...');
-             // Инициализация трех плоскостей
-            const axialElement = document.getElementById('axialView');
-            const sagittalElement = document.getElementById('sagittalView');
-            const coronalElement = document.getElementById('coronalView');
-            
-            cornerstone.enable(axialElement);
-            cornerstone.enable(sagittalElement);
-            cornerstone.enable(coronalElement);
+        // Загрузка списка файлов
+        await loadDicomFileList();
+        
+        // Инициализация просмотра
+        await initMultiplanarViewer();
+    });
 
-             // Инструменты для каждой плоскости
-            initToolsForElement(axialElement);
-            initToolsForElement(sagittalElement);
-            initToolsForElement(coronalElement);
-    
-            
-            const element = document.getElementById('dicomImage');
-            const canvas = document.createElement('canvas');
-            element.appendChild(canvas);
+    async function initMultiplanarViewer() {
+        const axialElement = document.getElementById('axialView');
+        const sagittalElement = document.getElementById('sagittalView');
+        const coronalElement = document.getElementById('coronalView');
+        
+        // Включение элементов
+        await cornerstone.enable(axialElement);
+        await cornerstone.enable(sagittalElement);
+        await cornerstone.enable(coronalElement);
+        
+        // Добавление инструментов
+        initToolsForElement(axialElement);
+        initToolsForElement(sagittalElement);
+        initToolsForElement(coronalElement);
+    }
 
-            // Настраиваем загрузчик
-            cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
-            cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
-
-            cornerstoneWADOImageLoader.webWorkerManager.initialize({
-                maxWebWorkers: navigator.hardwareConcurrency || 1,
-                startWebWorkersOnDemand: true,
-                webWorkerPath: 'https://cdn.jsdelivr.net/npm/cornerstone-wado-image-loader@4.13.2/dist/cornerstoneWADOImageLoaderWebWorker.min.js',
-                taskConfiguration: {
-                    'decodeTask': {
-                        codecsPath: 'https://cdn.jsdelivr.net/npm/cornerstone-wado-image-loader@4.13.2/dist/cornerstoneWADOImageLoaderCodecs.min.js'
-                    }
-                }
-            });
-
-            cornerstone.enable(element);
-            cornerstoneTools.init({
-                showSVGCursors: true,
-                globalToolSyncEnabled: true
-            });
-        }
- */
 
 
  async function initViewer() {
@@ -257,65 +264,65 @@
     });
 }
 
-        function initToolsForElement(element) {
-            cornerstoneTools.addTool(cornerstoneTools.PanTool);
-            cornerstoneTools.addTool(cornerstoneTools.ZoomTool);
-            cornerstoneTools.addTool(cornerstoneTools.WwwcTool);
+function initToolsForElement(element) {
+        cornerstoneTools.addTool(cornerstoneTools.PanTool);
+        cornerstoneTools.addTool(cornerstoneTools.ZoomTool);
+        cornerstoneTools.addTool(cornerstoneTools.WwwcTool);
+        
+        cornerstoneTools.setToolActive('Pan', { mouseButtonMask: 1, element: element });
+        cornerstoneTools.setToolActive('Zoom', { mouseButtonMask: 2, element: element });
+        cornerstoneTools.setToolActive('Wwwc', { mouseButtonMask: 4, element: element });
+    }
+
+
+
+    async function loadDicomFileList() {
+        try {
+            const response = await fetch('/api/dicom/list');
+            if (!response.ok) throw new Error('Failed to load DICOM list');
             
-            cornerstoneTools.setToolActive('Pan', { mouseButtonMask: 1 });
-            cornerstoneTools.setToolActive('Zoom', { mouseButtonMask: 2 });
-            cornerstoneTools.setToolActive('Wwwc', { mouseButtonMask: 4 });
+            const data = await response.json();
+            const selector = document.getElementById('fileSelector');
+            
+            selector.innerHTML = '<option value="">Select DICOM file</option>';
+            
+            data.files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file;
+                option.textContent = file;
+                selector.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading DICOM list:', error);
         }
+    }
 
-
-
-        async function loadDicomFileList() {
-            try {
-                const response = await fetch('/api/dicom/list');
-                if (!response.ok) throw new Error('Failed to load DICOM list');
-                
-                const data = await response.json();
-                const selector = document.getElementById('fileSelector');
-                
-                selector.innerHTML = '<option value="">Select DICOM file</option>';
-                
-                data.files.forEach(file => {
-                    const option = document.createElement('option');
-                    option.value = file;
-                    option.textContent = file;
-                    selector.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error loading DICOM list:', error);
-                alert('Failed to load DICOM files list');
+    async function loadMetadata(filename) {
+        try {
+            const response = await fetch(`/api/dicom/${filename}/metadata`);
+            const metadata = await response.json();
+            
+            let formattedMetadata = '';
+            for (const [key, value] of Object.entries(metadata)) {
+                formattedMetadata += `${key}: ${value}\n`;
             }
+            
+            document.getElementById('metadataDisplay').textContent = formattedMetadata;
+        } catch (error) {
+            console.error('Error loading metadata:', error);
         }
-
-        async function loadMetadata(filename) {
-            try {
-                const response = await fetch(`/api/dicom/${filename}/metadata`);
-                if (!response.ok) throw new Error('Failed to load metadata');
-                
-                const metadata = await response.json();
-                const metadataDisplay = document.getElementById('metadataDisplay');
-                
-                let formattedMetadata = '';
-                for (const [key, value] of Object.entries(metadata)) {
-                    formattedMetadata += `${key}: ${value}\n`;
-                }
-                
-                metadataDisplay.textContent = formattedMetadata;
-            } catch (error) {
-                console.error('Error loading metadata:', error);
-                document.getElementById('metadataDisplay').textContent = 'Failed to load metadata';
-            }
-        }
+    }
 
         async function loadAndViewDicomFile(filename) {
             if (!filename) return;
             
+
             try {
-                await loadMetadata(filename);
+            document.getElementById('loadingIndicator').style.display = 'block';
+            
+            await loadMetadata(filename);
+            await updateSlidersRange(filename);
+          
                 
                 const element = document.getElementById('dicomImage');
                 const imageId = `wadouri:${window.location.origin}/api/dicom/${filename}`;
@@ -324,9 +331,11 @@
                 cornerstone.displayImage(element, image);
                 
             } catch (error) {
-                console.error('Error loading DICOM image:', error);
-                alert('Failed to load DICOM image');
-            }
+            console.error('Error loading DICOM image:', error);
+            alert('Failed to load DICOM image');
+        } finally {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        } 
 
 
             try {
@@ -362,47 +371,33 @@
 
       
         async function displayMultiplanar(stack) {
-    try {
-        // Получаем элементы для трех плоскостей
-        const axialElement = document.getElementById('axialView');
-        const sagittalElement = document.getElementById('sagittalView');
-        const coronalElement = document.getElementById('coronalView');
-        
-        // Загружаем первое изображение
-        const image = await cornerstone.loadImage(stack.imageIds[0]);
-        
-        // Отображаем аксиальную плоскость
-        cornerstone.displayImage(axialElement, image);
-        
-        // Создаем stack state
-        const stackToolState = {
-            currentImageIdIndex: 0,
-            imageIds: stack.imageIds,
-        };
-        
-        cornerstoneTools.addStackStateManager(axialElement, ['stack']);
-        cornerstoneTools.addToolState(axialElement, 'stack', stackToolState);
-        
-        // Для других плоскостей используем тот же image, но с разными viewport
-        const viewport = cornerstone.getViewport(axialElement);
-        
-        // Сагиттальная плоскость (поворот на 90 градусов)
-        const sagittalViewport = {...viewport, rotation: 90};
-        cornerstone.displayImage(sagittalElement, image, sagittalViewport);
-        
-        // Коронарная плоскость (поворот на 180 градусов)
-        const coronalViewport = {...viewport, rotation: 180};
-        cornerstone.displayImage(coronalElement, image, coronalViewport);
-        
-        // Добавляем возможность переключения срезов
-        setupSliceNavigation(stackToolState);
-        
-    } catch (error) {
-        console.error('Error displaying multiplanar views:', error);
-        alert('Failed to display multiplanar views');
+        try {
+            const axialElement = document.getElementById('axialView');
+            const sagittalElement = document.getElementById('sagittalView');
+            const coronalElement = document.getElementById('coronalView');
+            
+            // Загрузка первого изображения
+            const image = await cornerstone.loadImage(stack.imageIds[0]);
+            
+            // Отображение аксиальной плоскости
+            cornerstone.displayImage(axialElement, image);
+            
+            // Отображение сагиттальной плоскости
+            cornerstone.displayImage(sagittalElement, image);
+            
+            // Отображение коронарной плоскости
+            cornerstone.displayImage(coronalElement, image);
+            
+            // Автомасштабирование
+            cornerstone.fitToWindow(axialElement);
+            cornerstone.fitToWindow(sagittalElement);
+            cornerstone.fitToWindow(coronalElement);
+            
+        } catch (error) {
+            console.error('Error displaying multiplanar views:', error);
+            throw error;
+        }
     }
-}
-
 
         function setupSliceNavigation(stack) {
             document.addEventListener('keydown', (e) => {
@@ -429,6 +424,116 @@
         document.getElementById('fileSelector').addEventListener('change', (e) => {
             loadAndViewDicomFile(e.target.value);
         });
+
+        document.getElementById('zoomIn').addEventListener('click', function() {
+    const elements = [document.getElementById('axialView'), 
+                     document.getElementById('sagittalView'),
+                     document.getElementById('coronalView')];
+    elements.forEach(el => {
+        if (el) {
+            const viewport = cornerstone.getViewport(el);
+            viewport.scale += 0.2;
+            cornerstone.setViewport(el, viewport);
+        }
+    });
+});
+
+document.getElementById('zoomOut').addEventListener('click', function() {
+    const elements = [document.getElementById('axialView'), 
+                     document.getElementById('sagittalView'),
+                     document.getElementById('coronalView')];
+    elements.forEach(el => {
+        if (el) {
+            const viewport = cornerstone.getViewport(el);
+            viewport.scale = Math.max(0.2, viewport.scale - 0.2);
+            cornerstone.setViewport(el, viewport);
+        }
+    });
+});
+
+document.getElementById('reset').addEventListener('click', function() {
+    const elements = [document.getElementById('axialView'), 
+                     document.getElementById('sagittalView'),
+                     document.getElementById('coronalView')];
+    elements.forEach(el => {
+        if (el) {
+            cornerstone.fitToWindow(el);
+        }
+    });
+});
+
+async function updateSlidersRange(filename) {
+        try {
+            const response = await fetch(`/api/dicom/${filename}/metadata`);
+            const metadata = await response.json();
+            
+            // Установка диапазона для слайдеров
+            const slicesCount = metadata['Number of Frames'] || 100;
+            
+            document.getElementById('sliderAxial').max = slicesCount - 1;
+            document.getElementById('sliderSagittal').max = slicesCount - 1;
+            document.getElementById('sliderCoronal').max = slicesCount - 1;
+            
+            // Обновление изображений при изменении слайдеров
+            document.getElementById('sliderAxial').addEventListener('input', e => {
+                updateImage('Axial', e.target.value);
+            });
+            
+            document.getElementById('sliderSagittal').addEventListener('input', e => {
+                updateImage('Sagittal', e.target.value);
+            });
+            
+            document.getElementById('sliderCoronal').addEventListener('input', e => {
+                updateImage('Coronal', e.target.value);
+            });
+        } catch (error) {
+            console.error('Error updating sliders:', error);
+        }
+    }
+
+
+    document.getElementById('fileSelector').addEventListener('change', async (e) => {
+        const filename = e.target.value;
+        if (!filename) return;
+        
+        try {
+            document.getElementById('loadingIndicator').style.display = 'block';
+            
+            // Загрузка метаданных
+            await loadMetadata(filename);
+            
+            // Получение SeriesInstanceUID
+            const metadataResponse = await fetch(`/api/dicom/${filename}/metadata`);
+            const metadata = await metadataResponse.json();
+            const seriesUid = metadata['Series Instance UID'];
+            
+            // Получение всех файлов серии
+            const seriesResponse = await fetch(`/api/dicom/series/${seriesUid}`);
+            const seriesData = await seriesResponse.json();
+            
+            // Создание стека изображений
+            const imageIds = seriesData.files.map(file => 
+                `wadouri:${window.location.origin}/api/dicom/${file}`
+            );
+            
+            const stack = {
+                currentImageIdIndex: 0,
+                imageIds: imageIds
+            };
+            
+            // Отображение в разных плоскостях
+            await displayMultiplanar(stack);
+            
+            // Обновление слайдеров
+            await updateSlidersRange(filename);
+            
+        } catch (error) {
+            console.error('Error loading DICOM:', error);
+            alert('Failed to load DICOM series');
+        } finally {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+    });
 
     </script> 
 </body>
