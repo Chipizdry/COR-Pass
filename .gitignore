@@ -163,3 +163,4 @@ cython_debug/
 docker-compose.yml
 Dockerfile
 
+dicom_files/
