@@ -135,7 +135,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 0 10px;
+    padding: 0px 0px 0px 10px;
 }
 
 .name-fields {
@@ -239,7 +239,7 @@
 /* Стили для дополнительных полей */
 .additional-fields {
     display: flex;
-    margin: 10px 0;
+    margin: 5px 0;
     max-width: 420px;
     padding-left: 20px;
     gap: 20px;
@@ -258,22 +258,25 @@
     border: 1px solid #D2CAE8;
     border-radius: 12px;
     padding-left: 10px;
-   
     width: 200px;
     box-sizing: border-box;
     color: #5B4296;
     cursor: not-allowed;
+    margin-bottom: 1px;
 }
 
 /* Стили для прогресс бара */
 .progress-container {
-    width: 100%;
-    padding: 20px;
-    position: sticky;
-    bottom: 20px;
-    box-sizing: border-box;
+    position: absolute;      /* фиксируем относительно .modal */
+    bottom: 20px;            /* отступ от нижнего края модального окна */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 410px;
+    padding: 4px;
+    border-radius: 6px;
     background-color: white;
     border-top: 1px solid #f0f0f0;
+    z-index: 10;             /* чтобы не перекрывался другим контентом */
 }
 
 .progress-bar {
@@ -298,21 +301,15 @@
 }
 
 .progress-step::after {
-    content: "";
-    position: absolute;
-    top: -6px;
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background-color: #D2CAE8;
-    border: 2px solid white;
+    content: none;
+    width: 0;
+    height: 0;
+    border: none;
+    background: none;
 }
 
 .progress-step.active::after {
-    background-color: #7B43F2;
+    display: none;
 }
 
 
