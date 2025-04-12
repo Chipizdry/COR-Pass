@@ -295,7 +295,8 @@ h3 {
 label {
     display: block;
     margin-bottom: 5px;
-    color: #333;
+    font-size: 14px;
+    color: #7f69bd;
 }
 
 input[type="text"],
@@ -586,11 +587,11 @@ select#user_sex option:checked {
 }
 
 .otp-container {
-    display: none; /* Изначально скрываем */
+    display: none;
     justify-content: center;
-    gap: 10px;
+    gap: 5px;
     margin: 10px 0;
-    max-width: 200px; /* Ограничиваем ширину */
+    width: 200px;
 }
 
 .otp-input {

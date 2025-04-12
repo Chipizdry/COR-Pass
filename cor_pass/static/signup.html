@@ -26,11 +26,10 @@
 </head>
 <body>
     <div class="container">
-        <button class="link-button" onclick="goBack()" data-translate="back-link-text"><<<назад<<<</button>
+        <button class="link-button" onclick="goBack('/static/login.html')" data-translate="back-link-text"><<<назад<<<</button>
         <h1 data-translate="signup-title">Регистрация</h1>
         <form id="registrationForm">
 
-            <!-- Поле для выбора пола -->
                 <div id="gender-field">
                     <label for="user_sex" data-translate="gender-label">Пол:</label>
                     <select id="user_sex" name="user_sex" required>
@@ -67,7 +66,6 @@
             <div class="password-container hidden">
                 <label for="password" data-translate="password-label">Пароль:</label>
                 <div class="input-wrapper">
-                   <!-- <div id="password-message" class="error-message" data-translate="password-message"></div>-->
                     <input type="password" id="password" name="password" placeholder="Введите пароль"   data-translate="password-placeholder" minlength="5" maxlength="21" required>
                     <span id="eyeIcon" class="eye-icon" onclick="togglePassword('password', 'eyeIcon')"></span>
                     <div id="password-message" class="error-message" data-translate="password-message"></div>
@@ -105,8 +103,6 @@
   
     <script src="translation.js"></script>   
     <script src="general_fun.js"></script>
-
-    <script> function goBack() { window.history.back();  } </script>
     <script>
     
 const urlParams = new URLSearchParams(window.location.search);
@@ -134,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const eyeIcon = document.getElementById('eyeIcon');
     const eyeIcon1 = document.getElementById('eyeIcon1');
-    updateEyeIcon(eyeIcon, false); // false = закрытый глаз
+    updateEyeIcon(eyeIcon, false);
     updateEyeIcon(eyeIcon1, false);
     
     const confirmationMessageDiv = document.getElementById('confirmationMessage');
