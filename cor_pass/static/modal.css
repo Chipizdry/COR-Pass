@@ -15,8 +15,8 @@
     height: 100%;
     flex-direction: column;
     display: flex;
-  /*  justify-content: center;
-    align-items: center; */
+    justify-content: center;
+    align-items: center; 
 }
 
 /* Стили для внутреннего контента */
@@ -569,12 +569,62 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    background-color: white;
+    border-radius: 12px;
+    width: 420px;
+    padding: 10px;
+    box-sizing: border-box;
+    margin-left: 20px;
+    margin-bottom: 10px;
 }
 
-/* Стиль для отображения значения */
+/* Слайдер растягивается */
+.range-container input[type="range"] {
+    flex-grow: 1;
+    height: 6px;
+    accent-color: #7B43F2;
+}
+
+/* Отображение значения */
 .range-value {
     color: #5B4296;
     font-size: 13px;
     min-width: 25px;
     text-align: center;
 }
+
+.recovery-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    justify-content: center;
+    text-align: center;
+    margin-top: 15px;
+}
+
+  #recoveryCode {
+   width: 100%;
+   padding: 5px;
+   margin-top: 5px;
+   display: none;
+  }
+
+
+  #recoveryQRImage {
+    max-width: 100px;
+    margin-top: 10px;
+    display: block; /* Убедитесь, что изображение ведет себя как блочный элемент */
+    margin-left: auto; /* Центрирование изображения */
+    margin-right: auto; /* Центрирование изображения */
+  }
+
+  #recoveryCodeDisplay {
+   display: none;
+  }
+
+
+  .recovery-options {
+    display: flex;
+    justify-content: space-between; /* Равномерное распределение кнопок */
+     margin-top: 10px;
+   }
