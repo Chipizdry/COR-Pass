@@ -478,10 +478,12 @@
             <input type="text" id="University" name="University" required>
         </div>
 
-        <div class="form-group-width">
-            <button id="submitButton" class="submit-button" onclick="submitForm()">Отправить на подтверждение</button>
-        </div>
-             
+      <div class="additional-fields"> 
+       
+            <button id="exportPdfButton" class="submit-button" onclick="exportFormToPDF()">Предпросмотр</button>
+            <button id="submitButton" class="submit-button" onclick="submitForm()">Отправить</button>
+        
+      </div>       
     </div>
    
     <div class="progress-container">
@@ -498,6 +500,7 @@
 
         <script src="/static/translation.js"></script>  
         <script src="/static/general_fun.js"></script> 
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
        
        document.addEventListener('DOMContentLoaded', function () {
@@ -965,6 +968,57 @@ document.getElementById('certificateFile').addEventListener('change', function(e
         fileNameElement.textContent = 'Файл не выбран';
     }
 });
+
+
+async function exportFormToPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const getFieldValue = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.value || '' : '';
+    };
+
+    // Сбор данных
+    const fields = {
+        "Фамилия": getFieldValue("lastName"),
+        "Имя": getFieldValue("firstName"),
+        "Отчество": getFieldValue("middleName"),
+        "Email": getFieldValue("workEmail"),
+        "Год рождения": getFieldValue("birthYear"),
+        "Пол": getFieldValue("gender"),
+        "Клиника": getFieldValue("Clinick_Name"),
+        "Отделение": getFieldValue("Department"),
+        "Должность": getFieldValue("Job_title"),
+        "Специализация": getFieldValue("specialization"),
+        "Степень": getFieldValue("degree"),
+        "Дата аттестации": getFieldValue("birthdate"),
+        "Дата выдачи диплома": getFieldValue("date_id"),
+        "Серия диплома": getFieldValue("Serial_number"),
+        "Номер диплома": getFieldValue("Number"),
+        "ВУЗ": getFieldValue("University"),
+    };
+
+    let y = 10;
+    doc.setFont("Helvetica");
+    doc.setFontSize(12);
+    doc.text("Данные формы регистрации врача:", 10, y);
+    y += 10;
+
+    for (const [label, value] of Object.entries(fields)) {
+        doc.text(`${label}: ${value}`, 10, y);
+        y += 8;
+        if (y > 280) {
+            doc.addPage();
+            y = 10;
+        }
+    }
+
+    doc.save("registration_preview.pdf");
+}
+
+
+
 // Функция для обновления прогресс бара
 function updateProgressBar(currentStep) {
     const visibleModal = document.querySelector('.modal[style*="display: block"]');
