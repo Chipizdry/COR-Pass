@@ -56,7 +56,33 @@
     background-color: #B1A1DA;
 }
 
-/* Стили для контейнера кнопок навигации */
+.recovery-btn {
+    background-color: white;
+    color: #7B43F2;
+    border: 1px solid #7B43F2;
+    border-radius: 12px;
+    padding: 2px 5px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    font-size: 11px;
+    height: 55px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Необязательно: стиль при наведении */
+.recovery-btn:hover {
+    background-color: #f2eaff;
+    color: #5e32c5;
+    border-color: #5e32c5;
+}
+
+.recovery-btn:active {
+    background-color: #e3d6ff;
+    color: #4a299e;
+    transform: scale(0.98); /* небольшой "нажимательный" эффект */
+}
 /* Стили для контейнера навигации */
 .navigation-container {
     display: flex
