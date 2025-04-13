@@ -501,6 +501,7 @@
         <script src="/static/translation.js"></script>  
         <script src="/static/general_fun.js"></script> 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/jspdf-customfonts@0.0.4-rc.4/dist/jspdf.customfonts.min.js"></script>
     <script>
        
        document.addEventListener('DOMContentLoaded', function () {
@@ -972,51 +973,240 @@ document.getElementById('certificateFile').addEventListener('change', function(e
 
 async function exportFormToPDF() {
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+    });
 
+    // Загрузка шрифта (если нужно)
+    try {
+    const fontUrl = '/static/fonts/Roboto-Regular.ttf';
+    const fontResponse = await fetch(fontUrl);
+    const fontArrayBuffer = await fontResponse.arrayBuffer();
+
+    function arrayBufferToBase64(buffer) {
+        let binary = '';
+        const bytes = new Uint8Array(buffer);
+        for (let i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+    }
+
+    const fontBase64 = arrayBufferToBase64(fontArrayBuffer);
+    doc.addFileToVFS('Roboto-Regular.ttf', fontBase64);
+    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+    doc.setFont('Roboto'); // Установить шрифт до любого текста
+} catch (error) {
+    console.error('Ошибка загрузки шрифта:', error);
+    doc.setFont('helvetica'); // fallback
+}
+
+
+    // Получение значений полей
     const getFieldValue = (id) => {
         const el = document.getElementById(id);
         return el ? el.value || '' : '';
     };
 
-    // Сбор данных
-    const fields = {
+    // Основные данные
+    const personalData = {
         "Фамилия": getFieldValue("lastName"),
         "Имя": getFieldValue("firstName"),
         "Отчество": getFieldValue("middleName"),
-        "Email": getFieldValue("workEmail"),
         "Год рождения": getFieldValue("birthYear"),
         "Пол": getFieldValue("gender"),
-        "Клиника": getFieldValue("Clinick_Name"),
+        "Телефон": getFieldValue("Phone_number"),
+        "Рабочий email": getFieldValue("workEmail")
+    };
+
+    const workData = {
+        "Название клиники": getFieldValue("Clinick_Name"),
         "Отделение": getFieldValue("Department"),
         "Должность": getFieldValue("Job_title"),
         "Специализация": getFieldValue("specialization"),
-        "Степень": getFieldValue("degree"),
-        "Дата аттестации": getFieldValue("birthdate"),
-        "Дата выдачи диплома": getFieldValue("date_id"),
-        "Серия диплома": getFieldValue("Serial_number"),
-        "Номер диплома": getFieldValue("Number"),
-        "ВУЗ": getFieldValue("University"),
+        "Научная степень": getFieldValue("degree"),
+        "Дата последней аттестации": getFieldValue("birthdate")
     };
 
-    let y = 10;
-    doc.setFont("Helvetica");
-    doc.setFontSize(12);
-    doc.text("Данные формы регистрации врача:", 10, y);
-    y += 10;
+    const diplomaData = {
+        "Дата выдачи": getFieldValue("date_id"),
+        "Серия": getFieldValue("Serial_number"),
+        "Номер": getFieldValue("Number"),
+        "ВУЗ": getFieldValue("University")
+    };
 
-    for (const [label, value] of Object.entries(fields)) {
-        doc.text(`${label}: ${value}`, 10, y);
-        y += 8;
-        if (y > 280) {
-            doc.addPage();
-            y = 10;
-        }
+    // Стили
+    const titleStyle = { fontSize: 16, fontStyle: 'bold', textColor: '#5B4296' };
+    const sectionTitleStyle = { fontSize: 14, fontStyle: 'bold', textColor: '#5B4296' };
+    const fieldStyle = { fontSize: 12, textColor: '#323238' };
+    const valueStyle = { fontSize: 12, textColor: '#000000' };
+
+    // Функция для добавления текста с переносами
+    function addTextWithLineBreaks(doc, text, x, y, maxWidth, lineHeight = 5) {
+        const lines = doc.splitTextToSize(text, maxWidth);
+        doc.text(lines, x, y);
+        return y + (lines.length * lineHeight);
     }
 
-    doc.save("registration_preview.pdf");
-}
+    // Первая страница - персональные данные
+    let y = 20;
+    
+    // Заголовок
+    doc.setFontSize(titleStyle.fontSize);
+    doc.setTextColor(titleStyle.textColor);
+    doc.setFont(titleStyle.fontStyle);
+    doc.text("Регистрационная карта врача", 105, y, { align: 'center' });
+    y += 10;
 
+    // Логотип (если нужно)
+    // doc.addImage(logoData, 'JPEG', 15, y, 30, 10);
+    // y += 15;
+
+    // Персональные данные
+    doc.setFontSize(sectionTitleStyle.fontSize);
+    doc.setTextColor(sectionTitleStyle.textColor);
+    doc.text("Личные данные", 15, y);
+    y += 8;
+
+    doc.setFontSize(fieldStyle.fontSize);
+    doc.setTextColor(fieldStyle.textColor);
+    
+    // Добавляем фото, если есть
+    const photoFile = document.getElementById('fileInput').files[0];
+    if (photoFile) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Ограничиваем размер изображения
+            const img = new Image();
+            img.src = e.target.result;
+            
+            img.onload = function() {
+                const maxWidth = 40;
+                const maxHeight = 40;
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > maxWidth) {
+                    height = (maxWidth / width) * height;
+                    width = maxWidth;
+                }
+                
+                if (height > maxHeight) {
+                    width = (maxHeight / height) * width;
+                    height = maxHeight;
+                }
+                
+                doc.addImage(img, 'JPEG', 150, y - 15, width, height);
+            };
+        };
+        reader.readAsDataURL(photoFile);
+    }
+
+    // Выводим персональные данные
+    for (const [label, value] of Object.entries(personalData)) {
+        doc.setTextColor(fieldStyle.textColor);
+        doc.text(`${label}:`, 15, y);
+        doc.setTextColor(valueStyle.textColor);
+        y = addTextWithLineBreaks(doc, value, 40, y, 100, 6);
+    }
+
+    // Проверяем, нужно ли добавить новую страницу
+    if (y > 250) {
+        doc.addPage();
+        y = 20;
+    } else {
+        y += 10;
+    }
+
+    // Рабочие данные
+    doc.setFontSize(sectionTitleStyle.fontSize);
+    doc.setTextColor(sectionTitleStyle.textColor);
+    doc.text("Профессиональные данные", 15, y);
+    y += 8;
+
+    doc.setFontSize(fieldStyle.fontSize);
+    
+    for (const [label, value] of Object.entries(workData)) {
+        doc.setTextColor(fieldStyle.textColor);
+        doc.text(`${label}:`, 15, y);
+        doc.setTextColor(valueStyle.textColor);
+        y = addTextWithLineBreaks(doc, value, 50, y, 140, 6);
+    }
+
+    // Проверяем, нужно ли добавить новую страницу
+    if (y > 250) {
+        doc.addPage();
+        y = 20;
+    } else {
+        y += 10;
+    }
+
+    // Данные диплома
+    doc.setFontSize(sectionTitleStyle.fontSize);
+    doc.setTextColor(sectionTitleStyle.textColor);
+    doc.text("Данные диплома", 15, y);
+    y += 8;
+
+    doc.setFontSize(fieldStyle.fontSize);
+    
+    for (const [label, value] of Object.entries(diplomaData)) {
+        doc.setTextColor(fieldStyle.textColor);
+        doc.text(`${label}:`, 15, y);
+        doc.setTextColor(valueStyle.textColor);
+        y = addTextWithLineBreaks(doc, value, 40, y, 150, 6);
+    }
+
+    // Добавляем файл диплома, если есть
+    const diplomaFile = document.getElementById('diplomaFile').files[0];
+    if (diplomaFile) {
+        doc.setTextColor(fieldStyle.textColor);
+        doc.text("Файл диплома:", 15, y);
+        doc.setTextColor(valueStyle.textColor);
+        y = addTextWithLineBreaks(doc, diplomaFile.name, 40, y, 150, 6);
+    }
+
+    // Проверяем, нужно ли добавить новую страницу
+    if (y > 250) {
+        doc.addPage();
+        y = 20;
+    } else {
+        y += 10;
+    }
+
+    // Сертификат специалиста
+    doc.setFontSize(sectionTitleStyle.fontSize);
+    doc.setTextColor(sectionTitleStyle.textColor);
+    doc.text("Сертификат специалиста", 15, y);
+    y += 8;
+
+    // Добавляем файл сертификата, если есть
+    const certificateFile = document.getElementById('certificateFile').files[0];
+    if (certificateFile) {
+        doc.setFontSize(fieldStyle.fontSize);
+        doc.setTextColor(fieldStyle.textColor);
+        doc.text("Файл сертификата:", 15, y);
+        doc.setTextColor(valueStyle.textColor);
+        y = addTextWithLineBreaks(doc, certificateFile.name, 50, y, 140, 6);
+    }
+
+    // Добавляем подпись и дату в конце
+    if (y > 200) {
+        doc.addPage();
+        y = 20;
+    } else {
+        y = 250;
+    }
+
+    doc.setFontSize(12);
+    doc.text("Дата заполнения: " + new Date().toLocaleDateString(), 15, y);
+    y += 10;
+    doc.text("Подпись: ___________________", 15, y);
+
+    // Сохраняем PDF
+    doc.save("Регистрационная_карта_врача.pdf");
+}
 
 
 // Функция для обновления прогресс бара
