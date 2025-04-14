@@ -318,11 +318,13 @@ input[type="submit"] {
 }
 
 
-/*
-.password-container {
-    position: relative;
-    width: 100%; 
-} */
+.label-padded {
+    padding-left: 20px;
+    color: #291161;
+    font-size: 13px;
+    display: block;
+    margin-bottom: 10px;
+}
 
 .password-container {
     position: relative;
