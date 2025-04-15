@@ -1,199 +1,112 @@
-
-
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Query
-from fastapi.responses import HTMLResponse, FileResponse, StreamingResponse
-from skimage.transform import resize
-from skimage import filters
-import numpy as np
+from fastapi import APIRouter, Query, HTTPException
+from fastapi.responses import StreamingResponse, HTMLResponse
 import os
+import numpy as np
 import pydicom
+from skimage.transform import resize
 from PIL import Image
 from io import BytesIO
+from functools import lru_cache
 from pathlib import Path
-from typing import List
-
 router = APIRouter(prefix="/api/dicom", tags=["DICOM"])
-
+HTML_FILE = Path(__file__).parent / "static" / "dicom_viewer.html"
 DICOM_DIR = "dicom_files"
 os.makedirs(DICOM_DIR, exist_ok=True)
 
+from skimage.transform import resize
+from collections import Counter
 
-def normalize_image(img):
-    """Нормализация изображения к диапазону 0-255"""
-    img_min = img.min()
-    img_max = img.max()
-    
-    if img_max == img_min:
-        return np.zeros_like(img, dtype=np.uint8)
-    
-    normalized = ((img - img_min) / (img_max - img_min)) * 255
-    return normalized.astype(np.uint8)
+@lru_cache(maxsize=1)
+def load_volume():
+    print("[INFO] Загружаем том из DICOM-файлов...")
 
-def apply_window(img, window_center, window_width):
-    """Применение оконных настроек к изображению"""
-    img_min = window_center - window_width // 2
-    img_max = window_center + window_width // 2
+    files = sorted(
+        [os.path.join(DICOM_DIR, f) for f in os.listdir(DICOM_DIR) if f.lower().endswith(".dcm")],
+        key=lambda x: int(pydicom.dcmread(x, stop_before_pixels=True).InstanceNumber)
+    )
+
+    slices = []
+    shapes = []
+    example_ds = None
+
+    for f in files:
+        ds = pydicom.dcmread(f)
+        arr = ds.pixel_array.astype(np.float32)
+        if hasattr(ds, 'RescaleSlope') and hasattr(ds, 'RescaleIntercept'):
+            arr = arr * ds.RescaleSlope + ds.RescaleIntercept
+        slices.append(arr)
+        shapes.append(arr.shape)
+        if example_ds is None:
+            example_ds = ds
+
+    # Определяем наиболее частую форму (размер срезов)
+    shape_counter = Counter(shapes)
+    target_shape = shape_counter.most_common(1)[0][0]
+    print(f"[INFO] Приводим к форме: {target_shape}")
+
+    resized_slices = [
+        resize(slice_, target_shape, preserve_range=True).astype(np.float32)
+        if slice_.shape != target_shape else slice_
+        for slice_ in slices
+    ]
+
+    volume = np.stack(resized_slices)
+    return volume, example_ds
+
+@router.get("/viewer", response_class=HTMLResponse)
+def get_viewer():
+    return HTMLResponse(HTML_FILE.read_text(encoding="utf-8"))
+
+
+def apply_window(img, center, width):
+    img_min = center - width / 2
+    img_max = center + width / 2
     img = np.clip(img, img_min, img_max)
     img = ((img - img_min) / (img_max - img_min)) * 255
     return img.astype(np.uint8)
 
-
-@router.post("/upload")
-async def upload_dicom_file(file: UploadFile = File(...)):
-    try:
-        file_path = os.path.join(DICOM_DIR, file.filename)
-        with open(file_path, "wb") as buffer:
-            buffer.write(await file.read())
-        pydicom.dcmread(file_path)  # Проверка, что файл корректный
-        return {"filename": file.filename}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid DICOM file: {str(e)}")
-
-
-@router.get("/list")
-async def list_dicom_files():
-    files = [f for f in os.listdir(DICOM_DIR) if f.endswith(('.dcm', '.DCM'))]
-    return {"files": files}
-
-
-@router.get("/{filename}/metadata")
-async def get_dicom_metadata(filename: str):
-    try:
-        file_path = os.path.join(DICOM_DIR, filename)
-        ds = pydicom.dcmread(file_path)
-        metadata = {elem.name: str(elem.value) for elem in ds if elem.name != "Pixel Data"}
-        return metadata
-    except Exception as e:
-        raise HTTPException(status_code=404, detail=f"DICOM file not found or invalid: {str(e)}")
-
-
-@router.get("/viewer", response_class=HTMLResponse)
-async def dicom_viewer():
-    return FileResponse("cor_pass/dicom/static/dicom_viewer.html")
-
-
-@router.get("/{filename}")
-async def get_dicom_file(filename: str):
-    file_path = os.path.join(DICOM_DIR, filename)
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file_path, media_type="application/dicom")
-
-
-@router.get("/series/{series_uid}")
-async def get_dicom_series(series_uid: str):
-    try:
-        print(f"Looking for series: {series_uid}")
-        series_files = []
-
-        for filename in os.listdir(DICOM_DIR):
-            if filename.upper() == 'DICOMDIR':
-                continue
-
-            try:
-                ds = pydicom.dcmread(os.path.join(DICOM_DIR, filename))
-                if ds.SeriesInstanceUID == series_uid:
-                    series_files.append(filename)
-            except Exception as e:
-                print(f"Error reading {filename}: {e}")
-
-        if not series_files:
-            raise HTTPException(status_code=404, detail="Series not found")
-
-        return {"files": sorted(series_files)}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @router.get("/reconstruct/{plane}")
-def reconstruct_plane(
-    plane: str,
-    index: int = Query(None),
-    size: int = Query(512, gt=0, le=1024)
-):
+def reconstruct(plane: str, index: int = Query(...), size: int = 512):
     try:
-        print(f"\n=== Reconstruction Start: {plane.upper()} ===")
+        volume, ds = load_volume()
 
-        files = sorted(
-            [os.path.join(DICOM_DIR, f) for f in os.listdir(DICOM_DIR) if f.lower().endswith('.dcm')],
-            key=lambda x: int(pydicom.dcmread(x).InstanceNumber)
-        )
-
-        slices = []
-        for f in files:
-            try:
-                ds = pydicom.dcmread(f)
-                if 'PixelData' not in ds:
-                    continue
-
-                pixel_array = ds.pixel_array.astype(np.float32)
-
-                if hasattr(ds, 'RescaleSlope') and hasattr(ds, 'RescaleIntercept'):
-                    pixel_array = pixel_array * ds.RescaleSlope + ds.RescaleIntercept
-
-                slices.append(pixel_array)
-            except Exception as e:
-                print(f"Skip file {f}: {e}")
-
-        if not slices:
-            raise HTTPException(status_code=404, detail="No valid slices found")
-
-        try:
-            volume = np.stack(slices)
-        except ValueError:
-            from collections import Counter
-            target_shape = Counter([s.shape for s in slices]).most_common(1)[0][0]
-            resized = [resize(s, target_shape, preserve_range=True) for s in slices]
-            volume = np.stack(resized)
-
-        # Выбор среза
-        if plane.lower() == "axial":
-            z = index if index is not None else volume.shape[0] // 2
-            img = volume[np.clip(z, 0, volume.shape[0] - 1), :, :]
-        elif plane.lower() == "sagittal":
-            x = index if index is not None else volume.shape[2] // 2
-            img = volume[:, :, np.clip(x, 0, volume.shape[2] - 1)]
-        elif plane.lower() == "coronal":
-            y = index if index is not None else volume.shape[1] // 2
-            img = volume[:, np.clip(y, 0, volume.shape[1] - 1), :]
+        if plane == "axial":
+            img = volume[np.clip(index, 0, volume.shape[0] - 1), :, :]
+        elif plane == "sagittal":
+            img = volume[:, :, np.clip(index, 0, volume.shape[2] - 1)]
+        elif plane == "coronal":
+            img = volume[:, np.clip(index, 0, volume.shape[1] - 1), :]
         else:
             raise HTTPException(status_code=400, detail="Invalid plane")
 
-        print(f"Selected slice shape: {img.shape}, dtype: {img.dtype}, min={img.min()}, max={img.max()}")
+        wc = float(ds.WindowCenter[0]) if isinstance(ds.WindowCenter, pydicom.multival.MultiValue) else float(ds.WindowCenter)
+        ww = float(ds.WindowWidth[0]) if isinstance(ds.WindowWidth, pydicom.multival.MultiValue) else float(ds.WindowWidth)
+        img = apply_window(img, wc, ww)
 
-        # Применение оконной настройки
-        try:
-            ds = pydicom.dcmread(files[0])
-            wc = ds.WindowCenter
-            ww = ds.WindowWidth
+       # Получаем spacing
+        ps = ds.PixelSpacing if hasattr(ds, 'PixelSpacing') else [1, 1]
+        st = float(ds.SliceThickness) if hasattr(ds, 'SliceThickness') else 1.0
 
-            # Обработка MultiValue
-            wc = float(wc[0]) if isinstance(wc, pydicom.multival.MultiValue) else float(wc)
-            ww = float(ww[0]) if isinstance(ww, pydicom.multival.MultiValue) else float(ww)
+        # Определяем реальный масштаб по плоскости
+        if plane == "axial":
+            spacing_x, spacing_y = ps
+        elif plane == "sagittal":
+            spacing_x, spacing_y = st, ps[0]
+        elif plane == "coronal":
+            spacing_x, spacing_y = st, ps[1]
 
-            print(f"Windowing: center={wc}, width={ww}")
-            img = apply_window(img, wc, ww)
-        except Exception as e:
-            print(f"Windowing failed: {e} — applying normalization")
-            img = normalize_image(img)
+        # Размер в пикселях (с сохранением пропорций)
+        aspect_ratio = spacing_y / spacing_x
+        height = size
+        width = int(size * aspect_ratio)
 
-        print(f"After window/normalize: dtype={img.dtype}, min={img.min()}, max={img.max()}")
-
-        # Sharpen
-        img = filters.unsharp_mask(img, radius=1, amount=1)
-        img = (img * 255).clip(0, 255).astype(np.uint8)
-        print(f"After sharpening: shape={img.shape}, dtype={img.dtype}")
-
-        pil_img = Image.fromarray(img)
-        pil_img = pil_img.resize((size, size), Image.LANCZOS)
-
+        # Масштабируем с учётом реальных размеров
+        img = Image.fromarray(img).resize((width, height))
         buf = BytesIO()
-        pil_img.save(buf, format="PNG")
+        img.save(buf, format="PNG")
         buf.seek(0)
-        print("=== Reconstruction done ===")
         return StreamingResponse(buf, media_type="image/png")
-
     except Exception as e:
-        print(f"Reconstruction error: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
