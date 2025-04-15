@@ -12,7 +12,7 @@
 </head>
 <body>
   
-  <div class="viewer">
+ <!-- <div class="viewer">
     <div class="view">
       <label>Axial <input type="range" id="axial" min="0" max="500" value="50" onchange="update('axial')"></label>
       <img id="img-axial">
@@ -25,7 +25,25 @@
       <label>Coronal <input type="range" id="coronal" min="0" max="500" value="100" step="1" onchange="update('coronal')"></label>
       <img id="img-coronal">
     </div>
-  </div>
+  </div> -->
+
+  <div class="viewer">
+    <div class="view">
+        <label>Axial <input type="range" id="axial" min="0" max="500" value="50" onchange="update('axial')"></label>
+        
+        <canvas id="canvas-axial" width="512" height="512"></canvas>
+    </div>
+    <div class="view">
+        <label>Sagittal <input type="range" id="sagittal" min="0" max="500" value="100" onchange="update('sagittal')"></label>
+    
+        <canvas id="canvas-sagittal" width="512" height="512"></canvas>
+    </div>
+    <div class="view">
+        <label>Coronal <input type="range" id="coronal" min="0" max="500" value="100" onchange="update('coronal')"></label>
+      
+        <canvas id="canvas-coronal" width="512" height="512"></canvas>
+    </div>
+</div>
 
   <script>
     async function update(plane) {
@@ -36,5 +54,125 @@
 
     ['axial', 'sagittal', 'coronal'].forEach(update);
   </script>
+   <script>
+   let currentPlane = 'axial';
+   let markers = { axial: [], sagittal: [], coronal: [] }; // Храним метки для каждого разреза
+   
+   // Функция для обновления изображения
+   async function update(plane) {
+     currentPlane = plane;
+     const idx = document.getElementById(plane).value;
+     const canvas = document.getElementById('canvas-' + plane);
+     const ctx = canvas.getContext('2d');
+     const img = new Image();
+     img.onload = function () {
+       ctx.clearRect(0, 0, canvas.width, canvas.height); // Очищаем холст
+       ctx.drawImage(img, 0, 0, canvas.width, canvas.height); // Рисуем изображение
+       drawMarkers(ctx, plane); // Рисуем метки на изображении
+     };
+     img.src = `/api/dicom/reconstruct/${plane}?index=${idx}&t=${Date.now()}`;
+   }
+   
+   // Функция для рисования меток
+   function drawMarkers(ctx, plane) {
+     markers[plane].forEach(marker => {
+       ctx.beginPath();
+       ctx.arc(marker.x, marker.y, 5, 0, 2 * Math.PI);
+       ctx.fillStyle = "red";
+       ctx.fill();
+     });
+   }
+   
+   function addMarker(e, plane) {
+  const canvas = e.target;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  markers[plane].push({ x, y });
+  drawMarkers(canvas.getContext('2d'), plane);
+
+  compute3DIntersections(); // <--- Вызываем после добавления маркера
+}
+   
+
+   function compute3DIntersections() {
+  const axialIndex = parseInt(document.getElementById('axial').value);
+  const sagittalIndex = parseInt(document.getElementById('sagittal').value);
+  const coronalIndex = parseInt(document.getElementById('coronal').value);
+
+  // Предположим, мы берем последнюю метку из каждого
+  const axialMarker = markers.axial[markers.axial.length - 1];
+  const sagittalMarker = markers.sagittal[markers.sagittal.length - 1];
+  const coronalMarker = markers.coronal[markers.coronal.length - 1];
+
+  if (axialMarker && sagittalMarker && coronalMarker) {
+    const x_from_sagittal = sagittalIndex;
+    const y_from_axial = axialMarker.y;
+    const z_from_axial = axialIndex;
+
+    const x_from_coronal = coronalMarker.x;
+    const z_from_coronal = coronalMarker.y;
+
+    const y_from_sagittal = sagittalMarker.y;
+    const z_from_sagittal = sagittalMarker.x;
+
+    // Теперь можно усреднить или выбрать наиболее надёжные координаты
+    const x = Math.round((x_from_sagittal + x_from_coronal) / 2);
+    const y = Math.round((y_from_axial + y_from_sagittal) / 2);
+    const z = Math.round((z_from_axial + z_from_coronal + z_from_sagittal) / 3);
+
+    console.log("🎯 Пересечение маркеров:", { x, y, z });
+
+    // Можно передать координаты для отображения на других проекциях
+    drawCrossOnSlices({ x, y, z });
+  }
+}
+function drawCrossOnSlices(point3D) {
+  const canvases = {
+    axial: document.getElementById('canvas-axial'),
+    sagittal: document.getElementById('canvas-sagittal'),
+    coronal: document.getElementById('canvas-coronal')
+  };
+
+  // Очищаем и перерисовываем метки
+  Object.entries(canvases).forEach(([plane, canvas]) => {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    update(plane); // Заново отрисовываем изображение и маркеры
+
+    ctx.strokeStyle = 'lime';
+    ctx.lineWidth = 1;
+
+    ctx.beginPath();
+    if (plane === 'axial') {
+      ctx.moveTo(0, point3D.y);
+      ctx.lineTo(512, point3D.y);
+      ctx.moveTo(point3D.x, 0);
+      ctx.lineTo(point3D.x, 512);
+    } else if (plane === 'sagittal') {
+      ctx.moveTo(0, point3D.y);
+      ctx.lineTo(512, point3D.y);
+      ctx.moveTo(point3D.z, 0);
+      ctx.lineTo(point3D.z, 512);
+    } else if (plane === 'coronal') {
+      ctx.moveTo(0, point3D.z);
+      ctx.lineTo(512, point3D.z);
+      ctx.moveTo(point3D.x, 0);
+      ctx.lineTo(point3D.x, 512);
+    }
+    ctx.stroke();
+  });
+}
+
+   document.getElementById('canvas-axial').addEventListener('click', (e) => addMarker(e, 'axial'));
+   document.getElementById('canvas-sagittal').addEventListener('click', (e) => addMarker(e, 'sagittal'));
+   document.getElementById('canvas-coronal').addEventListener('click', (e) => addMarker(e, 'coronal'));
+   
+   // Инициализируем отображение срезов
+   ['axial', 'sagittal', 'coronal'].forEach(update);
+   
+</script>
+
 </body>
 </html>

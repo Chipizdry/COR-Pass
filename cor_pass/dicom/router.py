@@ -74,8 +74,12 @@ def reconstruct(plane: str, index: int = Query(...), size: int = 512):
             img = volume[np.clip(index, 0, volume.shape[0] - 1), :, :]
         elif plane == "sagittal":
             img = volume[:, :, np.clip(index, 0, volume.shape[2] - 1)]
+            # Разворот сагиттального среза на 180 градусов
+            img = np.flip(img, axis=1)
         elif plane == "coronal":
             img = volume[:, np.clip(index, 0, volume.shape[1] - 1), :]
+            # Разворот коронального среза на 180 градусов
+            img = np.flip(img, axis=0)
         else:
             raise HTTPException(status_code=400, detail="Invalid plane")
 
@@ -83,7 +87,7 @@ def reconstruct(plane: str, index: int = Query(...), size: int = 512):
         ww = float(ds.WindowWidth[0]) if isinstance(ds.WindowWidth, pydicom.multival.MultiValue) else float(ds.WindowWidth)
         img = apply_window(img, wc, ww)
 
-       # Получаем spacing
+        # Получаем spacing
         ps = ds.PixelSpacing if hasattr(ds, 'PixelSpacing') else [1, 1]
         st = float(ds.SliceThickness) if hasattr(ds, 'SliceThickness') else 1.0
 
