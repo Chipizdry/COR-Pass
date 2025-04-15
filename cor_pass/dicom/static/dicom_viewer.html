@@ -59,20 +59,20 @@
    let markers = { axial: [], sagittal: [], coronal: [] }; // Храним метки для каждого разреза
    
    // Функция для обновления изображения
-   async function update(plane) {
-     currentPlane = plane;
-     const idx = document.getElementById(plane).value;
-     const canvas = document.getElementById('canvas-' + plane);
-     const ctx = canvas.getContext('2d');
-     const img = new Image();
-     img.onload = function () {
-       ctx.clearRect(0, 0, canvas.width, canvas.height); // Очищаем холст
-       ctx.drawImage(img, 0, 0, canvas.width, canvas.height); // Рисуем изображение
-       drawMarkers(ctx, plane); // Рисуем метки на изображении
-     };
-     img.src = `/api/dicom/reconstruct/${plane}?index=${idx}&t=${Date.now()}`;
-   }
-   
+   async function update(plane, callback) {
+  currentPlane = plane;
+  const idx = document.getElementById(plane).value;
+  const canvas = document.getElementById('canvas-' + plane);
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+  img.onload = function () {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    drawMarkers(ctx, plane);
+    if (callback) callback(ctx); // ✅ вызываем callback после полной отрисовки
+  };
+  img.src = `/api/dicom/reconstruct/${plane}?index=${idx}&t=${Date.now()}`;
+}
    // Функция для рисования меток
    function drawMarkers(ctx, plane) {
      markers[plane].forEach(marker => {

@@ -74,8 +74,8 @@ def reconstruct(plane: str, index: int = Query(...), size: int = 512):
             img = volume[np.clip(index, 0, volume.shape[0] - 1), :, :]
         elif plane == "sagittal":
             img = volume[:, :, np.clip(index, 0, volume.shape[2] - 1)]
-            # Разворот сагиттального среза на 180 градусов
-            img = np.flip(img, axis=1)
+             # Поворот сагиттального среза на 180 градусов относительно горизонта
+            img = np.flip(img, axis=(0, 1))  # или img = np.rot90(img, 2)
         elif plane == "coronal":
             img = volume[:, np.clip(index, 0, volume.shape[1] - 1), :]
             # Разворот коронального среза на 180 градусов
