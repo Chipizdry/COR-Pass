@@ -4,24 +4,25 @@
   <meta charset="UTF-8">
   <title>DICOM Viewer</title>
   <style>
-    .viewer { display: flex; gap: 20px; }
+    .viewer { display: flex; gap: 40px; } /* Увеличиваем промежуток между блоками */
     .view { display: flex; flex-direction: column; align-items: center; }
-    img { border: 1px solid #444; width: 256px; height: 256px; }
+    img { border: 1px solid #444; width: 512px; height: 512px; } /* Увеличиваем размеры изображений */
+    input[type="range"] { width: 500px; } /* Увеличиваем длину ползунков */
   </style>
 </head>
 <body>
   
   <div class="viewer">
     <div class="view">
-      <label>Axial <input type="range" id="axial" min="0" max="300" value="50" onchange="update('axial')"></label>
+      <label>Axial <input type="range" id="axial" min="0" max="500" value="50" onchange="update('axial')"></label>
       <img id="img-axial">
     </div>
     <div class="view">
-      <label>Sagittal <input type="range" id="sagittal" min="0" max="300" value="100" onchange="update('sagittal')"></label>
+      <label>Sagittal <input type="range" id="sagittal" min="0" max="500" value="100" onchange="update('sagittal')"></label>
       <img id="img-sagittal">
     </div>
     <div class="view">
-      <label>Coronal <input type="range" id="coronal" min="0" max="300" value="100" step="1" onchange="update('coronal')"></label>
+      <label>Coronal <input type="range" id="coronal" min="0" max="500" value="100" step="1" onchange="update('coronal')"></label>
       <img id="img-coronal">
     </div>
   </div>
