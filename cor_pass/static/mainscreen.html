@@ -258,18 +258,22 @@
 
        
     <!-- Модальное окно -->
-<div id="sessionsModal" class="modal" style="display: none;">
-    <div class="modal-header">
-        <div class="modal-buttons">
-            <button class="modal-button close" data-action="close" onclick="closeModal('sessionsModal')">✖</button>
+    <div id="sessionsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-scroll-header">
+            <div class="modal-buttons">
+              <button class="modal-button close" data-action="close" onclick="closeModal('sessionsModal')">✖</button>
+            </div>
+            <h3 style="margin-top: 15px; color:#291161;font-size: 17px;">Информация о сессиях</h3>
+          </div>
+      
+          <div class="cards-scroll-area">
+            <div class="cards-container" id="sessionCardsContainer">
+              <!-- Карточки -->
+            </div>
+          </div>
         </div>
-        <br><br>
-        <h3 style="margin-top:0; color:#291161;font-size: 17px;">Информация о сессиях</h3>
-    </div>
-    <div class="cards-container" id="sessionCardsContainer">
-        <!-- Здесь будут отображаться карточки с сессиями -->
-    </div>
-</div>
+      </div>
 
 
 

@@ -487,6 +487,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function getErrorMessage(status, messageDiv) {
         const userLang = localStorage.getItem('selectedLanguage');
         switch(status) {      
+            case 400:
+                messageDiv.style.color = 'red';
+                return "Master key needed!";
             case 401:
                 // messageDiv.innerText = translations[userLang]["message-error"];
                 messageDiv.style.color = 'red';
