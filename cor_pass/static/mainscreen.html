@@ -385,9 +385,11 @@
                 }
             }
 
-            document.addEventListener('DOMContentLoaded', fetchCorId);
+          //  document.addEventListener('DOMContentLoaded', fetchCorId);
             
             document.addEventListener('DOMContentLoaded', function() {
+              checkToken();
+              fetchCorId();
               initModalControls('sessionsModal');
               initAllModals();
               makeModalDraggable('sessionsModal');
