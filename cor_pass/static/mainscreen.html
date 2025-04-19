@@ -258,22 +258,21 @@
 
        
     <!-- Модальное окно -->
-    <div id="sessionsModal" class="modal" style="display: none;">
-        <div class="modal-content">
-          <div class="modal-scroll-header">
+    <div id="sessionsModal"class="modal" style="display: none;">  
+        <div class="modal-header"> 
             <div class="modal-buttons">
               <button class="modal-button close" data-action="close" onclick="closeModal('sessionsModal')">✖</button>
             </div>
-            <h3 style="margin-top: 15px; color:#291161;font-size: 17px;">Информация о сессиях</h3>
-          </div>
-      
+            <h3 style="margin-top: 25px; color:#291161;font-size: 17px;">Информация о сессиях</h3>
+        </div> 
+      <div class="modal-content"> 
           <div class="cards-scroll-area">
             <div class="cards-container" id="sessionCardsContainer">
               <!-- Карточки -->
             </div>
           </div>
-        </div>
       </div>
+    </div>
 
 
 
@@ -390,6 +389,8 @@
             
             document.addEventListener('DOMContentLoaded', function() {
               initModalControls('sessionsModal');
+              initAllModals();
+              makeModalDraggable('sessionsModal');
               enableFetchInterceptor();
               setupTokenCheckOnActions();
 
@@ -479,11 +480,11 @@ async function getSessions() {
 
         // Добавляем дополнительные отступы (например, padding и margin)
         const padding = 40; // Отступы внутри модального окна
-        const modalHeight = cardsHeight + padding+10;
+      //  const modalHeight = cardsHeight + padding+10;
 
         // Устанавливаем высоту модального окна
         const modal = document.getElementById("sessionsModal");
-        modal.style.height = `${modalHeight}px`;
+     //   modal.style.height = `${modalHeight}px`;
 
 
     } catch (error) {

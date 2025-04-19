@@ -648,20 +648,6 @@ select#user_sex option:checked {
 }
 
 
-#sessionsModal {
-    display: none;
-    position: fixed;
-    background: radial-gradient(circle, #ffffff, #f1e9fc, #fcf7f2);
-    box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1);
-    border: 1px solid #ccc;
-    border-radius: 30px;
-    top: 100px;
-    left: 100px;
-    width: 400px;
-    overflow-y: auto; /* Добавляем прокрутку, если контент не помещается */
-    max-height: 90vh; /* Максимальная высота модального окна */
-    min-height: 200px; /* Минимальная высота модального окна */
-}
 /* Стили для содержимого карточки сессии */
 .session-card .card-content {
     font-size: 12px; /* Уменьшаем размер шрифта */
