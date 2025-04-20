@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Кор Lab — Пациенты</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles_lab.css" />
+</head>
+<body>
+
+  <div class="layout">
+    <aside class="sidebar">
+
+      <!-- Логотип сервиса -->
+      <div class="logo" title="COR LAB"></div>
+
+      <!-- Навигационные иконки -->
+      <nav class="nav">
+
+        <!-- Кнопка: Пациенты -->
+        <div class="nav-item">
+          <button class="nav-btn" title="Пациенты">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="7" r="4"/>
+              <path d="M5 21v-2a7 7 0 0114 0v2"/>
+            </svg>
+          </button>
+          <span class="nav-label">Пациенты</span>
+        </div>
+
+        <!-- Кнопка: Сотрудники -->
+        <div class="nav-item">
+          <button class="nav-btn" title="Сотрудники">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="7" r="4"/>
+              <path d="M17 21v-2a5 5 0 00-10 0v2"/>
+              <path d="M22 21v-2a4 4 0 00-5-3.87"/>
+              <path d="M2 21v-2a4 4 0 015-3.87"/>
+            </svg>
+          </button>
+          <span class="nav-label">Сотрудники</span>
+        </div>
+
+        <!-- Кнопка: Сообщения -->
+        <div class="nav-item">
+          <button class="nav-btn" title="Сообщения">
+            <svg viewBox="0 0 24 24">
+              <path d="M21 15a2 2 0 002-2V7a2 2 0 00-2-2H3a2 2 0 00-2 2v6a2 2 0 002 2h3l4 4 4-4h7z"/>
+            </svg>
+          </button>
+          <span class="nav-label">Сообщения</span>
+        </div>
+      </nav>
+
+      <!-- Мини‑аватар пользователя внизу сайдбара -->
+      <div class="profile-wrapper">
+        <div class="profile"></div>
+        <span class="nav-label">Профиль</span>
+      </div>
+    </aside>
+
+    <!-- ОСНОВНОЕ СОДЕРЖИМОЕ -->
+    <main class="main">
+
+      <!-- Блок с поиском и кнопкой «Добавить пациента» -->
+      <div class="actions">
+
+        <!-- Поисковое поле -->
+        <div class="search">
+          <input type="text" placeholder="Search" id="searchInput"/>
+          <!-- Иконка‑лупа внутри поля -->
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+        </div>
+
+        <!-- Фиолетовая кнопка добавления -->
+        <button class="btn-primary" id="addPatientBtn">
+          <span class="icon-circle"><span>+</span></span>Добавить пациента
+        </button>
+      </div>
+
+      <!-- Панель фильтра и сортировки -->
+      <div class="filters-bar">
+
+        <!-- Кнопка‑заглушка: фильтр -->
+        <div class="filter" id="filterBtn">
+          <svg viewBox="0 0 24 24"><path d="M4 3h16l-6 8v8l-4 2v-10L4 3z"/></svg>Фильтр
+        </div>
+
+        <!-- Выпадающий список сортировки -->
+        <div style="position:relative">
+          <div class="sort" id="sortBtn">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 16h13"/><path d="M3 8h18"/><path d="M6 12h15"/>
+            </svg>
+            <span>Сортировка:</span>&nbsp;
+            <span id="sortLabel">Дата изменения (новые→старые)</span>
+          </div>
+
+          <!-- Сам dropdown с вариантами сортировки -->
+          <div class="dropdown" id="sortDropdown">
+            <!-- каждая кнопка задаёт field и dir -->
+            <button data-field="date" data-dir="desc">Дата изменения (новые→старые)</button>
+            <button data-field="date" data-dir="asc">Дата изменения (старые→новые)</button>
+            <button data-field="name" data-dir="asc">Фамилия А→Я</button>
+            <button data-field="name" data-dir="desc">Фамилия Я→А</button>
+            <button data-field="id" data-dir="asc">COR ID ↑</button>
+            <button data-field="id" data-dir="desc">COR ID ↓</button>
+            <button data-field="age" data-dir="asc">Возраст ↑</button>
+            <button data-field="age" data-dir="desc">Возраст ↓</button>
+            <button data-field="gender" data-dir="asc">Пол A→Я</button>
+            <button data-field="gender" data-dir="desc">Пол Я→A</button>
+            <button data-field="status" data-dir="asc">Статус A→Я</button>
+            <button data-field="status" data-dir="desc">Статус Я→A</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Карточка‑контейнер с таблицей пациентов -->
+      <section class="card">
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:40px">
+                  <input type="checkbox" id="selectAll">
+                </th>
+                <th data-field="name">Фото, фамилия, имя, отчество</th>
+                <th data-field="id">COR ID</th>
+                <th data-field="age">Возраст</th>
+                <th data-field="gender">Пол</th>
+                <th data-field="date">Дата изменения</th>
+                <th data-field="status">Статус</th>
+                <th style="width:32px"></th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="footer" id="footerInfo"></div>
+      </section>
+    </main>
+    <!-- КОНЕЦ основного контента -->
+  </div>
+
+  <!-- ─── ЛОГИКА (сортировка, поиск, обработчики) ─── -->
+  <script>
+    /* Массив‑заглушка с трёмя пациентами */
+    const sampleRows=[
+      {name:"Иванов Валерий Витальевич",id:"159RLHD9P-1978M",age:65,gender:"Мужской",date:"19.01.2024",status:"Новый",avatar:"https://randomuser.me/api/portraits/men/65.jpg"},
+      {name:"Иванова Екатерина Васильевна",id:"151RLHD9P-1990F",age:34,gender:"Женский",date:"15.01.1990",status:"Новый",avatar:"https://randomuser.me/api/portraits/women/44.jpg"},
+      {name:"Сидоров Пётр Кириллович",id:"162ABCD9P-1995M",age:29,gender:"Мужской",date:"05.03.2024",status:"Новый",avatar:"https://randomuser.me/api/portraits/men/22.jpg"}
+    ];
+
+    /* Текущее состояние таблицы */
+    let filteredRows=[...sampleRows];
+    let currentSort={field:"date",dir:"desc"};
+
+    /* DOM‑ссылки */
+    const tbody=document.getElementById("tableBody");
+    const footerInfo=document.getElementById("footerInfo");
+
+    /* Утилита: превращаем "дд.мм.гггг" в Date */
+    function parseDate(str){
+      const[d,m,y]=str.split(".").map(Number);
+      return new Date(y,m-1,d);
+    }
+
+    /* Компаратор для сортировки по полю */
+    function compare(a,b,field){
+      if(field==="date") return parseDate(a.date)-parseDate(b.date);
+      if(field==="age")  return a.age-b.age;
+      return a[field].toString().localeCompare(b[field].toString(),"ru",{sensitivity:"base"});
+    }
+
+    /* Рендерим строки таблицы */
+    function render(rows){
+      tbody.innerHTML="";
+      rows.forEach(r=>{
+        const tr=document.createElement("tr");
+        tr.innerHTML=`
+          <td><input type="checkbox" class="rowChk"></td>
+          <td style="display:flex;align-items:center;background:var(--clr-surface-alt);">
+            <img class="avatar" src="${r.avatar}" alt="">${r.name}
+          </td>
+          <td>${r.id}</td>
+          <td>${r.age} лет</td>
+          <td>${r.gender}</td>
+          <td>${r.date}</td>
+          <td><span class="status"><span class="status-dot"></span>${r.status}</span></td>
+          <td class="ellipsis">⋮</td>`;
+        tbody.appendChild(tr);
+      });
+      footerInfo.textContent=`Всего: ${rows.length} пациентов`;
+    }
+
+    /* Сортируем и перерисовываем */
+    function sortRows(field,dir){
+      filteredRows.sort((a,b)=>dir==="asc" ? compare(a,b,field) : -compare(a,b,field));
+      render(filteredRows);
+    }
+
+    /* Стартовый рендер */
+    sortRows(currentSort.field,currentSort.dir);
+
+    /* === Поиск по таблице === */
+    document.getElementById("searchInput").addEventListener("input",e=>{
+      const q=e.target.value.toLowerCase();
+      filteredRows=sampleRows.filter(r=>
+        Object.values(r).some(val=>val.toString().toLowerCase().includes(q))
+      );
+      sortRows(currentSort.field,currentSort.dir);
+    });
+
+    /* Чек‑бокс «выбрать всё» */
+    const selectAll=document.getElementById("selectAll");
+    if(selectAll){
+      selectAll.addEventListener("change",e=>{
+        document.querySelectorAll(".rowChk").forEach(chk=>chk.checked=e.target.checked);
+      });
+    }
+
+    /* Dropdown с вариантами сортировки */
+    const sortBtn=document.getElementById("sortBtn");
+    const sortDropdown=document.getElementById("sortDropdown");
+    const sortLabel=document.getElementById("sortLabel");
+
+    sortBtn.addEventListener("click",e=>{
+      e.stopPropagation();
+      sortDropdown.classList.toggle("visible");
+    });
+    window.addEventListener("click",()=>sortDropdown.classList.remove("visible"));
+
+    sortDropdown.addEventListener("click",e=>{
+      if(e.target.matches("button")){
+        const {field,dir}=e.target.dataset;
+        currentSort={field,dir};
+        sortLabel.textContent=e.target.textContent;
+        sortDropdown.classList.remove("visible");
+        sortRows(field,dir);
+      }
+    });
+
+    /* Клик по шапке таблицы = быстрая сортировка */
+    document.querySelectorAll("thead th[data-field]").forEach(th=>{
+      th.addEventListener("click",()=>{
+        const field=th.dataset.field;
+        if(field==="select") return;
+        const dir=currentSort.field===field && currentSort.dir==="asc" ? "desc":"asc";
+        currentSort={field,dir};
+        sortLabel.textContent=`Сортировка: ${th.textContent.trim()} ${dir==="asc"?"↑":"↓"}`;
+        sortRows(field,dir);
+      });
+    });
+
+    /* Заглушки */
+    document.getElementById("filterBtn").addEventListener("click",()=>alert("Здесь будет фильтр по полям"));
+    document.getElementById("addPatientBtn").addEventListener("click",()=>alert("Переход к форме добавления пациента"));
+  </script>
+</body>
+</html>
