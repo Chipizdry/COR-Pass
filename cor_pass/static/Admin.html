@@ -8,6 +8,7 @@
         <meta name="theme-color" content="#ffffff">
         <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/static/styles.css">
     <link rel="stylesheet" type="text/css" href="/static/modal.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <!-- Подключаем стили flatpickr -->
@@ -173,15 +174,15 @@
             <button class="modal-button close" data-action="close" id="closeColumnSelectModal">✖</button>
         </div>
     </div>
-        <label><input type="checkbox" onchange="toggleColumn('user_index')" id="checkbox-user_index" checked >Индекс</label><br>
-        <label><input type="checkbox" onchange="toggleColumn('id')" id="checkbox-id" checked >ID</label><br>
-        <label><input type="checkbox" onchange="toggleColumn('cor_id')" id="checkbox-cor_id" checked >COR-ID</label><br>
-        <label><input type="checkbox" onchange="toggleColumn('user_sex')" id="checkbox-user_sex" checked >Пол</label><br>
-        <label><input type="checkbox" onchange="toggleColumn('birth')" id="checkbox-birth" checked >Год рож.</label><br>
-        <label><input type="checkbox" onchange="toggleColumn('email')" id="checkbox-email" checked >Email</label><br>
-        <label><input type="checkbox" onchange="toggleColumn('created_at')" id="checkbox-created_at" checked >Дата регистрации</label><br>
-        <label><input type="checkbox" onchange="toggleColumn('last_password_change')" id="checkbox-last_password_change" checked >Последнее изменение пароля</label><br>
-        <label><input type="checkbox" onchange="toggleColumn('last_active')" id="checkbox-last_active" checked >Последняя активность</label><br>
+        <label><input type="checkbox" onchange="toggleColumn('user_index')" id="checkbox-user_index" checked >Индекс</label>
+        <label><input type="checkbox" onchange="toggleColumn('id')" id="checkbox-id" checked >ID</label>
+        <label><input type="checkbox" onchange="toggleColumn('cor_id')" id="checkbox-cor_id" checked >COR-ID</label>
+        <label><input type="checkbox" onchange="toggleColumn('user_sex')" id="checkbox-user_sex" checked >Пол</label>
+        <label><input type="checkbox" onchange="toggleColumn('birth')" id="checkbox-birth" checked >Год рож.</label>
+        <label><input type="checkbox" onchange="toggleColumn('email')" id="checkbox-email" checked >Email</label>
+        <label><input type="checkbox" onchange="toggleColumn('created_at')" id="checkbox-created_at" checked >Дата регистрации</label>
+        <label><input type="checkbox" onchange="toggleColumn('last_password_change')" id="checkbox-last_password_change" checked >Последнее изменение пароля</label>
+        <label><input type="checkbox" onchange="toggleColumn('last_active')" id="checkbox-last_active" checked >Последняя активность</label>
    
     <div class="modal-footer" style="text-align: center; margin-top: 20px;">
         <button onclick="closeModal('columnSelectModal')" class="modal-button">ОК</button>
@@ -627,19 +628,7 @@ async function filterTable() {
             document.getElementById('closeCorIDModal').addEventListener('click', function() {
                 document.getElementById('corIdModal').style.display = 'none';
             });
-            /*
-            document.addEventListener('DOMContentLoaded', function () {
-              const tableBody = document.querySelector("#userTable tbody");
 
-                // Пример добавления обработчика события на ячейки с COR-ID
-                tableBody.addEventListener('click', function (event) {
-                    if (event.target && event.target.classList.contains('cor-id-cell')) {
-                        const corId = event.target.textContent;
-                        showCorIdInfo(corId);
-                    }
-                });
-            });
-*/
             document.addEventListener('DOMContentLoaded', function () {
                 const tableBody = document.querySelector("#userTable tbody");
                 if (!tableBody) return;
