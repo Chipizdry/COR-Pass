@@ -94,12 +94,9 @@
 /* Кнопка удаления в правом верхнем углу карточки */
 .session-delete-button {
     position: absolute;
-    top: 5px;
-    right: 5px;
+    right: 10px;
     z-index: 10;
     background-color: #fff;
-    border: 1px solid #DF1125;
-    color: #DF1125;
     border-radius: 7px;
     font-size: 14px;
     width: 25px;
@@ -107,12 +104,16 @@
     display: flex;
     justify-content: center;
     align-items: center;
-  }
+}
+
+  .session-text {
+    flex: 1; /* занимает доступное пространство */
+    padding-right: 30px;
+}
   
   .session-delete-button:hover {
-    background-color: #ffe6e6;
-    color: #a10000;
-    border-color: #a10000;
+    background-color: #5e32c5;
+   
   }
 .recovery-btn {
     background-color: white;

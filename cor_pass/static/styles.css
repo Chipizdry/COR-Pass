@@ -637,24 +637,25 @@ select#user_sex option:checked {
 
 
 .session-card {
-    background-color: rgba(255, 255, 255, 0.6); /* Белый фон с прозрачностью 60% */
-    border-radius: 12px; 
-    padding: 7px; 
-    width: 320px; /* Ширина карточки */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Тень */
-    display: flex;
+    background-color: rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    width: 400px;
     flex-direction: column;
-    gap: 5px; /* Уменьшаем расстояние между элементами внутри карточки */
 }
-
 
 /* Стили для содержимого карточки сессии */
 .session-card .card-content {
-    font-size: 12px; /* Уменьшаем размер шрифта */
-    color: #291161; /* Цвет текста (цвет темы) */
-    line-height: 1.1; /* Уменьшаем высоту строки */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1px 18px 0px 10px;
+    border-radius: 10px;
+    background-color: white;
+    position: relative;
+    font-size: 10px;
+    color: #291161;
+    line-height: 1.1;
 }
-
 /* Стили для заголовков внутри карточки сессии */
 .session-card .card-content strong {
     color: #7527B2; /* Цвет заголовков (другой оттенок темы) */

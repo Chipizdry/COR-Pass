@@ -452,7 +452,7 @@ async function getSessions() {
             method: "GET",
             headers: {
                 "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json"
+                "Content-Type": "application/json;charset=utf-8"
             }
         });
 
@@ -469,20 +469,30 @@ async function getSessions() {
         sessions.forEach(session => {
             const card = document.createElement("div");
             card.className = "session-card";
-            card.innerHTML = `
+         /*   card.innerHTML = `
                 <div class="card-content">   
-                    <button class="modal-button delete" data-session-id="${session.id}">✖</button>
+                    <button class="modal-button session-delete-button" data-session-id="${session.id}">✖</button>
                     <p><strong>Об устройстве:</strong> ${session.device_info}</p>
                     <p><strong>Устройство:</strong> ${session.device_type || "Неизвестно"}, ${session.device_os || "Неизвестно"}</p>
                     <p><strong>Даты:</strong> Создана: ${new Date(session.created_at).toLocaleString()}, Обновлена: ${new Date(session.updated_at).toLocaleString()}</p>
                     
                 </div>
+            `;*/
+            card.innerHTML = `
+            <div class="card-content">
+                <div class="session-text">
+                <p><strong>Об устройстве:</strong> ${session.device_info}</p>
+                <p><strong>Устройство:</strong> ${session.device_type || "Неизвестно"}, ${session.device_os || "Неизвестно"}</p>
+                <p><strong>Даты:</strong> Создана: ${new Date(session.created_at).toLocaleString()}, Обновлена: ${new Date(session.updated_at).toLocaleString()}</p>
+                </div>
+                <button class="modal-button session-delete-button" data-session-id="${session.id}">✖</button>
+            </div>
             `;
             cardsContainer.appendChild(card);
         });
 
         // Добавляем обработчики событий для кнопок удаления
-        document.querySelectorAll('.modal-button.delete').forEach(button => {
+        document.querySelectorAll('.modal-button.session-delete-button').forEach(button => {
             button.addEventListener('click', async function() {
                 const sessionId = this.getAttribute('data-session-id');
                 await deleteSession(sessionId);
@@ -507,7 +517,7 @@ async function deleteSession(sessionId) {
             method: "DELETE",
             headers: {
                 "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json"
+                "Content-Type": "application/json;charset=utf-8"
             }
         });
 
