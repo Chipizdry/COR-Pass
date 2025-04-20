@@ -163,7 +163,7 @@
 </head>
 <body>
     <div class="container">
-        <button class="link-button" onclick="goBack()" data-translate="back-link-text"><<<назад<<<</button>
+        <button class="link-button" onclick="goBack('/static/mainscreen.html')" data-translate="back-link-text"><<<назад<<<</button>
         <h1>Пользователи</h1>
 <!-- Модальное окно выбора отображения колонок --> 
 <div id="columnSelectModal" class="modal" style="display: none;">
@@ -189,7 +189,7 @@
 </div>
 
         <!-- Модальное окно для отображения информации о COR-ID -->
-        <div id="corIdModal" class="modal">
+        <div id="corIdModal" class="modal" style="display: none;">
             <div class="modal-header">
                 <div class="modal-title">
                     <h1>Информация о COR-ID:</h1>
@@ -268,9 +268,6 @@
     </div>
     <script src="/static/translation.js"></script>
     <script src="/static/general_fun.js"></script>
-    <script> function goBack() { window.history.back();  } </script>
-
-    
     <script> 
 
         let currentPage = 1;
@@ -289,7 +286,6 @@
             users.forEach(user => {
                 const row = document.createElement('tr');
 
-                // Рассчитываем разницу во времени
               // Рассчитываем разницу во времени
                 const currentTime = new Date();
                 const lastActiveTime = user.last_active ? new Date(user.last_active) : null;
@@ -333,11 +329,8 @@
                     </td>
                     <td> <span class="delete-icon" onclick="deleteUser('${user.email}')">🗑️</span>
                         <span class="toggle-status-icon" onclick="toggleUserStatus('${user.email}', ${user.is_active ?? true})">
-                         ${user.is_active !== false ? '🔓' : '🔒'}
-                             </span>
-                            
-                             <span class="activity-indicator" style="background: ${activityColor}; display: inline-block; width: 12px; height: 12px;" title="Активность: ${activityTitle}">
-        </span>
+                         ${user.is_active !== false ? '🔓' : '🔒'}</span>
+                             <span class="activity-indicator" style="background: ${activityColor}; display: inline-block; width: 12px; height: 12px;" title="Активность: ${activityTitle}"></span>
                     </td>
                 `;
 
@@ -346,7 +339,6 @@
 
              // Подгонка размеров после заполнения
             adjustContainerWidth();
-          //  adjustColumnWidths();
         }
 
         
@@ -635,14 +627,28 @@ async function filterTable() {
             document.getElementById('closeCorIDModal').addEventListener('click', function() {
                 document.getElementById('corIdModal').style.display = 'none';
             });
+            /*
             document.addEventListener('DOMContentLoaded', function () {
-           const tableBody = document.querySelector("#userTable tbody");
+              const tableBody = document.querySelector("#userTable tbody");
 
                 // Пример добавления обработчика события на ячейки с COR-ID
                 tableBody.addEventListener('click', function (event) {
                     if (event.target && event.target.classList.contains('cor-id-cell')) {
                         const corId = event.target.textContent;
                         showCorIdInfo(corId);
+                    }
+                });
+            });
+*/
+            document.addEventListener('DOMContentLoaded', function () {
+                const tableBody = document.querySelector("#userTable tbody");
+                if (!tableBody) return;
+
+                tableBody.addEventListener('click', function (event) {
+                    // Более строгая проверка: клик именно на TD с классом cor-id-cell
+                    if (event.target.tagName === 'TD' && event.target.classList.contains('cor-id-cell')) {
+                        const corId = event.target.textContent.trim();
+                        if (corId) showCorIdInfo(corId);
                     }
                 });
             });
@@ -724,9 +730,8 @@ async function filterTable() {
 
                 loadPage(); // Загружаем страницу, если нужно
 
-                // Подгонка размеров
+
                 adjustContainerWidth();
-              //  adjustColumnWidths();
             }
                     
            // Функция для инициализации видимости колонок из localStorage
@@ -816,125 +821,6 @@ async function filterTable() {
                 });
             }
 
-
-            function decodeToken(token) {
-                try {
-                    const payloadBase64 = token.split('.')[1]; // Вторая часть JWT — это payload
-                    const payload = atob(payloadBase64); // Декодируем из base64
-                    return JSON.parse(payload); // Преобразуем JSON-строку в объект
-                } catch (error) {
-                    console.error("Ошибка декодирования токена:", error);
-                    return null;
-                }
-            }
-
-            function isTokenExpired(token) {
-                const payload = decodeToken(token);
-                if (payload && payload.exp) {
-                    const currentTime = Math.floor(Date.now() / 1000); // Текущее время в секундах
-                    return currentTime > payload.exp; // Сравниваем с временем истечения
-                }
-                return true; // Если нет exp или ошибка, считаем токен истёкшим
-            }
-
-
-            function showTokenExpiredModal() {
-
-                // Очищаем всё содержимое body
-                document.body.innerHTML = "";
-               // Добавляем ссылку на CSS, если она отсутствует
-               /*
-                if (!document.querySelector('link[href="/static/modal.css"]')) {
-                    const link = document.createElement("link");
-                    link.rel = "stylesheet";
-                   // link.href = "modal.css";
-                    link.href="/static/modal.css"
-                    document.head.appendChild(link);
-                }
-                    */
-                // Добавляем модальное окно в body
-                const modalHTML = `
-                    <div id="tokenExpiredModal" style="
-                    display: flex;
-                    flex-direction: column;
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    width: 400px;
-                    background: #f9f9f9;
-                    border: 1px solid #979292;
-                    border-radius: 5px;
-                    z-index: 1000;
-                    font-size: 12px;
-                    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-                ">
-                    <div style="
-                        background-color: #0078d7;
-                        color: white;
-                        padding: 5px 10px;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        border-top-left-radius: 5px;
-                        border-top-right-radius: 5px;
-                    ">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="
-                                width: 20px;
-                                height: 20px;
-                                background-color: yellow;
-                                color: black;
-                                font-weight: bold;
-                                font-size: 16px;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                border-radius: 50%;
-                            ">!</div>
-                            <h1 style="
-                                font-size: 14px;
-                                margin: 0;
-                            ">Срок действия сессии истёк</h1>
-                        </div>
-                    </div>
-                    <div style="
-                        padding: 10px;
-                        text-align: center;
-                    ">
-                        <p style="margin: 0 0 20px;">Пожалуйста, войдите снова, чтобы продолжить.</p>
-                        <button id="loginRedirectButton" style="
-                            background-color: #007bff;
-                            color: white;
-                            border: none;
-                            border-radius: 5px;
-                            padding: 10px 20px;
-                            margin: 5px;
-                            font-size: 16px;
-                            cursor: pointer;
-                            transition: background-color 0.3s, transform 0.2s;
-                            white-space: nowrap;
-                            min-width: 80px;
-                            display: inline-flex;
-                            align-items: center;
-                            justify-content: center;
-                        ">Войти</button>
-                    </div>
-                </div>
-                    `;
-                document.body.style.display = "none";
-                document.body.innerHTML = modalHTML;
-                document.body.style.display = "block"; 
-
-                // Добавляем обработчик кнопки для перехода на страницу логина
-                document.getElementById('loginRedirectButton').addEventListener('click', () => {
-                    window.location.href = "/"; 
-                });
-
-              //  const modal = document.getElementById('tokenExpiredModal');
-              //  modal.style.display = 'block';
-            }
-
             // Инициализация для выбора диапазона дат (календарик)
                 document.addEventListener('DOMContentLoaded', () => {
                     const dateInputs = document.querySelectorAll('input[id*="Range"]');
@@ -958,98 +844,14 @@ async function filterTable() {
 
         // Запуск функции после загрузки страницы
              document.addEventListener('DOMContentLoaded', function() {
+             checkToken();
              console.log('Страница загружена. Запуск процесса загрузки пользователей...');
              initializeColumns();
              initializeCheckboxes();
              adjustContainerWidth(); // Установить начальную ширину контейнера
-          //   adjustColumnWidths();
              makeModalDraggable('columnSelectModal');
              makeModalDraggable('corIdModal');
-         
-
-             const accessToken = new URLSearchParams(window.location.search).get('access_token');
-
-            if (!accessToken || isTokenExpired(accessToken)) {
-                showTokenExpiredModal();
-
-            }
-
-
-            const originalFetch = window.fetch;
-            window.fetch = async function (...args) {
-                // Печатаем аргументы вызова fetch для отладки
-                console.log("Fetch arguments:", args);
-
-                // Проверяем наличие токена в заголовках
-                const requestOptions = args[1] || {};
-                const headers = requestOptions.headers || {};
-
-                if (headers.Authorization) {
-                    const token = headers.Authorization.replace("Bearer ", ""); // Убираем "Bearer"
-                    console.log("Extracted token:", token);
-
-                    // Парсим токен и выводим его в консоль
-                    const decodedToken = decodeToken(token);
-                    if (decodedToken) {
-                        console.log("Decoded token:", decodedToken);
-
-                        // Вычисляем оставшееся время жизни токена
-                        const remainingTime = calculateTokenLifetime(decodedToken);
-                        if (remainingTime !== null) {
-                            console.log(`Оставшееся время жизни токена: ${remainingTime} секунд`);
-                            console.log(`Форматированное время: ${formatTime(remainingTime)}`);
-                        }
-                    } else {
-                        console.error("Failed to decode token.");
-                    }
-                } else {
-                    console.warn("Authorization header is missing.");
-                }
-
-                // Выполняем оригинальный запрос
-                const response = await originalFetch(...args);
-
-                // Обрабатываем ошибки 401
-                if (response.status === 401) { // Неавторизован
-                    console.warn("Unauthorized: Token might be expired.");
-                    showTokenExpiredModal();
-                }
-
-                return response;
-            };
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Функция вычисления оставшегося времени жизни токена
-function calculateTokenLifetime(decodedToken) {
-    if (!decodedToken.exp) {
-        console.warn("Token does not have an 'exp' field.");
-        return null;
-    }
-
-    const currentTime = Math.floor(Date.now() / 1000); // Текущее время в секундах
-    const remainingTime = decodedToken.exp - currentTime;
-
-    if (remainingTime <= 0) {
-        console.warn("Token has already expired.");
-        return 0;
-    }
-
-    return remainingTime; // В секундах
-}
-
-// Функция форматирования времени
-function formatTime(seconds) {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    return `${hours}ч ${minutes}м ${secs}с`;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            document.getElementById('loginRedirectButton').addEventListener('click', function () {
-                window.location.href='/';});
-
+ 
              // Функция для отображения модального окна
              document.getElementById('openModalBtn').onclick = function() {
              initializeCheckboxes();
@@ -1057,7 +859,6 @@ function formatTime(seconds) {
             
              };
              window.addEventListener('resize', adjustContainerWidth); // Подгонка ширины при изменении размеров окна
-           //   window.addEventListener('resize', adjustColumnWidths); // Перепроверка при изменении размера окна
               getAllUsers(); // По умолчанию загружаем 5 пользователей, начиная с 0            
               
              });
