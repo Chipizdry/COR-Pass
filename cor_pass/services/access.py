@@ -1,6 +1,9 @@
 from fastapi import Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from cor_pass.database.models import User
+from cor_pass.database import db
+from cor_pass.database.models import Doctor, DoctorStatus, User
 from cor_pass.services.auth import auth_service
 from cor_pass.config.config import settings
 
@@ -36,8 +39,23 @@ class LawyerAccess:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden operation"
             )
+        
+class DoctorAccess:
+    def __init__(self, email):
+        self.email = email
+
+    async def __call__(self, user: User = Depends(auth_service.get_current_user), db: AsyncSession = Depends(db.get_db)):
+        query = select(Doctor).where(Doctor.doctor_id == user.cor_id)
+        result = await db.execute(query)
+        doctor = result.scalar_one_or_none()
+        if not doctor or doctor.status != DoctorStatus.APPROVED:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Doctor access required and status is not approved"
+            )
+        return doctor
 
 
 user_access = UserAccess([User.is_active])
 admin_access = AdminAccess([User.email])
 lawyer_access = LawyerAccess([User.email])
+doctor_access = DoctorAccess([User.email])

@@ -26,6 +26,8 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+/dicom_files
+dicom_files/
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -162,6 +164,3 @@ cython_debug/
 *.db
 docker-compose.yml
 Dockerfile
-
-dicom_files/
-*.dcm

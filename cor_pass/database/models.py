@@ -9,6 +9,7 @@ from sqlalchemy import (
     Text,
     Date,
     Index,
+    UniqueConstraint,
     func,
     Boolean,
     LargeBinary,
@@ -28,6 +29,19 @@ class Status(enum.Enum):
 class DoctorStatus(enum.Enum):
     PENDING: str = "pending"
     APPROVED: str = "approved"
+
+
+class AuthSessionStatus(enum.Enum):
+    PENDING: str = "pending"
+    APPROVED: str = "approved"
+    REJECTED: str = "rejected"
+    TIMEOUT: str = "timeout"
+
+
+class PatientStatus(enum.Enum):
+    registered = "registered"
+    under_treatment = "under_treatment"
+    discharged = "discharged"
 
 
 class User(Base):
@@ -74,6 +88,11 @@ class User(Base):
         "Doctor", back_populates="user", cascade="all, delete-orphan"
     )
 
+    user_doctors = relationship(
+        "Doctor", back_populates="user", cascade="all, delete-orphan"
+    )
+    patient = relationship("Patient", back_populates="user", uselist=False)
+
     # Индексы
     __table_args__ = (
         Index("idx_users_email", "email"),
@@ -88,6 +107,7 @@ class Doctor(Base):
         String(36), ForeignKey("users.cor_id"), unique=True, nullable=False
     )
     work_email = Column(String(250), unique=True, nullable=False)
+    phone_number = Column(String(20), nullable=True)
     first_name = Column(String(100), nullable=True)
     surname = Column(String(100), nullable=True)
     last_name = Column(String(100), nullable=True)
@@ -106,6 +126,7 @@ class Doctor(Base):
     clinic_affiliations = relationship(
         "ClinicAffiliation", back_populates="doctor", cascade="all, delete-orphan"
     )
+    patient_statuses = relationship("DoctorPatientStatus", back_populates="doctor")
 
 
 class Diploma(Base):
@@ -166,6 +187,22 @@ class UserSession(Base):
 
     # Индексы
     __table_args__ = (Index("idx_user_sessions_user_id", "user_id"),)
+
+
+class CorIdAuthSession(Base):
+    __tablename__ = "cor_id_auth_sessions"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String(255), index=True, nullable=True)
+    cor_id = Column(String(250), index=True, nullable=True)
+    session_token = Column(String(36), unique=True, index=True, nullable=False)
+    status = Column(
+        Enum(AuthSessionStatus), default=AuthSessionStatus.PENDING, nullable=False
+    )
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+
+    __table_args__ = (Index("idx_cor_id_auth_sessions_token", "session_token"),)
 
 
 class Verification(Base):
@@ -255,4 +292,50 @@ class OTP(Base):
     __table_args__ = (Index("idx_otp_records_user_id", "user_id"),)
 
 
-Base.metadata.create_all(bind=engine)
+class Patient(Base):
+    __tablename__ = "patients"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    patient_cor_id = Column(
+        String(36), ForeignKey("users.cor_id"), unique=True, nullable=False
+    )
+    encrypted_surname = Column(LargeBinary, nullable=True)  # Зашифрована фамилия
+    encrypted_first_name = Column(LargeBinary, nullable=True)  # Зашифрованное имя
+    encrypted_middle_name = Column(
+        LargeBinary, nullable=True
+    )  # Зашифрованное отчество (может быть null)
+    birth_date = Column(Date, nullable=True)
+    sex = Column(String(10), nullable=True)
+    email = Column(String(250), nullable=True)
+    phone_number = Column(String(20), nullable=True)
+    address = Column(String(500), nullable=True)
+    photo = Column(LargeBinary, nullable=True)  # Хранение фото как бинарные данные
+    change_date = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    user = relationship("User", back_populates="patient")
+    doctor_statuses = relationship("DoctorPatientStatus", back_populates="patient")
+
+    def __repr__(self):
+        return f"<Patient(id='{self.id}', patient_cor_id='{self.patient_cor_id}')>"
+
+
+class DoctorPatientStatus(Base):
+    __tablename__ = "doctor_patient_statuses"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    patient_id = Column(String(36), ForeignKey("patients.id"), nullable=False)
+    doctor_id = Column(String(36), ForeignKey("doctors.id"), nullable=False)
+    status = Column(Enum(PatientStatus), nullable=False)
+    assigned_date = Column(DateTime, default=func.now())
+    updated_date = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    patient = relationship("Patient", back_populates="doctor_statuses")
+    doctor = relationship("Doctor", back_populates="patient_statuses")
+
+    __table_args__ = (
+        # Каждый врач имеет только 1 конкретный статус под пациента
+        UniqueConstraint(
+            "patient_id", "doctor_id", name="unique_patient_doctor_status"
+        ),
+    )
+
+
+# Base.metadata.create_all(bind=engine)

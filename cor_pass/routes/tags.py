@@ -6,12 +6,17 @@ from sqlalchemy.orm import Session
 from cor_pass.database.db import get_db
 from cor_pass.schemas import TagModel, TagResponse
 from cor_pass.repository import tags as repository_tags
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/tags", tags=["Tags"])
 
 
 @router.get("/", response_model=List[TagResponse])
-async def read_tags(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
+async def read_tags(
+    skip: int = 0,
+    limit: int = 50,
+    db: AsyncSession = Depends(get_db),
+):
     """
     **Get a list of tags. / Получение списка всех тэгов** \n
 
@@ -20,7 +25,7 @@ async def read_tags(skip: int = 0, limit: int = 50, db: Session = Depends(get_db
     :param limit: The maximum number of tags to retrieve. Default is 50.
     :type limit: int
     :param db: The database session. Dependency on get_db.
-    :type db: Session, optional
+    :type db: AsyncSession, optional
     :return: A list of TagResponse objects representing the tags.
     :rtype: List[TagResponse]
     """
@@ -29,14 +34,14 @@ async def read_tags(skip: int = 0, limit: int = 50, db: Session = Depends(get_db
 
 
 @router.get("/{tag_id}", response_model=TagResponse)
-async def read_tag(tag_id: int, db: Session = Depends(get_db)):
+async def read_tag(tag_id: int, db: AsyncSession = Depends(get_db)):
     """
     **Get a specific tag by ID. / Получение тэга по id** \n
 
     :param tag_id: The ID of the tag.
     :type tag_id: int
     :param db: The database session. Dependency on get_db.
-    :type db: Session, optional
+    :type db: AsyncSession, optional
     :return: The TagResponse object representing the tag.
     :rtype: TagResponse
     :raises HTTPException 404: If the tag with the specified ID does not exist.
@@ -49,15 +54,15 @@ async def read_tag(tag_id: int, db: Session = Depends(get_db)):
     return tag
 
 
-@router.post("/", response_model=TagResponse)
-async def create_tag(body: TagModel, db: Session = Depends(get_db)):
+@router.post("/", response_model=TagResponse, status_code=status.HTTP_201_CREATED)
+async def create_tag(body: TagModel, db: AsyncSession = Depends(get_db)):
     """
     **Create a new tag. / Создание нового тэга** \n
 
     :param body: The request body containing the tag data.
     :type body: TagModel
     :param db: The database session. Dependency on get_db.
-    :type db: Session, optional
+    :type db: AsyncSession, optional
     :return: The created TagResponse object representing the new tag.
     :rtype: TagResponse
     """
@@ -65,7 +70,7 @@ async def create_tag(body: TagModel, db: Session = Depends(get_db)):
 
 
 @router.put("/{tag_id}", response_model=TagResponse)
-async def update_tag(tag_id: int, body: TagModel, db: Session = Depends(get_db)):
+async def update_tag(tag_id: int, body: TagModel, db: AsyncSession = Depends(get_db)):
     """
     **Update an existing tag. / Обновление существующего тэга** \n
 
@@ -74,7 +79,7 @@ async def update_tag(tag_id: int, body: TagModel, db: Session = Depends(get_db))
     :param body: The request body containing the updated tag data.
     :type body: TagModel
     :param db: The database session. Dependency on get_db.
-    :type db: Session, optional
+    :type db: AsyncSession, optional
     :return: The updated TagResponse object representing the updated tag.
     :rtype: TagResponse
     :raises HTTPException 404: If the tag with the specified ID does not exist.
@@ -88,14 +93,14 @@ async def update_tag(tag_id: int, body: TagModel, db: Session = Depends(get_db))
 
 
 @router.delete("/{tag_id}", response_model=TagResponse)
-async def remove_tag(tag_id: int, db: Session = Depends(get_db)):
+async def remove_tag(tag_id: int, db: AsyncSession = Depends(get_db)):
     """
     **Remove a tag. / Удаление тэга** \n
 
     :param tag_id: The ID of the tag to remove.
     :type tag_id: int
     :param db: The database session. Dependency on get_db.
-    :type db: Session, optional
+    :type db: AsyncSession, optional
     :return: The removed TagResponse object representing the removed tag.
     :rtype: TagResponse
     :raises HTTPException 404: If the tag with the specified ID does not exist.

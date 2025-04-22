@@ -29,7 +29,8 @@ def get_device_info(request: Request) -> dict:
     Поддерживает как веб-браузеры, так и мобильные приложения.
     """
     user_agent = request.headers.get("User-Agent", "Unknown device")
-    ip_address = request.client.host
+    # ip_address = request.client.host
+    ip_address = get_client_ip(request)
 
     # Определяем тип устройства и ОС
     device_type = "Desktop"  # По умолчанию считаем устройство десктопом
@@ -69,3 +70,16 @@ def get_device_info(request: Request) -> dict:
         "ip_address": ip_address,  # IP-адрес
         "device_os": device_os,  # Операционная система
     }
+
+
+def get_client_ip(request: Request):
+    """Получение реального IP-адреса клиента."""
+    if "x-forwarded-for" in request.headers:
+        client_ip = request.headers["x-forwarded-for"].split(",")[0].strip()
+    elif "x-real-ip" in request.headers:
+        client_ip = request.headers["x-real-ip"].strip()
+    elif "http_client_ip" in request.headers:
+        client_ip = request.headers["http_client_ip"].strip()
+    else:
+        client_ip = request.client.host
+    return client_ip

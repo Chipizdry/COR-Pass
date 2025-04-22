@@ -1,4 +1,5 @@
-from sqlalchemy import and_
+from typing import List
+from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 
@@ -7,9 +8,12 @@ from cor_pass.schemas import CreateOTPRecordModel, UpdateOTPRecordModel
 from cor_pass.services.cipher import encrypt_data, decrypt_user_key
 from cor_pass.services import cor_otp
 from cor_pass.services.logger import logger
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
-async def create_otp_record(body: CreateOTPRecordModel, db: Session, user: User) -> OTP:
+async def create_otp_record(
+    body: CreateOTPRecordModel, db: AsyncSession, user: User
+) -> OTP:
     if not user:
         raise Exception("User not found")
     new_record = OTP(
@@ -26,60 +30,80 @@ async def create_otp_record(body: CreateOTPRecordModel, db: Session, user: User)
             new_record.private_key, user
         )
         db.add(new_record)
-        db.commit()
-        db.refresh(new_record)
+        await db.commit()
+        await db.refresh(new_record)
         return new_record
     except Exception as e:
         logger.error(f"Failed to create otp record: {e}")
-        db.rollback()
+        await db.rollback()
         raise e
 
 
-async def get_otp_record_by_id(user: User, db: Session, record_id: int):
-
-    record = (
-        db.query(OTP)
+async def get_otp_record_by_id(user: User, db: AsyncSession, record_id: int):
+    """
+    Асинхронно получает запись OTP по его ID, проверяя принадлежность пользователю.
+    """
+    stmt = (
+        select(OTP)
         .join(User, OTP.user_id == User.id)
-        .filter(and_(OTP.record_id == record_id, User.id == user.id))
-        .first()
+        .where(and_(OTP.record_id == record_id, User.id == user.id))
     )
+    result = await db.execute(stmt)
+    record = result.scalar_one_or_none()
     return record
 
 
-async def get_all_user_otp_records(db: Session, user_id: str, skip: int, limit: int):
-    records = db.query(OTP).filter_by(user_id=user_id).offset(skip).limit(limit).all()
-    return records
+async def get_all_user_otp_records(
+    db: AsyncSession, user_id: str, skip: int, limit: int
+) -> List[OTP]:
+    """
+    Асинхронно получает все записи OTP конкретного пользователя из базы с учетом пагинации.
+    """
+    stmt = select(OTP).where(OTP.user_id == user_id).offset(skip).limit(limit)
+    result = await db.execute(stmt)
+    records = result.scalars().all()
+    return list(records)
 
 
 async def update_otp_record(
-    record_id: int, body: UpdateOTPRecordModel, user: User, db: Session
+    record_id: int, body: UpdateOTPRecordModel, user: User, db: AsyncSession
 ):
-    record = (
-        db.query(OTP)
+    """
+    Асинхронно обновляет существующую запись OTP, проверяя ее принадлежность пользователю.
+    """
+    stmt = (
+        select(OTP)
         .join(User, OTP.user_id == User.id)
-        .filter(and_(OTP.record_id == record_id, User.id == user.id))
-        .first()
+        .where(and_(OTP.record_id == record_id, User.id == user.id))
     )
+    result = await db.execute(stmt)
+    record = result.scalar_one_or_none()
+
     if record:
         record.record_name = body.record_name
         record.username = body.username
-        db.commit()
-        db.refresh(record)
-    return record
+        await db.commit()
+        await db.refresh(record)
+        return record
+    return None 
 
 
-async def delete_otp_record(user: User, db: Session, record_id: int):
-
-    record = (
-        db.query(OTP)
+async def delete_otp_record(user: User, db: AsyncSession, record_id: int):
+    """
+    Асинхронно удаляет запись OTP, проверяя его принадлежность пользователю.
+    """
+    stmt = (
+        select(OTP)
         .join(User, OTP.user_id == User.id)
-        .filter(and_(OTP.record_id == record_id, OTP.user_id == user.id))
-        .first()
+        .where(and_(OTP.record_id == record_id, OTP.user_id == user.id))
     )
+    result = await db.execute(stmt)
+    record = result.scalar_one_or_none()
+
     if not record:
         return None
-    if record:
-        db.delete(record)
-        db.commit()
-        print("Record deleted")
+
+    await db.delete(record)
+    await db.commit()
+    print("Record deleted")
     return record

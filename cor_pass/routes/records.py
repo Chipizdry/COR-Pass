@@ -17,7 +17,7 @@ from cor_pass.services.logger import logger
 from cor_pass.services.access import user_access
 
 from cor_pass.services.cipher import encrypt_data, decrypt_data, decrypt_user_key
-
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/records", tags=["Records"])
 encryption_key = settings.encryption_key
@@ -31,8 +31,8 @@ encryption_key = settings.encryption_key
 async def read_records(
     skip: int = 0,
     limit: int = 150,
-    user: User = Depends(auth_service.get_current_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     **Get a list of records. / Получение всех записей пользователя** \n
@@ -42,31 +42,37 @@ async def read_records(
     :param limit: The maximum number of records to retrieve. Default is 50.
     :type limit: int
     :param db: The database session. Dependency on get_db.
-    :type db: Session, optional
+    :type db: AsyncSession, optional
     :return: A list of RecordModel objects representing the records.
-    :rtype: List[RecordModel]
+    :rtype: List[MainscreenRecordResponse]
     """
     try:
-        records = await repository_record.get_all_user_records(db, user.id, skip, limit)
+        records = await repository_record.get_all_user_records(
+            db, current_user.id, skip, limit
+        )
     except Exception as e:
         logger.error(f"Database query failed: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error",
+        )
     decrypted_records = []
+    decrypted_key = await decrypt_user_key(current_user.unique_cipher_key)
     for record in records:
         decrypted_username = await decrypt_data(
             encrypted_data=record.username,
-            key=await decrypt_user_key(user.unique_cipher_key),
+            key=decrypted_key,
         )
         # decrypted_password = await decrypt_data(
         #     encrypted_data=record.password,
-        #     key=await decrypt_user_key(user.unique_cipher_key),
+        #     key=decrypted_key,
         # )
         record_response = MainscreenRecordResponse(
             record_id=record.record_id,
             record_name=record.record_name,
             website=record.website,
             username=decrypted_username,
-            password=record.password,
+            password=record.password,  # Password is not decrypted here
             is_favorite=record.is_favorite,
         )
         decrypted_records.append(record_response)
@@ -78,8 +84,8 @@ async def read_records(
 )
 async def read_record(
     record_id: int,
-    user: User = Depends(auth_service.get_current_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     **Get a specific record by ID. / Получение данных одной конкретной записи пользователя** \n
@@ -87,14 +93,16 @@ async def read_record(
     :param record_id: The ID of the record.
     :type record_id: int
     :param db: The database session. Dependency on get_db.
-    :type db: Session, optional
+    :type db: AsyncSession, optional
     :return: The RecordModel object representing the record.
-    :rtype: RecordModel
+    :rtype: RecordResponse
     :raises HTTPException 404: If the record with the specified ID does not exist.
     """
-    record = await repository_record.get_record_by_id(user, db, record_id)
+    record = await repository_record.get_record_by_id(current_user, db, record_id)
     if record is None:
-        logger.exception("Record not found")
+        logger.exception(
+            f"Record with ID '{record_id}' not found for user '{current_user.id}'"
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Record not found"
         )
@@ -109,8 +117,8 @@ async def read_record(
 )
 async def create_record(
     body: CreateRecordModel,
-    user: User = Depends(auth_service.get_current_user),
-    db: Session = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     **Create a new record. / Создание записи** \n
@@ -118,23 +126,24 @@ async def create_record(
     :param body: The request body containing the record data.
     :type body: CreateRecordModel
     :param db: The database session. Dependency on get_db.
-    :type db: Session, optional
+    :type db: AsyncSession, optional
     :return: The created ResponseRecord object representing the new record.
-    :rtype: ResponseRecord
+    :rtype: RecordResponse
     """
-    if user.account_status.value == "basic":
-        records = await repository_record.get_all_user_records(db, user.id, 0, 50)
+    if current_user.account_status.value == "basic":
+        records = await repository_record.get_all_user_records(
+            db, current_user.id, 0, 50
+        )
         if len(records) < settings.basic_account_records:
-            record = await repository_record.create_record(body, db, user)
+            record = await repository_record.create_record(body, db, current_user)
             return record
         else:
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail="User is not premium",
+                detail="Basic account limit reached. Upgrade to premium to create more records.",
             )
-
     else:
-        record = await repository_record.create_record(body, db, user)
+        record = await repository_record.create_record(body, db, current_user)
         return record
 
 
@@ -149,8 +158,8 @@ async def create_record(
 async def update_record(
     record_id: int,
     body: UpdateRecordModel,
-    db: Session = Depends(get_db),
-    user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user),
 ):
     """
     **Update an existing record. / Обновление данных записи** \n
@@ -158,14 +167,14 @@ async def update_record(
     :param record_id: The ID of the record to update.
     :type record_id: int
     :param body: The request body containing the updated record data.
-    :type body: CreateRecordModel
+    :type body: UpdateRecordModel
     :param db: The database session. Dependency on get_db.
-    :type db: Session, optional
+    :type db: AsyncSession, optional
     :return: The updated ResponseRecord object representing the updated record.
-    :rtype: ResponseRecord
+    :rtype: RecordResponse
     :raises HTTPException 404: If the record with the specified ID does not exist.
     """
-    record = await repository_record.update_record(record_id, body, user, db)
+    record = await repository_record.update_record(record_id, body, current_user, db)
     if record is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Record not found"
@@ -181,8 +190,8 @@ async def update_record(
 async def make_favorite(
     record_id: int,
     is_favorite: bool,
-    db: Session = Depends(get_db),
-    user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user),
 ):
     """
     **Make favorite an existing record. / Отметить запись как избранную** \n
@@ -192,12 +201,14 @@ async def make_favorite(
     :param is_favorite: bool value.
     :type is_favorite: bool
     :param db: The database session. Dependency on get_db.
-    :type db: Session, optional
+    :type db: AsyncSession, optional
     :return: The updated ResponseRecord object representing the updated record.
-    :rtype: ResponseRecord
+    :rtype: RecordResponse
     :raises HTTPException 404: If the record with the specified ID does not exist.
     """
-    record = await repository_record.make_favorite(record_id, is_favorite, user, db)
+    record = await repository_record.make_favorite(
+        record_id, is_favorite, current_user, db
+    )
     if record is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Record not found"
@@ -208,8 +219,8 @@ async def make_favorite(
 @router.delete("/{record_id}", response_model=RecordResponse)
 async def remove_record(
     record_id: int,
-    db: Session = Depends(get_db),
-    user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user),
 ):
     """
     **Remove a record. / Удаление записи** \n
@@ -217,12 +228,12 @@ async def remove_record(
     :param record_id: The ID of the record to remove.
     :type record_id: int
     :param db: The database session. Dependency on get_db.
-    :type db: Session, optional
+    :type db: AsyncSession, optional
     :return: The removed RecordModel object representing the removed record.
-    :rtype: RecordModel
+    :rtype: RecordResponse
     :raises HTTPException 404: If the record with the specified ID does not exist.
     """
-    record = await repository_record.delete_record(user, db, record_id)
+    record = await repository_record.delete_record(current_user, db, record_id)
     if record is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Record not found"

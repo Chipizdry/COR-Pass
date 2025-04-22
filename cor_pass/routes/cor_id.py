@@ -7,7 +7,7 @@ from cor_pass.database.models import User
 from cor_pass.services.access import user_access
 from cor_pass.schemas import ResponseCorIdModel, CreateCorIdModel
 from cor_pass.repository import cor_id as repository_cor_id
-
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/medical/cor_id", tags=["Cor-Id"])
 
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/medical/cor_id", tags=["Cor-Id"])
 async def read_cor_id(
     cor_id: ResponseCorIdModel,
     user: User = Depends(auth_service.get_current_user),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     **Расшифровка COR-id** \n
@@ -30,6 +30,6 @@ async def read_cor_id(
         cor_id = repository_cor_id.decode_corid(cor_id.cor_id)
     if cor_id is None:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="COR-Id not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="COR-Id not found or invalid"
         )
     return cor_id

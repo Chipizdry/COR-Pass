@@ -1,7 +1,16 @@
-from pydantic import BaseModel, ConfigDict, Field, EmailStr, field_validator
+from enum import Enum
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    EmailStr,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 from typing import List, Optional
 from datetime import datetime
-from cor_pass.database.models import Status, DoctorStatus
+from cor_pass.database.models import Status, DoctorStatus, AuthSessionStatus
 import re
 from datetime import date
 
@@ -162,7 +171,7 @@ class RecordResponse(BaseModel):
     user_id: str
     is_favorite: bool
 
-    tags: List[TagModel]
+    # tags: List[TagModel]
 
     class Config:
         from_attributes = True
@@ -259,7 +268,6 @@ class UpdateOTPRecordModel(BaseModel):
 
 
 class DiplomaCreate(BaseModel):
-    # doctor_id: str = Field(..., description="COR-ID врача")
     scan: Optional[bytes] = Field(None, description="Скан диплома")
     date: Optional[datetime.date] = Field(..., description="Дата выдачи диплома")
     series: str = Field(..., max_length=50, description="Серия диплома")
@@ -275,11 +283,10 @@ class DiplomaResponse(BaseModel):
     series: str = Field(..., description="Серия диплома")
     number: str = Field(..., description="Номер диплома")
     university: str = Field(..., description="Название ВУЗа")
-    # scan: Optional[bytes] = Field(None, description="Скан диплома")
     scan: Optional[str] = Field(
-    None, 
-    description="Скан документа в формате base64. Может быть None если скан отсутствует"
-)
+        None,
+        description="Скан документа в формате base64. Может быть None если скан отсутствует",
+    )
 
     class Config:
         from_attributes = True
@@ -304,6 +311,10 @@ class CertificateResponse(BaseModel):
     series: str = Field(..., description="Серия сертификата")
     number: str = Field(..., description="Номер сертификата")
     university: str = Field(..., description="Название ВУЗа")
+    scan: Optional[str] = Field(
+        None,
+        description="Скан документа в формате base64. Может быть None если скан отсутствует",
+    )
 
     class Config:
         from_attributes = True
@@ -337,9 +348,13 @@ class DoctorWithRelationsResponse(BaseModel):
     id: str
     doctor_id: str
     work_email: str
+    phone_number: Optional[str]
     first_name: Optional[str]
     surname: Optional[str]
     last_name: Optional[str]
+    doctors_photo: Optional[str] = Field(
+        None, description="Фото в формате base64. Может быть None если фото отсутствует"
+    )
     scientific_degree: Optional[str]
     date_of_last_attestation: Optional[date]
     status: str
@@ -352,40 +367,9 @@ class DoctorWithRelationsResponse(BaseModel):
         arbitrary_types_allowed = True
 
 
-# class DoctorCreate(BaseModel):
-#     work_email: EmailStr = Field(..., example="doctor@example.com", description="Рабочий email")
-#     first_name: Optional[str] = Field(None, example="Иван", description="Имя")
-#     surname: Optional[str] = Field(None, example="Иванов", description="Фамилия")
-#     last_name: Optional[str] = Field(None, example="Иванович", description="Отчество")
-#     # doctors_photo: Optional[bytes] = Field(None, example="base64_encoded_photo", description="Фото врача")
-#     scientific_degree: Optional[str] = Field(None, example="PhD", description="Ученая степень")
-#     date_of_last_attestation: Optional[date] = Field(None, example="2023-01-01", description="Дата последней аттестации")
-#     status: Optional[str] = Field("pending", example="active", description="Статус врача")
-#     diplomas: List[DiplomaCreate] = Field([], example=[{
-#         "date": "2010-06-15",
-#         "series": "ABC",
-#         "number": "123456",
-#         "university": "Медицинский университет"
-#     }], description="Список дипломов")
-#     certificates: List[CertificateCreate] = Field([], example=[{
-#         "date": "2020-05-20",
-#         "series": "XYZ",
-#         "number": "654321",
-#         "university": "Институт повышения квалификации"
-#     }], description="Список сертификатов")
-#     clinic_affiliations: List[ClinicAffiliationCreate] = Field([], example=[{
-#         "clinic_name": "Городская больница №1",
-#         "department": "Терапевтическое отделение",
-#         "position": "Врач-терапевт",
-#         "specialty": "Терапия"
-#     }], description="Список привязок к клиникам")
-#     class Config:
-#         from_attributes = True
-#         arbitrary_types_allowed=True
-
-
 class DoctorCreate(BaseModel):
     work_email: str
+    phone_number: Optional[str] = None
     first_name: str
     surname: str
     last_name: str
@@ -396,9 +380,10 @@ class DoctorCreate(BaseModel):
     clinic_affiliations: List[ClinicAffiliationCreate] = []
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "work_email": "doctor@example.com",
+                "phone_number": "+3806666666",
                 "first_name": "John",
                 "surname": "Doe",
                 "last_name": "Smith",
@@ -436,18 +421,101 @@ class DoctorResponse(BaseModel):
     id: str = Field(..., description="ID врача")
     doctor_id: str = Field(..., description="COR-ID врача")
     work_email: EmailStr = Field(..., description="Рабочий имейл")
+    phone_number: Optional[str] = Field(None, description="Номер телефона")
     first_name: Optional[str] = Field(None, description="Имя врача")
     surname: Optional[str] = Field(None, description="Фамилия врача")
     last_name: Optional[str] = Field(None, description="Отчество врача")
+    doctors_photo: Optional[str] = Field(
+        None, description="Фото в формате base64. Может быть None если фото отсутствует"
+    )
     scientific_degree: Optional[str] = Field(None, description="Научная степень")
     date_of_last_attestation: Optional[date] = Field(
         None, description="Дата последней атестации"
     )
     status: DoctorStatus
-    diplomas: List[DiplomaResponse] = []
-    certificates: List[CertificateResponse] = []
-    clinic_affiliations: List[ClinicAffiliationResponse] = []
+    # diplomas: List[DiplomaResponse] = []
+    # certificates: List[CertificateResponse] = []
+    # clinic_affiliations: List[ClinicAffiliationResponse] = []
 
     class Config:
         from_attributes = True
         arbitrary_types_allowed = True
+
+
+# CorIdAuthSession MODELS
+
+
+class InitiateLoginRequest(BaseModel):
+    email: Optional[EmailStr] = None
+    cor_id: Optional[str] = None
+
+    @model_validator(mode="before")
+    def check_either_email_or_cor_id(cls, data: dict):
+        email = data.get("email")
+        cor_id = data.get("cor_id")
+        if not email and not cor_id:
+            raise ValueError("Требуется указать либо email, либо cor_id")
+        return data
+
+
+class InitiateLoginResponse(BaseModel):
+    session_token: str
+
+
+class SessionLoginStatus(str, Enum):
+    approved = "approved"
+    rejected = "rejected"
+
+
+class ConfirmLoginRequest(BaseModel):
+    email: Optional[EmailStr] = None
+    cor_id: Optional[str] = None
+    session_token: str
+    status: SessionLoginStatus
+
+    @model_validator(mode="before")
+    def check_either_email_or_cor_id(cls, data: dict):
+        email = data.get("email")
+        cor_id = data.get("cor_id")
+        if not email and not cor_id:
+            raise ValueError("Требуется указать либо email, либо cor_id")
+        return data
+
+
+class ConfirmLoginResponse(BaseModel):
+    message: str
+
+
+class PatientResponce(BaseModel):
+    patient_cor_id: str
+    encrypted_surname: Optional[bytes] = None
+    encrypted_first_name: Optional[bytes] = None
+    encrypted_middle_name: Optional[bytes] = None
+    sex: Optional[str]
+    birth_date: Optional[date]
+    status: Optional[str]
+
+class PaginatedPatientsResponse(BaseModel):
+    items: List[PatientResponce]
+    total: int
+
+class NewPatientRegistration(BaseModel):
+    email: EmailStr = Field(
+        ..., description="Email пациента (будет использован для создания пользователя)"
+    )
+    surname: str = Field(..., description="Фамилия пациента")
+    first_name: str = Field(..., description="Имя пациента")
+    middle_name: Optional[str] = Field(None, description="Отчество пациента")
+    birth_date: Optional[date] = Field(None, description="Дата рождения пациента")
+    sex: Optional[str] = Field(None, description="Пол пациента")
+    phone_number: Optional[str] = Field(None, description="Номер телефона пациента")
+    address: Optional[str] = Field(None, description="Адрес пациента")
+    photo: Optional[str] = Field(
+        None, description="Фото пациента (base64 или blob)"
+    ) 
+    status: Optional[str] = Field("registered", description="Начальный статус пациента")
+
+
+class ExistingPatientAdd(BaseModel):
+    cor_id: str = Field(..., description="Cor ID существующего пользователя")
+    status: Optional[str] = Field("registered", description="Начальный статус пациента")
