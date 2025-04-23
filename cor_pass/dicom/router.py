@@ -9,7 +9,7 @@ from io import BytesIO
 from functools import lru_cache
 from pathlib import Path
 router = APIRouter(prefix="/api/dicom", tags=["DICOM"])
-HTML_FILE = Path(__file__).parent / "static" / "dicom_viewer.html"
+HTML_FILE = Path(__file__).parents[1] / "static" / "dicom_viewer.html"
 DICOM_DIR = "dicom_files"
 os.makedirs(DICOM_DIR, exist_ok=True)
 
@@ -114,3 +114,4 @@ def reconstruct(plane: str, index: int = Query(...), size: int = 512):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+

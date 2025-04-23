@@ -451,15 +451,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         setTimeout(() => {
                             const refreshToken = response.refresh_token;
                             const accessToken = response.access_token;
+                            const savedRedirectUrl = localStorage.getItem('redirectUrl');
+
+
 
                             const accessToken_rcv = new URLSearchParams(window.location.search).get('access_token');
                             const refreshToken_rcv = new URLSearchParams(window.location.search).get('refresh_token');
                             const savedRedirectUrl_rcv = localStorage.getItem('redirectUrl');
 
-                        if (savedRedirectUrl_rcv && accessToken_rcv) {
-                            // Перенаправляем на savedRedirectUrl с access_token и cor_id
-                            window.location.href = `${savedRedirectUrl_rcv}?access_token=${accessToken_rcv}&refresh_token=${refreshToken_rcv}`;
-                        } else {
+                            if (savedRedirectUrl && savedRedirectUrl !== 'null' && savedRedirectUrl !== 'undefined') {
+                        // Перенаправляем на savedRedirectUrl с access_token и refresh_token
+                           window.location.href = `${savedRedirectUrl}?access_token=${accessToken}&refresh_token=${refreshToken}`;
+                         } else {
                            console.log(" Не найдены параметры redirect_url или cor_id.");
 
                             urlParams.set('access_token', accessToken);
@@ -469,7 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             window.location.href = url;
                               }
 
-                        }, 500);
+                        }, 1500);
 
                     } else {
                         const errorMessage = getErrorMessage(xhr.status, messageDiv);

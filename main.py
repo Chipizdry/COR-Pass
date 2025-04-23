@@ -73,7 +73,7 @@ app = FastAPI()
 
 
 # Монтируем статику
-app.mount("/static", StaticFiles(directory="cor_pass/dicom/static"), name="static")
+#app.mount("/static", StaticFiles(directory="cor_pass/dicom/static"), name="static")
 
 # Подключаем DICOM маршруты
 app.include_router(dicom_router)
