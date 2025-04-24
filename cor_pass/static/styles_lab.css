@@ -35,7 +35,7 @@
     display:flex;flex-direction:column;align-items:center;gap:40px;padding-top:24px
   }
   
-  .logo{
+  .logo_2{
     width:60px;height:60px;
     background:url("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMJ4aHDyPRue1B4MlungnXoJMkIpefsy4njQ&s") center/contain no-repeat
   }

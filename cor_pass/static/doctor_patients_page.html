@@ -5,7 +5,10 @@
   <meta charset="UTF-8" />
   <title>Кор Lab — Пациенты</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" type="text/css" href="modal.css">
   <link rel="stylesheet" href="styles_lab.css" />
+  <link rel="stylesheet" type="text/css" href="modal.css">
+
   
 </head>
 <body>
@@ -14,7 +17,7 @@
     <aside class="sidebar">
 
       <!-- Логотип сервиса -->
-      <div class="logo" title="COR LAB"></div>
+      <div class="logo_2" title="COR LAB"></div>
 
       <!-- Навигационные иконки -->
       <nav class="nav">
@@ -149,13 +152,69 @@
     <!-- КОНЕЦ основного контента -->
   </div>
 
+  <!-- Модальное окно для второго шага -->
+<div id="addPatientModal" class="modal">
+  
+      <h1>Новый пациент</h1>
+    <div class="modal-header">    
+      <div class="form-group-width">
+          <label for="workEmail" style="color:#7f69bd;font-size:14px;">Название клиники:</label>
+          <input type="text" id="Clinick_Name" name="Clinick_Name" required>
+      </div>
+
+      <div class="form-group-width">
+          <label for="workEmail" style="color:#7f69bd;font-size:14px;">Отделение:</label>
+          <input type="text" id="Department" name="Department" required>
+      </div>
+
+      <div class="form-group-width">
+          <label for="workEmail" style="color:#7f69bd;font-size:14px;">Должность:</label>
+          <input type="text" id="Job_title" name="Job_title" required>
+      </div>
+      
+      <div class="form-group">
+          <label for="specialization" style="color:#7f69bd;font-size:14px;">Специализация:</label>
+          <select id="specialization" name="specialization" style="width: 100%; padding: 10px; border: 1px solid #f0f0f0; border-radius: 12px; color: #5B4296;">
+              <option value="">Выберите специализацию</option>
+              <option value="therapist">Терапевт</option>
+              <option value="cardiologist">Кардиолог</option>
+              <option value="neurologist">Невролог</option>
+              <option value="pediatrician">Педиатр</option>
+              <option value="other">Другая</option>
+          </select>
+      </div>
+      
+      <div class="form-group">
+          <label for="degree" style="color:#7f69bd;font-size:14px;">Научная степень:</label>
+          <select id="degree" name="degree" style="width: 100%; padding: 10px; border: 1px solid #f0f0f0; border-radius: 12px; color: #5B4296;">
+              <option value="">Выберите научную степерь</option>
+              <option value="doctor">Доктор медицинских наук</option>
+              <option value="candidat">Кандидат медицинских наук</option>
+              <option value="aspirant">Аспирант</option>
+              <option value="junior">Младший медицинский сотрудник</option>
+              <option value="other">Другая</option>
+          </select>
+      </div>
+      
+      <div class="form-group-width">
+          <label for="birthdate" style="color:#7f69bd;font-size:14px;" >Дата последней атестации:</label>
+          <input type="date" id="birthdate" name="birthdate" required>
+      </div>
+      
+      
+  </div>
+ 
+</div>
+
   <!-- ─── ЛОГИКА (сортировка, поиск, обработчики) ─── -->
+  <script src="/static/translation.js"></script>  
+  <script src="/static/general_fun.js"></script>   
   <script>
     /* Массив‑заглушка с трёмя пациентами */
     const sampleRows=[
       {name:"Иванов Валерий Витальевич",id:"159RLHD9P-1978M",age:65,gender:"Мужской",date:"19.01.2024",status:"Новый",avatar:"https://randomuser.me/api/portraits/men/65.jpg"},
       {name:"Иванова Екатерина Васильевна",id:"151RLHD9P-1990F",age:34,gender:"Женский",date:"15.01.1990",status:"Новый",avatar:"https://randomuser.me/api/portraits/women/44.jpg"},
-      {name:"Сидоров Пётр Кириллович",id:"162ABCD9P-1995M",age:29,gender:"Мужской",date:"05.03.2024",status:"Новый",avatar:"https://randomuser.me/api/portraits/men/22.jpg"}
+      {name:"Сидоров Пётр Кириллович",id:"162ABCD9P-1995M",age:29,gender:"Мужской",date:"05.03.2024",status:"Новый",avatar:"https://randomuser.me/api/portraits/men/26.jpg"}
     ];
 
     /* Текущее состояние таблицы */
@@ -263,5 +322,149 @@
     document.getElementById("filterBtn").addEventListener("click",()=>alert("Здесь будет фильтр по полям"));
     document.getElementById("addPatientBtn").addEventListener("click",()=>alert("Переход к форме добавления пациента"));
   </script>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      // Инициализация модального окна
+      const modal = document.getElementById('addPatientModal');
+      const addPatientBtn = document.getElementById('addPatientBtn');
+      const cancelPatientBtn = document.getElementById('cancelPatientBtn');
+      const savePatientBtn = document.getElementById('savePatientBtn');
+      const tabs = document.querySelectorAll('.tab');
+      const tabContents = document.querySelectorAll('.tab-content');
+      const importFileInput = document.getElementById('importFile');
+      const importFileName = document.getElementById('importFileName');
+      
+      // Делаем модальное окно перетаскиваемым
+      makeModalDraggable('addPatientModal');
+      
+      // Обработчик открытия модального окна
+      addPatientBtn.addEventListener('click', function() {
+          if (checkToken()) {
+              modal.style.display = 'block';
+          }
+      });
+      
+      // Обработчик закрытия модального окна
+      cancelPatientBtn.addEventListener('click', function() {
+          modal.style.display = 'none';
+      });
+      
+      // Обработчик сохранения данных
+      savePatientBtn.addEventListener('click', function() {
+          const activeTab = document.querySelector('.tab.active').dataset.tab;
+          
+          if (activeTab === 'manual') {
+              // Валидация и сохранение данных ручного ввода
+              if (validateManualInput()) {
+                  savePatientData();
+                  modal.style.display = 'none';
+              }
+          } else {
+              // Валидация и обработка импорта
+              if (validateImport()) {
+                  processImport();
+                  modal.style.display = 'none';
+              }
+          }
+      });
+      
+      // Переключение между вкладками
+      tabs.forEach(tab => {
+          tab.addEventListener('click', function() {
+              // Удаляем активный класс у всех вкладок
+              tabs.forEach(t => t.classList.remove('active'));
+              tabContents.forEach(c => c.classList.remove('active'));
+              
+              // Добавляем активный класс текущей вкладке
+              this.classList.add('active');
+              const tabId = this.dataset.tab + 'Tab';
+              document.getElementById(tabId).classList.add('active');
+          });
+      });
+      
+      // Обработчик выбора файла для импорта
+      importFileInput.addEventListener('change', function() {
+          if (this.files.length > 0) {
+              importFileName.textContent = this.files[0].name;
+              importFileName.style.color = '#5B4296';
+          } else {
+              importFileName.textContent = 'Файл не выбран';
+              importFileName.style.color = '#7f69bd';
+          }
+      });
+      
+      // Функция валидации ручного ввода
+      function validateManualInput() {
+          const requiredFields = [
+              'patientLastName', 
+              'patientFirstName', 
+              'patientBirthDate',
+              'patientGender'
+          ];
+          
+          let isValid = true;
+          
+          requiredFields.forEach(fieldId => {
+              const field = document.getElementById(fieldId);
+              if (!field.value.trim()) {
+                  isValid = false;
+                  field.style.borderColor = 'red';
+              } else {
+                  field.style.borderColor = '#f0f0f0';
+              }
+          });
+          
+          if (!isValid) {
+              alert('Пожалуйста, заполните все обязательные поля');
+          }
+          
+          return isValid;
+      }
+      
+      // Функция валидации импорта
+      function validateImport() {
+          if (!importFileInput.files || importFileInput.files.length === 0) {
+              alert('Пожалуйста, выберите файл для импорта');
+              return false;
+          }
+          
+          if (!document.getElementById('importTemplate').value) {
+              alert('Пожалуйста, выберите шаблон импорта');
+              return false;
+          }
+          
+          return true;
+      }
+      
+      // Функция сохранения данных пациента
+      function savePatientData() {
+          const patientData = {
+              lastName: document.getElementById('patientLastName').value,
+              firstName: document.getElementById('patientFirstName').value,
+              middleName: document.getElementById('patientMiddleName').value,
+              birthDate: document.getElementById('patientBirthDate').value,
+              gender: document.getElementById('patientGender').value,
+              phone: document.getElementById('patientPhone').value,
+              email: document.getElementById('patientEmail').value
+          };
+          
+          // Здесь можно отправить данные на сервер
+          console.log('Данные пациента:', patientData);
+          alert('Пациент успешно добавлен!');
+      }
+      
+      // Функция обработки импорта
+      function processImport() {
+          const file = importFileInput.files[0];
+          const template = document.getElementById('importTemplate').value;
+          
+          // Здесь можно обработать файл импорта
+          console.log('Импорт файла:', file.name, 'с шаблоном:', template);
+          alert('Файл успешно импортирован!');
+      }
+  });
+</script>
 </body>
 </html>
