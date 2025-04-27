@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="layout-page">
 <head>
   <link rel="icon" type="image/png" href="/static/favicon.png">
   <meta charset="UTF-8" />
   <title>Кор Lab — Пациенты</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" type="text/css" href="modal.css">
-  <link rel="stylesheet" href="styles_lab.css" />
+  <link rel="stylesheet" type="text/css" href="styles_lab.css">
+  <link rel="stylesheet" type="text/css" href="styles.css">
   <link rel="stylesheet" type="text/css" href="modal.css">
 
   
 </head>
-<body>
+<body class="layout-page">
 
   <div class="layout">
     <aside class="sidebar">
@@ -63,6 +63,7 @@
         <span class="nav-label">Профиль</span>
       </div>
     </aside>
+ 
 
     <!-- ОСНОВНОЕ СОДЕРЖИМОЕ -->
     <main class="main">
@@ -122,7 +123,8 @@
           </div>
         </div>
       </div>
-
+  
+    
       <!-- Карточка‑контейнер с таблицей пациентов -->
       <section class="card">
 
@@ -151,12 +153,15 @@
     </main>
     <!-- КОНЕЦ основного контента -->
   </div>
+  <!-- Модальное окно добавления пациента -->
+<div id="addPatientModal" class="modal" style="display: none;">
+  <div class="modal-header">    
+   <div class="modal-buttons">
+    <button class="modal-button close" data-action="close" id="cancelPatientBtn">✖</button>
+   </div>
 
-  <!-- Модальное окно для второго шага -->
-<div id="addPatientModal" class="modal">
-  
       <h1>Новый пациент</h1>
-    <div class="modal-header">    
+  </div>
       <div class="form-group-width">
           <label for="workEmail" style="color:#7f69bd;font-size:14px;">Название клиники:</label>
           <input type="text" id="Clinick_Name" name="Clinick_Name" required>
@@ -202,7 +207,7 @@
       </div>
       
       
-  </div>
+ 
  
 </div>
 
@@ -320,7 +325,16 @@
 
     /* Заглушки */
     document.getElementById("filterBtn").addEventListener("click",()=>alert("Здесь будет фильтр по полям"));
-    document.getElementById("addPatientBtn").addEventListener("click",()=>alert("Переход к форме добавления пациента"));
+    document.getElementById("addPatientBtn").addEventListener("click", function() {
+    const modal = document.getElementById('addPatientModal');
+    if (modal) {
+        modal.style.display = 'block';
+        // Инициализируем модальное окно (если нужно)
+        initModalControls('addPatientModal');
+        // Делаем окно перетаскиваемым
+        makeModalDraggable('addPatientModal');
+    }
+});
   </script>
 
 
@@ -336,39 +350,13 @@
       const importFileInput = document.getElementById('importFile');
       const importFileName = document.getElementById('importFileName');
       
-      // Делаем модальное окно перетаскиваемым
-      makeModalDraggable('addPatientModal');
-      
-      // Обработчик открытия модального окна
-      addPatientBtn.addEventListener('click', function() {
-          if (checkToken()) {
-              modal.style.display = 'block';
-          }
-      });
       
       // Обработчик закрытия модального окна
       cancelPatientBtn.addEventListener('click', function() {
           modal.style.display = 'none';
       });
       
-      // Обработчик сохранения данных
-      savePatientBtn.addEventListener('click', function() {
-          const activeTab = document.querySelector('.tab.active').dataset.tab;
-          
-          if (activeTab === 'manual') {
-              // Валидация и сохранение данных ручного ввода
-              if (validateManualInput()) {
-                  savePatientData();
-                  modal.style.display = 'none';
-              }
-          } else {
-              // Валидация и обработка импорта
-              if (validateImport()) {
-                  processImport();
-                  modal.style.display = 'none';
-              }
-          }
-      });
+    
       
       // Переключение между вкладками
       tabs.forEach(tab => {
@@ -384,17 +372,7 @@
           });
       });
       
-      // Обработчик выбора файла для импорта
-      importFileInput.addEventListener('change', function() {
-          if (this.files.length > 0) {
-              importFileName.textContent = this.files[0].name;
-              importFileName.style.color = '#5B4296';
-          } else {
-              importFileName.textContent = 'Файл не выбран';
-              importFileName.style.color = '#7f69bd';
-          }
-      });
-      
+   
       // Функция валидации ручного ввода
       function validateManualInput() {
           const requiredFields = [
