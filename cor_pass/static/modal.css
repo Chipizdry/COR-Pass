@@ -477,8 +477,8 @@
 /* Стили для контейнера опций */
 .storage-options {
     display: flex;
-    gap: 10px;
-   /* margin-bottom: 10px; */
+    gap: 15px;
+    margin-bottom: 10px;
 }
 
 /* Стиль для каждой радио-кнопки в рамке */

@@ -190,7 +190,7 @@
     </main>
     <!-- КОНЕЦ основного контента -->
   </div>
-  <!-- Модальное окно добавления пациента -->
+  
 <!-- Модальное окно добавления пациента -->
 <div id="addPatientModal" class="modal" style="display: none;">
   <div class="modal-header">    
@@ -216,37 +216,60 @@
 
   <div class="tab-content" id="registerPatientTab">
     <div class="form-group-width">
-      <label for="Clinick_Name" style="color:#7f69bd;font-size:14px;">Название клиники:</label>
+      <label for="Clinick_Name" style="color:#7f69bd;font-size:13px;">Фамилия</label>
       <input type="text" id="Clinick_Name" name="Clinick_Name" required>
     </div>
 
     <div class="form-group-width">
-      <label for="Department" style="color:#7f69bd;font-size:14px;">Отделение:</label>
+      <label for="Department" style="color:#7f69bd;font-size:13px;">Имя</label>
       <input type="text" id="Department" name="Department" required>
     </div>
 
     <div class="form-group-width">
-      <label for="Job_title" style="color:#7f69bd;font-size:14px;">Должность:</label>
+      <label for="Job_title" style="color:#7f69bd;font-size:13px;">Отчество</label>
       <input type="text" id="Job_title" name="Job_title" required>
     </div>
 
-    <div class="form-group">
-      <label for="specialization" style="color:#7f69bd;font-size:14px;">Специализация:</label>
-      <select id="specialization" name="specialization" style="width: 100%; padding: 10px; border: 1px solid #f0f0f0; border-radius: 12px; color: #5B4296;">
-        <option value="">Выберите специализацию</option>
-        <option value="therapist">Терапевт</option>
-        <option value="cardiologist">Кардиолог</option>
-        <option value="neurologist">Невролог</option>
-        <option value="pediatrician">Педиатр</option>
-        <option value="other">Другая</option>
-      </select>
+    <div class="form-group-width">
+      <label for="birthdate" style="color:#7f69bd;font-size:13px;">Дата рождения:</label>
+      <input type="date" id="birthdate" name="birthdate" required>
+    </div>
+    <label class="label-padded">Пол:</label>
+    <div class="additional-fields">
+      <div class="storage-options">
+          <!-- Вариант "На устройстве" -->
+          <label class="storage-option">
+              <input type="radio" name="storageLocation" value="device" checked>
+              <span class="custom-radio"></span>
+              <span>Мужской</span>
+          </label>
+          
+          <!-- Вариант "На сервере" -->
+          <label class="storage-option">
+              <input type="radio" name="storageLocation" value="server">
+              <span class="custom-radio"></span>
+              <span>Женский</span>
+          </label>
+      </div>
+  </div>
+
+    <div class="additional-fields">
+      <div class="input-wrapper">
+          <label for="birthYear" style="color:#7f69bd;font-size:13px;">Имейл</label>
+          <input type="text" id="mail" name="mail" required>
+      </div>
+      <div class="input-wrapper">
+          <label for="gender" style="color:#7f69bd;font-size:13px;">Телефон</label>
+          <input type="text" id="patientPhone" name="patientPhone" required>
+      </div>
     </div>
 
     <div class="form-group-width">
-      <label for="birthdate" style="color:#7f69bd;font-size:14px;">Дата последней аттестации:</label>
-      <input type="date" id="birthdate" name="birthdate" required>
+      <label for="Addres" style="color:#7f69bd;font-size:13px;">Адрес</label>
+      <input type="text" id="Addres" name="Addres" required>
     </div>
   </div>
+  <button class="button" id="Add_Patient" data-translate="Add_Patient">Добавить пациента</button>
 </div>
 
   <!-- ─── ЛОГИКА (сортировка, поиск, обработчики) ─── -->
@@ -364,6 +387,7 @@
     /* Заглушки */
     document.getElementById("filterBtn").addEventListener("click",()=>alert("Здесь будет фильтр по полям"));
     document.getElementById("addPatientBtn").addEventListener("click", function() {
+      if( checkToken()){  
     const modal = document.getElementById('addPatientModal');
     if (modal) {
         modal.style.display = 'block';
@@ -372,7 +396,7 @@
         // Делаем окно перетаскиваемым
         makeModalDraggable('addPatientModal');
     }
-});
+}});
 
 
 
