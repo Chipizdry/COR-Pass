@@ -12,7 +12,7 @@ html.layout-page, body.layout-page {
   --radius-xl:24px;
   --radius-lg:20px;
   --radius-md:14px;
-  --clr-bg:#f2f3f8;
+  --clr-bg:#EFECF8;
   --clr-surface:#ffffff;
   --clr-surface-alt:#fafbff;
   --clr-primary:#7a3cff;
@@ -24,32 +24,35 @@ html.layout-page, body.layout-page {
 }
 
 *{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
+ 
   font-family:"Inter","Segoe UI",Roboto,Helvetica,Arial,sans-serif
 }
 
 .layout {
+  margin-left: var(--sidebar-w); /* Отступ, чтобы не налезать на сайдбар */
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
-  margin: 0;
-  padding: 0;
-  align-items: flex-start;
-  justify-content: flex-start;
+  gap: 24px;
 }
 
-
-.sidebar{
-  width:var(--sidebar-w);
-  background:#fff;
-  box-shadow:2px 0 8px rgba(0,0,0,.04);
-  display:flex;flex-direction:column;align-items:center;gap:40px;padding-top:24px
-}
-
-.logo_2{
-  width:60px;height:60px;
-  background:url("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMJ4aHDyPRue1B4MlungnXoJMkIpefsy4njQ&s") center/contain no-repeat
+.sidebar {
+  position: fixed;           /* Заставляем сайдбар всегда быть фиксированным */
+  top: 0;
+  left: 0;
+  height: 100vh;              /* Занимать всю высоту экрана */
+  width: var(--sidebar-w);    /* Ширина — как у тебя задано */
+  
+  background: #fff;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+  padding-top: 24px;
+  
+  z-index: 1000; /* чтобы быть поверх контента если надо */
 }
 
 .nav{
@@ -80,7 +83,7 @@ html.layout-page, body.layout-page {
 
 .main{
   flex:1;
-  padding:32px 40px;
+  padding:20px 20px;
   display:flex;
   flex-direction:column;
   gap:24px;
@@ -108,10 +111,6 @@ html.layout-page, body.layout-page {
 
 .btn-primary:hover{background:var(--clr-primary-hover)}
 
-.icon-circle{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:24px;height:24px;border-radius:50%;border:2px solid #fff;font-size:18px;line-height:0
-}
 
 .icon-circle span{display:block;transform:translateY(-1px)}
 
@@ -143,7 +142,7 @@ html.layout-page, body.layout-page {
 
 .dropdown button:hover{background:rgba(0,0,0,.04)}
 
-.card{
+.patients_card{
   background:var(--clr-surface);border:1px solid var(--clr-border);
   border-radius:24px;
   padding:0;box-shadow:0 6px 12px rgba(0,0,0,.03)
@@ -176,3 +175,51 @@ tbody tr:nth-child(even) td{background:#fafafa}
 .ellipsis{cursor:pointer;font-size:20px;color:var(--clr-text-light)}
 
 .footer{padding:12px 20px;font-size:14px;color:var(--clr-text-light)}
+
+.tab-buttons {
+  display: flex
+;
+  justify-content: center;
+  margin: 00px 25px;
+  background-color: #fafafa;
+  /* border: 1px solid #e0e0e0; */
+  border-radius: 12px;
+  height: 40px;
+  /* padding: 4px; */
+  /* overflow: hidden; */
+  align-items: center;
+}
+
+.tab-button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: #b3a3d1;
+  font-size: 14px;
+  /* font-weight: 500; */
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s, font-weight 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-button.active {
+  background-color: #ffffff;
+  color: #7f69bd;
+  font-weight: 600;
+  /* box-shadow: 0 0 0 2px #7f69bd; */
+}
+.tab-button:hover:not(.active) {
+  background-color: rgba(127, 105, 189, 0.05); /* лёгкий фиолетовый намёк на hover */
+}
+
+.tab-content {
+  display: none;
+  margin-top: 20px;
+}
+
+.tab-content.active {
+  display: block;
+}

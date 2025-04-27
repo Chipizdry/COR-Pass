@@ -156,6 +156,31 @@ button:disabled {
     max-width: 200px; 
 }
 
+.add-button {
+    padding: 10px;
+    border: 1px solid #7527B2; 
+    margin: 10px 0;
+    background-color: #7527B2;
+    color: white;
+    cursor: pointer;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 220px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 14px;
+    transition: background-color 0.3s, color 0.3s, transform 0.2s;
+    text-decoration: none;
+  }
+  
+  .add-button:hover {
+    background-color: #5f1b91;
+  }
+  
+
 .delete-button {
     padding: 10px;
     border: 1px solid #DF1125; 
@@ -219,7 +244,25 @@ button:disabled {
     top: -16px;
 }
 
-
+.icon-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid white; /* Белая рамка кружка */
+    background-color: transparent; /* Прозрачный фон кружка */
+    color: white; /* Белый плюс */
+    font-size: 18px;
+    font-weight: bold;
+  }
+  
+  .icon-circle span {
+    display: block;
+    transform: translateY(-1px);
+  }
+  
 .icon-button {
     background: none;
     border: none;
