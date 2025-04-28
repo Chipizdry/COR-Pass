@@ -244,3 +244,14 @@ tbody tr:nth-child(even) td{background:#fafafa}
 #Add_Patient:hover {
   background-color: #5e32c5;
 }
+
+#Add_Patient:active {
+  background-color: #5F41B2;
+  transform: translateX(-50%) translateY(2px);
+}
+
+#corIdInput {
+  text-align: center; /* Центрирование текста */
+  font-family: monospace; /* Для лучшего отображения символов */
+  width: 100%; /* Чтобы поле занимало всю доступную ширину */
+}
