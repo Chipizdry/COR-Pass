@@ -233,20 +233,23 @@
       <input type="date" id="birthDate" name="birthDate" required>
     </div>
 
+  <div class="form-group-width">
     <label>Пол:</label>
-    <div class="additional-fields">
+  </div>  
+    <div class="additional-fields">   
       <label class="storage-option">
-        <input type="radio" name="gender" value="male">
+        <input type="radio" name="gender" value="M">
         <span class="custom-radio"></span>
         <span>Мужской</span>
       </label>
 
       <label class="storage-option">
-        <input type="radio" name="gender" value="female">
+        <input type="radio" name="gender" value="F">
         <span class="custom-radio"></span>
         <span>Женский</span>
       </label>
     </div>
+   
 
     <div class="additional-fields">
       <div class="input-wrapper">
@@ -409,7 +412,7 @@ async function addPatientByCorId() {
       headers: {
         'accept': 'application/json',
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` // обязательно токен сюда
+        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
       },
       body: JSON.stringify({
         cor_id: corId,
@@ -493,15 +496,16 @@ function registerNewPatient() {
         status: "registered"
     };
 
-    // Отправляем запрос
     fetch('/api/doctor/patients/register-new', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify(patientData)
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+    },
+    body: JSON.stringify(patientData)
     })
+
     .then(response => {
         if (response.ok) {
             return response.json();
@@ -590,7 +594,7 @@ function formatCorIdInput() {
 
   // Вставляем дефис между частями
   if (value.length > 9) {
-    value = value.slice(0, 9) + value.slice(9, 14);
+    value = value.slice(0, 9) + value.slice(9, 15);
   }
 
   // Обновляем значение в поле ввода
