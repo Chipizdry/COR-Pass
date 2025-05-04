@@ -459,62 +459,52 @@
     transition: background-color 0.3s ease;
 }
 
-
-/* Новый класс для контейнера радио-кнопок */
-.storage-options-container {
-    width: 200px;
-    height: 40px;
-    background-color: white;
-    border: 1px solid #f0f0f0;
-    border-radius: 12px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 10px;
-    box-sizing: border-box;
-}
-
-/* Стили для контейнера опций */
-.storage-options {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 10px;
-}
-
-/* Стиль для каждой радио-кнопки в рамке */
-.storage-option {
-    width: 200px; /* Ширина рамки */
-    height: 40px; /* Высота рамки */
-    border: 1px solid #f0f0f0;
-    border-radius: 12px;
-    background-color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    cursor: pointer;
-}
-
-/* Скрытие оригинального радио-кнопки */
-.storage-option input[type="radio"], input[type="checkbox"] {
+/* Скрытие нативного инпута */
+.storage-option input[type="radio"],
+.storage-option input[type="checkbox"] {
     position: absolute;
     opacity: 0;
     cursor: pointer;
 }
 
-/* Стиль для кастомного радио-кнопки */
+/* Общий контейнер */
+.storage-option {
+    width: 200px;
+    height: 40px;
+    border: 1px solid #f0f0f0;
+    border-radius: 12px;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+}
+
+/* Общая иконка */
 .storage-option .custom-radio {
     position: relative;
     display: inline-block;
     width: 18px;
     height: 18px;
-    border: 2px solid #5B4296;
-    border-radius: 50%;
     margin-right: 8px;
 }
 
-/* Галочка для выбранного состояния */
-.storage-option input[type="radio"]:checked ~ .custom-radio::after {
+/* Радио-кнопка — круглая */
+.storage-option input[type="radio"] ~ .custom-radio {
+    border: 2px solid #5B4296;
+    border-radius: 50%;
+}
+
+/* Чекбокс — квадратный */
+.storage-option input[type="checkbox"] ~ .custom-radio {
+    border: 2px solid #5B4296;
+    border-radius: 4px;
+}
+
+/* Галочка */
+.storage-option input[type="radio"]:checked ~ .custom-radio::after,
+.storage-option input[type="checkbox"]:checked ~ .custom-radio::after {
     content: "✓";
     position: absolute;
     top: 50%;
@@ -524,23 +514,29 @@
     font-size: 12px;
 }
 
-/* Стиль текста */
-.storage-option span {
+/* Текст рядом с кнопкой */
+.storage-option span:last-child {
     color: #291161;
     font-size: 13px;
 }
 
-/* Эффект при наведении */
+/* Hover эффект */
 .storage-option:hover {
     background-color: #f9f9f9;
 }
 
-/* Эффект для выбранной опции */
-.storage-option input[type="radio"]:checked ~ span {
+/* Стиль для выбранного текста */
+.storage-option input:checked ~ span:last-child {
     color: #5B4296;
     font-weight: bold;
 }
 
+/* Контейнер опций */
+.storage-options {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+}
 
 
 
