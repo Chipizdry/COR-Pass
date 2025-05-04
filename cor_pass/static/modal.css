@@ -496,7 +496,7 @@
 }
 
 /* Скрытие оригинального радио-кнопки */
-.storage-option input[type="radio"] {
+.storage-option input[type="radio"], input[type="checkbox"] {
     position: absolute;
     opacity: 0;
     cursor: pointer;
@@ -663,10 +663,12 @@
 }
 
   #recoveryCode {
-   width: 100%;
+   width: 400px;
    padding: 5px;
    margin-top: 5px;
    display: none;
+   align-items: center; 
+   justify-content: center;
   }
 
 
@@ -688,3 +690,78 @@
     justify-content: space-between; /* Равномерное распределение кнопок */
      margin-top: 10px;
    }
+
+   .tab-buttons {
+    display: flex;
+    justify-content: center;
+    margin: 00px 20px;
+    background-color: #fafafa;
+    /* border: 1px solid #e0e0e0; */
+    border-radius: 12px;
+    height: 40px;
+    width: 420px;
+    /* padding: 0px; */
+    overflow: hidden;
+    align-items: center;
+  }
+  
+  .tab-button {
+    /* flex: 1; */
+    border: none;
+    background: transparent;
+    color: #b3a3d1;
+    font-size: 14px;
+    /* font-weight: 500; */
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s, font-weight 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 220px;
+  }
+  
+  .tab-button.active {
+    background-color: #ffffff;
+    color: #291161;
+    font-weight: 600;
+    /* box-shadow: 0 0 0 2px #7f69bd; */
+    width: 240px;
+  }
+  
+  .tab-button:hover:not(.active) {
+    background-color: rgba(127, 105, 189, 0.05); /* лёгкий фиолетовый намёк на hover */
+  }
+  
+  .tab-content {
+    display: none;
+    margin-top: 20px;
+  }
+  
+  .tab-content.active {
+    display: block;
+  }
+
+  
+#SaveSettingsButton {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #7B43F2; 
+    color: white;
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+  }
+#SaveSettingsButton:hover  {
+    background-color: #5e32c5;
+  }
+  
+#SaveSettingsButton:active  {
+    background-color: #5F41B2;
+    transform: translateX(-50%) translateY(2px);
+  }
+  
