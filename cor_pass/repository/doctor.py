@@ -1,8 +1,6 @@
 import base64
 from sqlalchemy import asc, desc, func, select
-from sqlalchemy.orm import Session, joinedload
-from typing import Dict, List, Optional, Tuple, List
-from fastapi import UploadFile, File
+from typing import List, Optional, Tuple, List
 
 from cor_pass.database.models import (
     Certificate,
@@ -15,11 +13,11 @@ from cor_pass.database.models import (
     User,
     DoctorStatus,
 )
-from cor_pass.schemas import DoctorCreate
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cor_pass.services.cipher import decrypt_data
 from cor_pass.config.config import settings
+
 
 async def create_doctor(
     doctor_data: dict,
@@ -46,7 +44,7 @@ async def create_doctor(
     db.add(doctor)
 
     await db.commit()
-    await db.refresh(doctor) 
+    await db.refresh(doctor)
 
     return doctor
 
@@ -71,7 +69,7 @@ async def create_certificates(
         )
         db.add(certificate)
 
-    await db.commit() 
+    await db.commit()
 
 
 async def create_diploma(
@@ -94,7 +92,7 @@ async def create_diploma(
         )
         db.add(diploma)
 
-    await db.commit() 
+    await db.commit()
 
 
 async def create_clinic_affiliation(
@@ -129,21 +127,16 @@ async def create_doctor_service(
     """
     # doctor = await create_doctor(doctor_data, db, user, doctors_photo_bytes)
 
-
     if doctor:
         print("Врач создан успешно")
 
-
         await create_certificates(doctor, doctor_data, db, certificate_scan_bytes)
 
-
         await create_diploma(doctor, doctor_data, db, diploma_scan_bytes)
-
 
         await create_clinic_affiliation(doctor, doctor_data, db)
 
     return doctor
-
 
 
 async def get_doctor_patients_with_status(
@@ -168,7 +161,9 @@ async def get_doctor_patients_with_status(
 
     # Фильтрация по статусу
     if status_filters:
-        query = query.where(DoctorPatientStatus.status.in_([s.value for s in status_filters]))
+        query = query.where(
+            DoctorPatientStatus.status.in_([s.value for s in status_filters])
+        )
 
     # Фильтрация по полу пациента
     if sex_filters:
@@ -200,12 +195,14 @@ async def get_doctor_patients_with_status(
     # Получаем общее количество результатов для пагинации
     count_query = (
         select(func.count())
-        .select_from(DoctorPatientStatus)  
+        .select_from(DoctorPatientStatus)
         .join(Patient, DoctorPatientStatus.patient_id == Patient.id)
         .where(DoctorPatientStatus.doctor_id == doctor.id)
     )
     if status_filters:
-        count_query = count_query.where(DoctorPatientStatus.status.in_([s.value for s in status_filters]))
+        count_query = count_query.where(
+            DoctorPatientStatus.status.in_([s.value for s in status_filters])
+        )
     if sex_filters:
         count_query = count_query.where(Patient.sex.in_(sex_filters))
 
@@ -215,25 +212,39 @@ async def get_doctor_patients_with_status(
     result = []
     decoded_key = base64.b64decode(settings.aes_key)
     for dps, patient in patients_with_status:
-        decrypted_surname = await decrypt_data(patient.encrypted_surname, decoded_key) if patient.encrypted_surname else None
-        decrypted_first_name = await decrypt_data(patient.encrypted_first_name, decoded_key) if patient.encrypted_first_name else None
-        decrypted_middle_name = await decrypt_data(patient.encrypted_middle_name, decoded_key) if patient.encrypted_middle_name else None
+        decrypted_surname = (
+            await decrypt_data(patient.encrypted_surname, decoded_key)
+            if patient.encrypted_surname
+            else None
+        )
+        decrypted_first_name = (
+            await decrypt_data(patient.encrypted_first_name, decoded_key)
+            if patient.encrypted_first_name
+            else None
+        )
+        decrypted_middle_name = (
+            await decrypt_data(patient.encrypted_middle_name, decoded_key)
+            if patient.encrypted_middle_name
+            else None
+        )
 
-        result.append({
-            "patient": {
-                "id": patient.id,
-                "patient_cor_id": patient.patient_cor_id,
-                "surname": decrypted_surname,
-                "first_name": decrypted_first_name,
-                "middle_name": decrypted_middle_name,
-                "birth_date": patient.birth_date,
-                "sex": patient.sex,
-                "email": patient.email,
-                "phone_number": patient.phone_number,
-                "address": patient.address,
-                "change_date": patient.change_date,
-            },
-            "status": dps.status.value,
-        })
+        result.append(
+            {
+                "patient": {
+                    "id": patient.id,
+                    "patient_cor_id": patient.patient_cor_id,
+                    "surname": decrypted_surname,
+                    "first_name": decrypted_first_name,
+                    "middle_name": decrypted_middle_name,
+                    "birth_date": patient.birth_date,
+                    "sex": patient.sex,
+                    "email": patient.email,
+                    "phone_number": patient.phone_number,
+                    "address": patient.address,
+                    "change_date": patient.change_date,
+                },
+                "status": dps.status.value,
+            }
+        )
 
     return result, total_count

@@ -39,18 +39,24 @@ class LawyerAccess:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden operation"
             )
-        
+
+
 class DoctorAccess:
     def __init__(self, email):
         self.email = email
 
-    async def __call__(self, user: User = Depends(auth_service.get_current_user), db: AsyncSession = Depends(db.get_db)):
+    async def __call__(
+        self,
+        user: User = Depends(auth_service.get_current_user),
+        db: AsyncSession = Depends(db.get_db),
+    ):
         query = select(Doctor).where(Doctor.doctor_id == user.cor_id)
         result = await db.execute(query)
         doctor = result.scalar_one_or_none()
         if not doctor or doctor.status != DoctorStatus.APPROVED:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Doctor access required and status is not approved"
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Doctor access required and status is not approved",
             )
         return doctor
 

@@ -1,36 +1,26 @@
 from typing import List, Optional
-from fastapi import APIRouter, File, HTTPException, Depends, Query, UploadFile, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException, Depends, Query, status
+
 from cor_pass.database.db import get_db
-from cor_pass.services.auth import auth_service
+
 from cor_pass.database.models import (
-    Certificate,
-    ClinicAffiliation,
-    Diploma,
     DoctorStatus,
-    User,
-    Status,
-    Doctor,
 )
-from cor_pass.services.access import admin_access, lawyer_access
+from cor_pass.services.access import lawyer_access
 from cor_pass.schemas import (
     CertificateResponse,
     ClinicAffiliationResponse,
     DiplomaResponse,
-    DoctorCreate,
     DoctorResponse,
     DoctorWithRelationsResponse,
-    UserDb,
 )
-from cor_pass.repository import person
 from cor_pass.repository import lawyer
-from pydantic import EmailStr
-from cor_pass.database.redis_db import redis_client
 import base64
 from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.services.logger import logger
 
 router = APIRouter(prefix="/lawyer", tags=["Lawyer"])
+
 
 @router.get(
     "/get_all_doctors",
@@ -42,7 +32,9 @@ async def get_all_doctors(
     limit: int = Query(10, description="Максимальное количество записей для возврата"),
     status: Optional[str] = Query(None, description="Фильтр по статусу врача"),
     sort_by: Optional[str] = Query(None, description="Сортировать по полю"),
-    sort_order: Optional[str] = Query("asc", description="Порядок сортировки ('asc' или 'desc')"),
+    sort_order: Optional[str] = Query(
+        "asc", description="Порядок сортировки ('asc' или 'desc')"
+    ),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -90,8 +82,8 @@ async def get_all_doctors(
     return doctors_response
 
 
-
 # Функция для преобразования бинарных данных в base64
+
 
 def bytes_to_base64(binary_data: bytes):
     if binary_data is None:

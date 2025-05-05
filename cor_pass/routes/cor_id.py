@@ -1,11 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from sqlalchemy.orm import Session
 
 from cor_pass.database.db import get_db
 from cor_pass.services.auth import auth_service
 from cor_pass.database.models import User
 from cor_pass.services.access import user_access
-from cor_pass.schemas import ResponseCorIdModel, CreateCorIdModel
+from cor_pass.schemas import ResponseCorIdModel
 from cor_pass.repository import cor_id as repository_cor_id
 from sqlalchemy.ext.asyncio import AsyncSession
 

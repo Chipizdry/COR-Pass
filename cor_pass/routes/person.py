@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from cor_pass.database.db import get_db
 from cor_pass.services.auth import auth_service
@@ -11,12 +10,10 @@ from cor_pass.database.models import User, Status
 from cor_pass.services.access import user_access
 from cor_pass.services.logger import logger
 from cor_pass.schemas import (
-    UserDb,
     PasswordStorageSettings,
     MedicalStorageSettings,
     EmailSchema,
     ChangePasswordModel,
-    ResponseCorIdModel,
     ChangeMyPasswordModel,
     UserSessionResponseModel,
 )
@@ -30,6 +27,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 import base64
 from fastapi.responses import JSONResponse
+from fastapi_limiter.depends import RateLimiter
 
 router = APIRouter(prefix="/user", tags=["User"])
 
@@ -368,7 +366,8 @@ async def get_last_password_change(
     }
 
 
-@router.get("/send_recovery_keys_email")
+@router.get("/send_recovery_keys_email",
+            dependencies=[Depends(RateLimiter(times=5, seconds=60))])
 async def send_recovery_keys_email(
     current_user: User = Depends(auth_service.get_current_user),
     db: AsyncSession = Depends(get_db),

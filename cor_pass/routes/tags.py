@@ -1,7 +1,6 @@
 from typing import List
 
 from fastapi import APIRouter, HTTPException, Depends, status
-from sqlalchemy.orm import Session
 
 from cor_pass.database.db import get_db
 from cor_pass.schemas import TagModel, TagResponse

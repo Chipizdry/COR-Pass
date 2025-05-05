@@ -29,7 +29,7 @@ async def close_websocket_connection(session_token: str):
 async def check_session_timeouts():
     """Асинхронная фоновая задача для проверки и обработки таймаутов сессий."""
     while True:
-        async with async_session_maker() as db:  
+        async with async_session_maker() as db:
             try:
                 now = datetime.utcnow()
                 stmt = select(CorIdAuthSession).where(
@@ -70,7 +70,7 @@ async def cleanup_auth_sessions():
                 expired_result = await db.execute(expired_stmt)
                 expired_count = expired_result.rowcount
 
-                cutoff_time = now - timedelta(days=1) # Завершенные 1 день назад сессии
+                cutoff_time = now - timedelta(days=1)  # Завершенные 1 день назад сессии
                 completed_stmt = delete(CorIdAuthSession).where(
                     CorIdAuthSession.status.in_(
                         [
@@ -92,6 +92,4 @@ async def cleanup_auth_sessions():
                 print(f"Ошибка при асинхронной очистке сессий авторизации: {e}")
                 await db.rollback()
             finally:
-                await asyncio.sleep(
-                    3600
-                )  # запуск каждый час 
+                await asyncio.sleep(3600)  # запуск каждый час

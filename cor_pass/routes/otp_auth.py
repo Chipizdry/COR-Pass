@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from sqlalchemy.orm import Session
 from typing import List
 
 from cor_pass.repository import otp_auth as repository_otp_auth

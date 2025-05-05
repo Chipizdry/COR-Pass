@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+
 
 from cor_pass.database.models import Tag
 from cor_pass.schemas import TagModel, TagResponse
@@ -54,7 +54,7 @@ async def update_tag(tag_id: int, body: TagModel, db: AsyncSession) -> Tag | Non
     if tag:
         tag.name = body.name
         await db.commit()
-        await db.refresh(tag)  
+        await db.refresh(tag)
         return tag
     return None
 

@@ -44,6 +44,89 @@ class PatientStatus(enum.Enum):
     discharged = "discharged"
 
 
+# Типы макроархива для параметров кейса
+class MacroArchive(enum.Enum):
+    ESS = "ESS - без остатка"
+    RSS = "RSS - остаток"
+
+
+# Типы декальцинации для параметров кейса
+class DecalcificationType(enum.Enum):
+    ABSENT = "Отсутствует"
+    EDTA = "EDTA"
+    ACIDIC = "Кислотная"
+
+
+# Типы образцов для параметров кейса
+class SampleType(enum.Enum):
+    NATIVE = "Нативный биоматериал"
+    BLOCKS = "Блоки/Стекла"
+
+
+# Типы материалов (исследований) для параметров кейса
+class MaterialType(enum.Enum):
+    R = "Resectio"
+    B = "Biopsy"
+    E = "Excisio"
+    C = "Cytology"
+    CB = "Cellblock"
+    S = "Second Opinion"
+    A = "Autopsy"
+    EM = "Electron Microscopy"
+
+
+# Типы срочности для параметров кейса
+class UrgencyType(enum.Enum):
+    S = "Standard"
+    U = "Urgent"
+    F = "Frozen"
+
+
+# Типы фиксации для параметров кейса
+class FixationType(enum.Enum):
+    NBF_10 = "10% NBF"
+    OSMIUM = "Osmium"
+    BOUIN = "Bouin"
+    ALCOHOL = "Alcohol"
+    GLUTARALDEHYDE_2 = "2% Glutaraldehyde"
+    OTHER = "Другое"
+
+
+# Типы исследований для направления
+class StudyType(enum.Enum):
+    CYTOLOGY = "цитология"
+    HISTOPATHOLOGY = "патогистология"
+    IMMUNOHISTOCHEMISTRY = "иммуногистохимия"
+    FISH_CISH = "FISH/CISH"
+
+
+# Типы окрашивания для стёкол
+class StainingType(enum.Enum):
+    HE = "H&E"
+    ALCIAN_PAS = "Alcian PAS"
+    CONGO_RED = "Congo red"
+    MASSON_TRICHROME = "Masson Trichrome"
+    VAN_GIESON = "van Gieson"
+    ZIEHL_NEELSEN = "Ziehl Neelsen"
+    WARTHIN_STARRY_SILVER = "Warthin-Starry Silver"
+    GROCOTT_METHENAMINE_SILVER = "Grocott's Methenamine Silver"
+    TOLUIDINE_BLUE = "Toluidine Blue"
+    PERLS_PRUSSIAN_BLUE = "Perls Prussian Blue"
+    PAMS = "PAMS"
+    PICROSIRIUS = "Picrosirius"
+    SIRIUS_RED = "Sirius red"
+    THIOFLAVIN_T = "Thioflavin T"
+    TRICHROME_AFOG = "Trichrome AFOG"
+    VON_KOSSA = "von Kossa"
+    GIEMSA = "Giemsa"
+    OTHAR = "Othar"
+
+
+class Grossing_status(enum.Enum):
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -310,6 +393,7 @@ class Patient(Base):
     address = Column(String(500), nullable=True)
     photo = Column(LargeBinary, nullable=True)  # Хранение фото как бинарные данные
     change_date = Column(DateTime, default=func.now(), onupdate=func.now())
+    create_date = Column(DateTime, default=func.now())
 
     user = relationship("User", back_populates="patient")
     doctor_statuses = relationship("DoctorPatientStatus", back_populates="patient")
@@ -336,6 +420,117 @@ class DoctorPatientStatus(Base):
             "patient_id", "doctor_id", name="unique_patient_doctor_status"
         ),
     )
+
+
+# Кейс
+class Case(Base):
+    __tablename__ = "cases"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    patient_id = Column(String(36), index=True)
+    creation_date = Column(DateTime, default=func.now())
+    case_code = Column(String(250), index=True)
+    bank_count = Column(Integer, default=0)
+    cassette_count = Column(Integer, default=0)
+    glass_count = Column(Integer, default=0)
+    grossing_status = Column(
+        Enum(Grossing_status), default=Grossing_status.PROCESSING
+    )
+
+    samples = relationship(
+        "Sample", back_populates="case", cascade="all, delete-orphan"
+    )
+    # directions = relationship("Direction", back_populates="case")
+    case_parameters = relationship(
+        "CaseParameters",
+        uselist=False,
+        back_populates="case",
+        cascade="all, delete-orphan",
+    )
+
+
+# Банка
+class Sample(Base):
+    __tablename__ = "samples"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    case_id = Column(String(36), ForeignKey("cases.id"), nullable=False)
+    sample_number = Column(String(50))
+    cassette_count = Column(Integer, default=0)
+    glass_count = Column(Integer, default=0)
+    archive = Column(Boolean, default=False)
+
+    case = relationship("Case", back_populates="samples")
+    cassette = relationship(
+        "Cassette", back_populates="sample", cascade="all, delete-orphan"
+    )
+
+
+# Касета
+class Cassette(Base):
+    __tablename__ = "cassettes"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    sample_id = Column(String(36), ForeignKey("samples.id"), nullable=False)
+    cassette_number = Column(String(50))  # Порядковый номер кассеты в рамках конкретной банки
+    comment = Column(String(500), nullable=True)
+    glass_count = Column(Integer, default=0)
+    glass = relationship(
+        "Glass", back_populates="cassette", cascade="all, delete-orphan"
+    )
+    sample = relationship("Sample", back_populates="cassette")
+
+
+# Стекло
+class Glass(Base):
+    __tablename__ = "glasses"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    cassette_id = Column(String(36), ForeignKey("cassettes.id"), nullable=False)
+    glass_number = Column(Integer)  # Порядковый номер стекла
+    staining = Column(Enum(StainingType), nullable=True)
+    glass_data = Column(LargeBinary, nullable=True)
+    cassette = relationship("Cassette", back_populates="glass")
+
+
+# Параметры кейса
+class CaseParameters(Base):
+    __tablename__ = "case_parameters"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    case_id = Column(String(36), ForeignKey("cases.id"), unique=True, nullable=False)
+    macro_archive = Column(Enum(MacroArchive), default=MacroArchive.ESS)
+    decalcification = Column(
+        Enum(DecalcificationType), default=DecalcificationType.ABSENT
+    )
+    sample_type = Column(Enum(SampleType), default=SampleType.NATIVE)
+    material_type = Column(Enum(MaterialType), default=MaterialType.B)
+    urgency = Column(Enum(UrgencyType), default=UrgencyType.S)
+    container_count_actual = Column(Integer, nullable=True)
+    fixation = Column(Enum(FixationType), default=FixationType.NBF_10)
+    macro_description = Column(Text, nullable=True)
+
+    case = relationship("Case", back_populates="case_parameters")
+
+
+# Направление на исследование
+# class Direction(Base):
+#     __tablename__ = "directions"
+
+#     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+#     case_id = Column(String(36), ForeignKey("cases.id"), nullable=False)
+#     study_type = Column(Enum(StudyType), nullable=False)
+#     container_count = Column(String(50), nullable=True)
+#     medical_record_number = Column(String(250), nullable=True)
+#     clinical_data = Column(Text, nullable=True)
+#     medical_institution = Column(String(250), nullable=True)
+#     department = Column(String(250), nullable=True)
+#     doctor_contacts = Column(String(250), nullable=True)
+#     medical_procedure = Column(String(250), nullable=True)
+#     final_report_send_to = Column(String(250), nullable=True)
+#     released = Column(String(250), nullable=True)
+
+#     case = relationship("Case", back_populates="directions")
 
 
 # Base.metadata.create_all(bind=engine)

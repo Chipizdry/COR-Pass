@@ -1,7 +1,7 @@
 from typing import List, Optional
 from fastapi import HTTPException
 from sqlalchemy import asc, desc, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import selectinload
 from sqlalchemy.orm import Query as SQLAQuery
 
 from cor_pass.database.models import (
@@ -37,7 +37,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 #     return list(doctors)
 
 
-
 async def get_doctors(
     skip: int,
     limit: int,
@@ -54,11 +53,13 @@ async def get_doctors(
     stmt: SQLAQuery = select(Doctor)
 
     if status:
-            try:
-                doctor_status = DoctorStatus[status.upper()]  
-                stmt = stmt.where(Doctor.status == doctor_status)
-            except KeyError:
-                raise HTTPException(status_code=400, detail=f"Недействительный статус врача: {status}")
+        try:
+            doctor_status = DoctorStatus[status.upper()]
+            stmt = stmt.where(Doctor.status == doctor_status)
+        except KeyError:
+            raise HTTPException(
+                status_code=400, detail=f"Недействительный статус врача: {status}"
+            )
 
     # Сортировка
     if sort_by:

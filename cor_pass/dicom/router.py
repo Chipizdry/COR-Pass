@@ -114,4 +114,3 @@ def reconstruct(plane: str, index: int = Query(...), size: int = 512):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-

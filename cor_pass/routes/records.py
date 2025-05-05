@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from sqlalchemy.orm import Session
 from typing import List
 
 from cor_pass.repository import records as repository_record
@@ -16,7 +15,7 @@ from cor_pass.services.auth import auth_service
 from cor_pass.services.logger import logger
 from cor_pass.services.access import user_access
 
-from cor_pass.services.cipher import encrypt_data, decrypt_data, decrypt_user_key
+from cor_pass.services.cipher import decrypt_data, decrypt_user_key
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/records", tags=["Records"])

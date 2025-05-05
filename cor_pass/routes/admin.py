@@ -1,6 +1,5 @@
 from typing import List
 from fastapi import APIRouter, HTTPException, Depends, status
-from sqlalchemy.orm import Session
 from cor_pass.database.db import get_db
 from cor_pass.services.auth import auth_service
 from cor_pass.database.models import User, Status

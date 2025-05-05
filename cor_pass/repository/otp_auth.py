@@ -1,6 +1,5 @@
 from typing import List
 from sqlalchemy import and_, select
-from sqlalchemy.orm import Session
 
 
 from cor_pass.database.models import User, OTP
@@ -85,7 +84,7 @@ async def update_otp_record(
         await db.commit()
         await db.refresh(record)
         return record
-    return None 
+    return None
 
 
 async def delete_otp_record(user: User, db: AsyncSession, record_id: int):

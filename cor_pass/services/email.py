@@ -122,9 +122,11 @@ async def send_email_code_with_qr(email: EmailStr, host: str, recovery_code):
         print(err)
 
 
-async def send_email_code_with_temp_pass(email: EmailStr, 
-                                        #  host: str, 
-                                         temp_pass):
+async def send_email_code_with_temp_pass(
+    email: EmailStr,
+    #  host: str,
+    temp_pass,
+):
     logger.debug(f"Sending email to {email}")
     try:
 
