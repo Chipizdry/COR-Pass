@@ -1,5 +1,4 @@
 from typing import List, Optional
-from sqlalchemy.orm import Session
 from sqlalchemy.future import select
 from sqlalchemy import func
 import uuid
@@ -9,23 +8,21 @@ from cor_pass.database.models import (
     Status,
     Verification,
     UserSettings,
-    UserSession,
 )
 from cor_pass.schemas import (
     UserModel,
     PasswordStorageSettings,
     MedicalStorageSettings,
-    UserSessionDBModel,
-    UserSessionModel,
 )
 from cor_pass.services.auth import auth_service
+from cor_pass.config.config import settings
+from cor_pass.services import roles as role_check
 from cor_pass.services.logger import logger
 from cor_pass.services.cipher import (
     generate_aes_key,
     encrypt_user_key,
     generate_recovery_code,
     encrypt_data,
-    decrypt_user_key,
 )
 from cor_pass.services.email import send_email_code_with_qr
 from sqlalchemy.exc import NoResultFound
@@ -237,7 +234,6 @@ async def change_user_password(email: str, password: str, db: AsyncSession) -> N
         logger.warning(f"User with email {email} not found during password change.")
 
 
-
 async def change_user_email(email: str, current_user, db: AsyncSession) -> None:
     """
     Асинхронно изменяет email пользователя.
@@ -443,3 +439,20 @@ async def get_last_password_change(email: str, db: AsyncSession) -> Optional[dat
     if user:
         return user.last_password_change
     return None
+
+
+
+async def get_user_roles(email: str, db: AsyncSession) -> List[str]:
+    roles = []
+    user = await get_user_by_email(email, db)
+    
+    if await role_check.admin_role_checker.is_admin(user=user):
+        roles.append("admin")
+    if await role_check.lawyer_role_checker.is_lawyer(user=user):
+        roles.append("lawyer")
+    doctor = await role_check.doctor_role_checker.is_doctor(user=user, db=db)
+    if doctor:
+        roles.append("doctor")
+    if user.is_active:
+        roles.append("active_user")
+    return roles

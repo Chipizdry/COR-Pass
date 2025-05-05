@@ -14,7 +14,6 @@ from fastapi.security import (
     HTTPAuthorizationCredentials,
     HTTPBearer,
 )
-from sqlalchemy.orm import Session
 from random import randint
 from fastapi_limiter.depends import RateLimiter
 from cor_pass.database.db import get_db
@@ -29,13 +28,11 @@ from cor_pass.schemas import (
     TokenModel,
     EmailSchema,
     VerificationModel,
-    ChangePasswordModel,
     LoginResponseModel,
     RecoveryCodeModel,
-    UserSessionDBModel,
     UserSessionModel,
 )
-from cor_pass.database.models import User, UserSession
+from cor_pass.database.models import UserSession
 from cor_pass.repository import person as repository_person
 from cor_pass.repository import user_session as repository_session
 from cor_pass.repository import cor_id as repository_cor_id
@@ -49,12 +46,10 @@ from cor_pass.services.cipher import decrypt_data, decrypt_user_key, encrypt_dat
 from cor_pass.config.config import settings
 from cor_pass.services.access import user_access
 from cor_pass.services.logger import logger
-from cor_pass.services import cor_otp
 from fastapi import UploadFile
 
 from collections import defaultdict
 from datetime import datetime, timedelta
-import re
 
 from cor_pass.services.websocket import send_websocket_message
 
@@ -184,22 +179,25 @@ async def login(
                 detail="Нужен ввод мастер-ключа",
             )
 
+    # Проверка ролей
+    user_roles = await repository_person.get_user_roles(email=user.email, db=db)
+
     # Создаём токены
     if user.email in settings.eternal_accounts:
         access_token = await auth_service.create_access_token(
-            data={"oid": str(user.id), "corid": user.cor_id},
+            data={"oid": str(user.id), "corid": user.cor_id, "roles": user_roles},
             expires_delta=settings.eternal_token_expiration,
         )
         refresh_token = await auth_service.create_refresh_token(
-            data={"oid": str(user.id), "corid": user.cor_id},
+            data={"oid": str(user.id), "corid": user.cor_id, "roles": user_roles},
             expires_delta=settings.eternal_token_expiration,
         )
     else:
         access_token = await auth_service.create_access_token(
-            data={"oid": str(user.id), "corid": user.cor_id}
+            data={"oid": str(user.id), "corid": user.cor_id, "roles": user_roles}
         )
         refresh_token = await auth_service.create_refresh_token(
-            data={"oid": str(user.id), "corid": user.cor_id}
+            data={"oid": str(user.id), "corid": user.cor_id, "roles": user_roles}
         )
 
     # Создаём новую сессию
@@ -218,20 +216,20 @@ async def login(
     )
 
     # Проверяем, является ли пользователь администратором
-    is_admin = user.email in settings.admin_accounts
+    # is_admin = user.email in settings.admin_accounts
 
     # Логируем успешный вход
     logger.info(
         f"Успешный вход пользователя {user.email} с IP {client_ip} и устройства {device_information.get('device_info')}"
     )
-    logger.info(f"is_admin - {is_admin}")
+    # logger.info(f"is_admin - {is_admin}")
 
     # Возвращаем ответ
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
-        "is_admin": is_admin,
+        # "is_admin": is_admin,
         "session_id": str(
             new_session.id
         ),  # Добавляем ID сессии в ответ (преобразуем UUID в str)
@@ -305,8 +303,12 @@ async def confirm_login(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found / invalid email",
             )
+        
+        # Проверка ролей
+        user_roles = await repository_person.get_user_roles(email=user.email, db=db)
+
         # Получаем токены
-        token_data = {"oid": str(user.id), "corid": user.cor_id}
+        token_data = {"oid": str(user.id), "corid": user.cor_id, "roles": user_roles}
         expires_delta = (
             settings.eternal_token_expiration
             if user.email in settings.eternal_accounts
@@ -417,22 +419,24 @@ async def refresh_token(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="No active session found"
         )
+    # Проверка ролей
+    user_roles = await repository_person.get_user_roles(email=user.email, db=db)
 
     if user.email in settings.eternal_accounts:
         access_token = await auth_service.create_access_token(
-            data={"oid": str(user.id), "corid": user.cor_id},
+            data={"oid": str(user.id), "corid": user.cor_id, "roles": user_roles},
             expires_delta=settings.eternal_token_expiration,
         )
         refresh_token = await auth_service.create_refresh_token(
-            data={"oid": str(user.id), "corid": user.cor_id},
+            data={"oid": str(user.id), "corid": user.cor_id, "roles": user_roles},
             expires_delta=settings.eternal_token_expiration,
         )
     else:
         access_token = await auth_service.create_access_token(
-            data={"oid": str(user.id), "corid": user.cor_id}
+            data={"oid": str(user.id), "corid": user.cor_id, "roles": user_roles}
         )
         refresh_token = await auth_service.create_refresh_token(
-            data={"oid": str(user.id), "corid": user.cor_id}
+            data={"oid": str(user.id), "corid": user.cor_id, "roles": user_roles}
         )
 
     await repository_session.update_session_token(
@@ -449,7 +453,8 @@ async def refresh_token(
 
 
 @router.post(
-    "/send_verification_code"
+    "/send_verification_code",
+    dependencies=[Depends(RateLimiter(times=5, seconds=60))],
 )  # Маршрут проверки почты в случае если это новая регистрация
 async def send_verification_code(
     body: EmailSchema,
@@ -517,7 +522,8 @@ async def confirm_email(body: VerificationModel, db: AsyncSession = Depends(get_
         )
 
 
-@router.post("/forgot_password")
+@router.post("/forgot_password",
+             dependencies=[Depends(RateLimiter(times=5, seconds=60))],)
 async def forgot_password_send_verification_code(
     body: EmailSchema,
     background_tasks: BackgroundTasks,
@@ -595,12 +601,15 @@ async def restore_account_by_text(
     )
     await db.commit()  # Commit the change to recovery_code
 
+    # Проверка ролей
+    user_roles = await repository_person.get_user_roles(email=user.email, db=db)
+
     # Создаём токены
     access_token = await auth_service.create_access_token(
-        data={"oid": str(user.id), "corid": user.cor_id}, expires_delta=3600
+        data={"oid": str(user.id), "corid": user.cor_id, "roles": user_roles}, expires_delta=12
     )
     refresh_token = await auth_service.create_refresh_token(
-        data={"oid": str(user.id), "corid": user.cor_id}
+        data={"oid": str(user.id), "corid": user.cor_id, "roles": user_roles}
     )
 
     # Создаём новую сессию
@@ -663,6 +672,8 @@ async def upload_recovery_file(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid recovery code format",
         )
+    # Проверка ролей
+    user_roles = await repository_person.get_user_roles(email=user.email, db=db)
 
     if file_content == recovery_code.encode():
         confirmation = True
@@ -672,10 +683,10 @@ async def upload_recovery_file(
         await db.commit()
 
         access_token = await auth_service.create_access_token(
-            data={"oid": str(user.id), "corid": user.cor_id}, expires_delta=3600
+            data={"oid": str(user.id), "corid": user.cor_id, "roles": user_roles}, expires_delta=12
         )
         refresh_token = await auth_service.create_refresh_token(
-            data={"oid": str(user.id), "corid": user.cor_id}
+            data={"oid": str(user.id), "corid": user.cor_id, "roles": user_roles}
         )
         # Создаём новую сессию
         device_information = di.get_device_info(request)
