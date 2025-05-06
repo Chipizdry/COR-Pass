@@ -538,3 +538,112 @@ function goBack(url) {
         window.location.href = `${url}?access_token=${token}`;
     } 
 }
+
+//Отображение прогресс-бара паролей 
+function updatePasswordStrength(password, targetId) {
+    const strengthBar = document.getElementById(targetId);
+    if (!strengthBar) {
+        console.error(`Элемент с ID ${targetId} не найден`);
+        return;
+    }
+
+    const strengthFill = strengthBar.querySelector('.password-strength-fill');
+    if (!strengthFill) {
+        console.error('Элемент .password-strength-fill не найден');
+        return;
+    }
+
+    if (!password) {
+        strengthFill.style.width = '0%';
+        return;
+    }
+
+    let score = 0;
+    if (password.length >= 8) score += 1;
+    if (password.length >= 12) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[a-z]/.test(password)) score += 1;
+    if (/\d/.test(password)) score += 1;
+    if (/[\W_]/.test(password)) score += 1;
+
+    let percent, colorClass;
+    if (password.length < 6) {
+        percent = 25;
+        colorClass = "password-strength-weak";
+    } else if (score <= 3) {
+        percent = 40;
+        colorClass = "password-strength-weak";
+    } else if (score <= 5) {
+        percent = 65;
+        colorClass = "password-strength-medium";
+    } else if (score <= 7) {
+        percent = 85;
+        colorClass = "password-strength-good";
+    } else {
+        percent = 100;
+        colorClass = "password-strength-strong";
+    }
+
+    strengthFill.style.width = `${percent}%`;
+    strengthFill.className = `password-strength-fill ${colorClass}`;
+}
+
+// Обработчик генерации пароля
+function generatePassword(event) {
+    if( checkToken()){ 
+        console.log('Кнопка "Сгенерировать пароль" нажата');
+        event.preventDefault();
+        
+        let passwordField, targetId;
+        if (event.target.id === 'generatePasswordBtnCreate') {
+            passwordField = document.getElementById('generatedPassword');
+            targetId = 'passwordStrengthCreate';
+        } else if (event.target.id === 'generatePasswordBtnEdit') {
+            passwordField = document.getElementById('edit_password');
+            targetId = 'passwordStrengthEdit';
+        }
+
+        const length = parseInt(document.getElementById('passwordLength')?.value) || 12;
+        const includeUppercase = document.getElementById('includeUppercase')?.checked || false;
+        const includeLowercase = document.getElementById('includeLowercase')?.checked || true;
+        const includeDigits = document.getElementById('includeNumbers')?.checked || false;
+        const includeSpecial = document.getElementById('includeSymbols')?.checked || false;
+
+        const settings = {
+            length: length,
+            include_uppercase: includeUppercase,
+            include_lowercase: includeLowercase,
+            include_digits: includeDigits,
+            include_special: includeSpecial
+        };
+
+        fetch('/api/password_generator/generate_password/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (passwordField) {
+                passwordField.value = data.password;
+                // Проверяем, что функция определена перед вызовом
+                if (typeof updatePasswordStrength === 'function') {
+                    updatePasswordStrength(data.password, targetId);
+                } else {
+                    console.error('updatePasswordStrength function is not defined');
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка сети при попытке генерации пароля:', error);
+        });
+    }
+}
+
