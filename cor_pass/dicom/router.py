@@ -8,6 +8,18 @@ from PIL import Image
 from io import BytesIO
 from functools import lru_cache
 from pathlib import Path
+
+from fastapi import UploadFile, File
+import zipfile
+import shutil
+
+
+from typing import List
+from fastapi import UploadFile, File
+
+
+
+
 router = APIRouter(prefix="/api/dicom", tags=["DICOM"])
 HTML_FILE = Path(__file__).parents[1] / "static" / "dicom_viewer.html"
 DICOM_DIR = "dicom_files"
@@ -113,4 +125,85 @@ def reconstruct(plane: str, index: int = Query(...), size: int = 512):
     except Exception as e:
         import traceback
         traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@router.post("/upload")
+async def upload_dicom_files(files: List[UploadFile] = File(...)):
+    try:
+        # Очищаем директорию перед загрузкой новых файлов
+        shutil.rmtree(DICOM_DIR)
+        os.makedirs(DICOM_DIR, exist_ok=True)
+        
+        processed_files = 0
+        valid_files = 0
+        
+        for file in files:
+            file_ext = os.path.splitext(file.filename)[1].lower()
+            
+            # Пропускаем файлы с недопустимыми расширениями
+            if file_ext not in {'.dcm', '.zip'}:
+                continue
+                
+            temp_path = os.path.join(DICOM_DIR, file.filename)
+            
+            # Сохраняем файл
+            with open(temp_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            # Обрабатываем ZIP архив
+            if file_ext == '.zip':
+                try:
+                    with zipfile.ZipFile(temp_path, 'r') as zip_ref:
+                        zip_ref.extractall(DICOM_DIR)
+                    os.remove(temp_path)
+                    
+                    # Валидация DICOM файлов после распаковки
+                    for extracted_file in os.listdir(DICOM_DIR):
+                        if extracted_file.lower().endswith('.dcm'):
+                            try:
+                                pydicom.dcmread(os.path.join(DICOM_DIR, extracted_file), stop_before_pixels=True)
+                                valid_files += 1
+                            except:
+                                os.remove(os.path.join(DICOM_DIR, extracted_file))
+                except zipfile.BadZipFile:
+                    os.remove(temp_path)
+                    continue
+            else:
+                # Валидация одиночного DICOM файла
+                try:
+                    pydicom.dcmread(temp_path, stop_before_pixels=True)
+                    valid_files += 1
+                except:
+                    os.remove(temp_path)
+                    continue
+                    
+            processed_files += 1
+        
+        if valid_files == 0:
+            raise HTTPException(
+                status_code=400, 
+                detail="No valid DICOM files found in the uploaded files"
+            )
+        
+        # Очищаем кэш загруженного объема
+        load_volume.cache_clear()
+        
+        return {
+            "message": f"Successfully processed {processed_files} files, {valid_files} DICOM files validated"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/volume_info")
+def get_volume_info():
+    try:
+        volume, ds = load_volume()
+        return {
+            "slices": volume.shape[0],
+            "width": volume.shape[1],
+            "height": volume.shape[2]
+        }
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
