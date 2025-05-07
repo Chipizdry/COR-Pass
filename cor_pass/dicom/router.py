@@ -16,7 +16,8 @@ import shutil
 
 from typing import List
 from fastapi import UploadFile, File
-
+from pydicom import config
+from pydicom.pixel_data_handlers.util import convert_color_space
 
 
 
@@ -43,7 +44,15 @@ def load_volume():
 
     for f in files:
         ds = pydicom.dcmread(f)
-        arr = ds.pixel_array.astype(np.float32)
+
+        if not hasattr(ds, 'pixel_array'):
+             raise ValueError("DICOM dataset does not contain pixel data.")
+
+        try:
+            
+           arr = ds.pixel_array.astype(np.float32)
+        except NotImplementedError as e:
+         raise ValueError(f"Не удалось декодировать пиксели: {e}. Убедитесь, что установлен pylibjpeg, pylibjpeg-openjpeg или python-gdcm.")
         if hasattr(ds, 'RescaleSlope') and hasattr(ds, 'RescaleIntercept'):
             arr = arr * ds.RescaleSlope + ds.RescaleIntercept
         slices.append(arr)
