@@ -277,3 +277,43 @@ async def upload_dicom_files(files: List[UploadFile] = File(...)):
     except Exception as e:
         logger.error(f"Ошибка загрузки DICOM файлов: {str(e)}")
         raise HTTPException(status_code=500, detail="Не удалось загрузить DICOM файлы")
+
+@router.get("/volume_shape")
+def get_volume_shape():
+    try:
+        volume, _ = load_volume()
+        shape = {
+            "axial": volume.shape[0],
+            "coronal": volume.shape[1],
+            "sagittal": volume.shape[2]
+        }
+        return shape
+    except Exception as e:
+        logger.error(f"Ошибка получения формы тома: {str(e)}")
+        raise HTTPException(status_code=500, detail="Ошибка получения формы тома")
+
+
+@router.get("/metadata")
+def get_metadata():
+    try:
+        volume, ds = load_volume()
+        depth, height, width = volume.shape
+
+        spacing = ds.get("PixelSpacing", [1.0, 1.0])
+        slice_thickness = float(ds.get("SliceThickness", 1.0))
+        
+        return {
+            "shape": {
+                "depth": depth,       # количество аксиальных срезов
+                "height": height,
+                "width": width
+            },
+            "spacing": {
+                "x": float(spacing[1]),
+                "y": float(spacing[0]),
+                "z": slice_thickness
+            }
+        }
+    except Exception as e:
+        logger.error(f"Ошибка получения метаданных: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail="Не удалось получить метаданные")        

@@ -68,6 +68,10 @@
       </div>
       <div class="file-info" id="file-info"></div>
       <div id="upload-status"></div>
+
+      <p>Axial: <span id="axial-size"></span></p>
+      <p>Coronal: <span id="coronal-size"></span></p>
+      <p>Sagittal: <span id="sagittal-size"></span></p>
   </div>
   </div>
 
@@ -210,13 +214,17 @@ async function handleUpload() {
     
     // Добавляем файлы и считаем общий размер
     for (const file of fileInput.files) {
-        const fileExt = file.name.split('.').pop().toLowerCase();
-        if (fileExt === 'dcm' || fileExt === 'zip') {
-            formData.append('files', file);
-            totalSize += file.size;
-            fileCount++;
-        }
+    const fileName = file.name;
+    const parts = fileName.split('.');
+    const hasExtension = parts.length > 1;
+    const fileExt = hasExtension ? parts.pop().toLowerCase() : '';
+
+    if (fileExt === 'dcm' || fileExt === 'zip' || !hasExtension) {
+        formData.append('files', file);
+        totalSize += file.size;
+        fileCount++;
     }
+}
     
     if (fileCount === 0) {
         statusDiv.textContent = 'No valid DICOM or ZIP files selected';
@@ -248,10 +256,33 @@ async function handleUpload() {
                 
                 // Получаем информацию об объеме и обновляем слайдеры
                 const volumeInfo = await fetch('/api/dicom/volume_info').then(r => r.json());
-                updateSliders(volumeInfo);
+             //   updateSliders(volumeInfo);
                 
                 // Перезагружаем изображения
                 ['axial', 'sagittal', 'coronal'].forEach(update);
+
+                fetch("/api/dicom/metadata")
+                  .then(res => res.json())
+                  .then(data => {
+                    const { shape } = data;
+                    
+                    // Установим максимальные значения ползунков
+               /*     document.getElementById("axialSlider").max = shape.depth - 1;
+                    document.getElementById("coronalSlider").max = shape.height - 1;
+                    document.getElementById("sagittalSlider").max = shape.width - 1;
+
+                    // Можно также установить текущие значения в середину диапазона
+                    document.getElementById("axialSlider").value = Math.floor(shape.depth / 2);
+                    document.getElementById("coronalSlider").value = Math.floor(shape.height / 2);
+                    document.getElementById("sagittalSlider").value = Math.floor(shape.width / 2);
+                    
+                    // Затем можно вызвать функцию отображения среза
+                    renderSlice("axial", shape.depth / 2);
+                    renderSlice("coronal", shape.height / 2);
+                    renderSlice("sagittal", shape.width / 2);  */
+                  });
+
+
             } else {
                 statusDiv.textContent = `Error: ${xhr.statusText}`;
                 progressBar.style.background = '#f44336';
