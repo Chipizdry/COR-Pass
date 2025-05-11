@@ -232,51 +232,55 @@ async def upload_dicom_files(files: List[UploadFile] = File(...)):
         
         processed_files = 0
         valid_files = 0
-        errors = []
-        
+        invalid_files = []
+
         for file in files:
+            file_ext = os.path.splitext(file.filename)[1].lower()
+            temp_path = os.path.join(DICOM_DIR, file.filename)
+
             try:
-                file_ext = os.path.splitext(file.filename)[1].lower()
-                temp_path = os.path.join(DICOM_DIR, file.filename)
-                
-                logger.debug(f"Обработка файла {file.filename}")
-                
-                # Сохраняем файл
+                logger.debug(f"Сохраняется файл: {file.filename}")
                 with open(temp_path, "wb") as buffer:
                     shutil.copyfileobj(file.file, buffer)
+
+                if file_ext == ".zip":
+                    logger.info(f"Распаковка ZIP архива: {file.filename}")
+                    with zipfile.ZipFile(temp_path, "r") as zip_ref:
+                        zip_ref.extractall(DICOM_DIR)
+                    os.remove(temp_path)
                 
-                # Обрабатываем ZIP архив
-                if file_ext == '.zip':
-                    try:
-                        with zipfile.ZipFile(temp_path, 'r') as zip_ref:
-                            zip_ref.extractall(DICOM_DIR)
-                        os.remove(temp_path)
-                        
-                        # Валидация DICOM файлов после распаковки
-                        dicom_files = [f for f in os.listdir(DICOM_DIR) if is_dicom_file(os.path.join(DICOM_DIR, f))]
-                        valid_files += len(dicom_files)
-                    except Exception as e:
-                        errors.append(f"Ошибка обработки ZIP архива {file.filename}: {str(e)}")
-                elif is_dicom_file(temp_path):
-                    valid_files += 1
-                else:
-                    errors.append(f"{file.filename} не является действительным DICOM файлом.")
-                    
                 processed_files += 1
 
             except Exception as e:
-                errors.append(f"Ошибка обработки файла {file.filename}: {str(e)}")
-        
-        logger.info(f"Обработано {processed_files} файлов, {valid_files} действительных DICOM файлов")
-        
-        if errors:
-            logger.warning("Ошибки при обработке файлов:")
-            logger.warning("\n".join(errors))
-        
-        return {"status": "success", "valid_files": valid_files, "errors": errors}
+                logger.error(f"Ошибка при сохранении файла {file.filename}: {e}")
+                invalid_files.append((file.filename, str(e)))
+
+        # Проверка всех файлов в директории
+        final_files = [os.path.join(DICOM_DIR, f) for f in os.listdir(DICOM_DIR)]
+        for f in final_files:
+            try:
+                if is_dicom_file(f):
+                    # Попробуем прочитать файл как DICOM
+                    ds = pydicom.dcmread(f, stop_before_pixels=True)
+                    valid_files += 1
+                    logger.info(f"Файл подтверждён как DICOM: {os.path.basename(f)}")
+                else:
+                    raise ValueError("Файл не содержит сигнатуру DICM")
+            except Exception as e:
+                logger.warning(f"Невалидный DICOM файл: {os.path.basename(f)} — {e}")
+                invalid_files.append((os.path.basename(f), str(e)))
+                os.remove(f)  # Удалим невалидный файл
+
+        return {
+            "status": "ok",
+            "processed": processed_files,
+            "valid_dicom": valid_files,
+            "invalid_files": invalid_files
+        }
+
     except Exception as e:
-        logger.error(f"Ошибка загрузки DICOM файлов: {str(e)}")
-        raise HTTPException(status_code=500, detail="Не удалось загрузить DICOM файлы")
+        logger.error(f"Ошибка при загрузке DICOM файлов: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail="Ошибка загрузки DICOM файлов")
 
 @router.get("/volume_shape")
 def get_volume_shape():
