@@ -647,23 +647,40 @@ function generatePassword(event) {
     }
 }
 
+
 /**
- * Функция для шифрования учётных данных с использованием супер-пароля восстановления
- * @param {Array} records - Массив объектов с учётными данными
+ * Функция для шифрования всех данных учётных записей с использованием супер-пароля восстановления
+ * @param {Array} records - Массив объектов с учётными данными (включая все поля)
  * @param {string} recoveryPassword - Супер-пароль восстановления
  * @returns {Promise<Blob>} - Возвращает Blob с зашифрованными данными в формате txt
  */
 async function encryptAndSaveRecords(records, recoveryPassword) {
     try {
-        // 1. Преобразуем данные в строку JSON
-        const dataString = JSON.stringify(records);
+        // 1. Подготовка данных - включаем все поля каждой записи
+        const dataToEncrypt = records.map(record => ({
+            record_id: record.record_id,
+            record_name: record.record_name,
+            website: record.website,
+            username: record.username,
+            password: record.password,
+            notes: record.notes, // Шифруем комментарии
+            is_favorite: record.is_favorite,
+            created_at: record.created_at,
+            updated_at: record.updated_at
+            // Добавьте другие поля, если они есть
+        }));
+
+        // 2. Преобразуем данные в строку JSON
+        const dataString = JSON.stringify(dataToEncrypt);
         
-        // 2. Генерируем ключ шифрования из супер-пароля
+        // 3. Генерируем ключ шифрования из супер-пароля
         const encoder = new TextEncoder();
         const passwordBuffer = encoder.encode(recoveryPassword);
         
-        // Используем PBKDF2 для получения криптографически стойкого ключа
+        // Генерируем случайную соль
         const salt = window.crypto.getRandomValues(new Uint8Array(16));
+        
+        // Создаем ключевой материал из пароля
         const keyMaterial = await window.crypto.subtle.importKey(
             'raw',
             passwordBuffer,
@@ -672,47 +689,51 @@ async function encryptAndSaveRecords(records, recoveryPassword) {
             ['deriveKey']
         );
         
+        // Производим ключ с помощью PBKDF2
         const key = await window.crypto.subtle.deriveKey(
             {
                 name: 'PBKDF2',
                 salt: salt,
-                iterations: 100000,
+                iterations: 100000, // Достаточно большое число итераций для безопасности
                 hash: 'SHA-256'
             },
             keyMaterial,
-            { name: 'AES-GCM', length: 256 },
+            { name: 'AES-GCM', length: 256 }, // Используем AES-GCM с ключом 256 бит
             false,
             ['encrypt']
         );
         
-        // 3. Шифруем данные
-        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+        // 4. Шифруем данные
+        const iv = window.crypto.getRandomValues(new Uint8Array(12)); // Генерируем IV
         const dataBuffer = encoder.encode(dataString);
         
         const encryptedData = await window.crypto.subtle.encrypt(
             {
                 name: 'AES-GCM',
-                iv: iv
+                iv: iv,
+                additionalData: encoder.encode('additional-auth-data'), // Дополнительные данные для аутентификации
+                tagLength: 128 // Длина тега аутентификации
             },
             key,
             dataBuffer
         );
         
-        // 4. Комбинируем соль, IV и зашифрованные данные в один файл
+        // 5. Формируем итоговый файл:
+        // Формат: [соль (16 байт)][IV (12 байт)][зашифрованные данные][тег аутентификации (16 байт)]
         const combined = new Uint8Array(salt.length + iv.length + encryptedData.byteLength);
-        combined.set(salt, 0);
-        combined.set(iv, salt.length);
+        combined.set(salt, 0); // Добавляем соль
+        combined.set(iv, salt.length); // Добавляем IV
+        // Добавляем зашифрованные данные (включая тег аутентификации)
         combined.set(new Uint8Array(encryptedData), salt.length + iv.length);
         
-        // 5. Создаем Blob и возвращаем его
+        // 6. Создаем Blob для скачивания
         return new Blob([combined], { type: 'text/plain' });
         
     } catch (error) {
         console.error('Ошибка при шифровании данных:', error);
-        throw error;
+        throw new Error('Не удалось зашифровать данные. Пожалуйста, попробуйте снова.');
     }
 }
-
 
 /**
  * Функция для создания и скачивания файла с зашифрованными данными
@@ -743,7 +764,7 @@ async function downloadEncryptedRecords(records) {
         const url = window.URL.createObjectURL(encryptedBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'encrypted_records.txt';
+        a.download = 'account_records.cor';
         document.body.appendChild(a);
         a.click();
         
@@ -766,19 +787,28 @@ async function downloadEncryptedRecords(records) {
  */
 async function decryptRecordsFromFile(file, recoveryPassword) {
     try {
+        console.log('Начало дешифровки файла...');
+        
         // 1. Читаем файл как ArrayBuffer
         const fileBuffer = await file.arrayBuffer();
         const fileBytes = new Uint8Array(fileBuffer);
-        
-        // 2. Извлекаем соль, IV и зашифрованные данные
+        console.log('Размер файла:', fileBytes.length, 'байт');
+
+        // 2. Извлекаем компоненты из файла
         const salt = fileBytes.slice(0, 16);
-        const iv = fileBytes.slice(16, 16 + 12);
-        const encryptedData = fileBytes.slice(16 + 12);
+        const iv = fileBytes.slice(16, 28); // 16 + 12 = 28 (IV)
+        const encryptedData = fileBytes.slice(28); // Остальное - зашифрованные данные + тег
         
+        console.log('Извлечены компоненты:',
+            '\nСоль (16 байт):', salt,
+            '\nIV (12 байт):', iv,
+            '\nДанные + тег:', encryptedData.length, 'байт');
+
         // 3. Генерируем ключ из супер-пароля
         const encoder = new TextEncoder();
         const passwordBuffer = encoder.encode(recoveryPassword);
         
+        console.log('Генерация ключа из пароля...');
         const keyMaterial = await window.crypto.subtle.importKey(
             'raw',
             passwordBuffer,
@@ -799,65 +829,93 @@ async function decryptRecordsFromFile(file, recoveryPassword) {
             false,
             ['decrypt']
         );
-        
+        console.log('Ключ успешно сгенерирован');
+
         // 4. Дешифруем данные
+        console.log('Процесс дешифровки...');
         const decryptedData = await window.crypto.subtle.decrypt(
             {
                 name: 'AES-GCM',
-                iv: iv
+                iv: iv,
+                additionalData: encoder.encode('additional-auth-data'),
+                tagLength: 128
             },
             key,
             encryptedData
         );
-        
+        console.log('Данные успешно дешифрованы');
+
         // 5. Преобразуем в строку и парсим JSON
         const decoder = new TextDecoder();
         const decryptedString = decoder.decode(decryptedData);
-        const records = JSON.parse(decryptedString);
+        console.log('Дешифрованная строка:', decryptedString);
         
+        const records = JSON.parse(decryptedString);
+        console.log('Дешифрованные записи:', records);
+
         return records;
         
     } catch (error) {
-        console.error('Ошибка при дешифровке данных:', error);
-        throw error;
+        console.error('Полная ошибка дешифровки:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
+        throw new Error('Не удалось дешифровать файл. Проверьте: 1) правильность супер-пароля, 2) что файл не поврежден');
     }
 }
-
 
 /**
  * Функция для загрузки и дешифровки файла с учётными записями
  */
 async function uploadAndDecryptRecords() {
     try {
+        console.log('Инициализация процесса загрузки файла...');
+        
         // Создаем input для выбора файла
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
-        fileInput.accept = '.txt';
+        fileInput.accept = '.cor,.txt';
+        fileInput.style.display = 'none';
         
         fileInput.onchange = async (e) => {
             const file = e.target.files[0];
-            if (!file) return;
+            if (!file) {
+                console.log('Файл не выбран');
+                return;
+            }
             
-            // Запрашиваем супер-пароль восстановления
-            const recoveryPassword = prompt('Введите супер-пароль восстановления:');
-            if (!recoveryPassword) return;
+            console.log('Выбран файл:', file.name, 'размер:', file.size, 'байт');
             
             try {
-                // Дешифруем записи
+                // Запрашиваем супер-пароль восстановления
+                const recoveryPassword = prompt('Введите супер-пароль восстановления:');
+                if (!recoveryPassword) {
+                    console.log('Пользователь отменил ввод пароля');
+                    return;
+                }
+
+                console.log('Начало дешифровки файла...');
                 const records = await decryptRecordsFromFile(file, recoveryPassword);
                 
-                // Отображаем записи в интерфейсе
-                displayDecryptedRecords(records);
+                console.log('Успешно дешифровано записей:', records.length);
+                alert(`Успешно дешифровано ${records.length} записей!`);
                 
-                alert('Учётные записи успешно загружены и дешифрованы!');
+                // Отображаем записи в интерфейсе
+                populateTable(records, true);
+                
             } catch (error) {
-                console.error('Ошибка:', error);
-                alert('Не удалось дешифровать файл. Проверьте правильность супер-пароля.');
+                console.error('Ошибка при обработке файла:', error);
+                alert(error.message);
             }
         };
         
+        document.body.appendChild(fileInput);
         fileInput.click();
+        document.body.removeChild(fileInput);
+        
     } catch (error) {
-        console.error('Ошибка при загрузке файла:', error);
+        console.error('Ошибка в uploadAndDecryptRecords:', error);
+        alert('Произошла ошибка при загрузке файла. Пожалуйста, попробуйте снова.');
     }
 }
