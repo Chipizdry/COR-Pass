@@ -815,3 +815,49 @@
     background-color: #007bff;
 }
   
+
+/* Стили для кнопок в разделе восстановления */
+.recovery-actions {
+    position: absolute;
+    bottom: 20px; /* Фиксированный отступ от нижнего края */
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+#encryptAndSaveRecords,
+#decryptRecordsBtn {
+    width: 100%;
+    max-width: 420px;
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#encryptAndSaveRecords {
+    background-color: #7B43F2;
+    color: white;
+    border: none;
+}
+
+#decryptRecordsBtn {
+    background-color: white;
+    color: #7B43F2;
+    border: 1px solid #7B43F2;
+}
+
+#encryptAndSaveRecords:hover {
+    background-color: #5e32c5;
+}
+
+#decryptRecordsBtn:hover {
+    background-color: #f2eaff;
+}
