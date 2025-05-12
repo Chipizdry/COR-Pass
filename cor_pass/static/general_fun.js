@@ -919,3 +919,36 @@ async function uploadAndDecryptRecords() {
         alert('Произошла ошибка при загрузке файла. Пожалуйста, попробуйте снова.');
     }
 }
+
+
+async function deleteAccount() {
+    if (checkToken()) {
+        const confirmDelete = confirm('Вы уверены, что хотите удалить аккаунт? Это действие необратимо.');
+
+        if (!confirmDelete) return;
+
+        try {
+            const token = localStorage.getItem('accessToken'); // или другое имя, если храните токен иначе
+
+            const response = await fetch('/api/user/delete_my_account', {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                }
+            });
+
+            if (response.ok) {
+                alert('Аккаунт успешно удалён.');
+                // Например, выйти на главную страницу или форму входа
+                window.location.href = "/"; 
+               
+            } else {
+                const errorData = await response.json();
+                alert('Ошибка при удалении аккаунта: ' + (errorData.message || response.status));
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Произошла ошибка при удалении аккаунта.');
+        }
+    }
+}
