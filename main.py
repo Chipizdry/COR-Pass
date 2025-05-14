@@ -54,7 +54,7 @@ import logging
 
 from cor_pass.services.websocket import check_session_timeouts, cleanup_auth_sessions
 from cor_pass.dicom.router import router as dicom_router
-
+from cor_pass.routes import printer
 # Создание обработчика для логирования с временными метками
 class CustomFormatter(logging.Formatter):
     def format(self, record):
@@ -227,10 +227,12 @@ app.include_router(dicom_router, prefix="/api/dicom")
 app.include_router(cassettes.router, prefix="/api")
 app.include_router(glasses.router, prefix="/api")
 
+app.include_router(printer.router, prefix="/api")
+
 if __name__ == "__main__":
     uvicorn.run(
         app="main:app",
-        host="192.168.153.203",
+        host="192.168.154.191",
         port=8000,
         log_level="info",
         access_log=True,
