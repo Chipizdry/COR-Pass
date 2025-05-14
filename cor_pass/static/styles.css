@@ -803,3 +803,16 @@ select#user_sex option:checked {
     max-height: none; /* Отключаем ограничение по высоте */
     display: none;
 }
+
+select {
+    width: 200px;
+    padding: 10px;         /* Внутренние отступы */
+    font-size: 14px;
+    color: #5B4296;
+    border: 1px solid #ccc;/* Рамка вокруг */
+    border-radius: 12px;   /* Скругленные углы */
+    box-sizing: border-box;/* Учитываем отступы и границы при расчете ширины */
+    background-color: white;
+    appearance: none;      /* Скрываем стандартный стиль стрелки */
+    margin-bottom: 10px;   /* Отступ снизу для разделения полей */
+}

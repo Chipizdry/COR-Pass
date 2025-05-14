@@ -11,6 +11,7 @@ const modalConfigs = {
     step3Modal: { width: '460px', height: '650px', top: '20px', left: '300px' },
     step4Modal: { width: '460px', height: '650px', top: '20px', left: '300px' },
     addPatientModal: { width: '460px', height: '700px', top: '15px', left: '300px' },
+    addDeviceModal: { width: '250px', height: '750px', top: '50px', left: '250px' },
 };
 
 function makeModalDraggable(modalId) {
