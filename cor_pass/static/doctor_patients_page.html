@@ -103,6 +103,7 @@
         </button>
         <span class="nav-label">Печать</span>
       </div>
+      <div id="printerStatus" style="margin-left: 10px; font-size: 14px;">Проверка статуса принтера...</div>
     </nav>
 
       <!-- Мини‑аватар пользователя внизу сайдбара -->
@@ -567,6 +568,9 @@ document.querySelectorAll('.tab-button').forEach(button => {
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+
+
+    
       // Инициализация модального окна
       const modal = document.getElementById('addPatientModal');
       const addPatientBtn = document.getElementById('addPatientBtn');
@@ -614,10 +618,28 @@ function formatCorIdInput() {
   inputField.value = value;
 }
 
-// Обработчик ввода в поле COR-ID
-document.getElementById('corIdInput').addEventListener('input', formatCorIdInput);
+
       
   });
+
+
+
+
+  document.addEventListener('DOMContentLoaded', () => {
+    startPrinterMonitoring();
+    
+    document.getElementById('sendLabelButton')?.addEventListener('click', async () => {
+        const ip = document.getElementById('printerIp')?.value.trim() || PRINTER_IP;
+        const isAvailable = await checkPrinterAvailability(ip);
+        
+        if (!isAvailable) {
+            alert('Принтер недоступен. Проверьте соединение.');
+            return;
+        }
+        
+        await sendPrintRequest(ip);
+    });
+}); 
 </script>
 </body>
 </html>
