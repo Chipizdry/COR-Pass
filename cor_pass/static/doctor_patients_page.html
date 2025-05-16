@@ -353,34 +353,35 @@
       <div class="modal-buttons">
         <button class="modal-button close" data-action="close" id="closeAddDeviceModal">✖</button>
       </div>
+
       <h1>Новое устройство</h1>
     </div>
 
     <label>Тип устройства:</label>
     <select id="deviceType" class="select">
-      <option value="Принтер">Принтер</option>
-      <option value="Сканер">Сканер</option>
-      <option value="Камера">Камера</option>
+      <option value="Принтер">Принтер кассет</option>
+      <option value="Сканер">Принтер стёкол</option>
+      <option value="Камера">Сканер</option>
       <option value="Другое">Другое</option>
     </select>
 
     <label>ID устройства (0–65535):</label>
-    <input type="number" id="deviceId" min="0" max="65535" />
+    <input type="text" class="select" id="deviceId" min="0" max="65535" />
 
     <label>IP-адрес:</label>
-    <input type="text" id="deviceIp" placeholder="192.168.001.100" />
+    <input type="text" id="deviceIp" placeholder="000.000.000.000" />
 
-    <label>Маска подсети:</label>
-    <input type="text" id="deviceMask" placeholder="255.255.255.000" />
+<!--    <label>Маска подсети:</label>
+    <input type="text" id="deviceMask" placeholder="000.000.000.000" />
 
     <label>Шлюз:</label>
-    <input type="text" id="deviceGateway" placeholder="192.168.001.001" />
+    <input type="text" id="deviceGateway" placeholder="000.000.000.000" /> -->
 
     <label>Статус / Локация:</label>
     <input type="text" id="deviceLocation" maxlength="20" placeholder="Серверная, этаж 2" />
 
-      <button onclick="testDevice()" class="button" id="testDevice">🧪 Тест</button>
-      <button onclick="addDevice()"  class="button" id="addDevice" >💾 Сохранить</button>
+      <button onclick="testDevice()" class="button" id="testDevice">Тест</button>
+      <button onclick="addDevice()"  class="button" id="addDevice" >Сохранить</button>
     
   </div>
 </div>

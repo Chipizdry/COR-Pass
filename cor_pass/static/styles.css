@@ -804,15 +804,16 @@ select#user_sex option:checked {
     display: none;
 }
 
+/*
 select {
     width: 200px;
-    padding: 10px;         /* Внутренние отступы */
+    padding: 10px;         
     font-size: 14px;
     color: #5B4296;
-    border: 1px solid #ccc;/* Рамка вокруг */
-    border-radius: 12px;   /* Скругленные углы */
-    box-sizing: border-box;/* Учитываем отступы и границы при расчете ширины */
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    box-sizing: border-box;
     background-color: white;
-    appearance: none;      /* Скрываем стандартный стиль стрелки */
-    margin-bottom: 10px;   /* Отступ снизу для разделения полей */
-}
+    appearance: none;  
+    margin-bottom: 10px;
+} */
