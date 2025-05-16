@@ -1,3 +1,5 @@
+import asyncio
+import platform
 from fastapi import FastAPI, APIRouter, HTTPException,Query 
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
@@ -9,7 +11,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-router = APIRouter()  # Убрали prefix="/api" здесь
+router = APIRouter(tags=["Printer"])  
 
 class Label(BaseModel):
     model_id: int

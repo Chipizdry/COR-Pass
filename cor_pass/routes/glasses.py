@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.database.db import get_db
-from cor_pass.schemas import Cassette, CassetteCreate, Glass, Sample, SampleCreate
+from cor_pass.schemas import DeleteGlassesRequest, DeleteGlassesResponse, Glass as GlassModelScheema, GlassCreate
 from cor_pass.repository import sample as sample_service
 from cor_pass.repository import cassette as cassette_service
 from cor_pass.repository import glass as glass_service
@@ -14,25 +14,23 @@ router = APIRouter(prefix="/glasses", tags=["Glass"])
 
 
 @router.post(
-    "/cassettes/{cassettes_id}/glass",
+    "/create",
     dependencies=[Depends(doctor_access)],
-    #  response_model=Cassette
+    response_model=List[GlassModelScheema],
 )
 async def create_glass_for_cassette(
-    cassette_id: str,
-    staining_type: db_models.StainingType,
-    num_glasses: int = 1,
+    body: GlassCreate,
     db: AsyncSession = Depends(get_db),
 ):
     return await glass_service.create_glass(
         db=db,
-        cassette_id=cassette_id,
-        num_glasses=num_glasses,
-        staining_type=staining_type,
+        cassette_id=body.cassette_id,
+        num_glasses=body.num_glasses,
+        staining_type=body.staining_type,
     )
 
 
-@router.get("/{glass_id}", response_model=Glass, dependencies=[Depends(doctor_access)])
+@router.get("/{glass_id}", response_model=GlassModelScheema, dependencies=[Depends(doctor_access)])
 async def read_glass_info(glass_id: str, db: AsyncSession = Depends(get_db)):
     db_glass = await glass_service.get_glass(db=db, glass_id=glass_id)
     if db_glass is None:
@@ -41,12 +39,14 @@ async def read_glass_info(glass_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.delete(
-    "/{glass_id}",
+    "/glasses",
+    response_model=DeleteGlassesResponse,
     dependencies=[Depends(doctor_access)],
-    #    response_model=Glass
+    status_code=status.HTTP_200_OK,
 )
-async def delete_glass(glass_id: str, db: AsyncSession = Depends(get_db)):
-    db_glass = await glass_service.delete_glass(db, glass_id)
-    if db_glass is None:
-        raise HTTPException(status_code=404, detail="Glass not found")
-    return db_glass
+async def delete_glasses_endpoint(
+    request_body: DeleteGlassesRequest, db: AsyncSession = Depends(get_db)
+):
+    """Удаляет несколько стекол по их ID."""
+    result = await glass_service.delete_glasses(db=db, glass_ids=request_body.glass_ids)
+    return result

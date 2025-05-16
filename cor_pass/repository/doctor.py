@@ -1,6 +1,9 @@
 import base64
+from datetime import datetime, timedelta
+from fastapi import HTTPException, UploadFile
 from sqlalchemy import asc, desc, func, select
 from typing import List, Optional, Tuple, List
+
 
 from cor_pass.database.models import (
     Certificate,
@@ -11,34 +14,37 @@ from cor_pass.database.models import (
     Patient,
     PatientStatus,
     User,
-    DoctorStatus,
+    Doctor_Status,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from cor_pass.schemas import DoctorCreate
 from cor_pass.services.cipher import decrypt_data
 from cor_pass.config.config import settings
 
 
+
 async def create_doctor(
-    doctor_data: dict,
+    doctor_data: DoctorCreate,
     db: AsyncSession,
     user: User,
-    doctors_photo_bytes: Optional[bytes] = None,
 ) -> Doctor:
     """
     Асинхронная сервисная функция по созданию врача.
     """
     doctor = Doctor(
         doctor_id=user.cor_id,
-        work_email=doctor_data.get("work_email"),
-        phone_number=doctor_data.get("phone_number"),
-        first_name=doctor_data.get("first_name"),
-        surname=doctor_data.get("surname"),
-        last_name=doctor_data.get("last_name"),
-        doctors_photo=doctors_photo_bytes,
-        scientific_degree=doctor_data.get("scientific_degree"),
-        date_of_last_attestation=doctor_data.get("date_of_last_attestation"),
-        status=DoctorStatus.PENDING,
+        work_email=doctor_data.work_email,
+        phone_number=doctor_data.phone_number,
+        first_name=doctor_data.first_name,
+        surname=doctor_data.surname,
+        last_name=doctor_data.last_name,
+        scientific_degree=doctor_data.scientific_degree,
+        date_of_last_attestation=doctor_data.date_of_last_attestation,
+        passport_code=doctor_data.passport_code,
+        taxpayer_identification_number=doctor_data.taxpayer_identification_number,
+        date_of_next_review=datetime.now() + timedelta(days=180),
+        status=Doctor_Status.pending,
     )
 
     db.add(doctor)
@@ -49,78 +55,91 @@ async def create_doctor(
     return doctor
 
 
+
+
+
 async def create_certificates(
     doctor: Doctor,
-    doctor_data: dict,
+    doctor_data: DoctorCreate,
     db: AsyncSession,
-    certificate_scan_bytes: Optional[bytes] = None,
-) -> None:
+):
     """
     Асинхронно создает сертификаты врача.
     """
-    for cert in doctor_data.get("certificates", []):
+    list_of_certificates = []
+    for cert in doctor_data.certificates:
         certificate = Certificate(
             doctor_id=doctor.doctor_id,
-            date=cert.get("date"),
-            series=cert.get("series"),
-            number=cert.get("number"),
-            university=cert.get("university"),
-            scan=certificate_scan_bytes,
+            date=cert.date,
+            series=cert.series,
+            number=cert.number,
+            university=cert.university,
         )
         db.add(certificate)
+        await db.flush()
+        list_of_certificates.append(certificate.id)
 
     await db.commit()
+    return list_of_certificates
+
+
 
 
 async def create_diploma(
     doctor: Doctor,
-    doctor_data: dict,
+    doctor_data: DoctorCreate,
     db: AsyncSession,
-    diploma_scan_bytes: Optional[bytes] = None,
-) -> None:
+):
     """
     Асинхронно создает дипломы врача.
     """
-    for dip in doctor_data.get("diplomas", []):
+    list_of_diplomas = []
+    for dip in doctor_data.diplomas:
         diploma = Diploma(
             doctor_id=doctor.doctor_id,
-            date=dip.get("date"),
-            series=dip.get("series"),
-            number=dip.get("number"),
-            university=dip.get("university"),
-            scan=diploma_scan_bytes,
+            date=dip.date,
+            series=dip.series,
+            number=dip.number,
+            university=dip.university,
         )
         db.add(diploma)
+        await db.flush()
+        list_of_diplomas.append(diploma.id)
 
     await db.commit()
+    return list_of_diplomas
 
 
 async def create_clinic_affiliation(
-    doctor: Doctor, doctor_data: dict, db: AsyncSession
-) -> None:
+    doctor: Doctor, doctor_data: DoctorCreate, db: AsyncSession
+):
     """
     Асинхронно создает привязки к клиникам для врача.
     """
-    for aff in doctor_data.get("clinic_affiliations", []):
+    list_of_clinics = []
+    for aff in doctor_data.clinic_affiliations:
         affiliation = ClinicAffiliation(
             doctor_id=doctor.doctor_id,
-            clinic_name=aff.get("clinic_name"),
-            department=aff.get("department"),
-            position=aff.get("position"),
-            specialty=aff.get("specialty"),
+            clinic_name=aff.clinic_name,
+            department=aff.department,
+            position=aff.position,
+            specialty=aff.specialty,
         )
         db.add(affiliation)
+        await db.flush()
+        list_of_clinics.append(affiliation.id)
 
     await db.commit()
+    return list_of_clinics
+
+
+
 
 
 async def create_doctor_service(
-    doctor_data: dict,
+    doctor_data: DoctorCreate,
     db: AsyncSession,
     doctor: Doctor,
-    doctors_photo_bytes: Optional[bytes] = None,
-    diploma_scan_bytes: Optional[bytes] = None,
-    certificate_scan_bytes: Optional[bytes] = None,
 ) -> Doctor:
     """
     Асинхронная основная сервисная функция по созданию врача и его сертификатов.
@@ -130,13 +149,16 @@ async def create_doctor_service(
     if doctor:
         print("Врач создан успешно")
 
-        await create_certificates(doctor, doctor_data, db, certificate_scan_bytes)
+        certificates = await create_certificates(doctor, doctor_data, db)
+        print(certificates)
 
-        await create_diploma(doctor, doctor_data, db, diploma_scan_bytes)
+        diploma = await create_diploma(doctor, doctor_data, db)
+        print(diploma)
 
-        await create_clinic_affiliation(doctor, doctor_data, db)
+        clinic_aff = await create_clinic_affiliation(doctor, doctor_data, db)
+        print(diploma)
 
-    return doctor
+    return certificates, diploma, clinic_aff
 
 
 async def get_doctor_patients_with_status(
@@ -248,3 +270,80 @@ async def get_doctor_patients_with_status(
         )
 
     return result, total_count
+
+
+
+
+async def upload_doctor_photo_service(doctor_id: str, file: UploadFile, db: AsyncSession):
+    stmt = select(Doctor).where(Doctor.doctor_id == doctor_id)
+    result = await db.execute(stmt)
+    doctor = result.scalar_one_or_none()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Врач не найден")
+    doctor.doctors_photo = file.file.read()
+    await db.commit()
+    await db.refresh(doctor)
+    return {"doctor_id": doctor_id, "message": "Фотография врача успешно загружена"}
+
+
+
+
+
+async def upload_reserv_data_service(doctor_id: str, file: UploadFile, db: AsyncSession):
+    allowed_types = ["image/jpeg", "image/png", "application/pdf"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Недопустимый тип файла. Разрешены только JPEG, PNG и PDF.",
+        )
+    stmt = select(Doctor).where(Doctor.doctor_id == doctor_id)
+    result = await db.execute(stmt)
+    doctor = result.scalar_one_or_none()
+    if not doctor:
+        raise HTTPException(status_code=404, detail="Врач не найден")
+    contents = await file.read()
+    doctor.reserv_scan_data = contents
+    doctor.reserv_scan_file_type = file.content_type
+    await db.commit()
+    return {"doctor_id": doctor_id, "message": "Выписка из резерва успешно загружена"}
+
+
+
+
+async def upload_diploma_service(diploma_id: str, file: UploadFile, db: AsyncSession):
+    allowed_types = ["image/jpeg", "image/png", "application/pdf"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Недопустимый тип файла. Разрешены только JPEG, PNG и PDF.",
+        )
+    stmt = select(Diploma).where(Diploma.id == diploma_id)
+    result = await db.execute(stmt)
+    diploma = result.scalar_one()
+    if not diploma:
+        raise HTTPException(status_code=404, detail="Документ не найден")
+    contents = await file.read()
+    diploma.file_data = contents
+    diploma.file_type = file.content_type
+    await db.commit()
+    return {"document_id": diploma_id, "message": "Диплом успешно загружен"}
+
+
+
+async def upload_certificate_service(certificate_id: str, file: UploadFile, db: AsyncSession):
+    allowed_types = ["image/jpeg", "image/png", "application/pdf"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail="Недопустимый тип файла. Разрешены только JPEG, PNG и PDF.",
+        )
+    stmt = select(Certificate).where(Certificate.id == certificate_id)
+    result = await db.execute(stmt)
+    certificate = result.scalar_one()
+    if not certificate:
+        raise HTTPException(status_code=404, detail="Документ не найден")
+    contents = await file.read()
+    certificate.file_data = contents
+    certificate.file_type = file.content_type
+    await db.commit()
+    return {"document_id": certificate_id, "message": "Сертификат успешно загружен"}

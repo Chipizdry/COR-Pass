@@ -1,13 +1,10 @@
-from datetime import date
-import json
 from fastapi import (
     APIRouter,
+    Body,
     Depends,
-    Form,
     HTTPException,
     Query,
     UploadFile,
-    File,
     status,
 )
 
@@ -20,11 +17,16 @@ from cor_pass.repository.doctor import (
     create_doctor,
     create_doctor_service,
     get_doctor_patients_with_status,
+    upload_certificate_service,
+    upload_diploma_service,
+    upload_doctor_photo_service,
+    upload_reserv_data_service,
 )
 from cor_pass.repository.lawyer import get_doctor
 from cor_pass.repository.patient import add_existing_patient, register_new_patient
 from cor_pass.schemas import (
-    DoctorResponse,
+    DoctorCreate,
+    DoctorCreateResponse,
     ExistingPatientAdd,
     NewPatientRegistration,
 )
@@ -32,6 +34,7 @@ from cor_pass.repository import person as repository_person
 from cor_pass.services.auth import auth_service
 from cor_pass.services.access import user_access, doctor_access
 from cor_pass.services.auth import auth_service
+from cor_pass.services.document_validation import validate_document_file
 from cor_pass.services.image_validation import validate_image_file
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,20 +46,12 @@ router = APIRouter(prefix="/doctor", tags=["Doctor"])
 
 @router.post(
     "/signup",
-    # response_model=DoctorResponse,
+    response_model=DoctorCreateResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(user_access)],
 )
 async def signup_doctor(
-    doctor_data: str = Form(
-        ...,
-        example='{"work_email": "doctor@example.com","phone_number": "+380636666541", "first_name": "John", "surname": "Doe", "last_name": "Smith", "scientific_degree": "PhD", "date_of_last_attestation": "2022-12-31", "diplomas": [{"date": "2023-01-01", "series": "AB", "number": "123456", "university": "Medical University"}], "certificates": [{"date": "2023-01-01", "series": "CD", "number": "654321", "university": "Another University"}], "clinic_affiliations": [{"clinic_name": "City Hospital", "department": "Cardiology", "position": "Senior Doctor", "specialty": "Cardiologist"}]}',
-        description='Данные врача в формате JSON.\n Пример: {"work_email": "doctor@example.com","phone_number": "+380636666541", "first_name": "John", "surname": "Doe", "last_name": "Smith", "scientific_degree": "PhD", "date_of_last_attestation": "2022-12-31", "diplomas": [{"date": "2023-01-01", "series": "AB", "number": "123456", "university": "Medical University"}], "certificates": [{"date": "2023-01-01", "series": "CD", "number": "654321", "university": "Another University"}], "clinic_affiliations": [{"clinic_name": "City Hospital", "department": "Cardiology", "position": "Senior Doctor", "specialty": "Cardiologist"}]}',
-    ),
-    # doctor_data: DoctorCreate = Body(...),
-    doctors_photo: UploadFile = File(None),
-    diploma_scan: UploadFile = File(None),
-    certificate_scan: UploadFile = File(None),
+    doctor_data: DoctorCreate = Body(...),
     current_user: User = Depends(auth_service.get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -70,27 +65,7 @@ async def signup_doctor(
     :return: Созданный врач.
     :rtype: DoctorResponse
     """
-    try:
-        # Валидация изображений
-        if doctors_photo:
-            doctors_photo = await validate_image_file(doctors_photo)
-        if diploma_scan:
-            diploma_scan = await validate_image_file(diploma_scan)
-        if certificate_scan:
-            certificate_scan = await validate_image_file(certificate_scan)
-    except HTTPException as exception:
-        logger.error(f"Error validating image: {str(exception)}")
-        raise exception
 
-    # Парсим JSON-строку в словарь
-    try:
-        doctor_data_dict = json.loads(doctor_data)
-    except json.JSONDecodeError as e:
-        logger.error(f"Error decoding JSON: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Invalid JSON format",
-        )
 
     exist_doctor = await get_doctor(db=db, doctor_id=current_user.cor_id)
     if exist_doctor:
@@ -99,62 +74,16 @@ async def signup_doctor(
             status_code=status.HTTP_409_CONFLICT, detail="Doctor account already exists"
         )
 
-    doctors_photo_bytes = await doctors_photo.read() if doctors_photo else None
-    diploma_scan_bytes = await diploma_scan.read() if diploma_scan else None
-    certificate_scan_bytes = await certificate_scan.read() if certificate_scan else None
-
-    try:
-        if (
-            "date_of_last_attestation" in doctor_data_dict
-            and doctor_data_dict["date_of_last_attestation"]
-        ):
-            doctor_data_dict["date_of_last_attestation"] = date.fromisoformat(
-                doctor_data_dict["date_of_last_attestation"]
-            )
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Invalid date format for date_of_last_attestation. Expected YYYY-MM-DD.",
-        )
-
-    if "diplomas" in doctor_data_dict and isinstance(
-        doctor_data_dict["diplomas"], list
-    ):
-        for diploma in doctor_data_dict["diplomas"]:
-            if "date" in diploma and diploma["date"]:
-                try:
-                    diploma["date"] = date.fromisoformat(diploma["date"])
-                except ValueError:
-                    raise HTTPException(
-                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                        detail="Invalid date format in diplomas. Expected YYYY-MM-DD.",
-                    )
-
-    if "certificates" in doctor_data_dict and isinstance(
-        doctor_data_dict["certificates"], list
-    ):
-        for certificate in doctor_data_dict["certificates"]:
-            if "date" in certificate and certificate["date"]:
-                try:
-                    certificate["date"] = date.fromisoformat(certificate["date"])
-                except ValueError:
-                    raise HTTPException(
-                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                        detail="Invalid date format in certificates. Expected YYYY-MM-DD.",
-                    )
     try:
         doctor = await create_doctor(
-            doctor_data=doctor_data_dict,
+            doctor_data=doctor_data,
             db=db,
-            doctors_photo_bytes=doctors_photo_bytes,
             user=current_user,
         )
-        doctors_data = await create_doctor_service(
-            doctor_data=doctor_data_dict,
+        cer, dip, clin = await create_doctor_service(
+            doctor_data=doctor_data,
             db=db,
-            doctor=doctor,
-            diploma_scan_bytes=diploma_scan_bytes,
-            certificate_scan_bytes=certificate_scan_bytes,
+            doctor=doctor
         )
     except IntegrityError as e:
         logger.error(f"Database integrity error: {e}")
@@ -169,21 +98,64 @@ async def signup_doctor(
             detail="An unexpected error occurred during doctor creation.",
         )
     # Сериализуем ответ
-    doctor_response = DoctorResponse(
+    doctor_response = DoctorCreateResponse(
         id=doctor.id,
-        doctor_id=doctor.doctor_id,
+        doctor_cor_id=doctor.doctor_id,
         work_email=doctor.work_email,
         phone_number=doctor.phone_number,
         first_name=doctor.first_name,
         surname=doctor.surname,
         last_name=doctor.last_name,
-        # doctors_photo=doctor.doctors_photo,
         scientific_degree=doctor.scientific_degree,
         date_of_last_attestation=doctor.date_of_last_attestation,
         status=doctor.status,
+        diploma_id=dip,
+        certificates_id=cer,
+        clinic_affiliations_id=clin
     )
 
     return doctor_response
+
+
+
+
+@router.post("/doctors/{doctor_cor_id}/photo",
+             dependencies=[Depends(user_access)]
+          )
+async def upload_doctor_photo(doctor_cor_id: str, 
+                              file: UploadFile = Depends(validate_image_file), 
+                              db: AsyncSession = Depends(get_db)):
+    return await upload_doctor_photo_service(doctor_cor_id, file, db)
+
+
+@router.post("/doctors/{doctor_cor_id}/reserv",
+             dependencies=[Depends(user_access)]
+          )
+async def upload_doctor_reserv_data(doctor_cor_id: str, 
+                              file: UploadFile = Depends(validate_document_file), 
+                              db: AsyncSession = Depends(get_db)):
+    return await upload_reserv_data_service(doctor_cor_id, file, db)
+
+
+
+
+@router.post("/diploma/{diploma_id}",
+             dependencies=[Depends(user_access)])
+async def upload_diploma(document_id: str, 
+                         file: UploadFile = Depends(validate_document_file), 
+                         db: AsyncSession = Depends(get_db)):
+    return await upload_diploma_service(document_id, file, db)
+
+
+
+@router.post("/certificate/{certificate_id}",
+             dependencies=[Depends(user_access)])
+async def upload_certificate(document_id: str, 
+                         file: UploadFile = Depends(validate_document_file), 
+                         db: AsyncSession = Depends(get_db)):
+    return await upload_certificate_service(document_id, file, db)
+
+
 
 
 @router.get(

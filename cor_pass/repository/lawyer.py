@@ -6,35 +6,14 @@ from sqlalchemy.orm import Query as SQLAQuery
 
 from cor_pass.database.models import (
     Doctor,
-    DoctorStatus,
+    Doctor_Status,
     Diploma,
     Certificate,
     ClinicAffiliation,
 )
-from cor_pass.schemas import (
-    UserModel,
-    PasswordStorageSettings,
-    MedicalStorageSettings,
-    UserSessionDBModel,
-    UserSessionModel,
-)
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
-# async def get_doctors(skip: int, limit: int, db: AsyncSession) -> List[Doctor]:
-#     """
-#     Асинхронно повертає список всіх лікарів з бази даних.
-
-#     :param skip: int: Пропустити перші n записів у базі даних
-#     :param limit: int: Обмежити кількість повернутих результатів
-#     :param db: AsyncSession: Асинхронна сесія бази даних
-#     :return: Список всіх лікарів
-#     """
-#     stmt = select(Doctor).offset(skip).limit(limit)
-#     result = await db.execute(stmt)
-#     doctors = result.scalars().all()
-#     return list(doctors)
 
 
 async def get_doctors(
@@ -54,7 +33,7 @@ async def get_doctors(
 
     if status:
         try:
-            doctor_status = DoctorStatus[status.upper()]
+            doctor_status = Doctor_Status[status.upper()]
             stmt = stmt.where(Doctor.status == doctor_status)
         except KeyError:
             raise HTTPException(
@@ -111,7 +90,7 @@ async def get_all_doctor_info(doctor_id: str, db: AsyncSession) -> Doctor | None
     return doctor
 
 
-async def approve_doctor(doctor: Doctor, db: AsyncSession, status: DoctorStatus):
+async def approve_doctor(doctor: Doctor, db: AsyncSession, status: Doctor_Status):
     """
     Асинхронно обновляет статус врача.
     """
@@ -139,3 +118,15 @@ async def delete_doctor_by_doctor_id(db: AsyncSession, doctor_id: str):
     except Exception as e:
         await db.rollback()
         print(f"Произошла ошибка при удалении врача: {e}")
+
+
+
+async def get_diploma_by_id(diploma_id: str, db: AsyncSession):
+    """Получает информацию о документе по его ID."""
+    result = await db.execute(select(Diploma).where(Diploma.id == diploma_id))
+    return result.scalar_one_or_none()
+
+async def get_certificate_by_id(certificate_id: str, db: AsyncSession):
+    """Получает информацию о документе по его ID."""
+    result = await db.execute(select(Certificate).where(Certificate.id == certificate_id))
+    return result.scalar_one_or_none()

@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cor_pass.database import db
-from cor_pass.database.models import Doctor, DoctorStatus, User
+from cor_pass.database.models import Doctor, Doctor_Status, User
 from cor_pass.services.auth import auth_service
 from cor_pass.config.config import settings
 
@@ -29,7 +29,7 @@ class DoctorRoleChecker:
         query = select(Doctor).where(Doctor.doctor_id == user.cor_id)
         result = await db.execute(query)
         doctor = result.scalar_one_or_none()
-        return doctor is not None and doctor.status == DoctorStatus.APPROVED
+        return doctor is not None and doctor.status == Doctor_Status.approved
 
 user_role_checker = UserRoleChecker()
 admin_role_checker = AdminRoleChecker()

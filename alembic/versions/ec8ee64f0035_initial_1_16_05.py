@@ -1,8 +1,8 @@
-"""initial 16.05
+"""initial 1 16.05
 
-Revision ID: 19c7484db1e9
-Revises: bf3bbc4f21c8
-Create Date: 2025-05-16 11:42:32.377391
+Revision ID: ec8ee64f0035
+Revises: 
+Create Date: 2025-05-16 14:20:26.239599
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '19c7484db1e9'
-down_revision: Union[str, None] = 'bf3bbc4f21c8'
+revision: str = 'ec8ee64f0035'
+down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -47,6 +47,30 @@ def upgrade() -> None:
     op.create_index(op.f('ix_cor_id_auth_sessions_cor_id'), 'cor_id_auth_sessions', ['cor_id'], unique=False)
     op.create_index(op.f('ix_cor_id_auth_sessions_email'), 'cor_id_auth_sessions', ['email'], unique=False)
     op.create_index(op.f('ix_cor_id_auth_sessions_session_token'), 'cor_id_auth_sessions', ['session_token'], unique=True)
+    op.create_table('manufactured_devices',
+    sa.Column('id', sa.String(length=36), nullable=False),
+    sa.Column('token', sa.String(), nullable=True),
+    sa.Column('serial_number', sa.String(), nullable=True),
+    sa.Column('status', sa.Enum('MANUFACTURED', 'ACTIVATED', 'BLOCKED', name='devicestatus'), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('serial_number')
+    )
+    op.create_index(op.f('ix_manufactured_devices_id'), 'manufactured_devices', ['id'], unique=False)
+    op.create_index(op.f('ix_manufactured_devices_token'), 'manufactured_devices', ['token'], unique=True)
+    op.create_table('printing_device',
+    sa.Column('id', sa.String(length=36), nullable=False),
+    sa.Column('device_class', sa.String(), nullable=False),
+    sa.Column('device_identifier', sa.String(), nullable=False),
+    sa.Column('subnet_mask', sa.String(), nullable=True),
+    sa.Column('gateway', sa.String(), nullable=True),
+    sa.Column('ip_address', sa.String(), nullable=False),
+    sa.Column('port', sa.Integer(), nullable=True),
+    sa.Column('comment', sa.String(), nullable=True),
+    sa.Column('location', sa.String(), nullable=True),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('device_identifier')
+    )
+    op.create_index(op.f('ix_printing_device_id'), 'printing_device', ['id'], unique=False)
     op.create_table('tags',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=50), nullable=False),
@@ -103,6 +127,19 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('case_id')
     )
+    op.create_table('devices',
+    sa.Column('id', sa.String(length=36), nullable=False),
+    sa.Column('token', sa.String(), nullable=True),
+    sa.Column('name', sa.String(length=250), nullable=True),
+    sa.Column('create_date', sa.DateTime(), nullable=True),
+    sa.Column('user_id', sa.String(), nullable=True),
+    sa.Column('serial_number', sa.String(), nullable=True),
+    sa.ForeignKeyConstraint(['serial_number'], ['manufactured_devices.serial_number'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.cor_id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_devices_id'), 'devices', ['id'], unique=False)
+    op.create_index(op.f('ix_devices_token'), 'devices', ['token'], unique=True)
     op.create_table('doctors',
     sa.Column('id', sa.String(length=36), nullable=False),
     sa.Column('doctor_id', sa.String(length=36), nullable=False),
@@ -114,7 +151,12 @@ def upgrade() -> None:
     sa.Column('doctors_photo', sa.LargeBinary(), nullable=True),
     sa.Column('scientific_degree', sa.String(length=100), nullable=True),
     sa.Column('date_of_last_attestation', sa.Date(), nullable=True),
-    sa.Column('status', sa.Enum('PENDING', 'APPROVED', name='doctorstatus'), nullable=False),
+    sa.Column('status', sa.Enum('pending', 'approved', 'agreed', 'rejected', 'need_revision', name='doctor_status'), nullable=False),
+    sa.Column('passport_code', sa.String(length=20), nullable=True),
+    sa.Column('taxpayer_identification_number', sa.String(length=20), nullable=True),
+    sa.Column('reserv_scan_data', sa.LargeBinary(), nullable=True),
+    sa.Column('reserv_scan_file_type', sa.String(), nullable=True),
+    sa.Column('date_of_next_review', sa.Date(), nullable=True),
     sa.ForeignKeyConstraint(['doctor_id'], ['users.cor_id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('doctor_id'),
@@ -210,7 +252,8 @@ def upgrade() -> None:
     op.create_table('certificates',
     sa.Column('id', sa.String(length=36), nullable=False),
     sa.Column('doctor_id', sa.String(length=36), nullable=False),
-    sa.Column('scan', sa.LargeBinary(), nullable=True),
+    sa.Column('file_data', sa.LargeBinary(), nullable=True),
+    sa.Column('file_type', sa.String(), nullable=True),
     sa.Column('date', sa.Date(), nullable=False),
     sa.Column('series', sa.String(length=50), nullable=False),
     sa.Column('number', sa.String(length=50), nullable=False),
@@ -228,10 +271,24 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['doctor_id'], ['doctors.doctor_id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('device_access',
+    sa.Column('id', sa.String(length=36), nullable=False),
+    sa.Column('device_id', sa.String(), nullable=True),
+    sa.Column('granting_user_id', sa.String(), nullable=True),
+    sa.Column('accessing_user_id', sa.String(), nullable=True),
+    sa.Column('access_level', sa.Enum('READ', 'READ_WRITE', 'SHARE', name='accesslevel'), nullable=True),
+    sa.Column('create_date', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['accessing_user_id'], ['users.cor_id'], ),
+    sa.ForeignKeyConstraint(['device_id'], ['devices.id'], ),
+    sa.ForeignKeyConstraint(['granting_user_id'], ['users.cor_id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_device_access_id'), 'device_access', ['id'], unique=False)
     op.create_table('diplomas',
     sa.Column('id', sa.String(length=36), nullable=False),
     sa.Column('doctor_id', sa.String(length=36), nullable=False),
-    sa.Column('scan', sa.LargeBinary(), nullable=True),
+    sa.Column('file_data', sa.LargeBinary(), nullable=True),
+    sa.Column('file_type', sa.String(), nullable=True),
     sa.Column('date', sa.Date(), nullable=False),
     sa.Column('series', sa.String(length=50), nullable=False),
     sa.Column('number', sa.String(length=50), nullable=False),
@@ -276,6 +333,8 @@ def downgrade() -> None:
     op.drop_table('records_tags')
     op.drop_table('doctor_patient_statuses')
     op.drop_table('diplomas')
+    op.drop_index(op.f('ix_device_access_id'), table_name='device_access')
+    op.drop_table('device_access')
     op.drop_table('clinic_affiliations')
     op.drop_table('certificates')
     op.drop_table('cassettes')
@@ -289,6 +348,9 @@ def downgrade() -> None:
     op.drop_index('idx_otp_records_user_id', table_name='otp_records')
     op.drop_table('otp_records')
     op.drop_table('doctors')
+    op.drop_index(op.f('ix_devices_token'), table_name='devices')
+    op.drop_index(op.f('ix_devices_id'), table_name='devices')
+    op.drop_table('devices')
     op.drop_table('case_parameters')
     op.drop_index('idx_verification_email', table_name='verification')
     op.drop_table('verification')
@@ -297,6 +359,11 @@ def downgrade() -> None:
     op.drop_table('users')
     op.drop_index('idx_tags_name', table_name='tags')
     op.drop_table('tags')
+    op.drop_index(op.f('ix_printing_device_id'), table_name='printing_device')
+    op.drop_table('printing_device')
+    op.drop_index(op.f('ix_manufactured_devices_token'), table_name='manufactured_devices')
+    op.drop_index(op.f('ix_manufactured_devices_id'), table_name='manufactured_devices')
+    op.drop_table('manufactured_devices')
     op.drop_index(op.f('ix_cor_id_auth_sessions_session_token'), table_name='cor_id_auth_sessions')
     op.drop_index(op.f('ix_cor_id_auth_sessions_email'), table_name='cor_id_auth_sessions')
     op.drop_index(op.f('ix_cor_id_auth_sessions_cor_id'), table_name='cor_id_auth_sessions')

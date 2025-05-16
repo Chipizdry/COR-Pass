@@ -26,9 +26,6 @@ class Status(enum.Enum):
     basic: str = "basic"
 
 
-class DoctorStatus(enum.Enum):
-    PENDING: str = "pending"
-    APPROVED: str = "approved"
 
 
 class AuthSessionStatus(enum.Enum):
@@ -36,6 +33,13 @@ class AuthSessionStatus(enum.Enum):
     APPROVED: str = "approved"
     REJECTED: str = "rejected"
     TIMEOUT: str = "timeout"
+
+class Doctor_Status(enum.Enum):
+    pending: str = "pending"
+    approved: str = "approved"
+    agreed:  str = "agreed"
+    rejected: str = "rejected"
+    need_revision: str = "need_revision"
 
 
 class PatientStatus(enum.Enum):
@@ -176,6 +180,11 @@ class User(Base):
     )
     patient = relationship("Patient", back_populates="user", uselist=False)
 
+
+    devices = relationship("Device", back_populates="user")
+    shared_devices = relationship("DeviceAccess", foreign_keys="[DeviceAccess.granting_user_id]", back_populates="granting_user")
+    access_to_devices = relationship("DeviceAccess", foreign_keys="[DeviceAccess.accessing_user_id]", back_populates="accessing_user")
+
     # Индексы
     __table_args__ = (
         Index("idx_users_email", "email"),
@@ -197,7 +206,12 @@ class Doctor(Base):
     doctors_photo = Column(LargeBinary, nullable=True)
     scientific_degree = Column(String(100), nullable=True)
     date_of_last_attestation = Column(Date, nullable=True)
-    status = Column(Enum(DoctorStatus), default=DoctorStatus.PENDING, nullable=False)
+    status = Column(Enum(Doctor_Status), default=Doctor_Status.pending, nullable=False)
+    passport_code = Column(String(20), nullable=True)
+    taxpayer_identification_number = Column(String(20),nullable=True)
+    reserv_scan_data = Column(LargeBinary, nullable=True)
+    reserv_scan_file_type = Column(String, nullable=True)
+    date_of_next_review = Column(Date, nullable=True)
 
     user = relationship("User", back_populates="user_doctors")
     diplomas = relationship(
@@ -209,14 +223,15 @@ class Doctor(Base):
     clinic_affiliations = relationship(
         "ClinicAffiliation", back_populates="doctor", cascade="all, delete-orphan"
     )
-    patient_statuses = relationship("DoctorPatientStatus", back_populates="doctor")
+    patient_statuses = relationship("DoctorPatientStatus", back_populates="doctor", cascade="all, delete-orphan")
 
 
 class Diploma(Base):
     __tablename__ = "diplomas"
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     doctor_id = Column(String(36), ForeignKey("doctors.doctor_id"), nullable=False)
-    scan = Column(LargeBinary, nullable=True)
+    file_data = Column(LargeBinary, nullable=True)
+    file_type = Column(String, nullable=True)
     date = Column(Date, nullable=False)
     series = Column(String(50), nullable=False)
     number = Column(String(50), nullable=False)
@@ -229,7 +244,8 @@ class Certificate(Base):
     __tablename__ = "certificates"
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     doctor_id = Column(String(36), ForeignKey("doctors.doctor_id"), nullable=False)
-    scan = Column(LargeBinary, nullable=True)
+    file_data = Column(LargeBinary, nullable=True)
+    file_type = Column(String, nullable=True)
     date = Column(Date, nullable=False)
     series = Column(String(50), nullable=False)
     number = Column(String(50), nullable=False)
@@ -531,6 +547,71 @@ class CaseParameters(Base):
 #     released = Column(String(250), nullable=True)
 
 #     case = relationship("Case", back_populates="directions")
+
+
+
+#Модели для девайсов 
+
+class DeviceStatus(enum.Enum):
+    MANUFACTURED = "manufactured"
+    ACTIVATED = "activated"
+    BLOCKED = "blocked"
+
+class ManufacturedDevice(Base):
+    __tablename__ = "manufactured_devices"
+
+    id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
+    token = Column(String, unique=True, index=True)
+    serial_number = Column(String, unique=True)
+    status = Column(Enum(DeviceStatus), default=DeviceStatus.MANUFACTURED)
+    
+
+class Device(Base):
+    __tablename__ = "devices"
+
+    id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
+    token = Column(String, unique=True, index=True) # JWT токен, которые выдается устройству после привязки
+    name = Column(String(250))
+    create_date = Column(DateTime, default=func.now())
+    user_id = Column(String, ForeignKey("users.cor_id"))
+    serial_number = Column(String, ForeignKey("manufactured_devices.serial_number"))
+
+    user = relationship("User", back_populates="devices")
+    device = relationship("ManufacturedDevice")
+
+
+class AccessLevel(enum.Enum):
+    READ = "read"
+    READ_WRITE = "read_write"
+    SHARE = "share"
+
+class DeviceAccess(Base):
+    __tablename__ = "device_access"
+
+    id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
+    device_id = Column(String, ForeignKey("devices.id"))
+    granting_user_id = Column(String, ForeignKey("users.cor_id"))
+    accessing_user_id = Column(String, ForeignKey("users.cor_id"))
+    access_level = Column(Enum(AccessLevel), default=AccessLevel.READ)
+    create_date = Column(DateTime, default=func.now())
+
+    device = relationship("Device")
+    granting_user = relationship("User", foreign_keys=[granting_user_id], back_populates="shared_devices")
+    accessing_user = relationship("User", foreign_keys=[accessing_user_id], back_populates="access_to_devices")
+
+
+class PrintingDevice(Base):
+    __tablename__ = "printing_device"
+
+    id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
+    device_class = Column(String, nullable=False)
+    device_identifier = Column(String, nullable=False, unique=True)
+    subnet_mask = Column(String, nullable=True)
+    gateway = Column(String, nullable=True)
+    ip_address = Column(String, nullable=False)
+    port = Column(Integer, nullable=True)
+    comment = Column(String, nullable=True)
+    location = Column(String, nullable=True)
 
 
 # Base.metadata.create_all(bind=engine)

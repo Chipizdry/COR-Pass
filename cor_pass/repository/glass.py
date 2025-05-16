@@ -9,7 +9,7 @@ from cor_pass.schemas import (
     Glass as GlassModelScheema,
     SampleCreate,
 )
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from sqlalchemy.orm import joinedload
 from sqlalchemy.orm import selectinload
 from cor_pass.database import models as db_models
@@ -130,7 +130,7 @@ async def create_glass(
 
     # 2. Створюємо вказану кількість скелець для касети
     for i in range(num_glasses):
-        next_glass_number = db_cassette.glass_count + i + 1
+        next_glass_number = db_cassette.glass_count + 1
         db_glass = db_models.Glass(
             cassette_id=db_cassette.id,
             glass_number=next_glass_number,
@@ -153,17 +153,33 @@ async def create_glass(
     for glass in created_glasses:
         await db.refresh(glass)
 
-    return created_glasses
+    # return created_glasses
+    return [GlassModelScheema.model_validate(glass) for glass in created_glasses]
 
 
-async def delete_glass(db: AsyncSession, glass_id: str) -> GlassModelScheema | None:
-    """Асинхронно удаляет стекло."""
-    result = await db.execute(
-        select(db_models.Glass).where(db_models.Glass.id == glass_id)
-    )
-    db_glass = result.scalar_one_or_none()
-    if db_glass:
-        await db.delete(db_glass)
-        await db.commit()
-        return {"message": f"Стекло с ID {glass_id} успешно удалено"}
-    return None
+async def delete_glasses(db: AsyncSession, glass_ids: List[str]) -> Dict[str, Any]:
+    """Асинхронно удаляет несколько стекол по их ID."""
+    deleted_count = 0
+    not_found_ids: List[str] = []
+
+    for glass_id in glass_ids:
+        result = await db.execute(
+            select(db_models.Glass).where(db_models.Glass.id == glass_id)
+        )
+        db_glass = result.scalar_one_or_none()
+        if db_glass:
+            await db.delete(db_glass)
+            deleted_count += 1
+        else:
+            not_found_ids.append(glass_id)
+
+    await db.commit()
+
+    response = {"deleted_count": deleted_count}
+    if not_found_ids:
+        response["not_found_ids"] = not_found_ids
+    response["message"] = f"Успешно удалено {deleted_count} стекол."
+    if not_found_ids:
+        response["message"] += f" Стекла с ID {', '.join(not_found_ids)} не найдены."
+
+    return response

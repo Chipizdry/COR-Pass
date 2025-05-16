@@ -77,7 +77,7 @@ async def register_new_patient(
     doctor_patient_status = DoctorPatientStatus(
         patient_id=new_patient.id,
         doctor_id=doctor.id,
-        status=PatientStatus(body.status),
+        status=PatientStatus.registered,
     )
     db.add(doctor_patient_status)
 

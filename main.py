@@ -34,13 +34,15 @@ from cor_pass.routes import (
     admin,
     lawyer,
     doctor,
-    dicom,
     websocket,
     device_ws,
     cases,
     samples,
     cassettes,
     glasses,
+    dicom_router,
+    printing_device,
+    printer
 )
 from cor_pass.config.config import settings
 from cor_pass.services.logger import logger
@@ -53,8 +55,8 @@ from jose import JWTError, jwt
 import logging
 
 from cor_pass.services.websocket import check_session_timeouts, cleanup_auth_sessions
-from cor_pass.dicom.router import router as dicom_router
-from cor_pass.routes import printer
+
+
 # Создание обработчика для логирования с временными метками
 class CustomFormatter(logging.Formatter):
     def format(self, record):
@@ -71,11 +73,6 @@ logging.basicConfig(handlers=[console_handler], level=logging.INFO)
 
 
 app = FastAPI()
-
-# Подключаем DICOM маршруты
-app.include_router(dicom_router)
-
-
 app.mount("/static", StaticFiles(directory="cor_pass/static"), name="static")
 
 
@@ -211,28 +208,27 @@ blocked_ips = {}
 app.include_router(auth.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 app.include_router(records.router, prefix="/api")
-app.include_router(tags.router, prefix="/api")
+# app.include_router(tags.router, prefix="/api")
 app.include_router(password_generator.router, prefix="/api")
 app.include_router(person.router, prefix="/api")
 app.include_router(cor_id.router, prefix="/api")
 app.include_router(otp_auth.router, prefix="/api")
 app.include_router(lawyer.router, prefix="/api")
 app.include_router(doctor.router, prefix="/api")
-app.include_router(dicom.router, prefix="/api")
-app.include_router(websocket.router, prefix="/api")
-app.include_router(device_ws.router, prefix="/api")
 app.include_router(cases.router, prefix="/api")
 app.include_router(samples.router, prefix="/api")
-app.include_router(dicom_router, prefix="/api/dicom")
 app.include_router(cassettes.router, prefix="/api")
 app.include_router(glasses.router, prefix="/api")
-
+app.include_router(websocket.router, prefix="/api")
+app.include_router(device_ws.router, prefix="/api")
+app.include_router(dicom_router.router, prefix="/api")
+app.include_router(printing_device.router, prefix="/api")
 app.include_router(printer.router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run(
         app="main:app",
-        host="192.168.154.191",
+        host="192.168.153.203",
         port=8000,
         log_level="info",
         access_log=True,

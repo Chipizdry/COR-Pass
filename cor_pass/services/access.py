@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cor_pass.database import db
-from cor_pass.database.models import Doctor, DoctorStatus, User
+from cor_pass.database.models import Doctor, Doctor_Status, User
 from cor_pass.services.auth import auth_service
 from cor_pass.config.config import settings
 
@@ -53,7 +53,7 @@ class DoctorAccess:
         query = select(Doctor).where(Doctor.doctor_id == user.cor_id)
         result = await db.execute(query)
         doctor = result.scalar_one_or_none()
-        if not doctor or doctor.status != DoctorStatus.APPROVED:
+        if not doctor or doctor.status != Doctor_Status.approved:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Doctor access required and status is not approved",

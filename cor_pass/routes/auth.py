@@ -71,7 +71,9 @@ ALGORITHM = settings.algorithm
 )
 async def signup(
     body: UserModel,
+    request: Request,
     db: AsyncSession = Depends(get_db),
+    device_info: dict = Depends(di.get_device_header)
 ):
     """
     **The signup function creates a new user in the database. / Регистрация нового юзера**\n
@@ -93,7 +95,34 @@ async def signup(
     if not new_user.cor_id:
         await repository_cor_id.create_new_corid(new_user, db)
     logger.debug(f"{body.email} user successfully created")
-    return ResponseUser(user=new_user, detail="User successfully created")
+
+    # Проверка ролей
+    user_roles = await repository_person.get_user_roles(email=body.email, db=db)
+
+    # Создаём токены
+    access_token = await auth_service.create_access_token(
+        data={"oid": str(new_user.id), "corid": new_user.cor_id, "roles": user_roles}, expires_delta=12
+    )
+    refresh_token = await auth_service.create_refresh_token(
+        data={"oid": str(new_user.id), "corid": new_user.cor_id, "roles": user_roles}
+    )
+
+    # Создаём новую сессию
+    device_information = di.get_device_info(request)
+    session_data = {
+        "user_id": new_user.cor_id,
+        "refresh_token": refresh_token,
+        "device_type": device_information["device_type"],  # Тип устройства
+        "device_info": device_information["device_info"],  # Информация об устройстве
+        "ip_address": device_information["ip_address"],  # IP-адрес
+        "device_os": device_information["device_os"],  # Операционная система
+    }
+    new_session = await repository_session.create_user_session(
+        body=UserSession(**session_data),  # Передаём данные для сессии
+        user=new_user,
+        db=db,
+    )
+    return ResponseUser(user=new_user, detail="User successfully created", access_token=access_token, refresh_token=refresh_token, token_type="bearer")
 
 
 @router.post(
@@ -450,6 +479,31 @@ async def refresh_token(
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
+
+
+
+@router.get(
+    "/verify"
+)
+async def verify_access_token(
+    credentials: HTTPAuthorizationCredentials = Security(security),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    **The verify_access_token function is used to verify the access token. / Маршрут для проверки валидности токена доступа **\n
+
+    :param credentials: HTTPAuthorizationCredentials: Get the credentials from the request header
+    :param db: AsyncSession: Pass the database session to the function
+    :return: JSON message
+
+    """
+    token = credentials.credentials
+    user = await auth_service.get_current_user(token=token, db=db)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token"
+        )
+    return {"detail": "Token is valid"}
 
 
 @router.post(
