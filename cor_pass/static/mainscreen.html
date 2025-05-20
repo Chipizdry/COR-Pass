@@ -469,12 +469,12 @@ async function getSessions() {
             card.className = "session-card";
             card.innerHTML = `
             <div class="card-content">
-                <div class="session-text">
+              <div class="session-text">
                 <p><strong>Об устройстве:</strong> ${session.device_info}</p>
                 <p><strong>Устройство:</strong> ${session.device_type || "Неизвестно"}, ${session.device_os || "Неизвестно"}</p>
                 <p><strong>IP адрес:</strong> ${session.ip_address || "Неизвестно"}</p>
                 <p><strong>Даты:</strong> Создана: ${new Date(session.created_at).toLocaleString()}, Обновлена: ${new Date(session.updated_at).toLocaleString()}</p>
-                </div>
+              </div>
                 <button class="modal-button session-delete-button" data-session-id="${session.id}">✖</button>
             </div>
             `;

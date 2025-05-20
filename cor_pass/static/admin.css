@@ -1,0 +1,160 @@
+
+
+
+  /* Основные стили для контейнера и таблицы */
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    width: auto; /* Автоматическая ширина контейнера */
+    min-width: 400px; /* Минимальная ширина, если все столбцы скрыты */
+    max-width: 80%; /* Ограничение по ширине */
+    background-color: #fff;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow-x: auto; /* Добавляет горизонтальную прокрутку, если таблица выходит за пределы контейнера */
+}
+
+h1 {
+    font-size: 20px;
+    margin-bottom: 10px;
+    text-align: center;
+    color: #333;
+}
+
+
+/* Стили для таблицы */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px; /* Уменьшенный шрифт */
+    margin-top: 8px;
+  
+   /* table-layout: auto; /* Динамическая ширина колонок */
+}
+
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 4px;
+    text-align: left;
+    white-space: nowrap; /* Исключаем перенос текста */
+}
+
+thead input[type="text"] {
+    width: calc(100% - 8px); /* Поля ввода занимают ширину данных с учётом отступов */
+    max-width: 210px; /* Ограничиваем максимальную ширину */
+    box-sizing: border-box; /* Учитываем padding и border */
+    padding: 4px; /* Минимальные отступы для компактности */
+    font-size: 10px; /* Размер текста для компактности */
+    margin: 0; /* Убираем внешние отступы */
+}
+
+
+/* Для конкретных колонок */
+#header-user_index,
+#header-user_sex,
+#header-account_status, 
+#header-birth {
+    max-width: 65px; /* Ограничение максимальной ширины */
+}
+
+/* Для конкретных полей поиска */
+thead input[data-column="user_index"],
+thead input[data-column="user_sex"],
+thead input[data-column="account_status"],
+thead input[data-column="birth"] {
+    max-width: 60px; /* Максимальная ширина для компактности */
+}
+
+thead th {
+    position: relative; /* Для контроля над содержимым ячеек */
+    padding: 4px; /* Сужаем padding */
+}
+
+th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    white-space: nowrap; /* Текст в одной строке */
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+
+
+.date-range {
+display: flex;
+align-items: center;
+gap: 5px;
+}
+
+.date-range input[type="date"] {
+width: 150px;
+}
+
+.date-range span {
+margin: 0 5px;
+}
+
+.delete-icon, .toggle-status-icon  {
+    cursor: pointer;
+    color: #ff4d4d;
+    font-size: 16px; 
+}
+.delete-icon:hover {
+    color: #cc0000;
+}
+
+ /* Стили для пагинации */
+ .pagination {
+    margin-top: 20px;
+    text-align: center;
+}
+.pagination button {
+    margin: 0 5px;
+    padding: 5px 10px;
+}
+        /* Стили для ячеек с COR-ID */
+.cor-id-cell {
+    cursor: pointer; /* Указатель мыши при наведении */
+    text-decoration: none; /* Убираем подчеркивание по умолчанию */
+}
+
+/* Подчеркивание при наведении */
+.cor-id-cell:hover {
+    text-decoration: underline; /* Подчеркивание при наведении */
+    color: blue; /* Можно изменить цвет текста на синий, если нужно */
+}
+.activity-indicator {
+    background-color: #ccc; /* Цвет фона */
+    border-radius: 50%; /* Делаем круглый */
+    width: 15px; /* Увеличиваем диаметр */
+    height: 15px; /* Увеличиваем диаметр */
+    margin-left: 3px; /* Отступ для отделения от других элементов */
+    border: 2px solid #fff; /* Белая рамка для более четкого видимого круга */
+}
+
+
+.cor-card {
+  /*  background-color: rgba(255, 255, 255, 0.6);*/
+    border-radius: 12px;
+    width: 300px;
+    flex-direction: column;
+}
+
+.cor-text {
+    padding: 10px;
+    font-size: 12px;
+    color: #291161;
+    line-height: 1.3;
+}

@@ -75,3 +75,67 @@ function startPrinterMonitoring() {
         statusElement.style.color = isAvailable ? 'green' : 'red';
     }, 2000);
 }
+
+
+async function addDevice() {
+    // Получаем значения из полей формы
+    const deviceType = document.getElementById('deviceType').value;
+    const deviceId = document.getElementById('deviceId').value;
+    const deviceIp = document.getElementById('deviceIp').value;
+    const deviceLocation = document.getElementById('deviceLocation').value;
+
+    // Проверяем обязательные поля
+    if (!deviceType || !deviceId || !deviceIp) {
+        alert('Пожалуйста, заполните все обязательные поля');
+        return;
+    }
+
+    // Проверяем валидность ID устройства
+    const idNumber = parseInt(deviceId);
+    if (isNaN(idNumber) || idNumber < 0 || idNumber > 65535) {
+        alert('ID устройства должен быть числом от 0 до 65535');
+        return;
+    }
+
+    // Подготавливаем данные для отправки
+    const deviceData = {
+        device_class: deviceType,
+        device_identifier: deviceId,
+        ip_address: deviceIp,
+        subnet_mask: "255.255.255.0", // По умолчанию
+        gateway: "0.0.0.0", // По умолчанию
+        port: 0, // По умолчанию
+        comment: "", // Пока пустое
+        location: deviceLocation || "" // Если не указано - пустая строка
+    };
+
+    try {
+        // Отправляем запрос на сервер
+        const response = await fetch('/api/printing_devices/', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+            },
+            body: JSON.stringify(deviceData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ошибка HTTP: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('Устройство успешно добавлено:', result);
+        alert('Устройство успешно добавлено!');
+        
+        // Закрываем модальное окно и обновляем список устройств
+        document.getElementById('addDeviceModal').style.display = 'none';
+        // Здесь можно вызвать функцию для обновления списка устройств
+        // например: refreshDevicesList();
+        
+    } catch (error) {
+        console.error('Ошибка при добавлении устройства:', error);
+        alert('Произошла ошибка при добавлении устройства: ' + error.message);
+    }
+}
