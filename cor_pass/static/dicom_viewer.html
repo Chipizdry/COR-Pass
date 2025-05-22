@@ -69,7 +69,25 @@ input[type="range"] {
     }
 
 
+    .metadata-container {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    margin-top: 15px;
+}
 
+.metadata-container h3 {
+    margin-top: 0;
+    color: #333;
+    font-size: 16px;
+}
+
+#metadata-content p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #555;
+}
 
 
   </style>
@@ -226,103 +244,7 @@ function drawCrossOnPlane(ctx, plane, point3D = markers3D[0]) {
 
 
 <script>
- /* 
-async function handleUpload() {
-    const fileInput = document.getElementById('dicom-upload');
-    const statusDiv = document.getElementById('upload-status');
-    const progressBar = document.getElementById('progress-bar');
-    const fileInfoDiv = document.getElementById('file-info');
-    
-    if (!fileInput.files.length) {
-        statusDiv.textContent = 'Please select files';
-        return;
-    }
-
-    statusDiv.textContent = 'Preparing upload...';
-    progressBar.style.width = '0%';
-    progressBar.textContent = '0%';
-    
-    const formData = new FormData();
-    let totalSize = 0;
-    let fileCount = 0;
-    
-    // Добавляем файлы и считаем общий размер
-    for (const file of fileInput.files) {
-    const fileName = file.name;
-    const parts = fileName.split('.');
-    const hasExtension = parts.length > 1;
-    const fileExt = hasExtension ? parts.pop().toLowerCase() : '';
-
-    if (fileExt === 'dcm' || fileExt === 'zip' || !hasExtension) {
-        formData.append('files', file);
-        totalSize += file.size;
-        fileCount++;
-    }
-}
-    
-    if (fileCount === 0) {
-        statusDiv.textContent = 'No valid DICOM or ZIP files selected';
-        return;
-    }
-    
-    fileInfoDiv.textContent = `Selected ${fileCount} files (${formatFileSize(totalSize)})`;
-    statusDiv.textContent = 'Uploading...';
-    
-    try {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/api/dicom/upload');
-        
-        // Обработка прогресса загрузки
-        xhr.upload.onprogress = function(e) {
-            if (e.lengthComputable) {
-                const percent = Math.round((e.loaded / e.total) * 100);
-                progressBar.style.width = percent + '%';
-                progressBar.textContent = percent + '%';
-            }
-        };
-        
-        xhr.onload = async function() {
-            if (xhr.status === 200) {
-                const result = JSON.parse(xhr.responseText);
-                statusDiv.textContent = result.message;
-                progressBar.style.width = '100%';
-                progressBar.textContent = '100%';
-                
-                // Получаем информацию об объеме и обновляем слайдеры
-                const volumeInfo = await fetch('/api/dicom/volume_info').then(r => r.json());
-             //   updateSliders(volumeInfo);
-                
-                // Перезагружаем изображения
-                ['axial', 'sagittal', 'coronal'].forEach(update);
-
-                fetch("/api/dicom/metadata")
-                  .then(res => res.json())
-                  .then(data => {
-                    const { shape } = data;
-                    
-                    // Установим максимальные значения ползунков
-              
-                  });
-
-
-            } else {
-                statusDiv.textContent = `Error: ${xhr.statusText}`;
-                progressBar.style.background = '#f44336';
-            }
-        };
-        
-        xhr.onerror = function() {
-            statusDiv.textContent = 'Upload failed';
-            progressBar.style.background = '#f44336';
-        };
-        
-        xhr.send(formData);
-    } catch (error) {
-        statusDiv.textContent = `Error: ${error.message}`;
-        progressBar.style.background = '#f44336';
-    }
-}
-*/
+ 
 async function handleUpload() {
     const fileInput = document.getElementById('dicom-upload');
     const statusDiv = document.getElementById('upload-status');

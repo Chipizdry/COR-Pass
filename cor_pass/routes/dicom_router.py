@@ -207,3 +207,28 @@ def get_volume_info():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/metadata")
+def get_metadata():
+    try:
+        volume, ds = load_volume()
+        depth, height, width = volume.shape
+
+        spacing = ds.PixelSpacing if hasattr(ds, 'PixelSpacing') else [1.0, 1.0]
+        slice_thickness = float(ds.SliceThickness) if hasattr(ds, 'SliceThickness') else 1.0
+        
+        return {
+            "shape": {
+                "depth": depth,       # количество аксиальных срезов
+                "height": height,
+                "width": width
+            },
+            "spacing": {
+                "x": float(spacing[1]),
+                "y": float(spacing[0]),
+                "z": slice_thickness
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
