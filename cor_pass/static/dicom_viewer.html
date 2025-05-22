@@ -46,14 +46,14 @@ input[type="range"] {
   max-width: 480px;
 }
     
-    .progress-container {
+    .dicom-progress-container {
         margin-top: 10px;
         width: 100%;
         background: #e0e0e0;
         border-radius: 5px;
         overflow: hidden;
     }
-    .progress-bar {
+    .dicom-progress-bar {
         height: 20px;
         background: #4CAF50;
         width: 0%;
@@ -97,8 +97,8 @@ input[type="range"] {
     <div class="upload-container">
       <input type="file" id="dicom-upload" accept=".zip,.dcm" multiple>
       <button onclick="handleUpload()">Upload DICOM files</button>
-      <div class="progress-container">
-          <div class="progress-bar" id="progress-bar">0%</div>
+      <div class="dicom-progress-container">
+          <div class="dicom-progress-bar" id="progress-bar">0%</div>
       </div>
       <div class="file-info" id="file-info"></div>
       <div id="upload-status"></div>
