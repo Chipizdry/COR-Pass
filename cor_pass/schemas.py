@@ -58,6 +58,19 @@ class ResponseUser(BaseModel):
     token_type: str = "bearer"
 
 
+class NewUserRegistration(BaseModel):
+    email: EmailStr = Field(
+        ..., description="Email пользователя"
+    )
+    birth_date: Optional[date] = Field(None, description="Дата рождения пациента")
+    sex: Optional[str] = Field(None, max_length=1, description="Пол пациента, может быть 'M'(мужской) или 'F'(женский)")
+
+    @field_validator("sex")
+    def user_sex_must_be_m_or_f(cls, v):
+        if v not in ["M", "F"]:
+            raise ValueError('user_sex must be "M" or "F"')
+        return v
+
 class TokenModel(BaseModel):
     access_token: str
     refresh_token: str
@@ -362,6 +375,9 @@ class DoctorWithRelationsResponse(BaseModel):
     )
     scientific_degree: Optional[str]
     date_of_last_attestation: Optional[date]
+    passport_code: Optional[str] = Field(None, description="Номер паспорта")
+    taxpayer_identification_number: Optional[str] = Field(None, description="ИНН")
+    place_of_registration: Optional[str] = Field(None, description="Место прописки")
     status: str
     diplomas: List[DiplomaResponse] = []
     certificates: List[CertificateResponse] = []
@@ -373,15 +389,16 @@ class DoctorWithRelationsResponse(BaseModel):
 
 
 class DoctorCreate(BaseModel):
-    work_email: str
-    phone_number: Optional[str] = None
-    first_name: str
-    surname: str
-    last_name: str
-    passport_code: str
-    taxpayer_identification_number: str
-    scientific_degree: Optional[str] = None
-    date_of_last_attestation: Optional[date] = None
+    work_email: EmailStr = Field(..., description="Рабочий имейл, должен быть уникальным")
+    phone_number: Optional[str] = Field(None, description="Номер телефона")
+    first_name: str = Field(..., description="Имя врача")
+    surname: str = Field(..., description="Отчество врача")
+    last_name: str = Field(..., description="Фамилия врача")
+    passport_code: str = Field(..., description="Номер паспорта")
+    taxpayer_identification_number: str = Field(..., description="ИНН")
+    place_of_registration: str = Field(..., description="Место прописки")
+    scientific_degree: Optional[str] = Field(None, description="Научная степень")
+    date_of_last_attestation: Optional[date] = Field(None, description="Дата последней атестации")
     diplomas: List[DiplomaCreate] = []
     certificates: List[CertificateCreate] = []
     clinic_affiliations: List[ClinicAffiliationCreate] = []
@@ -396,6 +413,7 @@ class DoctorCreate(BaseModel):
                 "last_name": "Smith",
                 "passport_code": "CN123456",
                 "taxpayer_identification_number": "1234567890",
+                "place_of_registration": "Kyiv, Antona Tsedica 12",
                 "scientific_degree": "PhD",
                 "date_of_last_attestation": "2022-12-31",
                 "diplomas": [
@@ -432,8 +450,8 @@ class DoctorResponse(BaseModel):
     work_email: EmailStr = Field(..., description="Рабочий имейл")
     phone_number: Optional[str] = Field(None, description="Номер телефона")
     first_name: Optional[str] = Field(None, description="Имя врача")
-    surname: Optional[str] = Field(None, description="Фамилия врача")
-    last_name: Optional[str] = Field(None, description="Отчество врача")
+    surname: Optional[str] = Field(None, description="Отчество врача")
+    last_name: Optional[str] = Field(None, description="Фамилия врача")
     doctors_photo: Optional[str] = Field(
         None, description="Ссылка на фото врача"
     )
@@ -442,6 +460,9 @@ class DoctorResponse(BaseModel):
         None, description="Дата последней атестации"
     )
     status: Doctor_Status
+    place_of_registration: Optional[str] = Field(None, description="Место прописки")
+    passport_code: Optional[str] = Field(None, description="Номер паспорта")
+    taxpayer_identification_number: Optional[str] = Field(None, description="ИНН")
 
     class Config:
         from_attributes = True
@@ -453,14 +474,17 @@ class DoctorCreateResponse(BaseModel):
     doctor_cor_id: str = Field(..., description="COR-ID врача")
     work_email: EmailStr = Field(..., description="Рабочий имейл")
     phone_number: Optional[str] = Field(None, description="Номер телефона")
-    first_name: Optional[str] = Field(None, description="Имя врача")
-    surname: Optional[str] = Field(None, description="Фамилия врача")
-    last_name: Optional[str] = Field(None, description="Отчество врача")
+    first_name: str = Field(..., description="Имя врача")
+    surname: str = Field(..., description="Отчество врача")
+    last_name: str = Field(..., description="Фамилия врача")
     scientific_degree: Optional[str] = Field(None, description="Научная степень")
     date_of_last_attestation: Optional[date] = Field(
         None, description="Дата последней атестации"
     )
     status: Doctor_Status
+    place_of_registration: Optional[str] = Field(None, description="Место прописки")
+    passport_code: Optional[str] = Field(None, description="Номер паспорта")
+    taxpayer_identification_number: Optional[str] = Field(None, description="ИНН")
     diploma_id: List = Field(..., description="ID дипломов")
     certificates_id: List = Field(..., description="ID сертификатов")
     clinic_affiliations_id: List = Field(..., description="ID записей о клиниках")
@@ -513,6 +537,25 @@ class ConfirmLoginRequest(BaseModel):
 
 class ConfirmLoginResponse(BaseModel):
     message: str
+
+class CheckSessionRequest(BaseModel):
+    email: Optional[EmailStr] = None
+    cor_id: Optional[str] = None
+    session_token: str
+
+    @model_validator(mode="before")
+    def check_either_email_or_cor_id(cls, data: dict):
+        email = data.get("email")
+        cor_id = data.get("cor_id")
+        if not email and not cor_id:
+            raise ValueError("Требуется указать либо email, либо cor_id")
+        return data
+
+class ConfirmCheckSessionResponse(BaseModel):
+    status: str = "approved"
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
 
 
 
@@ -595,6 +638,7 @@ class DeleteGlassesResponse(BaseModel):
     deleted_count: int
     message: str
     not_found_ids: List[str] | None = None
+
 class GetSample(BaseModel):
     sample_id: str
 
@@ -620,6 +664,9 @@ class CassetteCreate(BaseModel):
     num_cassettes: int = 1
 
 
+class CassetteUpdateComment(BaseModel):
+    comment: Optional[str] = None
+
 
 class Cassette(CassetteBase):
     id: str
@@ -637,13 +684,40 @@ class Cassette(CassetteBase):
     class Config:
         from_attributes = True
 
+class DeleteCassetteRequest(BaseModel):
+    cassette_ids: List[str]
+
+class DeleteCassetteResponse(BaseModel):
+    deleted_count: int
+    message: str
+
 class Sample(SampleBase):
     id: str
     case_id: str
+    macro_description: str
     cassettes: List[Cassette] = []
     class Config:
         from_attributes = True
 
+class UpdateSampleMacrodescription(SampleBase):
+    macro_description: str
+
+
+class DeleteSampleRequest(BaseModel):
+    sample_ids: List[str]
+
+class DeleteSampleResponse(BaseModel):
+    deleted_count: int
+    message: str
+
+
+
+class DeleteCasesRequest(BaseModel):
+    case_ids: List[str]
+
+class DeleteCasesResponse(BaseModel):
+    deleted_count: int
+    message: str 
 
 
 class CaseBase(BaseModel):
@@ -726,9 +800,9 @@ class CaseParametersScheema(BaseModel):
     sample_type: SampleType
     material_type: MaterialType
     urgency: UrgencyType
-    container_count_actual: int
+    container_count_actual: Optional[int]
     fixation: FixationType
-    macro_description: str
+    macro_description: Optional[str]
 
 
 class SampleWithoutCassettesSchema(BaseModel):
@@ -839,3 +913,14 @@ class UpdatePrintingDevice(BaseModel):
     port: Optional[int] = Field(None, le=65535, description="Порт")
     comment: Optional[str] = Field(None, description="Комментарий")
     location: Optional[str] = Field(None, description="Локация")
+
+
+
+
+class Label(BaseModel):
+    models_id: int
+    content: str
+    uuid: Optional[str] = None
+
+class PrintRequest(BaseModel):
+    labels: List[Label]

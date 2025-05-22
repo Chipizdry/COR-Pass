@@ -1,6 +1,6 @@
 
 const modalConfigs = {
-    columnSelectModal: { width: '250px', height: '300px', top: '300px', left: '200px' },
+    columnSelectModal: { width: '250px', height: '350px', top: '300px', left: '200px' },
     corIdModal: { width: '300px', height: '500px', top: '300px', left: '250px' },
     editModal: { width: '250px', height: '520px', top: '50px', left: '50px' },
     myModal: { width: '250px', height: '450px', top: '50px', left: '250px' },

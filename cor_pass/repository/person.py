@@ -1,3 +1,4 @@
+import base64
 from typing import List, Optional
 from sqlalchemy.future import select
 from sqlalchemy import func
@@ -9,7 +10,11 @@ from cor_pass.database.models import (
     Verification,
     UserSettings,
 )
+from cor_pass.repository.password_generator import generate_password
+from cor_pass.repository import cor_id as repository_cor_id
 from cor_pass.schemas import (
+    NewUserRegistration,
+    PasswordGeneratorSettings,
     UserModel,
     PasswordStorageSettings,
     MedicalStorageSettings,
@@ -24,7 +29,7 @@ from cor_pass.services.cipher import (
     generate_recovery_code,
     encrypt_data,
 )
-from cor_pass.services.email import send_email_code_with_qr
+from cor_pass.services.email import send_email_code_with_qr, send_email_code_with_temp_pass
 from sqlalchemy.exc import NoResultFound
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -450,9 +455,43 @@ async def get_user_roles(email: str, db: AsyncSession) -> List[str]:
         roles.append("admin")
     if await role_check.lawyer_role_checker.is_lawyer(user=user):
         roles.append("lawyer")
+    if await role_check.cor_int_role_checker.is_cor_int(user=user):
+        roles.append("cor-int")
     doctor = await role_check.doctor_role_checker.is_doctor(user=user, db=db)
     if doctor:
         roles.append("doctor")
     if user.is_active:
         roles.append("active_user")
     return roles
+
+
+async def register_new_user(
+    db: AsyncSession, body: NewUserRegistration
+):
+    """
+    Асинхронно регистрирует нового пользователя как пациента и связывает его с врачом.
+    """
+    # Генерируем временный пароль
+    password_settings = PasswordGeneratorSettings()
+    temp_password = generate_password(password_settings)
+    hashed_password = auth_service.get_password_hash(temp_password)
+
+    user_signup_data = UserModel(
+        email=body.email,
+        password=temp_password,
+        birth=body.birth_date.year,
+        user_sex=body.sex,
+    )
+    hashed_password = auth_service.get_password_hash(temp_password)
+    user_signup_data.password = hashed_password
+
+    new_user = await create_user(user_signup_data, db)
+
+    await db.flush()
+
+    await repository_cor_id.create_new_corid(new_user, db)
+    await db.commit()
+
+    await send_email_code_with_temp_pass(
+        email=body.email, temp_pass=temp_password
+    )

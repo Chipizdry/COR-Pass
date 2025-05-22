@@ -20,50 +20,13 @@
   
 </head>
 <body>
-    <div class="container">
+  <div class="container">
         <button class="link-button" onclick="goBack('/static/mainscreen.html')" data-translate="back-link-text"><<<назад<<<</button>
         <h1>Пользователи</h1>
-<!-- Модальное окно выбора отображения колонок --> 
-<div id="columnSelectModal" class="modal" style="display: none;">
-    <div class="modal-header">
-        <h1>Поля для отображения </h1>
-        <div class="modal-buttons">
-            <button class="modal-button close" data-action="close" id="closeColumnSelectModal">✖</button>
-        </div>
-    </div>
-        <label><input type="checkbox" onchange="toggleColumn('user_index')" id="checkbox-user_index" checked >Индекс</label>
-        <label><input type="checkbox" onchange="toggleColumn('id')" id="checkbox-id" checked >ID</label>
-        <label><input type="checkbox" onchange="toggleColumn('cor_id')" id="checkbox-cor_id" checked >COR-ID</label>
-        <label><input type="checkbox" onchange="toggleColumn('user_sex')" id="checkbox-user_sex" checked >Пол</label>
-        <label><input type="checkbox" onchange="toggleColumn('birth')" id="checkbox-birth" checked >Год рож.</label>
-        <label><input type="checkbox" onchange="toggleColumn('email')" id="checkbox-email" checked >Email</label>
-        <label><input type="checkbox" onchange="toggleColumn('created_at')" id="checkbox-created_at" checked >Дата регистрации</label>
-        <label><input type="checkbox" onchange="toggleColumn('last_password_change')" id="checkbox-last_password_change" checked >Последнее изменение пароля</label>
-        <label><input type="checkbox" onchange="toggleColumn('last_active')" id="checkbox-last_active" checked >Последняя активность</label>
-   
-    <div class="modal-footer" style="text-align: center; margin-top: 20px;">
-        <button onclick="closeModal('columnSelectModal')" class="modal-button">ОК</button>
-    </div>
-</div>
-
-        <!-- Модальное окно для отображения информации о COR-ID -->
-        <div id="corIdModal" class="modal" style="display: none;">
-            <div class="modal-header">
-                
-                    <h3 style="margin-top:30; color:#291161;font-size: 17px;">Информация о COR-ID:</h3>
-                <div class="modal-buttons">
-                    <button class="modal-button close" data-action="close" id="closeCorIDModal">✖</button>
-                </div>
-            </div>
-            <span id="corIdValue"></span>           
-                <div id="corIdInfo" class="cor-card"> </div>
-                    <!-- Здесь информация о COR-ID -->                              
-                <div id="qrcode"></div>
-        </div>
 
 
 
-<button id="openModalBtn">Выбрать вывод</button>
+     <button id="openModalBtn">Выбрать вывод</button>
         <!-- Таблица для отображения пользователей -->
         <table id="userTable">
             <thead>
@@ -95,13 +58,57 @@
 
         <!-- Пагинация -->
         <div class="pagination" id="pagination">
-            <button onclick="goToFirstPage()">« Первый</button>
-            <button onclick="prevPage()">« Назад</button>
+            <button onclick="goToFirstPage()" class="pagination button">« Первый</button>
+            <button onclick="prevPage()"  class="pagination button">« Назад</button>
             <span id="page-info">Страница 1</span> <!-- Отображение текущей страницы -->
-            <button onclick="nextPage()">Вперед »</button>
-            <button onclick="goToLastPage()">Последний »»</button>
+            <button onclick="nextPage()" class="pagination button">Вперед »</button>
+            <button onclick="goToLastPage()" class="pagination button">Последний »»</button>
         </div>
-    </div>
+  </div>
+
+
+                <!-- Модальное окно выбора отображения колонок --> 
+            <div id="columnSelectModal" class="modal" style="display: none;">
+                <div class="modal-header">
+                    <h1>Поля для отображения </h1>
+                    <div class="modal-buttons">
+                        <button class="modal-button close" data-action="close" id="closeColumnSelectModal">✖</button>
+                    </div>
+                </div>
+                    <label><input type="checkbox" onchange="toggleColumn('user_index')" id="checkbox-user_index" checked >Индекс</label>
+                    <label><input type="checkbox" onchange="toggleColumn('id')" id="checkbox-id" checked >ID</label>
+                    <label><input type="checkbox" onchange="toggleColumn('cor_id')" id="checkbox-cor_id" checked >COR-ID</label>
+                    <label><input type="checkbox" onchange="toggleColumn('user_sex')" id="checkbox-user_sex" checked >Пол</label>
+                    <label><input type="checkbox" onchange="toggleColumn('birth')" id="checkbox-birth" checked >Год рож.</label>
+                    <label><input type="checkbox" onchange="toggleColumn('email')" id="checkbox-email" checked >Email</label>
+                    <label><input type="checkbox" onchange="toggleColumn('created_at')" id="checkbox-created_at" checked >Дата регистрации</label>
+                    <label><input type="checkbox" onchange="toggleColumn('last_password_change')" id="checkbox-last_password_change" checked >Последнее изменение пароля</label>
+                    <label><input type="checkbox" onchange="toggleColumn('last_active')" id="checkbox-last_active" checked >Последняя активность</label>
+            
+                <div class="modal-footer" style="text-align: center; margin-top: 20px;">
+                    <button onclick="closeModal('columnSelectModal')" class="modal-button">ОК</button>
+                </div>
+            </div>
+
+                
+            <!-- Модальное окно для отображения информации о COR-ID -->
+            <div id="corIdModal" class="modal" style="display: none;">
+                <div class="modal-header">
+                    
+                        <h3 style="margin-top:30; color:#291161;font-size: 17px;">Информация о COR-ID:</h3>
+                    <div class="modal-buttons">
+                        <button class="modal-button close" data-action="close" id="closeCorIDModal">✖</button>
+                    </div>
+                </div>
+                <span id="corIdValue"></span>           
+                    <div id="corIdInfo" class="cor-card"> </div>
+                        <!-- Здесь информация о COR-ID -->                              
+                    <div id="qrcode"></div>
+            </div>
+
+
+
+
     <script src="/static/translation.js"></script>
     <script src="/static/general_fun.js"></script>
     <script> 

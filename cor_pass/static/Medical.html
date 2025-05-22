@@ -78,6 +78,51 @@
             <span data-translate="button_text">Вызвать скорую</span>
         </button>
 
+
+
+
+        <button class="custom-button"id="Dicom_viewer">
+            <!-- Первая SVG-иконка -->       
+            <svg width="24" height="24" viewBox="0 0 51 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="0.5" width="50" height="50" rx="25" fill="#F8A441"/>
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M25.75 
+                14C24.2913 14 22.8924 14.5795 21.8609 15.6109C20.8295 
+                16.6424 20.25 18.0413 20.25 19.5C20.25 20.9587 20.8295 
+                22.3576 21.8609 23.3891C22.8924 24.4205 24.2913 25 25.75 
+                25C27.2087 25 28.6076 24.4205 29.6391 23.3891C30.6705 
+                22.3576 31.25 20.9587 31.25 19.5C31.25 18.0413 30.6705 
+                16.6424 29.6391 15.6109C28.6076 14.5795 27.2087 14 25.75 
+                14ZM23 26.375C21.5413 26.375 20.1424 26.9545 19.1109 
+                27.9859C18.0795 29.0174 17.5 30.4163 17.5 31.875V33.25C17.5 
+                33.9793 17.7897 34.6788 18.3055 35.1945C18.8212 35.7103 
+                19.5207 36 20.25 36H31.25C31.9793 36 32.6788 35.7103 33.1945 
+                35.1945C33.7103 34.6788 34 33.9793 34 33.25V31.875C34 30.4163 
+                33.4205 29.0174 32.3891 27.9859C31.3576 26.9545 29.9587 
+                26.375 28.5 26.375H23Z" fill="white"/>
+            </svg>
+                
+                                
+            <!-- Текст кнопки -->
+            <span class="button-text">Dicom_viewer</span> 
+            <!-- Вторая SVG-иконка -->
+            <svg class="icon-right" width="24" height="24" viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1.125" y="0.625" width="28.75" height="28.75" rx="14.375" stroke="#7527B2" stroke-width="1.25"/>
+                <path d="M20.1161 14.3274L20.1132 14.3248L14.1478 8.73647L14.1432 8.73226L14.1418 8.7311C13.7749 8.40419 
+                13.2289 8.43324 12.8907 8.76051L12.8866 8.76302L12.8857 8.76387L12.8823 8.76723L12.883 8.76796C12.5174 
+                9.10176 12.5154 9.67494 12.8829 10.0382L12.885 10.0403L12.8862 10.0415L12.8884 10.0435L18.1453 
+                14.996L12.8804 19.956L12.8817 19.9574C12.7001 20.1105 12.6074 20.3496 12.6074 20.5897C12.6074 21.0796 
+                13.0121 21.4995 13.5307 21.4995C13.7755 21.4995 13.9909 21.4093 14.1458 21.2575L14.1494 21.254L20.1144 
+                15.637L20.1176 15.634L20.1415 15.6107L20.151 15.6008L20.1535 15.5982C20.4888 15.233 20.4849 14.6591 
+                20.1161 14.3274Z" fill="#7527B2"/>
+            </svg>
+        </button>
+
+
+
+
+
+
+
         <button id="I_am_a_doctor" class="link-button" type="button" 
         style="  text-align: left; font-size: 12px;float: left;
         white-space: nowrap;max-width:60px;width:60px;
@@ -95,6 +140,14 @@ document.getElementById('I_am_a_doctor').addEventListener('click', function() {
     if (checkToken()) {
     window.location.href = '/static/doctor_registration.html' + '?access_token=' + accessToken;   }
 });
+
+document.getElementById('Dicom_viewer').addEventListener('click', function() {
+    if (checkToken()) {
+    window.location.href = '/api/dicom/viewer' + '?access_token=' + accessToken;   }
+});
+
+
+
 </script>
     
 </body>

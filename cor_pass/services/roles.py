@@ -31,7 +31,15 @@ class DoctorRoleChecker:
         doctor = result.scalar_one_or_none()
         return doctor is not None and doctor.status == Doctor_Status.approved
 
+class CorIntRoleChecker:
+    async def is_cor_int(self, user: User = Depends(auth_service.get_current_user)):
+        """
+        Проверяет, принадлежит ли пользователь к роли cor-int.
+        """
+        return user.email.endswith("@cor-int.com")
+
 user_role_checker = UserRoleChecker()
 admin_role_checker = AdminRoleChecker()
 lawyer_role_checker = LawyerRoleChecker()
 doctor_role_checker = DoctorRoleChecker()
+cor_int_role_checker = CorIntRoleChecker()
