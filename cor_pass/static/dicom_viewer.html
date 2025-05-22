@@ -30,17 +30,18 @@ canvas {
   height: auto;
 }
 
-.upload-container {
-  padding: 15px;
-  border: 1px solid #ccc;
-  background: #f5f5f5;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 512px;
-  max-height: 512px;
-  box-sizing: border-box;
-}
 
+.dicom-upload-container {
+    margin-top: 40px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 512px;
+    max-height: 512px;
+    box-sizing: border-box;
+}
 input[type="range"] {
   width: 100%;
   max-width: 480px;
@@ -80,21 +81,21 @@ input[type="range"] {
 
   <div class="viewer">
     <div class="view">
-      <label>Coronal <input type="range" id="coronal" min="0" max="500" value="100" onchange="update('coronal')"></label>
+      <label>Coronal <input type="range" id="coronal" min="0" max="500" value="100" oninput="update('coronal')"></label>
       <canvas id="canvas-coronal" width="512" height="512"></canvas>
     </div>
     
     <div class="view">
-      <label>Sagittal <input type="range" id="sagittal" min="0" max="500" value="100" onchange="update('sagittal')"></label>
+      <label>Sagittal <input type="range" id="sagittal" min="0" max="500" value="100" oninput="update('sagittal')"></label>
       <canvas id="canvas-sagittal" width="512" height="512"></canvas>
     </div>
    
     <div class="view">
-      <label>Axial <input type="range" id="axial" min="0" max="500" value="50" onchange="update('axial')"></label>
+      <label>Axial <input type="range" id="axial" min="0" max="500" value="50" oninput="update('axial')"></label>
       <canvas id="canvas-axial" width="512" height="512"></canvas>
     </div>
 
-    <div class="upload-container">
+    <div class="dicom-upload-container">
       <input type="file" id="dicom-upload" accept=".zip,.dcm" multiple>
       <button onclick="handleUpload()">Upload DICOM files</button>
       <div class="dicom-progress-container">
@@ -102,6 +103,12 @@ input[type="range"] {
       </div>
       <div class="file-info" id="file-info"></div>
       <div id="upload-status"></div>
+
+
+      <div class="metadata-container" id="metadata-container" style="margin-top: 20px; display: none;">
+        <h3>DICOM Metadata</h3>
+        <div id="metadata-content"></div>
+      </div>
 
       <p>Axial: <span id="axial-size"></span></p>
       <p>Coronal: <span id="coronal-size"></span></p>
@@ -148,20 +155,12 @@ input[type="range"] {
   if (plane === 'axial') {
     point3D = { x: x, y: y, z: indices.axial };
   } else if (plane === 'sagittal') {
-    // Для сагиттальной плоскости:
-    // x (на изображении) -> z (в объеме)
-    // y (на изображении) -> y (в объеме)
-    // позиция слайдера -> x (в объеме)
     point3D = {
       x: indices.sagittal,
       y: 512-x,  // учитываем переворот изображения
       z: 512-y          // x на изображении становится z в объеме
     };
   } else if (plane === 'coronal') {
-    // Для корональной плоскости:
-    // x (на изображении) -> x (в объеме)
-    // y (на изображении) -> z (в объеме)
-    // позиция слайдера -> y (в объеме)
     point3D = {
       x: x,
       y: indices.coronal,
@@ -227,6 +226,7 @@ function drawCrossOnPlane(ctx, plane, point3D = markers3D[0]) {
 
 
 <script>
+ /* 
 async function handleUpload() {
     const fileInput = document.getElementById('dicom-upload');
     const statusDiv = document.getElementById('upload-status');
@@ -301,21 +301,124 @@ async function handleUpload() {
                     const { shape } = data;
                     
                     // Установим максимальные значения ползунков
-               /*     document.getElementById("axialSlider").max = shape.depth - 1;
-                    document.getElementById("coronalSlider").max = shape.height - 1;
-                    document.getElementById("sagittalSlider").max = shape.width - 1;
-
-                    // Можно также установить текущие значения в середину диапазона
-                    document.getElementById("axialSlider").value = Math.floor(shape.depth / 2);
-                    document.getElementById("coronalSlider").value = Math.floor(shape.height / 2);
-                    document.getElementById("sagittalSlider").value = Math.floor(shape.width / 2);
-                    
-                    // Затем можно вызвать функцию отображения среза
-                    renderSlice("axial", shape.depth / 2);
-                    renderSlice("coronal", shape.height / 2);
-                    renderSlice("sagittal", shape.width / 2);  */
+              
                   });
 
+
+            } else {
+                statusDiv.textContent = `Error: ${xhr.statusText}`;
+                progressBar.style.background = '#f44336';
+            }
+        };
+        
+        xhr.onerror = function() {
+            statusDiv.textContent = 'Upload failed';
+            progressBar.style.background = '#f44336';
+        };
+        
+        xhr.send(formData);
+    } catch (error) {
+        statusDiv.textContent = `Error: ${error.message}`;
+        progressBar.style.background = '#f44336';
+    }
+}
+*/
+async function handleUpload() {
+    const fileInput = document.getElementById('dicom-upload');
+    const statusDiv = document.getElementById('upload-status');
+    const progressBar = document.getElementById('progress-bar');
+    const fileInfoDiv = document.getElementById('file-info');
+    const metadataContainer = document.getElementById('metadata-container');
+    const metadataContent = document.getElementById('metadata-content');
+    
+    if (!fileInput.files.length) {
+        statusDiv.textContent = 'Please select files';
+        return;
+    }
+
+    statusDiv.textContent = 'Preparing upload...';
+    progressBar.style.width = '0%';
+    progressBar.textContent = '0%';
+    metadataContainer.style.display = 'none'; // Скрываем метаданные перед загрузкой
+    
+    const formData = new FormData();
+    let totalSize = 0;
+    let fileCount = 0;
+    
+    // Добавляем файлы и считаем общий размер
+    for (const file of fileInput.files) {
+        const fileName = file.name;
+        const parts = fileName.split('.');
+        const hasExtension = parts.length > 1;
+        const fileExt = hasExtension ? parts.pop().toLowerCase() : '';
+
+        if (fileExt === 'dcm' || fileExt === 'zip' || !hasExtension) {
+            formData.append('files', file);
+            totalSize += file.size;
+            fileCount++;
+        }
+    }
+    
+    if (fileCount === 0) {
+        statusDiv.textContent = 'No valid DICOM or ZIP files selected';
+        return;
+    }
+    
+    fileInfoDiv.textContent = `Selected ${fileCount} files (${formatFileSize(totalSize)})`;
+    statusDiv.textContent = 'Uploading...';
+    
+    try {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/dicom/upload');
+        
+        // Обработка прогресса загрузки
+        xhr.upload.onprogress = function(e) {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                progressBar.style.width = percent + '%';
+                progressBar.textContent = percent + '%';
+            }
+        };
+        
+        xhr.onload = async function() {
+            if (xhr.status === 200) {
+                const result = JSON.parse(xhr.responseText);
+                statusDiv.textContent = result.message;
+                progressBar.style.width = '100%';
+                progressBar.textContent = '100%';
+                
+                // Получаем информацию об объеме и обновляем слайдеры
+                const volumeInfo = await fetch('/api/dicom/volume_info').then(r => r.json());
+                
+                // Получаем метаданные
+                try {
+                    const metadata = await fetch("/api/dicom/metadata").then(res => res.json());
+                    
+                    // Отображаем метаданные
+                    metadataContainer.style.display = 'block';
+                    metadataContent.innerHTML = `
+                        <p><strong>Dimensions:</strong> 
+                        Axial: ${metadata.shape.depth}, 
+                        Coronal: ${metadata.shape.height}, 
+                        Sagittal: ${metadata.shape.width}</p>
+                        <p><strong>Spacing:</strong> 
+                        X: ${metadata.spacing.x.toFixed(2)} mm, 
+                        Y: ${metadata.spacing.y.toFixed(2)} mm, 
+                        Z: ${metadata.spacing.z.toFixed(2)} mm</p>
+                    `;
+                    
+                    // Обновляем информацию о размерах
+                    document.getElementById("axial-size").textContent = `${metadata.shape.depth} slices`;
+                    document.getElementById("coronal-size").textContent = `${metadata.shape.height} slices`;
+                    document.getElementById("sagittal-size").textContent = `${metadata.shape.width} slices`;
+                    
+                } catch (error) {
+                    console.error("Error fetching metadata:", error);
+                    metadataContent.innerHTML = "<p>Failed to load metadata</p>";
+                }
+                
+                // Перезагружаем изображения
+                ['axial', 'sagittal', 'coronal'].forEach(update);
 
             } else {
                 statusDiv.textContent = `Error: ${xhr.statusText}`;
