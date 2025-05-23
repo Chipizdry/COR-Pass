@@ -63,33 +63,53 @@ input[type="range"] {
         color: white;
         line-height: 20px;
     }
-    .file-info {
-        margin-top: 10px;
-        font-size: 14px;
-    }
-
 
     .metadata-container {
     background: #f8f9fa;
-    padding: 15px;
+    padding: 10px;
     border-radius: 5px;
     border: 1px solid #ddd;
-    margin-top: 15px;
+    margin-top: 10px;
 }
 
 .metadata-container h3 {
     margin-top: 0;
-    color: #333;
-    font-size: 16px;
+    color: #7527B2;
+    font-size: 14px;
 }
 
 #metadata-content p {
     margin: 5px 0;
-    font-size: 14px;
-    color: #555;
+    font-size: 12px;
+    color: #7527B2;
 }
 
 
+.viewer-controls {
+  grid-column: 1 / -1;
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.viewer-controls label {
+  margin-right: 15px;
+}
+
+.viewer-controls select, .viewer-controls button {
+  padding: 5px 10px;
+  border-radius: 3px;
+  border: 1px solid #ccc;
+}
+
+
+.file-info, #upload-status {
+    font-size: 12px;
+    color: #7527B2;
+    margin-top: 5px;
+  
+}
   </style>
 
 <link rel="stylesheet" type="text/css" href="/static/styles.css">
@@ -123,15 +143,34 @@ input[type="range"] {
       <div id="upload-status"></div>
 
 
-      <div class="metadata-container" id="metadata-container" style="margin-top: 20px; display: none;">
-        <h3>DICOM Metadata</h3>
+      <div class="metadata-container" id="metadata-container" style="display: none;">
+        <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">DICOM Metadata</h3>
         <div id="metadata-content"></div>
       </div>
 
       <p>Axial: <span id="axial-size"></span></p>
       <p>Coronal: <span id="coronal-size"></span></p>
       <p>Sagittal: <span id="sagittal-size"></span></p>
+
+
+      <div class="viewer-controls">
+        <label>View Mode:
+          <select id="view-mode" onchange="updateViewMode()">
+            <option value="auto">Auto (Window Level)</option>
+            <option value="window">Manual Window Level</option>
+            <option value="raw">Raw Data</option>
+          </select>
+        </label>
+        
+        <div id="window-controls" style="display: none; margin-top: 10px;">
+          <label>Window Center: <input type="range" id="window-center" min="0" max="3000" value="50" step="1"></label>
+          <label>Window Width: <input type="range" id="window-width" min="0" max="3000" value="400" step="1"></label>
+          <button onclick="applyManualWindow()">Apply</button>
+        </div>
+      </div>
   </div>
+
+
   </div>
 
 
@@ -140,19 +179,56 @@ input[type="range"] {
   <script>
     let markers3D = [];
 
+    let currentMode = 'auto';
+    let manualWindowCenter = 50;
+    let manualWindowWidth = 400;
+
+    function updateViewMode() {
+  currentMode = document.getElementById('view-mode').value;
+  
+  // Показываем/скрываем ручные контролы window level
+  const windowControls = document.getElementById('window-controls');
+  windowControls.style.display = currentMode === 'window' ? 'block' : 'none';
+  
+  // Обновляем все изображения
+  ['axial', 'sagittal', 'coronal'].forEach(plane => {
+    update(plane);
+  });
+}
+
+function applyManualWindow() {
+  manualWindowCenter = parseInt(document.getElementById('window-center').value);
+  manualWindowWidth = parseInt(document.getElementById('window-width').value);
+  
+  // Обновляем все изображения
+  ['axial', 'sagittal', 'coronal'].forEach(plane => {
+    update(plane);
+  });
+}
+
+
     // Обновление среза
     async function update(plane, callback) {
       const idx = parseInt(document.getElementById(plane).value);
       const canvas = document.getElementById('canvas-' + plane);
       const ctx = canvas.getContext('2d');
       const img = new Image();
-      img.onload = function () {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        drawCrossOnPlane(ctx, plane); // рисуем перекрестие
-        if (callback) callback();
+      img.onload = function() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      drawCrossOnPlane(ctx, plane);
+      if (callback) callback();
       };
-      img.src = `/api/dicom/reconstruct/${plane}?index=${idx}&t=${Date.now()}`;
+      
+     // img.src = `/api/dicom/reconstruct/${plane}?index=${idx}&t=${Date.now()}`;
+      let url = `/api/dicom/reconstruct/${plane}?index=${idx}&mode=${currentMode}`;
+      img.src = url + `&t=${Date.now()}`;
+      
+      if (currentMode === 'window') {
+        url += `&window_center=${manualWindowCenter}&window_width=${manualWindowWidth}`;
+      }
+       
+
     }
 
     // Добавление метки по клику
