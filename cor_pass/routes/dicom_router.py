@@ -42,19 +42,32 @@ def load_volume():
     example_ds = None
 
     for f in files:
-        ds = pydicom.dcmread(f)
-        arr = ds.pixel_array.astype(np.float32)
-        if hasattr(ds, 'RescaleSlope') and hasattr(ds, 'RescaleIntercept'):
-            arr = arr * ds.RescaleSlope + ds.RescaleIntercept
-        slices.append(arr)
-        shapes.append(arr.shape)
-        if example_ds is None:
-            example_ds = ds
+        try:
+            ds = pydicom.dcmread(f)
+            print(f"[INFO] Обработка файла: {os.path.basename(f)}")
+            print(f"        → Transfer Syntax: {ds.file_meta.TransferSyntaxUID}")
 
-    # Определяем наиболее частую форму (размер срезов)
+            arr = ds.pixel_array.astype(np.float32)
+
+            if hasattr(ds, 'RescaleSlope') and hasattr(ds, 'RescaleIntercept'):
+                arr = arr * ds.RescaleSlope + ds.RescaleIntercept
+
+            slices.append(arr)
+            shapes.append(arr.shape)
+
+            if example_ds is None:
+                example_ds = ds
+
+        except Exception as e:
+            print(f"[ERROR] Не удалось прочитать {os.path.basename(f)}: {e}")
+            continue
+
+    if not slices:
+        raise RuntimeError("Не удалось загрузить ни одного DICOM-среза.")
+
     shape_counter = Counter(shapes)
     target_shape = shape_counter.most_common(1)[0][0]
-    print(f"[INFO] Приводим к форме: {target_shape}")
+    print(f"[INFO] Приводим срезы к форме: {target_shape}")
 
     resized_slices = [
         resize(slice_, target_shape, preserve_range=True).astype(np.float32)
@@ -63,6 +76,8 @@ def load_volume():
     ]
 
     volume = np.stack(resized_slices)
+    print(f"[INFO] Загружено срезов: {len(resized_slices)}")
+
     return volume, example_ds
 
 @router.get("/viewer", response_class=HTMLResponse)
