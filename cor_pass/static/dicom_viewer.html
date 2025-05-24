@@ -32,21 +32,55 @@ canvas {
 
 
 .dicom-upload-container {
-    margin-top: 40px;
+    margin-top: 25px;
     padding: 15px;
     border: 1px solid #ccc;
     background: #f5f5f5;
-    border-radius: 8px;
+    border-radius: 3px;
     width: 100%;
     max-width: 512px;
     max-height: 512px;
     box-sizing: border-box;
 }
+
+
 input[type="range"] {
   width: 100%;
   max-width: 480px;
 }
     
+
+/* Контейнер для слайдера и значения */
+.dcm-range-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: white;
+    border-radius: 12px;
+    width: 512px;
+    padding: 5px;
+    box-sizing: border-box;
+    margin-bottom: 5px;
+}
+
+/* Слайдер растягивается */
+.dcm-range-container input[type="range"] {
+    flex-grow: 1;
+    height: 6px;
+    accent-color: #7B43F2;
+}
+
+/* Отображение значения */
+.dcm-range-value {
+    color: #5B4296;
+    font-size: 13px;
+    min-width: 25px;
+    text-align: center;
+}
+
+
+
+
     .dicom-progress-container {
         margin-top: 10px;
         width: 100%;
@@ -119,24 +153,32 @@ input[type="range"] {
 
   <div class="viewer">
     <div class="view">
-      <label>Coronal <input type="range" id="coronal" min="0" max="500" value="100" oninput="update('coronal')"></label>
-      <canvas id="canvas-coronal" width="512" height="512"></canvas>
+      <label class="label-padded">Coronal</label> 
+      <canvas id="canvas-coronal" width="512" height="512"></canvas>   
+      <div class="dcm-range-container">
+      <input type="range" id="coronal" min="0" max="600" value="100" oninput="update('coronal')" class="dcm-range-value;" ></div>
     </div>
     
     <div class="view">
-      <label>Sagittal <input type="range" id="sagittal" min="0" max="500" value="100" oninput="update('sagittal')"></label>
-      <canvas id="canvas-sagittal" width="512" height="512"></canvas>
+      <label class="label-padded">Sagittal</label>
+      <canvas id="canvas-sagittal" width="512" height="512"></canvas>     
+      <div class="dcm-range-container">
+      <input type="range" id="sagittal" min="0" max="600" value="100" oninput="update('sagittal')" class="dcm-range-value;" ></div>
     </div>
    
     <div class="view">
-      <label>Axial <input type="range" id="axial" min="0" max="500" value="50" oninput="update('axial')"></label>
+      <label class="label-padded">Axial</label>
+   <!--   <label>Axial<input type="range" id="axial" min="0" max="600" value="50" oninput="update('axial')"></label> -->
       <canvas id="canvas-axial" width="512" height="512"></canvas>
+      <div class="dcm-range-container">
+      <input type="range" id="axial" min="0" max="600" value="100" oninput="update('axial')" class="dcm-range-value;" ></div>
     </div>
 
     <div class="dicom-upload-container">
       <input type="file" id="dicom-upload" accept=".zip,.dcm" multiple>
       <button onclick="handleUpload()">Upload DICOM files</button>
       <div class="dicom-progress-container">
+
           <div class="dicom-progress-bar" id="progress-bar">0%</div>
       </div>
       <div class="file-info" id="file-info"></div>
@@ -148,9 +190,9 @@ input[type="range"] {
         <div id="metadata-content"></div>
       </div>
 
-      <p>Axial: <span id="axial-size"></span></p>
+  <!--   <p>Axial: <span id="axial-size"></span></p>
       <p>Coronal: <span id="coronal-size"></span></p>
-      <p>Sagittal: <span id="sagittal-size"></span></p>
+      <p>Sagittal: <span id="sagittal-size"></span></p> --> 
 
 
       <div class="viewer-controls">
@@ -300,8 +342,6 @@ function drawCrossOnPlane(ctx, plane, point3D = markers3D[0]) {
   ctx.lineTo(512 - point3D.y, 512);
 } else if (plane === 'coronal') {
     // Для корональной плоскости:
-    // x на изображении соответствует x в объеме
-    // y на изображении соответствует z в объеме (с учетом переворота)
     const imgZ = 512 - point3D.z;
     ctx.moveTo(0, imgZ);
     ctx.lineTo(512, imgZ);
@@ -350,7 +390,8 @@ async function handleUpload() {
         const hasExtension = parts.length > 1;
         const fileExt = hasExtension ? parts.pop().toLowerCase() : '';
 
-        if (fileExt === 'dcm' || fileExt === 'zip' || !hasExtension) {
+        // Разрешаем файлы без расширения или с .dcm/.zip
+        if (fileExt === '' || fileExt === 'dcm' || fileExt === 'zip') {
             formData.append('files', file);
             totalSize += file.size;
             fileCount++;
@@ -406,9 +447,9 @@ async function handleUpload() {
                     `;
                     
                     // Обновляем информацию о размерах
-                    document.getElementById("axial-size").textContent = `${metadata.shape.depth} slices`;
-                    document.getElementById("coronal-size").textContent = `${metadata.shape.height} slices`;
-                    document.getElementById("sagittal-size").textContent = `${metadata.shape.width} slices`;
+                //    document.getElementById("axial-size").textContent = `${metadata.shape.depth} slices`;
+                //    document.getElementById("coronal-size").textContent = `${metadata.shape.height} slices`;
+                //    document.getElementById("sagittal-size").textContent = `${metadata.shape.width} slices`;
                     
                 } catch (error) {
                     console.error("Error fetching metadata:", error);

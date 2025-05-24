@@ -25,10 +25,22 @@ os.makedirs(DICOM_DIR, exist_ok=True)
 def load_volume():
     print("[INFO] Загружаем том из DICOM-файлов...")
 
-    files = sorted(
-        [os.path.join(DICOM_DIR, f) for f in os.listdir(DICOM_DIR) if f.lower().endswith(".dcm")],
-        key=lambda x: int(pydicom.dcmread(x, stop_before_pixels=True).InstanceNumber)
-    )
+    # Собираем все файлы и пытаемся прочитать их как DICOM
+    files = []
+    for f in os.listdir(DICOM_DIR):
+        file_path = os.path.join(DICOM_DIR, f)
+        try:
+            # Пытаемся прочитать только заголовок (для скорости)
+            ds = pydicom.dcmread(file_path, stop_before_pixels=True)
+            # Если успешно - добавляем в список
+            files.append((file_path, int(ds.InstanceNumber)))
+        except:
+            # Пропускаем файлы, которые не являются DICOM
+            continue
+
+    # Сортируем по InstanceNumber
+    files.sort(key=lambda x: x[1])
+    files = [f[0] for f in files]  # Оставляем только пути к файлам
 
     slices = []
     shapes = []
@@ -171,34 +183,38 @@ async def upload_dicom_files(files: List[UploadFile] = File(...)):
 
         for file in files:
             file_ext = os.path.splitext(file.filename)[1].lower()
-            if file_ext not in {'.dcm', '.zip'}:
+            
+            # Разрешаем файлы без расширения или с .dcm/.zip
+            if file_ext not in {'', '.dcm', '.zip'}:
                 continue
 
             temp_path = os.path.join(DICOM_DIR, file.filename)
             with open(temp_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
+            # Для ZIP-архивов
             if file_ext == '.zip':
                 try:
                     with zipfile.ZipFile(temp_path, 'r') as zip_ref:
                         zip_ref.extractall(DICOM_DIR)
                     os.remove(temp_path)
-                    for extracted_file in os.listdir(DICOM_DIR):
-                        if extracted_file.lower().endswith('.dcm'):
-                            try:
-                                pydicom.dcmread(os.path.join(DICOM_DIR, extracted_file), stop_before_pixels=True)
-                                valid_files += 1
-                            except:
-                                os.remove(os.path.join(DICOM_DIR, extracted_file))
                 except zipfile.BadZipFile:
                     os.remove(temp_path)
                     continue
-            else:
+
+            # Проверяем все файлы в директории (включая распакованные)
+            for filename in os.listdir(DICOM_DIR):
+                file_path = os.path.join(DICOM_DIR, filename)
+                
+                # Пытаемся прочитать как DICOM, даже если нет расширения
                 try:
-                    pydicom.dcmread(temp_path, stop_before_pixels=True)
+                    # Читаем только заголовок (stop_before_pixels=True для скорости)
+                    pydicom.dcmread(file_path, stop_before_pixels=True)
                     valid_files += 1
                 except:
-                    os.remove(temp_path)
+                    # Если не DICOM и не ZIP - удаляем
+                    if not filename.lower().endswith('.zip'):
+                        os.remove(file_path)
                     continue
 
             processed_files += 1
