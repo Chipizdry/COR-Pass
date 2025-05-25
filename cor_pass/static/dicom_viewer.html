@@ -17,22 +17,30 @@
       <label class="label-padded">Coronal</label> 
       <canvas id="canvas-coronal" width="512" height="512"></canvas>   
       <div class="dcm-range-container">
-      <input type="range" id="coronal" min="0" max="600" value="100" oninput="update('coronal')" class="dcm-range-value;" ></div>
+        <input type="range" id="coronal" min="0" max="100" value="50" 
+               oninput="update('coronal'); updateSliderValue('coronal')">
+        <span class="dcm-range-value">50</span>
+      </div>
     </div>
     
     <div class="view">
       <label class="label-padded">Sagittal</label>
       <canvas id="canvas-sagittal" width="512" height="512"></canvas>     
       <div class="dcm-range-container">
-      <input type="range" id="sagittal" min="0" max="600" value="100" oninput="update('sagittal')" class="dcm-range-value;" ></div>
+        <input type="range" id="sagittal" min="0" max="100" value="50" 
+               oninput="update('sagittal'); updateSliderValue('sagittal')">
+        <span class="dcm-range-value">50</span>
+      </div>
     </div>
    
     <div class="view">
       <label class="label-padded">Axial</label>
-   <!--   <label>Axial<input type="range" id="axial" min="0" max="600" value="50" oninput="update('axial')"></label> -->
       <canvas id="canvas-axial" width="512" height="512"></canvas>
       <div class="dcm-range-container">
-      <input type="range" id="axial" min="0" max="600" value="100" oninput="update('axial')" class="dcm-range-value;" ></div>
+        <input type="range" id="axial" min="0" max="100" value="50" 
+               oninput="update('axial'); updateSliderValue('axial')">
+        <span class="dcm-range-value">50</span>
+      </div>
     </div>
 
     <div class="dicom-upload-container">
@@ -50,11 +58,6 @@
         <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">DICOM Metadata</h3>
         <div id="metadata-content"></div>
       </div>
-
-  <!--   <p>Axial: <span id="axial-size"></span></p>
-      <p>Coronal: <span id="coronal-size"></span></p>
-      <p>Sagittal: <span id="sagittal-size"></span></p> --> 
-
 
       <div class="viewer-controls">
         <label>View Mode:
@@ -289,7 +292,9 @@ async function handleUpload() {
                 
                 // Получаем информацию об объеме и обновляем слайдеры
                 const volumeInfo = await fetch('/api/dicom/volume_info').then(r => r.json());
-                
+                console.log('Volume info:', volumeInfo);
+                updateSliders(volumeInfo);
+
                 // Получаем метаданные
                 try {
                     const metadata = await fetch("/api/dicom/metadata").then(res => res.json());
@@ -343,16 +348,35 @@ async function handleUpload() {
 }
 
 function updateSliders(volumeInfo) {
-  document.getElementById('axial').max = volumeInfo.slices - 1;
-  document.getElementById('sagittal').max = volumeInfo.width - 1;
-  document.getElementById('coronal').max = volumeInfo.height - 1;
+  // Используем slices вместо depth, если shape отсутствует
+  const depth = volumeInfo.shape?.depth ?? volumeInfo.slices;
+  const width = volumeInfo.shape?.width ?? volumeInfo.width;
+  const height = volumeInfo.shape?.height ?? volumeInfo.height;
+
+  // Устанавливаем максимальные значения для каждого ползунка
+  document.getElementById('axial').max = Math.max(0, depth - 1);
+  document.getElementById('sagittal').max = Math.max(0, width - 1);
+  document.getElementById('coronal').max = Math.max(0, height - 1);
   
   // Устанавливаем средние значения
-  document.getElementById('axial').value = Math.floor(volumeInfo.slices / 2);
-  document.getElementById('sagittal').value = Math.floor(volumeInfo.width / 2);
-  document.getElementById('coronal').value = Math.floor(volumeInfo.height / 2);
+  document.getElementById('axial').value = Math.floor(depth / 2);
+  document.getElementById('sagittal').value = Math.floor(width / 2);
+  document.getElementById('coronal').value = Math.floor(height / 2);
+  
+  // Обновляем отображаемые значения
+  updateSliderValue('axial');
+  updateSliderValue('sagittal');
+  updateSliderValue('coronal');
 }
 
+// Функция для обновления отображаемого значения ползунка
+function updateSliderValue(plane) {
+  const slider = document.getElementById(plane);
+  const valueDisplay = slider.nextElementSibling; // Предполагаем, что следующий элемент - это span для значения
+  if (valueDisplay && valueDisplay.classList.contains('dcm-range-value')) {
+    valueDisplay.textContent = slider.value;
+  }
+}
 
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
