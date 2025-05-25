@@ -1,0 +1,140 @@
+
+
+.viewer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;      /* Две колонки */
+    grid-template-rows: auto auto;      /* Автоматические строки */
+    gap: 20px;
+    padding: 20px;
+    box-sizing: border-box;
+    height: 100vh;                      /* Занимает весь экран */
+  }
+  
+  .view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  canvas {
+    border: 1px solid #444;
+    width: 100%;                       /* Заполняет родителя */
+    aspect-ratio: 1 / 1;               /* Квадратный вид */
+    max-width: 512px;                  /* Ограничение сверху */
+    height: auto;
+  }
+  
+  
+  .dicom-upload-container {
+      margin-top: 25px;
+      padding: 15px;
+      border: 1px solid #ccc;
+      background: #f5f5f5;
+      border-radius: 3px;
+      width: 100%;
+      max-width: 512px;
+      max-height: 512px;
+      box-sizing: border-box;
+  }
+  
+  
+  input[type="range"] {
+    width: 100%;
+    max-width: 480px;
+  }
+      
+  
+  /* Контейнер для слайдера и значения */
+  .dcm-range-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background-color: white;
+      border-radius: 12px;
+      width: 512px;
+      padding: 5px;
+      box-sizing: border-box;
+      margin-bottom: 5px;
+  }
+  
+  /* Слайдер растягивается */
+  .dcm-range-container input[type="range"] {
+      flex-grow: 1;
+      height: 6px;
+      accent-color: #7B43F2;
+  }
+  
+  /* Отображение значения */
+  .dcm-range-value {
+      color: #5B4296;
+      font-size: 13px;
+      min-width: 25px;
+      text-align: center;
+  }
+  
+  
+  
+  
+      .dicom-progress-container {
+          margin-top: 10px;
+          width: 100%;
+          background: #e0e0e0;
+          border-radius: 5px;
+          overflow: hidden;
+      }
+      .dicom-progress-bar {
+          height: 20px;
+          background: #4CAF50;
+          width: 0%;
+          transition: width 0.3s;
+          text-align: center;
+          color: white;
+          line-height: 20px;
+      }
+  
+      .metadata-container {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      margin-top: 10px;
+  }
+  
+  .metadata-container h3 {
+      margin-top: 0;
+      color: #7527B2;
+      font-size: 14px;
+  }
+  
+  #metadata-content p {
+      margin: 5px 0;
+      font-size: 12px;
+      color: #7527B2;
+  }
+  
+  
+  .viewer-controls {
+    grid-column: 1 / -1;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+  
+  .viewer-controls label {
+    margin-right: 15px;
+  }
+  
+  .viewer-controls select, .viewer-controls button {
+    padding: 5px 10px;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+  }
+  
+  
+  .file-info, #upload-status {
+      font-size: 12px;
+      color: #7527B2;
+      margin-top: 5px;
+    
+  }

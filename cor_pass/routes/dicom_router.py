@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse, HTMLResponse
 import os
 import numpy as np
@@ -8,11 +8,8 @@ from PIL import Image
 from io import BytesIO
 from functools import lru_cache
 from pathlib import Path
-
-from fastapi import UploadFile, File
 import zipfile
 import shutil
-
 from typing import List
 from collections import Counter
 
@@ -25,54 +22,52 @@ os.makedirs(DICOM_DIR, exist_ok=True)
 def load_volume():
     print("[INFO] Загружаем том из DICOM-файлов...")
 
-    # Собираем все файлы и пытаемся прочитать их как DICOM
-    files = []
-    for f in os.listdir(DICOM_DIR):
-        file_path = os.path.join(DICOM_DIR, f)
-        try:
-            # Пытаемся прочитать только заголовок (для скорости)
-            ds = pydicom.dcmread(file_path, stop_before_pixels=True)
-            # Если успешно - добавляем в список
-            files.append((file_path, int(ds.InstanceNumber)))
-        except:
-            # Пропускаем файлы, которые не являются DICOM
-            continue
-
-    # Сортируем по InstanceNumber
-    files.sort(key=lambda x: x[1])
-    files = [f[0] for f in files]  # Оставляем только пути к файлам
-
     slices = []
     shapes = []
     example_ds = None
+    file_infos = []
 
-    for f in files:
+    for filename in os.listdir(DICOM_DIR):
+        file_path = os.path.join(DICOM_DIR, filename)
         try:
-            ds = pydicom.dcmread(f)
-            print(f"[INFO] Обработка файла: {os.path.basename(f)}")
-            print(f"        → Transfer Syntax: {ds.file_meta.TransferSyntaxUID}")
+            ds = pydicom.dcmread(file_path, stop_before_pixels=True)
+            orientation = tuple(round(float(v), 3) for v in ds.ImageOrientationPatient)
+            instance = int(ds.InstanceNumber)
+            file_infos.append((file_path, orientation, instance))
+        except Exception as e:
+            print(f"[WARN] Пропущен файл {filename}: {e}")
+            continue
 
+    if not file_infos:
+        raise RuntimeError("Нет допустимых DICOM файлов.")
+
+    orientation_counter = Counter([ori for _, ori, _ in file_infos])
+    main_orientation = orientation_counter.most_common(1)[0][0]
+    print(f"[INFO] Используется основная ориентация: {main_orientation}")
+
+    filtered_files = [(path, inst) for path, ori, inst in file_infos if ori == main_orientation]
+    filtered_files.sort(key=lambda x: x[1])
+
+    for path, _ in filtered_files:
+        try:
+            ds = pydicom.dcmread(path)
             arr = ds.pixel_array.astype(np.float32)
-
             if hasattr(ds, 'RescaleSlope') and hasattr(ds, 'RescaleIntercept'):
                 arr = arr * ds.RescaleSlope + ds.RescaleIntercept
-
             slices.append(arr)
             shapes.append(arr.shape)
-
             if example_ds is None:
                 example_ds = ds
-
         except Exception as e:
-            print(f"[ERROR] Не удалось прочитать {os.path.basename(f)}: {e}")
+            print(f"[ERROR] {os.path.basename(path)}: {e}")
             continue
 
     if not slices:
-        raise RuntimeError("Не удалось загрузить ни одного DICOM-среза.")
+        raise RuntimeError("Не удалось загрузить срезы основной ориентации.")
 
     shape_counter = Counter(shapes)
     target_shape = shape_counter.most_common(1)[0][0]
-    print(f"[INFO] Приводим срезы к форме: {target_shape}")
+    print(f"[INFO] Приведение всех срезов к форме {target_shape}")
 
     resized_slices = [
         resize(slice_, target_shape, preserve_range=True).astype(np.float32)
@@ -81,7 +76,7 @@ def load_volume():
     ]
 
     volume = np.stack(resized_slices)
-    print(f"[INFO] Загружено срезов: {len(resized_slices)}")
+    print(f"[INFO] Загружено срезов: {len(volume)}")
 
     return volume, example_ds
 
@@ -114,53 +109,49 @@ def reconstruct(
     try:
         volume, ds = load_volume()
 
+        # Получаем spacing
+        ps = ds.PixelSpacing if hasattr(ds, 'PixelSpacing') else [1, 1]
+        st = float(ds.SliceThickness) if hasattr(ds, 'SliceThickness') else 1.0
+
         if plane == "axial":
             img = volume[np.clip(index, 0, volume.shape[0] - 1), :, :]
+            spacing_x, spacing_y = ps
         elif plane == "sagittal":
             img = np.flip(volume[:, :, np.clip(index, 0, volume.shape[2] - 1)], axis=(0, 1))
+            spacing_x, spacing_y = st, ps[0]
         elif plane == "coronal":
             img = np.flip(volume[:, np.clip(index, 0, volume.shape[1] - 1), :], axis=0)
+            spacing_x, spacing_y = st, ps[1]
         else:
             raise HTTPException(status_code=400, detail="Invalid plane")
 
+        # Windowing
         if mode == "auto":
             img = apply_window(img, ds)
         elif mode == "window":
             try:
-                # Используем переданные значения или значения из DICOM
                 wc = window_center if window_center is not None else (
-                    float(ds.WindowCenter[0]) if isinstance(ds.WindowCenter, pydicom.multival.MultiValue) 
-                    else float(ds.WindowCenter))
+                    float(ds.WindowCenter[0]) if isinstance(ds.WindowCenter, pydicom.multival.MultiValue) else float(ds.WindowCenter))
                 ww = window_width if window_width is not None else (
-                    float(ds.WindowWidth[0]) if isinstance(ds.WindowWidth, pydicom.multival.MultiValue) 
-                    else float(ds.WindowWidth))
-                
+                    float(ds.WindowWidth[0]) if isinstance(ds.WindowWidth, pydicom.multival.MultiValue) else float(ds.WindowWidth))
                 img_min = wc - ww / 2
                 img_max = wc + ww / 2
                 img = np.clip(img, img_min, img_max)
                 img = ((img - img_min) / (img_max - img_min + 1e-5)) * 255
                 img = img.astype(np.uint8)
             except Exception as e:
-                print(f"Window level error, using raw: {e}")
+                print(f"Window level error, fallback to raw: {e}")
                 img = ((img - img.min()) / (img.max() - img.min() + 1e-5)) * 255
                 img = img.astype(np.uint8)
         elif mode == "raw":
             img = ((img - img.min()) / (img.max() - img.min() + 1e-5)) * 255
             img = img.astype(np.uint8)
 
-        ps = ds.PixelSpacing if hasattr(ds, 'PixelSpacing') else [1, 1]
-        st = float(ds.SliceThickness) if hasattr(ds, 'SliceThickness') else 1.0
-
-        if plane == "axial":
-            spacing_x, spacing_y = ps
-        elif plane == "sagittal":
-            spacing_x, spacing_y = st, ps[0]
-        elif plane == "coronal":
-            spacing_x, spacing_y = st, ps[1]
-
+        # Масштабирование по физическим размерам
+        # size — высота (в пикселях), ширину пересчитаем через spacing
         aspect_ratio = spacing_y / spacing_x
         height = size
-        width = int(size * aspect_ratio)
+        width = int(round(size * aspect_ratio))
 
         img = Image.fromarray(img).resize((width, height))
         buf = BytesIO()
@@ -171,6 +162,7 @@ def reconstruct(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/upload")
 async def upload_dicom_files(files: List[UploadFile] = File(...)):
@@ -183,8 +175,7 @@ async def upload_dicom_files(files: List[UploadFile] = File(...)):
 
         for file in files:
             file_ext = os.path.splitext(file.filename)[1].lower()
-            
-            # Разрешаем файлы без расширения или с .dcm/.zip
+
             if file_ext not in {'', '.dcm', '.zip'}:
                 continue
 
@@ -192,7 +183,6 @@ async def upload_dicom_files(files: List[UploadFile] = File(...)):
             with open(temp_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
-            # Для ZIP-архивов
             if file_ext == '.zip':
                 try:
                     with zipfile.ZipFile(temp_path, 'r') as zip_ref:
@@ -202,20 +192,14 @@ async def upload_dicom_files(files: List[UploadFile] = File(...)):
                     os.remove(temp_path)
                     continue
 
-            # Проверяем все файлы в директории (включая распакованные)
-            for filename in os.listdir(DICOM_DIR):
-                file_path = os.path.join(DICOM_DIR, filename)
-                
-                # Пытаемся прочитать как DICOM, даже если нет расширения
-                try:
-                    # Читаем только заголовок (stop_before_pixels=True для скорости)
-                    pydicom.dcmread(file_path, stop_before_pixels=True)
-                    valid_files += 1
-                except:
-                    # Если не DICOM и не ZIP - удаляем
-                    if not filename.lower().endswith('.zip'):
-                        os.remove(file_path)
-                    continue
+        for filename in os.listdir(DICOM_DIR):
+            file_path = os.path.join(DICOM_DIR, filename)
+            try:
+                pydicom.dcmread(file_path, stop_before_pixels=True)
+                valid_files += 1
+            except:
+                if not filename.lower().endswith('.zip'):
+                    os.remove(file_path)
 
             processed_files += 1
 
