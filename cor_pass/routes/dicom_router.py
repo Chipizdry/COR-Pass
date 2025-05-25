@@ -5,6 +5,7 @@ import numpy as np
 import pydicom
 from skimage.transform import resize
 from PIL import Image
+from PIL import ImageOps
 from io import BytesIO
 from functools import lru_cache
 from pathlib import Path
@@ -80,6 +81,7 @@ def load_volume():
 
     return volume, example_ds
 
+
 @router.get("/viewer", response_class=HTMLResponse)
 def get_viewer():
     return HTMLResponse(HTML_FILE.read_text(encoding="utf-8"))
@@ -96,6 +98,7 @@ def apply_window(img, ds):
     except Exception as e:
         print(f"[WARN] Ошибка применения Window Center/Width: {e}")
         return img.astype(np.uint8)
+
 
 @router.get("/reconstruct/{plane}")
 def reconstruct(
@@ -147,21 +150,26 @@ def reconstruct(
             img = ((img - img.min()) / (img.max() - img.min() + 1e-5)) * 255
             img = img.astype(np.uint8)
 
-        # Масштабирование по физическим размерам
-        # size — высота (в пикселях), ширину пересчитаем через spacing
-        aspect_ratio = spacing_y / spacing_x
-        height = size
-        width = int(round(size * aspect_ratio))
+        # Преобразуем в изображение и добавляем паддинг (512x512 канва)
+        img_pil = Image.fromarray(img).convert("L")
+        img_pil = ImageOps.pad(
+            img_pil,
+            (512, 512),
+            method=Image.Resampling.BICUBIC,
+            color=0,
+            centering=(0.5, 0.5)
+        )
 
-        img = Image.fromarray(img).resize((width, height))
         buf = BytesIO()
-        img.save(buf, format="PNG")
+        img_pil.save(buf, format="PNG")
         buf.seek(0)
         return StreamingResponse(buf, media_type="image/png")
+
     except Exception as e:
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @router.post("/upload")
