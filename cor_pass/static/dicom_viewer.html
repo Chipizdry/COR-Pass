@@ -436,20 +436,24 @@ async function handleUpload() {
                     // Отображаем метаданные
                     metadataContainer.style.display = 'block';
                     metadataContent.innerHTML = `
-                        <p><strong>Dimensions:</strong> 
-                        Axial: ${metadata.shape.depth}, 
-                        Coronal: ${metadata.shape.height}, 
-                        Sagittal: ${metadata.shape.width}</p>
-                        <p><strong>Spacing:</strong> 
-                        X: ${metadata.spacing.x.toFixed(2)} mm, 
-                        Y: ${metadata.spacing.y.toFixed(2)} mm, 
-                        Z: ${metadata.spacing.z.toFixed(2)} mm</p>
-                    `;
-                    
-                    // Обновляем информацию о размерах
-                //    document.getElementById("axial-size").textContent = `${metadata.shape.depth} slices`;
-                //    document.getElementById("coronal-size").textContent = `${metadata.shape.height} slices`;
-                //    document.getElementById("sagittal-size").textContent = `${metadata.shape.width} slices`;
+                        <p><strong>Dimensions:</strong> Axial: ${metadata.shape.depth}, Coronal: ${metadata.shape.height}, Sagittal: ${metadata.shape.width}</p>
+                        <p><strong>Spacing:</strong> X: ${metadata.spacing.x.toFixed(2)} mm, Y: ${metadata.spacing.y.toFixed(2)} mm, Z: ${metadata.spacing.z.toFixed(2)} mm</p>
+
+                        <p><strong>Study UID:</strong> ${metadata.study_info.StudyInstanceUID}</p>
+                        <p><strong>Series UID:</strong> ${metadata.study_info.SeriesInstanceUID}</p>
+                        <p><strong>Modality:</strong> ${metadata.study_info.Modality}</p>
+                        <p><strong>Date:</strong> ${metadata.study_info.StudyDate}</p>
+
+                        <p><strong>Patient:</strong> ${metadata.study_info.PatientName}</p>
+                        <p><strong>Birth Date:</strong> ${metadata.study_info.PatientBirthDate}</p>
+
+                        <p><strong>Manufacturer:</strong> ${metadata.study_info.Manufacturer}</p>
+                        <p><strong>Model:</strong> ${metadata.study_info.DeviceModel}</p>
+
+                        <p><strong>KVP:</strong> ${metadata.study_info.KVP}</p>
+                        <p><strong>Current (mA):</strong> ${metadata.study_info.XRayTubeCurrent}</p>
+                        <p><strong>Exposure (mAs):</strong> ${metadata.study_info.Exposure}</p>
+                      `;
                     
                 } catch (error) {
                     console.error("Error fetching metadata:", error);

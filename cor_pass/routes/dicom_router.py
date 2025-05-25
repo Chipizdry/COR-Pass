@@ -251,7 +251,7 @@ def get_metadata():
         spacing = ds.PixelSpacing if hasattr(ds, 'PixelSpacing') else [1.0, 1.0]
         slice_thickness = float(ds.SliceThickness) if hasattr(ds, 'SliceThickness') else 1.0
 
-        return {
+        metadata = {
             "shape": {
                 "depth": depth,
                 "height": height,
@@ -261,7 +261,22 @@ def get_metadata():
                 "x": float(spacing[1]),
                 "y": float(spacing[0]),
                 "z": slice_thickness
+            },
+            "study_info": {
+                "StudyInstanceUID": getattr(ds, "StudyInstanceUID", "N/A"),
+                "SeriesInstanceUID": getattr(ds, "SeriesInstanceUID", "N/A"),
+                "Modality": getattr(ds, "Modality", "N/A"),
+                "StudyDate": getattr(ds, "StudyDate", "N/A"),
+                "PatientName": str(getattr(ds, "PatientName", "N/A")),
+                "PatientBirthDate": getattr(ds, "PatientBirthDate", "N/A"),
+                "Manufacturer": getattr(ds, "Manufacturer", "N/A"),
+                "DeviceModel": getattr(ds, "ManufacturerModelName", "N/A"),
+                "KVP": getattr(ds, "KVP", "N/A"),
+                "XRayTubeCurrent": getattr(ds, "XRayTubeCurrent", "N/A"),
+                "Exposure": getattr(ds, "Exposure", "N/A")
             }
         }
+
+        return metadata
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
