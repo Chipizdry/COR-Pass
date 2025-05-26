@@ -113,29 +113,57 @@ function applyManualWindow() {
 }
 
 
-    // Обновление среза
     async function update(plane, callback) {
-      const idx = parseInt(document.getElementById(plane).value);
-      const canvas = document.getElementById('canvas-' + plane);
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      img.onload = function() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      drawCrossOnPlane(ctx, plane);
-      if (callback) callback();
-      };
-      
-     // img.src = `/api/dicom/reconstruct/${plane}?index=${idx}&t=${Date.now()}`;
-      let url = `/api/dicom/reconstruct/${plane}?index=${idx}&mode=${currentMode}`;
-      img.src = url + `&t=${Date.now()}`;
-      
-      if (currentMode === 'window') {
-        url += `&window_center=${manualWindowCenter}&window_width=${manualWindowWidth}`;
-      }
-       
+    const idx = parseInt(document.getElementById(plane).value);
+    const canvas = document.getElementById('canvas-' + plane);
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    // Получаем токен из localStorage или URL
+    const token = localStorage.getItem('authToken') || 
+                  new URLSearchParams(window.location.search).get('access_token');
 
+    img.onload = function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        drawCrossOnPlane(ctx, plane);
+        if (callback) callback();
+    };
+
+    // Создаем URL с параметрами
+    const params = new URLSearchParams({
+        index: idx,
+        mode: currentMode,
+        t: Date.now()
+    });
+
+    if (currentMode === 'window') {
+        params.append('window_center', manualWindowCenter);
+        params.append('window_width', manualWindowWidth);
     }
+
+    try {
+        const response = await fetch(`/api/dicom/reconstruct/${plane}?${params.toString()}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        img.src = URL.createObjectURL(blob);
+    } catch (error) {
+        console.error('Error loading DICOM image:', error);
+        // Обработка ошибок (например, показать сообщение)
+        if (error.message.includes('401')) {
+            alert('Session expired. Please login again.');
+            window.location.href = '/';
+        }
+    }
+}    
 
     // Добавление метки по клику
  function addMarker(event, plane) {
@@ -267,18 +295,23 @@ async function handleUpload() {
     statusDiv.textContent = 'Preparing upload...';
     progressBar.style.width = '0%';
     progressBar.textContent = '0%';
-    metadataContainer.style.display = 'none'; // Скрываем метаданные перед загрузкой
+    metadataContainer.style.display = 'none';
     
     const formData = new FormData();
     let totalSize = 0;
     let fileCount = 0;
     
-    // Добавляем файлы и считаем общий размер
+    // Получаем токен 
+    const token = localStorage.getItem('authToken') || 
+                  new URLSearchParams(window.location.search).get('access_token');
+    
+    // Добавляем файлы
     for (const file of fileInput.files) {
         const fileName = file.name;
         const parts = fileName.split('.');
         const hasExtension = parts.length > 1;
         const fileExt = hasExtension ? parts.pop().toLowerCase() : '';
+        const accessToken = new URLSearchParams(window.location.search).get('access_token');
 
         // Разрешаем файлы без расширения или с .dcm/.zip
         if (fileExt === '' || fileExt === 'dcm' || fileExt === 'zip') {
@@ -288,8 +321,9 @@ async function handleUpload() {
         }
     }
     
+    
     if (fileCount === 0) {
-        statusDiv.textContent = 'No valid DICOM or ZIP files selected';
+        statusDiv.textContent = 'No valid files selected';
         return;
     }
     
@@ -297,37 +331,45 @@ async function handleUpload() {
     statusDiv.textContent = 'Uploading...';
     
     try {
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '/api/dicom/upload');
-        
-        // Обработка прогресса загрузки
-        xhr.upload.onprogress = function(e) {
-            if (e.lengthComputable) {
-                const percent = Math.round((e.loaded / e.total) * 100);
-                progressBar.style.width = percent + '%';
-                progressBar.textContent = percent + '%';
-            }
-        };
-        
-        xhr.onload = async function() {
-            if (xhr.status === 200) {
-                const result = JSON.parse(xhr.responseText);
-                statusDiv.textContent = result.message;
-                progressBar.style.width = '100%';
-                progressBar.textContent = '100%';
-                
-                // Получаем информацию об объеме и обновляем слайдеры
-                const volumeInfo = await fetch('/api/dicom/volume_info').then(r => r.json());
-                console.log('Volume info:', volumeInfo);
-                updateSliders(volumeInfo);
+    
+        const token = localStorage.getItem('authToken') || 
+        new URLSearchParams(window.location.search).get('access_token');
+        const response = await fetch('/api/dicom/upload', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
 
-                // Получаем метаданные
-                try {
-                    const metadata = await fetch("/api/dicom/metadata").then(res => res.json());
-                    
-                    // Отображаем метаданные
-                    metadataContainer.style.display = 'block';
-                    metadataContent.innerHTML = `
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        statusDiv.textContent = result.message;
+        progressBar.style.width = '100%';
+        progressBar.textContent = '100%';
+
+      
+        const volumeInfo = await fetch('/api/dicom/volume_info', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        }).then(r => r.json());
+        
+        updateSliders(volumeInfo);
+
+        // Получаем метаданные с токеном
+        try {
+            const metadata = await fetch("/api/dicom/metadata", {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }).then(res => res.json());
+            
+            metadataContainer.style.display = 'block';
+            metadataContent.innerHTML = `
                         <p><strong>Dimensions:</strong> Axial: ${metadata.shape.depth}, Coronal: ${metadata.shape.height}, Sagittal: ${metadata.shape.width}</p>
                         <p><strong>Spacing:</strong> X: ${metadata.spacing.x.toFixed(2)} mm, Y: ${metadata.spacing.y.toFixed(2)} mm, Z: ${metadata.spacing.z.toFixed(2)} mm</p>
 
@@ -346,32 +388,24 @@ async function handleUpload() {
                         <p><strong>Current (mA):</strong> ${metadata.study_info.XRayTubeCurrent}</p>
                         <p><strong>Exposure (mAs):</strong> ${metadata.study_info.Exposure}</p>
                       `;
-                    
-                } catch (error) {
-                    console.error("Error fetching metadata:", error);
-                    metadataContent.innerHTML = "<p>Failed to load metadata</p>";
-                }
-                
-                // Перезагружаем изображения
-                ['axial', 'sagittal', 'coronal'].forEach(update);
+        } catch (error) {
+            console.error("Error fetching metadata:", error);
+            metadataContent.innerHTML = "<p>Failed to load metadata</p>";
+        }
+        
+        ['axial', 'sagittal', 'coronal'].forEach(update);
 
-            } else {
-                statusDiv.textContent = `Error: ${xhr.statusText}`;
-                progressBar.style.background = '#f44336';
-            }
-        };
-        
-        xhr.onerror = function() {
-            statusDiv.textContent = 'Upload failed';
-            progressBar.style.background = '#f44336';
-        };
-        
-        xhr.send(formData);
     } catch (error) {
         statusDiv.textContent = `Error: ${error.message}`;
         progressBar.style.background = '#f44336';
+        
+        // Если ошибка 401 (Unauthorized), перенаправляем на страницу авторизации
+        if (error.message.includes('401')) {
+            window.location.href = '/';
+        }
     }
 }
+
 
 function updateSliders(volumeInfo) {
   // Используем slices вместо depth, если shape отсутствует

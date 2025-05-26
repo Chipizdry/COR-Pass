@@ -6,6 +6,14 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Установим системные зависимости
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libopenslide0 \
+    libopenslide-dev \
+    openslide-tools \
+    build-essential \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 COPY . /app
 
 RUN cat .dockerignore

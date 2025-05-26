@@ -116,8 +116,8 @@
             </button>
 
 
-            <button class="custom-button"id="COR-AUTH">
-                <!-- Первая SVG-иконка -->       
+    <!--        <button class="custom-button"id="COR-AUTH">
+                      
                 <svg width="24" height="24" viewBox="0 0 51 50" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="0.5" width="50" height="50" rx="25" fill="#7B43F2"/>
                     <path d="M24.8362 15.0372C22.5504 15.2911 20.5889 16.9205 
@@ -150,9 +150,9 @@
                     25.8879 26.1139 25.9777Z" fill="white"/>
                     </svg>
                                     
-                <!-- Текст кнопки -->
+                
                 <span class="button-text">Аутентификатор</span> 
-                <!-- Вторая SVG-иконка -->
+               
                 <svg class="icon-right" width="24" height="24" viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="1.125" y="0.625" width="28.75" height="28.75" rx="14.375" stroke="#7527B2" stroke-width="1.25"/>
                     <path d="M20.1161 14.3274L20.1132 14.3248L14.1478 8.73647L14.1432 8.73226L14.1418 8.7311C13.7749 8.40419 
@@ -163,7 +163,7 @@
                     15.637L20.1176 15.634L20.1415 15.6107L20.151 15.6008L20.1535 15.5982C20.4888 15.233 20.4849 14.6591 
                     20.1161 14.3274Z" fill="#7527B2"/>
                 </svg>
-            </button>
+            </button> -->
 
        
             <button class="custom-button"id="COR-ERP">
@@ -567,10 +567,10 @@
                 window.location.href = '/static/password_manager.html' + '?access_token=' + accessToken;   }
             });
     
-            document.getElementById('COR-AUTH').addEventListener('click', function() {
+       /*     document.getElementById('COR-AUTH').addEventListener('click', function() {
                 if (checkToken()) {
                 window.location.href = '/static/medical.html' + '?access_token=' + accessToken;}
-            });
+            }); */
     
             // Обработчик для кнопки "COR-Platform"
         document.getElementById('COR-MED').addEventListener('click', function() {
@@ -588,7 +588,7 @@
        // Обработчик для кнопки "COR-ERP"
        document.getElementById('COR-ERP').addEventListener('click', function() {
             if (checkToken()) {          
-                window.location.href = 'http://docker.dev.erp.cor-medical.ua:3001/' + '?access_token=' + accessToken;
+                window.location.href = 'https://dev.erp.cor-medical.ua/front' + '?access_token=' + accessToken;
             } 
           });
 

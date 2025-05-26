@@ -136,7 +136,10 @@ document.getElementById('I_am_a_doctor').addEventListener('click', function() {
 
 document.getElementById('Dicom_viewer').addEventListener('click', function() {
     if (checkToken()) {
-    window.location.href = '/api/dicom/viewer' + '?access_token=' + accessToken;   }
+   // window.location.href = '/api/dicom/viewer' + '?access_token=' + accessToken;  
+    window.location.href = '/static/dicom_viewer.html' + '?access_token=' + accessToken;
+
+}
 });
 
 

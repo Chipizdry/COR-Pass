@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, Query, HTTPException, UploadFile, File, status
 from fastapi.responses import StreamingResponse, HTMLResponse
 import os
 import numpy as np
@@ -13,31 +13,41 @@ import zipfile
 import shutil
 from typing import List
 from collections import Counter
+from skimage.transform import resize
+from collections import Counter
+from cor_pass.services.auth import auth_service
+from cor_pass.database.models import User
 
 router = APIRouter(prefix="/dicom", tags=["DICOM"])
 HTML_FILE = Path(__file__).parents[1] / "static" / "dicom_viewer.html"
-DICOM_DIR = "dicom_files"
-os.makedirs(DICOM_DIR, exist_ok=True)
+DICOM_ROOT_DIR = "dicom_users_data"
+os.makedirs(DICOM_ROOT_DIR, exist_ok=True)
 
-@lru_cache(maxsize=1)
-def load_volume():
+@lru_cache(maxsize=16)
+def load_volume(user_cor_id: str):
     print("[INFO] Загружаем том из DICOM-файлов...")
 
     # Чтение всех файлов
+    user_dicom_dir = os.path.join(DICOM_ROOT_DIR, user_cor_id)
+    if not os.path.exists(user_dicom_dir):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="DICOM данные для этого пользователя не найдены.")
+
     dicom_paths = [
-        os.path.join(DICOM_DIR, f)
-        for f in os.listdir(DICOM_DIR)
-        if not f.startswith('.') and os.path.isfile(os.path.join(DICOM_DIR, f))
+        os.path.join(user_dicom_dir, f)
+        for f in os.listdir(user_dicom_dir)
+        if not f.startswith('.') and os.path.isfile(os.path.join(user_dicom_dir, f))
     ]
 
     datasets = []
     for path in dicom_paths:
         try:
             ds = pydicom.dcmread(path)
-            if hasattr(ds, 'ImagePositionPatient') and hasattr(ds, 'ImageOrientationPatient'):
+            if hasattr(ds, 'ImagePositionPatient') and hasattr(ds, 'ImageOrientationPatient') and hasattr(ds, 'pixel_array'):
                 datasets.append((ds, path))
+            else:
+                print(f"[WARN] Файл {path} не содержит необходимых DICOM-тегов (ImagePositionPatient, ImageOrientationPatient, pixel_array). Пропущен.")
         except Exception as e:
-            print(f"[WARN] Пропущен файл {path}: {e}")
+            print(f"[WARN] Пропущен файл {path} из-за ошибки чтения: {e}")
             continue
 
     if not datasets:
@@ -74,9 +84,6 @@ def load_volume():
         raise RuntimeError("Не удалось загрузить ни одного среза.")
 
     # Приведение всех к одной форме
-    from skimage.transform import resize
-    from collections import Counter
-
     shape_counter = Counter(shapes)
     target_shape = shape_counter.most_common(1)[0][0]
     print(f"[INFO] Приведение всех срезов к форме {target_shape}")
@@ -94,7 +101,7 @@ def load_volume():
 
 
 @router.get("/viewer", response_class=HTMLResponse)
-def get_viewer():
+def get_viewer(current_user: User = Depends(auth_service.get_current_user)):
     return HTMLResponse(HTML_FILE.read_text(encoding="utf-8"))
 
 def apply_window(img, ds):
@@ -118,10 +125,11 @@ def reconstruct(
     size: int = 512,
     mode: str = Query("auto", enum=["auto", "window", "raw"]),
     window_center: float = Query(None),
-    window_width: float = Query(None)
+    window_width: float = Query(None),
+    current_user: User = Depends(auth_service.get_current_user)
 ):
     try:
-        volume, ds = load_volume()
+        volume, ds = load_volume(str(current_user.cor_id))
 
         # Получаем spacing
         ps = ds.PixelSpacing if hasattr(ds, 'PixelSpacing') else [1, 1]
@@ -184,10 +192,12 @@ def reconstruct(
 
 
 @router.post("/upload")
-async def upload_dicom_files(files: List[UploadFile] = File(...)):
+async def upload_dicom_files(files: List[UploadFile] = File(...), current_user: User = Depends(auth_service.get_current_user)):
     try:
-        shutil.rmtree(DICOM_DIR)
-        os.makedirs(DICOM_DIR, exist_ok=True)
+        user_dicom_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id))        
+        if os.path.exists(user_dicom_dir):
+            shutil.rmtree(user_dicom_dir)
+        os.makedirs(user_dicom_dir, exist_ok=True)
 
         processed_files = 0
         valid_files = 0
@@ -198,57 +208,83 @@ async def upload_dicom_files(files: List[UploadFile] = File(...)):
             if file_ext not in {'', '.dcm', '.zip'}:
                 continue
 
-            temp_path = os.path.join(DICOM_DIR, file.filename)
+            temp_path = os.path.join(user_dicom_dir, file.filename)
             with open(temp_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
             if file_ext == '.zip':
                 try:
                     with zipfile.ZipFile(temp_path, 'r') as zip_ref:
-                        zip_ref.extractall(DICOM_DIR)
+                        # Защита от Zip Slip и извлечение в папку пользователя
+                        for member in zip_ref.namelist():
+                            member_path = os.path.join(user_dicom_dir, member)
+                            # Убедимся, что путь находится внутри user_dicom_dir
+                            if not member_path.startswith(user_dicom_dir):
+                                raise ValueError("Zip Slip атака предотвращена!")
+                            zip_ref.extract(member, user_dicom_dir)
                     os.remove(temp_path)
                 except zipfile.BadZipFile:
                     os.remove(temp_path)
+                    print(f"[ERROR] Неверный ZIP-файл: {file.filename}")
+                    continue
+                except Exception as e:
+                    print(f"[ERROR] Ошибка при распаковке ZIP {file.filename}: {e}")
+                    os.remove(temp_path)
                     continue
 
-        for filename in os.listdir(DICOM_DIR):
-            file_path = os.path.join(DICOM_DIR, filename)
+        # Валидация DICOM-файлов
+        current_user_dicom_paths = [
+            os.path.join(user_dicom_dir, f)
+            for f in os.listdir(user_dicom_dir)
+            if not f.startswith('.') and os.path.isfile(os.path.join(user_dicom_dir, f))
+            and f.lower().endswith(('.dcm', '')) # Если без расширения, тоже считаем DICOM
+        ]
+
+        for file_path in current_user_dicom_paths:
             try:
                 pydicom.dcmread(file_path, stop_before_pixels=True)
                 valid_files += 1
             except:
-                if not filename.lower().endswith('.zip'):
-                    os.remove(file_path)
+                if not os.path.basename(file_path).lower().endswith('.zip'): # Не удаляем сам zip-файл, если он невалидный
+                    os.remove(file_path) # Удаляем невалидные DICOM-файлы
 
-            processed_files += 1
+            processed_files += 1 # Считаем все обработанные файлы (включая ZIP и не DICOM, которые были пропущены/удалены)
 
         if valid_files == 0:
-            raise HTTPException(status_code=400, detail="No valid DICOM files found in the uploaded files")
+            # Если нет валидных DICOM-файлов, удаляем созданную директорию пользователя
+            if os.path.exists(user_dicom_dir) and not os.listdir(user_dicom_dir): # Проверяем, что директория пуста, прежде чем удалять
+                shutil.rmtree(user_dicom_dir)
+            raise HTTPException(status_code=400, detail="No valid DICOM files found in the uploaded files.")
 
-        load_volume.cache_clear()
+        load_volume.cache_clear() 
 
         return {
-            "message": f"Successfully processed {processed_files} files, {valid_files} DICOM files validated"
+            "message": f"Successfully processed {processed_files} files, {valid_files} DICOM files validated for user {current_user.cor_id}"
         }
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/volume_info")
-def get_volume_info():
+def get_volume_info(current_user: User = Depends(auth_service.get_current_user)):
     try:
-        volume, ds = load_volume()
+        print(f"Loading volume for user cor_id: {current_user.cor_id}")  # Логирование
+        volume, ds = load_volume(str(current_user.cor_id))
+        print(f"Volume shape: {volume.shape}")  # Логирование
         return {
             "slices": volume.shape[0],
             "width": volume.shape[1],
             "height": volume.shape[2]
         }
     except Exception as e:
+        print(f"Error in volume_info: {str(e)}")  # Логирование
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/metadata")
-def get_metadata():
+def get_metadata(current_user: User = Depends(auth_service.get_current_user)):
     try:
-        volume, ds = load_volume()
+        volume, ds = load_volume(str(current_user.cor_id))
         depth, height, width = volume.shape
 
         spacing = ds.PixelSpacing if hasattr(ds, 'PixelSpacing') else [1.0, 1.0]
