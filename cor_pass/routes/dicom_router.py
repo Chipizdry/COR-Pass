@@ -3,6 +3,8 @@ from fastapi.responses import StreamingResponse, HTMLResponse
 import os
 import numpy as np
 import pydicom
+import openslide
+from openslide import OpenSlide, OpenSlideUnsupportedFormatError
 from skimage.transform import resize
 from PIL import Image
 from PIL import ImageOps

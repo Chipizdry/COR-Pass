@@ -113,7 +113,7 @@ function applyManualWindow() {
 }
 
 
-    async function update(plane, callback) {
+async function update(plane, callback) {
     const idx = parseInt(document.getElementById(plane).value);
     const canvas = document.getElementById('canvas-' + plane);
     const ctx = canvas.getContext('2d');
@@ -127,7 +127,10 @@ function applyManualWindow() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         drawCrossOnPlane(ctx, plane);
-        if (callback) callback();
+        // Добавляем проверку, является ли callback функцией перед вызовом
+        if (callback && typeof callback === 'function') {
+            callback();
+        }
     };
 
     // Создаем URL с параметрами
@@ -163,7 +166,7 @@ function applyManualWindow() {
             window.location.href = '/';
         }
     }
-}    
+}
 
     // Добавление метки по клику
  function addMarker(event, plane) {
@@ -432,7 +435,7 @@ function updateSliders(volumeInfo) {
 // Функция для обновления отображаемого значения ползунка
 function updateSliderValue(plane) {
   const slider = document.getElementById(plane);
-  const valueDisplay = slider.nextElementSibling; // Предполагаем, что следующий элемент - это span для значения
+  const valueDisplay = slider.nextElementSibling; 
   if (valueDisplay && valueDisplay.classList.contains('dcm-range-value')) {
     valueDisplay.textContent = slider.value;
   }
