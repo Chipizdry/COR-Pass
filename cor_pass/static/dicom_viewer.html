@@ -138,11 +138,17 @@ function applyManualWindow() {
     }
 
     // Добавление метки по клику
-    function addMarker(event, plane) {
+ function addMarker(event, plane) {
   const canvas = event.target;
   const rect = canvas.getBoundingClientRect();
   const x = Math.round(event.clientX - rect.left);
   const y = Math.round(event.clientY - rect.top);
+
+  // Получаем фактические размеры изображения на canvas
+  const imgWidth = canvas.width;
+  const imgHeight = canvas.height;
+  const scaleX = 512 / imgWidth;
+  const scaleY = 512 / imgHeight;
 
   const indices = {
     axial: parseInt(document.getElementById('axial').value),
@@ -153,18 +159,22 @@ function applyManualWindow() {
   let point3D;
 
   if (plane === 'axial') {
-    point3D = { x: x, y: y, z: indices.axial };
+    point3D = { 
+      x: x * scaleX, 
+      y: y * scaleY, 
+      z: indices.axial 
+    };
   } else if (plane === 'sagittal') {
     point3D = {
       x: indices.sagittal,
-      y: 512-x,  // учитываем переворот изображения
-      z: 512-y          // x на изображении становится z в объеме
+      y: 512 - (x * scaleX),  // учитываем переворот изображения
+      z: 512 - (y * scaleY)    // x на изображении становится z в объеме
     };
   } else if (plane === 'coronal') {
     point3D = {
-      x: x,
+      x: x * scaleX,
       y: indices.coronal,
-      z: 512 - y    // учитываем переворот изображения
+      z: 512 - (y * scaleY)    // учитываем переворот изображения
     };
   }
 
@@ -184,8 +194,17 @@ function applyManualWindow() {
     }
 
  // Рисование перекрестия на конкретном срезе
-function drawCrossOnPlane(ctx, plane, point3D = markers3D[0]) {
+ function drawCrossOnPlane(ctx, plane, point3D = markers3D[0]) {
   if (!point3D) return;
+
+  // Получаем размеры изображения на canvas
+  const canvas = ctx.canvas;
+  const imgWidth = canvas.width;
+  const imgHeight = canvas.height;
+  
+  // Рассчитываем масштабные коэффициенты
+  const scaleX = imgWidth / 512;
+  const scaleY = imgHeight / 512;
 
   ctx.strokeStyle = 'lime';
   ctx.lineWidth = 1;
@@ -193,24 +212,31 @@ function drawCrossOnPlane(ctx, plane, point3D = markers3D[0]) {
 
   if (plane === 'axial') {
     // Для аксиальной плоскости просто используем x и y
-    ctx.moveTo(0, point3D.y);
-    ctx.lineTo(512, point3D.y);
-    ctx.moveTo(point3D.x, 0);
-    ctx.lineTo(point3D.x, 512);
-} else if (plane === 'sagittal') {
-  const imgZ = 512 - point3D.z;
-  ctx.moveTo(0, imgZ); // отзеркаленная горизонтальная линия
-  ctx.lineTo(512, imgZ);
-
-  ctx.moveTo(512 - point3D.y, 0); // y — вертикальная линия (с учетом переворота)
-  ctx.lineTo(512 - point3D.y, 512);
-} else if (plane === 'coronal') {
-    // Для корональной плоскости:
-    const imgZ = 512 - point3D.z;
+    const yPos = point3D.y * scaleY;
+    ctx.moveTo(0, yPos);
+    ctx.lineTo(imgWidth, yPos);
+    
+    const xPos = point3D.x * scaleX;
+    ctx.moveTo(xPos, 0);
+    ctx.lineTo(xPos, imgHeight);
+  } else if (plane === 'sagittal') {
+    // Для сагиттальной плоскости
+    const imgZ = (512 - point3D.z) * scaleY;
     ctx.moveTo(0, imgZ);
-    ctx.lineTo(512, imgZ);
-    ctx.moveTo(point3D.x, 0);
-    ctx.lineTo(point3D.x, 512);
+    ctx.lineTo(imgWidth, imgZ);
+
+    const yPos = (512 - point3D.y) * scaleX;
+    ctx.moveTo(yPos, 0);
+    ctx.lineTo(yPos, imgHeight);
+  } else if (plane === 'coronal') {
+    // Для корональной плоскости
+    const imgZ = (512 - point3D.z) * scaleY;
+    ctx.moveTo(0, imgZ);
+    ctx.lineTo(imgWidth, imgZ);
+    
+    const xPos = point3D.x * scaleX;
+    ctx.moveTo(xPos, 0);
+    ctx.lineTo(xPos, imgHeight);
   }
 
   ctx.stroke();

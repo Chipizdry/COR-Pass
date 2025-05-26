@@ -84,7 +84,7 @@
       }
       .dicom-progress-bar {
           height: 20px;
-          background: #4CAF50;
+          background: #7B43F2;
           width: 0%;
           transition: width 0.3s;
           text-align: center;

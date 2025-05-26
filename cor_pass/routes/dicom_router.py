@@ -23,40 +23,47 @@ os.makedirs(DICOM_DIR, exist_ok=True)
 def load_volume():
     print("[INFO] Загружаем том из DICOM-файлов...")
 
+    # Чтение всех файлов
+    dicom_paths = [
+        os.path.join(DICOM_DIR, f)
+        for f in os.listdir(DICOM_DIR)
+        if not f.startswith('.') and os.path.isfile(os.path.join(DICOM_DIR, f))
+    ]
+
+    datasets = []
+    for path in dicom_paths:
+        try:
+            ds = pydicom.dcmread(path)
+            if hasattr(ds, 'ImagePositionPatient') and hasattr(ds, 'ImageOrientationPatient'):
+                datasets.append((ds, path))
+        except Exception as e:
+            print(f"[WARN] Пропущен файл {path}: {e}")
+            continue
+
+    if not datasets:
+        raise RuntimeError("Нет подходящих DICOM-файлов с ImagePositionPatient.")
+
+    # Определение нормали к срезу из ориентации
+    orientation = datasets[0][0].ImageOrientationPatient
+    normal = np.cross(orientation[:3], orientation[3:])
+
+    # Сортировка по проекции позиции на нормаль
+    datasets.sort(key=lambda item: np.dot(item[0].ImagePositionPatient, normal))
+
     slices = []
     shapes = []
     example_ds = None
-    file_infos = []
 
-    for filename in os.listdir(DICOM_DIR):
-        file_path = os.path.join(DICOM_DIR, filename)
+    for ds, path in datasets:
         try:
-            ds = pydicom.dcmread(file_path, stop_before_pixels=True)
-            orientation = tuple(round(float(v), 3) for v in ds.ImageOrientationPatient)
-            instance = int(ds.InstanceNumber)
-            file_infos.append((file_path, orientation, instance))
-        except Exception as e:
-            print(f"[WARN] Пропущен файл {filename}: {e}")
-            continue
-
-    if not file_infos:
-        raise RuntimeError("Нет допустимых DICOM файлов.")
-
-    orientation_counter = Counter([ori for _, ori, _ in file_infos])
-    main_orientation = orientation_counter.most_common(1)[0][0]
-    print(f"[INFO] Используется основная ориентация: {main_orientation}")
-
-    filtered_files = [(path, inst) for path, ori, inst in file_infos if ori == main_orientation]
-    filtered_files.sort(key=lambda x: x[1])
-
-    for path, _ in filtered_files:
-        try:
-            ds = pydicom.dcmread(path)
             arr = ds.pixel_array.astype(np.float32)
+
             if hasattr(ds, 'RescaleSlope') and hasattr(ds, 'RescaleIntercept'):
                 arr = arr * ds.RescaleSlope + ds.RescaleIntercept
+
             slices.append(arr)
             shapes.append(arr.shape)
+
             if example_ds is None:
                 example_ds = ds
         except Exception as e:
@@ -64,7 +71,11 @@ def load_volume():
             continue
 
     if not slices:
-        raise RuntimeError("Не удалось загрузить срезы основной ориентации.")
+        raise RuntimeError("Не удалось загрузить ни одного среза.")
+
+    # Приведение всех к одной форме
+    from skimage.transform import resize
+    from collections import Counter
 
     shape_counter = Counter(shapes)
     target_shape = shape_counter.most_common(1)[0][0]
