@@ -371,6 +371,44 @@ async function update(plane, callback) {
         svsPreviewContainer.style.display = 'block';
         dcmViewerControls.style.display = 'none';
         metadataContainer.style.display = 'none';
+
+
+ 
+        // Загружаем метаданные SVS
+        try {
+            const metadataResponse = await fetch('/api/dicom/svs_metadata', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (metadataResponse.ok) {
+                const svsMetadata = await metadataResponse.json();
+                metadataContainer.style.display = 'block';
+                
+                // Форматируем метаданные для отображения
+                let metadataHTML = `
+                    <p><strong>Filename:</strong> ${svsMetadata.filename}</p>
+                    <p><strong>Dimensions:</strong> ${svsMetadata.dimensions.width} × ${svsMetadata.dimensions.height} px</p>
+                    <p><strong>Zoom Levels:</strong> ${svsMetadata.dimensions.levels}</p>
+                    <h4 style="margin-top:10px;margin-bottom:5px;color:#7527B2;">Slide Properties:</h4>
+                `;
+                
+                // Добавляем все свойства
+                for (const [key, value] of Object.entries(svsMetadata.properties)) {
+                    metadataHTML += `<p><strong>${key}:</strong> ${value}</p>`;
+                }
+                
+                metadataContent.innerHTML = metadataHTML;
+            }
+        } catch (metadataError) {
+            console.error("Error loading SVS metadata:", metadataError);
+            metadataContent.innerHTML = "<p>Failed to load SVS metadata</p>";
+        }
+
+
+
+
       } catch (err) {
         console.error("Error loading SVS preview:", err);
         svsPreviewContainer.style.display = 'none';

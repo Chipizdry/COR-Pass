@@ -362,3 +362,35 @@ def preview_svs(current_user: User = Depends(auth_service.get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/svs_metadata")
+def get_svs_metadata(current_user: User = Depends(auth_service.get_current_user)):
+    user_slide_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id), "slides")
+    svs_files = [f for f in os.listdir(user_slide_dir) if f.lower().endswith('.svs')]
+
+    if not svs_files:
+        raise HTTPException(status_code=404, detail="No SVS files found.")
+
+    svs_path = os.path.join(user_slide_dir, svs_files[0])
+
+    try:
+        slide = OpenSlide(svs_path)
+        
+        # Базовые метаданные
+        metadata = {
+            "filename": svs_files[0],
+            "dimensions": {
+                "width": slide.dimensions[0],
+                "height": slide.dimensions[1],
+                "levels": slide.level_count
+            },
+            "properties": {}
+        }
+
+        # Все свойства слайда
+        for prop_name in slide.properties:
+            metadata["properties"][prop_name] = slide.properties[prop_name]
+
+        return metadata
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
