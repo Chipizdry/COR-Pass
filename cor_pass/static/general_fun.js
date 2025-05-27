@@ -12,6 +12,7 @@ const modalConfigs = {
     step4Modal: { width: '460px', height: '650px', top: '20px', left: '300px' },
     addPatientModal: { width: '460px', height: '700px', top: '15px', left: '300px' },
     addDeviceModal: { width: '250px', height: '550px', top: '50px', left: '250px' },
+    Dicom_upload_modal: { width: '460px', height: 'auto', top: '20px', left: '300px' },
 };
 
 function makeModalDraggable(modalId) {
@@ -169,7 +170,9 @@ function initModalControls(modalId) {
         const config = modalConfigs[modalId];
         if (config) {
             modal.style.width = config.width;
-            modal.style.height = config.height;
+            if (config.height) {
+                modal.style.height = config.height;
+            }
             modal.style.top = config.top;
             modal.style.left = config.left;
             modal.style.transform = 'none'; // Убираем стандартное центрирование

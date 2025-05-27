@@ -12,6 +12,35 @@
 </head>
 <body>
 
+  <div id="Dicom_upload_modal" class="modal" style="display: block;">
+
+    <div class="modal-header">     
+      <div class="modal-buttons">
+          <button class="modal-button close" data-action="close" id="closeDicom_upload_modal">✖</button>
+      </div>       
+      <h3 style="margin-top:30; color:#291161;font-size: 17px;">Upload Medical Files</h3>
+    </div>  
+      
+    <div class="dicom-upload-container">
+      <input type="file" id="dicom-upload" accept=".zip,.dcm" multiple>
+      <button onclick="handleUpload()">Upload DICOM files</button>
+      <div class="dicom-progress-container">
+
+          <div class="dicom-progress-bar" id="progress-bar">0%</div>
+      </div>
+      <div class="file-info" id="file-info"></div>
+      <div id="upload-status"></div>
+
+      <div class="svs-preview-container" id="svs-preview-container" style="display: none;">
+        <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">SVS Preview</h3>
+        <img id="svs-thumbnail" src="" alt="SVS Thumbnail" style="max-width: 512px; border: 1px solid #ccc;" />
+      </div>
+    </div>
+    
+  </div>
+
+
+
   <div class="viewer">
     <div class="view">
       <label class="label-padded">Coronal</label> 
@@ -44,7 +73,7 @@
     </div>
 
     <div class="dicom-upload-container">
-      <input type="file" id="dicom-upload" accept=".zip,.dcm" multiple>
+   <!--  <input type="file" id="dicom-upload" accept=".zip,.dcm" multiple>
       <button onclick="handleUpload()">Upload DICOM files</button>
       <div class="dicom-progress-container">
 
@@ -56,7 +85,7 @@
       <div class="svs-preview-container" id="svs-preview-container" style="display: none;">
         <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">SVS Preview</h3>
         <img id="svs-thumbnail" src="" alt="SVS Thumbnail" style="max-width: 512px; border: 1px solid #ccc;" />
-      </div>
+      </div> --> 
 
       <div class="metadata-container" id="metadata-container" style="display: none;">
         <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">DICOM Metadata</h3>
@@ -83,7 +112,8 @@
 
   </div>
 
-
+  <script src="/static/translation.js"></script>  
+  <script src="/static/general_fun.js"></script>   
   <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
   
   <script>
@@ -550,7 +580,14 @@ function formatFileSize(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
   </script>
+ <script> 
+ document.addEventListener('DOMContentLoaded', () => {
+ 
   
+  makeModalDraggable('Dicom_upload_modal');
+ 
+});
+</script>
 
 </body>
 </html>
