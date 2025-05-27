@@ -387,16 +387,59 @@ async function update(plane, callback) {
                 metadataContainer.style.display = 'block';
                 
                 // Форматируем метаданные для отображения
-                let metadataHTML = `
+                                let metadataHTML = `
+                    <h4>Basic Information</h4>
                     <p><strong>Filename:</strong> ${svsMetadata.filename}</p>
-                    <p><strong>Dimensions:</strong> ${svsMetadata.dimensions.width} × ${svsMetadata.dimensions.height} px</p>
-                    <p><strong>Zoom Levels:</strong> ${svsMetadata.dimensions.levels}</p>
-                    <h4 style="margin-top:10px;margin-bottom:5px;color:#7527B2;">Slide Properties:</h4>
+                    <p><strong>Dimensions:</strong> ${svsMetadata.dimensions.width.toLocaleString()} × ${svsMetadata.dimensions.height.toLocaleString()} px (Levels: ${svsMetadata.dimensions.levels})</p>
+                    <p><strong>Microns per pixel:</strong> ${svsMetadata.basic_info.mpp}</p>
+                    <p><strong>Magnification:</strong> ${svsMetadata.basic_info.magnification}x</p>
+                    <p><strong>Scan Date:</strong> ${svsMetadata.basic_info.scan_date}</p>
+                    <p><strong>Scanner:</strong> ${svsMetadata.basic_info.scanner}</p>
+
+                    <h4>Slide Properties</h4>
+                    <table class="metadata-table">
+                        <tr><td><strong>Vendor</strong></td><td>${svsMetadata.basic_info.vendor}</td></tr>
+                        <tr><td><strong>Format</strong></td><td>${svsMetadata.full_properties['tiff.ImageDescription']?.split('|')[0] || 'N/A'}</td></tr>
+                    </table>
+
+                    <h4>Level Details</h4>
+                    <div class="level-details">
+                        <table class="metadata-table">
+                            <thead>
+                                <tr>
+                                    <th>Level</th>
+                                    <th>Downsample</th>
+                                    <th>Dimensions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${svsMetadata.levels.map((level, i) => `
+                                    <tr>
+                                        <td>${i}</td>
+                                        <td>${level.downsample.toFixed(1)}</td>
+                                        <td>${level.width.toLocaleString()} × ${level.height.toLocaleString()}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h4>Technical Metadata</h4>
+                    <details>
+                      <summary>Show full metadata</summary>
+                      <pre>${
+                        svsMetadata.full_properties 
+                          ? Object.entries(svsMetadata.full_properties).map(([k, v]) => `${k}: ${v}`).join('\n') 
+                          : 'No technical metadata available.'
+                      }</pre>
+                    </details>
                 `;
-                
+                                
                 // Добавляем все свойства
-                for (const [key, value] of Object.entries(svsMetadata.properties)) {
+                if (svsMetadata.properties && typeof svsMetadata.properties === 'object') {
+                  for (const [key, value] of Object.entries(svsMetadata.properties)) {
                     metadataHTML += `<p><strong>${key}:</strong> ${value}</p>`;
+                  }
                 }
                 
                 metadataContent.innerHTML = metadataHTML;

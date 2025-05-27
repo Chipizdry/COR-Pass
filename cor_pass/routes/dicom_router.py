@@ -375,7 +375,7 @@ def get_svs_metadata(current_user: User = Depends(auth_service.get_current_user)
     try:
         slide = OpenSlide(svs_path)
         
-        # Базовые метаданные
+        # Основные метаданные
         metadata = {
             "filename": svs_files[0],
             "dimensions": {
@@ -383,12 +383,27 @@ def get_svs_metadata(current_user: User = Depends(auth_service.get_current_user)
                 "height": slide.dimensions[1],
                 "levels": slide.level_count
             },
-            "properties": {}
+            "basic_info": {
+                "mpp": float(slide.properties.get('aperio.MPP', 0)),
+                "magnification": slide.properties.get('aperio.AppMag', 'N/A'),
+                "scan_date": slide.properties.get('aperio.Time', 'N/A'),
+                "scanner": slide.properties.get('aperio.User', 'N/A'),
+                "vendor": slide.properties.get('openslide.vendor', 'N/A')
+            },
+            "levels": [],
+            "full_properties": {}
         }
 
-        # Все свойства слайда
-        for prop_name in slide.properties:
-            metadata["properties"][prop_name] = slide.properties[prop_name]
+        # Информация о уровнях
+        for level in range(slide.level_count):
+            metadata["levels"].append({
+                "downsample": float(slide.properties.get(f'openslide.level[{level}].downsample', 0)),
+                "width": int(slide.properties.get(f'openslide.level[{level}].width', 0)),
+                "height": int(slide.properties.get(f'openslide.level[{level}].height', 0))
+            })
+
+        # Все свойства для детального просмотра
+        metadata["full_properties"] = dict(slide.properties)
 
         return metadata
 
