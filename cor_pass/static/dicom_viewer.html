@@ -53,13 +53,17 @@
       <div class="file-info" id="file-info"></div>
       <div id="upload-status"></div>
 
+      <div class="svs-preview-container" id="svs-preview-container" style="display: none;">
+        <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">SVS Preview</h3>
+        <img id="svs-thumbnail" src="" alt="SVS Thumbnail" style="max-width: 512px; border: 1px solid #ccc;" />
+      </div>
 
       <div class="metadata-container" id="metadata-container" style="display: none;">
         <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">DICOM Metadata</h3>
         <div id="metadata-content"></div>
       </div>
 
-      <div class="viewer-controls">
+      <div class="viewer-controls" id="viewer-controls">
         <label>View Mode:
           <select id="view-mode" onchange="updateViewMode()">
             <option value="auto">Auto (Window Level)</option>
@@ -282,132 +286,148 @@ async function update(plane, callback) {
 
 <script>
  
-async function handleUpload() {
-    const fileInput = document.getElementById('dicom-upload');
-    const statusDiv = document.getElementById('upload-status');
-    const progressBar = document.getElementById('progress-bar');
-    const fileInfoDiv = document.getElementById('file-info');
-    const metadataContainer = document.getElementById('metadata-container');
-    const metadataContent = document.getElementById('metadata-content');
-    
-    if (!fileInput.files.length) {
-        statusDiv.textContent = 'Please select files';
-        return;
+ async function handleUpload() {
+  const fileInput = document.getElementById('dicom-upload');
+  const statusDiv = document.getElementById('upload-status');
+  const progressBar = document.getElementById('progress-bar');
+  const fileInfoDiv = document.getElementById('file-info');
+  const metadataContainer = document.getElementById('metadata-container');
+  const metadataContent = document.getElementById('metadata-content');
+  const svsPreviewContainer = document.getElementById('svs-preview-container');
+  const dcmViewerControls = document.getElementById('viewer-controls');
+  const svsThumbnail = document.getElementById('svs-thumbnail');
+
+  if (!fileInput.files.length) {
+    statusDiv.textContent = 'Please select files';
+    return;
+  }
+
+  statusDiv.textContent = 'Preparing upload...';
+  progressBar.style.width = '0%';
+  progressBar.textContent = '0%';
+  metadataContainer.style.display = 'none';
+  svsPreviewContainer.style.display = 'none';
+
+  const formData = new FormData();
+  let totalSize = 0;
+  let fileCount = 0;
+
+  const token = localStorage.getItem('authToken') || 
+                new URLSearchParams(window.location.search).get('access_token');
+
+  for (const file of fileInput.files) {
+    const fileName = file.name;
+    const parts = fileName.split('.');
+    const fileExt = (parts.length > 1) ? parts.pop().toLowerCase() : '';
+    if (fileExt === '' || ['dcm', 'zip', 'svs'].includes(fileExt)) {
+      formData.append('files', file);
+      totalSize += file.size;
+      fileCount++;
+    }
+  }
+
+  if (fileCount === 0) {
+    statusDiv.textContent = 'No valid files selected';
+    return;
+  }
+
+  fileInfoDiv.textContent = `Selected ${fileCount} files (${formatFileSize(totalSize)})`;
+  statusDiv.textContent = 'Uploading...';
+
+  try {
+    const response = await fetch('/api/dicom/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    statusDiv.textContent = 'Preparing upload...';
-    progressBar.style.width = '0%';
-    progressBar.textContent = '0%';
-    metadataContainer.style.display = 'none';
-    
-    const formData = new FormData();
-    let totalSize = 0;
-    let fileCount = 0;
-    
-    // Получаем токен 
-    const token = localStorage.getItem('authToken') || 
-                  new URLSearchParams(window.location.search).get('access_token');
-    
-    // Добавляем файлы
-    for (const file of fileInput.files) {
-        const fileName = file.name;
-        const parts = fileName.split('.');
-        const hasExtension = parts.length > 1;
-        const fileExt = hasExtension ? parts.pop().toLowerCase() : '';
-        const accessToken = new URLSearchParams(window.location.search).get('access_token');
+    const result = await response.json();
+    statusDiv.textContent = result.message;
+    progressBar.style.width = '100%';
+    progressBar.textContent = '100%';
 
-        // Разрешаем файлы без расширения или с .dcm/.zip
-        if (fileExt === '' || fileExt === 'dcm' || fileExt === 'zip') {
-            formData.append('files', file);
-            totalSize += file.size;
-            fileCount++;
-        }
-    }
-    
-    
-    if (fileCount === 0) {
-        statusDiv.textContent = 'No valid files selected';
-        return;
-    }
-    
-    fileInfoDiv.textContent = `Selected ${fileCount} files (${formatFileSize(totalSize)})`;
-    statusDiv.textContent = 'Uploading...';
-    
-    try {
-    
-        const token = localStorage.getItem('authToken') || 
-        new URLSearchParams(window.location.search).get('access_token');
-        const response = await fetch('/api/dicom/upload', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
+    // Проверяем сообщение — SVS или DICOM
+    if (result.message.includes('SVS')) {
+      // Отображаем миниатюру SVS
+      try {
+        const previewResponse = await fetch('/api/dicom/preview_svs', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        if (!previewResponse.ok) {
+          throw new Error('Failed to load SVS preview');
         }
 
-        const result = await response.json();
-        statusDiv.textContent = result.message;
-        progressBar.style.width = '100%';
-        progressBar.textContent = '100%';
+        const blob = await previewResponse.blob();
+        svsThumbnail.src = URL.createObjectURL(blob);
+        svsPreviewContainer.style.display = 'block';
+        dcmViewerControls.style.display = 'none';
+        metadataContainer.style.display = 'none';
+      } catch (err) {
+        console.error("Error loading SVS preview:", err);
+        svsPreviewContainer.style.display = 'none';
+      }
 
-      
-        const volumeInfo = await fetch('/api/dicom/volume_info', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        }).then(r => r.json());
-        
-        updateSliders(volumeInfo);
+    } else {
+      // Предполагаем, что это DICOM
+      svsPreviewContainer.style.display = 'none';
 
-        // Получаем метаданные с токеном
-        try {
-            const metadata = await fetch("/api/dicom/metadata", {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            }).then(res => res.json());
-            
-            metadataContainer.style.display = 'block';
-            metadataContent.innerHTML = `
-                        <p><strong>Dimensions:</strong> Axial: ${metadata.shape.depth}, Coronal: ${metadata.shape.height}, Sagittal: ${metadata.shape.width}</p>
-                        <p><strong>Spacing:</strong> X: ${metadata.spacing.x.toFixed(2)} mm, Y: ${metadata.spacing.y.toFixed(2)} mm, Z: ${metadata.spacing.z.toFixed(2)} mm</p>
-
-                        <p><strong>Study UID:</strong> ${metadata.study_info.StudyInstanceUID}</p>
-                        <p><strong>Series UID:</strong> ${metadata.study_info.SeriesInstanceUID}</p>
-                        <p><strong>Modality:</strong> ${metadata.study_info.Modality}</p>
-                        <p><strong>Date:</strong> ${metadata.study_info.StudyDate}</p>
-
-                        <p><strong>Patient:</strong> ${metadata.study_info.PatientName}</p>
-                        <p><strong>Birth Date:</strong> ${metadata.study_info.PatientBirthDate}</p>
-
-                        <p><strong>Manufacturer:</strong> ${metadata.study_info.Manufacturer}</p>
-                        <p><strong>Model:</strong> ${metadata.study_info.DeviceModel}</p>
-
-                        <p><strong>KVP:</strong> ${metadata.study_info.KVP}</p>
-                        <p><strong>Current (mA):</strong> ${metadata.study_info.XRayTubeCurrent}</p>
-                        <p><strong>Exposure (mAs):</strong> ${metadata.study_info.Exposure}</p>
-                      `;
-        } catch (error) {
-            console.error("Error fetching metadata:", error);
-            metadataContent.innerHTML = "<p>Failed to load metadata</p>";
+      const volumeInfo = await fetch('/api/dicom/volume_info', {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
-        
-        ['axial', 'sagittal', 'coronal'].forEach(update);
+      }).then(r => r.json());
 
-    } catch (error) {
-        statusDiv.textContent = `Error: ${error.message}`;
-        progressBar.style.background = '#f44336';
-        
-        // Если ошибка 401 (Unauthorized), перенаправляем на страницу авторизации
-        if (error.message.includes('401')) {
-            window.location.href = '/';
-        }
+      updateSliders(volumeInfo);
+
+      try {
+        const metadata = await fetch("/api/dicom/metadata", {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }).then(res => res.json());
+
+        metadataContainer.style.display = 'block';
+        metadataContent.innerHTML = `
+          <p><strong>Dimensions:</strong> Axial: ${metadata.shape.depth}, Coronal: ${metadata.shape.height}, Sagittal: ${metadata.shape.width}</p>
+          <p><strong>Spacing:</strong> X: ${metadata.spacing.x.toFixed(2)} mm, Y: ${metadata.spacing.y.toFixed(2)} mm, Z: ${metadata.spacing.z.toFixed(2)} mm</p>
+          <p><strong>Study UID:</strong> ${metadata.study_info.StudyInstanceUID}</p>
+          <p><strong>Series UID:</strong> ${metadata.study_info.SeriesInstanceUID}</p>
+          <p><strong>Modality:</strong> ${metadata.study_info.Modality}</p>
+          <p><strong>Date:</strong> ${metadata.study_info.StudyDate}</p>
+          <p><strong>Patient:</strong> ${metadata.study_info.PatientName}</p>
+          <p><strong>Birth Date:</strong> ${metadata.study_info.PatientBirthDate}</p>
+          <p><strong>Manufacturer:</strong> ${metadata.study_info.Manufacturer}</p>
+          <p><strong>Model:</strong> ${metadata.study_info.DeviceModel}</p>
+          <p><strong>KVP:</strong> ${metadata.study_info.KVP}</p>
+          <p><strong>Current (mA):</strong> ${metadata.study_info.XRayTubeCurrent}</p>
+          <p><strong>Exposure (mAs):</strong> ${metadata.study_info.Exposure}</p>
+        `;
+      } catch (error) {
+        console.error("Error fetching metadata:", error);
+        metadataContent.innerHTML = "<p>Failed to load metadata</p>";
+      }
+
+      ['axial', 'sagittal', 'coronal'].forEach(update);
     }
+
+  } catch (error) {
+    statusDiv.textContent = `Error: ${error.message}`;
+    progressBar.style.background = '#f44336';
+    if (error.message.includes('401')) {
+      window.location.href = '/';
+    }
+  }
 }
+
 
 
 function updateSliders(volumeInfo) {

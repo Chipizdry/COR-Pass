@@ -194,79 +194,98 @@ def reconstruct(
 
 
 @router.post("/upload")
-async def upload_dicom_files(files: List[UploadFile] = File(...), current_user: User = Depends(auth_service.get_current_user)):
+async def upload_dicom_files(
+    files: List[UploadFile] = File(...),
+    current_user: User = Depends(auth_service.get_current_user)
+):
     try:
-        user_dicom_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id))        
+        user_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id))
+        user_dicom_dir = user_dir
+        user_slide_dir = os.path.join(user_dir, "slides")
+
+        # Чистим старые данные
         if os.path.exists(user_dicom_dir):
             shutil.rmtree(user_dicom_dir)
         os.makedirs(user_dicom_dir, exist_ok=True)
+        os.makedirs(user_slide_dir, exist_ok=True)
 
         processed_files = 0
-        valid_files = 0
+        valid_dicom = 0
+        valid_svs = 0
 
         for file in files:
             file_ext = os.path.splitext(file.filename)[1].lower()
-
-            if file_ext not in {'', '.dcm', '.zip'}:
-                continue
 
             temp_path = os.path.join(user_dicom_dir, file.filename)
             with open(temp_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
+            processed_files += 1
+
+            if file_ext == '.svs':
+                try:
+                    # Проверяем что .svs файл действительно читается как OpenSlide
+                    OpenSlide(temp_path)
+                    shutil.move(temp_path, os.path.join(user_slide_dir, file.filename))
+                    valid_svs += 1
+                except OpenSlideUnsupportedFormatError:
+                    os.remove(temp_path)
+                    print(f"[ERROR] Файл {file.filename} не является допустимым SVS-форматом.")
+                continue
+
             if file_ext == '.zip':
                 try:
                     with zipfile.ZipFile(temp_path, 'r') as zip_ref:
-                        # Защита от Zip Slip и извлечение в папку пользователя
                         for member in zip_ref.namelist():
                             member_path = os.path.join(user_dicom_dir, member)
-                            # Убедимся, что путь находится внутри user_dicom_dir
                             if not member_path.startswith(user_dicom_dir):
                                 raise ValueError("Zip Slip атака предотвращена!")
                             zip_ref.extract(member, user_dicom_dir)
                     os.remove(temp_path)
-                except zipfile.BadZipFile:
-                    os.remove(temp_path)
-                    print(f"[ERROR] Неверный ZIP-файл: {file.filename}")
-                    continue
                 except Exception as e:
-                    print(f"[ERROR] Ошибка при распаковке ZIP {file.filename}: {e}")
+                    print(f"[ERROR] Ошибка распаковки {file.filename}: {e}")
                     os.remove(temp_path)
                     continue
 
-        # Валидация DICOM-файлов
-        current_user_dicom_paths = [
+        # Проверка DICOM-файлов
+        dicom_paths = [
             os.path.join(user_dicom_dir, f)
             for f in os.listdir(user_dicom_dir)
-            if not f.startswith('.') and os.path.isfile(os.path.join(user_dicom_dir, f))
-            and f.lower().endswith(('.dcm', '')) # Если без расширения, тоже считаем DICOM
+            if not f.startswith('.') and os.path.isfile(os.path.join(user_dicom_dir, f)) and
+               f.lower().endswith(('.dcm', '')) and not f.lower().endswith('.svs')
         ]
 
-        for file_path in current_user_dicom_paths:
+        for file_path in dicom_paths:
             try:
                 pydicom.dcmread(file_path, stop_before_pixels=True)
-                valid_files += 1
+                valid_dicom += 1
             except:
-                if not os.path.basename(file_path).lower().endswith('.zip'): # Не удаляем сам zip-файл, если он невалидный
-                    os.remove(file_path) # Удаляем невалидные DICOM-файлы
+                os.remove(file_path)
 
-            processed_files += 1 # Считаем все обработанные файлы (включая ZIP и не DICOM, которые были пропущены/удалены)
+        if valid_dicom == 0 and valid_svs == 0:
+            shutil.rmtree(user_dicom_dir)
+            raise HTTPException(status_code=400, detail="No valid DICOM or SVS files found.")
 
-        if valid_files == 0:
-            # Если нет валидных DICOM-файлов, удаляем созданную директорию пользователя
-            if os.path.exists(user_dicom_dir) and not os.listdir(user_dicom_dir): # Проверяем, что директория пуста, прежде чем удалять
-                shutil.rmtree(user_dicom_dir)
-            raise HTTPException(status_code=400, detail="No valid DICOM files found in the uploaded files.")
+        load_volume.cache_clear()
 
-        load_volume.cache_clear() 
+        if valid_svs > 0 and valid_dicom == 0:
+            message = f"Загружен файл SVS ({valid_svs} шт.)"
+        elif valid_dicom > 0 and valid_svs == 0:
+            message = f"Загружено {valid_dicom} срезов DICOM"
+        elif valid_dicom > 0 and valid_svs > 0:
+            message = f"Загружено {valid_dicom} срезов DICOM и {valid_svs} файл(ов) SVS"
+        else:
+            message = "Файлы загружены, но не удалось распознать ни одного DICOM или SVS."
 
         return {
-            "message": f"Successfully processed {processed_files} files, {valid_files} DICOM files validated for user {current_user.cor_id}"
+            "message": message
         }
+
     except Exception as e:
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/volume_info")
 def get_volume_info(current_user: User = Depends(auth_service.get_current_user)):
@@ -321,3 +340,25 @@ def get_metadata(current_user: User = Depends(auth_service.get_current_user)):
         return metadata
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/preview_svs")
+def preview_svs(current_user: User = Depends(auth_service.get_current_user)):
+    user_slide_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id), "slides")
+    svs_files = [f for f in os.listdir(user_slide_dir) if f.lower().endswith('.svs')]
+
+    if not svs_files:
+        raise HTTPException(status_code=404, detail="No SVS found.")
+
+    svs_path = os.path.join(user_slide_dir, svs_files[0])
+
+    try:
+        slide = OpenSlide(svs_path)
+        thumbnail = slide.get_thumbnail((300, 300))
+        buf = BytesIO()
+        thumbnail.save(buf, format="PNG")
+        buf.seek(0)
+        return StreamingResponse(buf, media_type="image/png")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
