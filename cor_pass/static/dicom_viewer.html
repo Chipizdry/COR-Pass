@@ -40,8 +40,7 @@
   </div>
 
 
-
-  <div class="viewer">
+  <div class="viewer hidden" id="DcmViewerFrame">
     <div class="view">
       <label class="label-padded">Coronal</label> 
       <canvas id="canvas-coronal" width="512" height="512"></canvas>   
@@ -73,20 +72,7 @@
     </div>
 
     <div class="dicom-upload-container">
-   <!--  <input type="file" id="dicom-upload" accept=".zip,.dcm" multiple>
-      <button onclick="handleUpload()">Upload DICOM files</button>
-      <div class="dicom-progress-container">
-
-          <div class="dicom-progress-bar" id="progress-bar">0%</div>
-      </div>
-      <div class="file-info" id="file-info"></div>
-      <div id="upload-status"></div>
-
-      <div class="svs-preview-container" id="svs-preview-container" style="display: none;">
-        <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">SVS Preview</h3>
-        <img id="svs-thumbnail" src="" alt="SVS Thumbnail" style="max-width: 512px; border: 1px solid #ccc;" />
-      </div> --> 
-
+  
       <div class="metadata-container" id="metadata-container" style="display: none;">
         <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">DICOM Metadata</h3>
         <div id="metadata-content"></div>
@@ -108,9 +94,7 @@
         </div>
       </div>
   </div>
-
-
-  </div>
+</div>
 
   <script src="/static/translation.js"></script>  
   <script src="/static/general_fun.js"></script>   
@@ -316,6 +300,7 @@ async function update(plane, callback) {
 
 <script>
  
+
  async function handleUpload() {
   const fileInput = document.getElementById('dicom-upload');
   const statusDiv = document.getElementById('upload-status');
@@ -326,6 +311,8 @@ async function update(plane, callback) {
   const svsPreviewContainer = document.getElementById('svs-preview-container');
   const dcmViewerControls = document.getElementById('viewer-controls');
   const svsThumbnail = document.getElementById('svs-thumbnail');
+  const dcmViewerFrame=document.getElementById('DcmViewerFrame');
+
 
   if (!fileInput.files.length) {
     statusDiv.textContent = 'Please select files';
@@ -490,7 +477,7 @@ async function update(plane, callback) {
     } else {
       // Предполагаем, что это DICOM
       svsPreviewContainer.style.display = 'none';
-
+      dcmViewerFrame.classList.remove('hidden');
       const volumeInfo = await fetch('/api/dicom/volume_info', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -538,7 +525,7 @@ async function update(plane, callback) {
     }
   }
 }
-
+ 
 
 
 function updateSliders(volumeInfo) {
@@ -581,12 +568,15 @@ function formatFileSize(bytes) {
 }
   </script>
  <script> 
- document.addEventListener('DOMContentLoaded', () => {
- 
-  
+ document.addEventListener('DOMContentLoaded', () => { 
   makeModalDraggable('Dicom_upload_modal');
- 
+  document.getElementById('DcmViewerFrame').classList.add('hidden');
+
 });
+
+function showMainContent() {
+  document.getElementById('main-content').style.display = 'block';
+}
 </script>
 
 </body>

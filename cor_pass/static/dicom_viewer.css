@@ -180,3 +180,7 @@ details pre {
     overflow-x: auto;
     max-height: 200px;
 }
+
+.hidden {
+  display: none !important;
+}
