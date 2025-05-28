@@ -106,7 +106,7 @@
             </div>
         </div>
     <!-- Модальное окно для восстановления доступа -->
-<div id="recovery-modal" class="modal" style="display:none;">
+<div id="recovery_modal" class="modal" style="display:none;">
         <div class="modal-header">          
             <div class="modal-buttons">
                 <button class="modal-button close" data-action="close" id="closeMyModal">✖</button>
@@ -140,7 +140,7 @@
 <script>
     // Открытие модального окна
     document.getElementById('recovery-btn').onclick = function() {
-        document.getElementById('recovery-modal').style.display = 'block';
+        document.getElementById('recovery_modal').style.display = 'block';
         document.getElementById('email-recovery').style.display = 'none';
         document.getElementById('email-recovery-label').style.display = 'none';
         document.getElementById('send-recovery-btn').style.display = 'none';
@@ -178,8 +178,8 @@
 });
     // Закрытие модального окна при клике вне его
     window.onclick = function(event) {
-        if (event.target == document.getElementById('recovery-modal')) {
-            document.getElementById('recovery-modal').style.display = 'none';
+        if (event.target == document.getElementById('recovery_modal')) {
+            document.getElementById('recovery_modal').style.display = 'none';
         }
     }
 // Обработка отправки данных формы

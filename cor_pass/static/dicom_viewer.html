@@ -97,7 +97,8 @@
 </div>
 
   <script src="/static/translation.js"></script>  
-  <script src="/static/general_fun.js"></script>   
+  <script src="/static/general_fun.js"></script> 
+  <script src="/static/dicom_viewer.js"></script>  
   <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
   
   <script>
@@ -300,8 +301,12 @@ async function update(plane, callback) {
 
 <script>
  
+ handleUpload();
 
+
+ /*
  async function handleUpload() {
+  if( checkToken()){
   const fileInput = document.getElementById('dicom-upload');
   const statusDiv = document.getElementById('upload-status');
   const progressBar = document.getElementById('progress-bar');
@@ -524,9 +529,9 @@ async function update(plane, callback) {
       window.location.href = '/';
     }
   }
-}
+}}
  
-
+*/
 
 function updateSliders(volumeInfo) {
   // Используем slices вместо depth, если shape отсутствует
