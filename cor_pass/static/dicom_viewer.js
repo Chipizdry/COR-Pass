@@ -47,65 +47,176 @@ function prepareUIBeforeUpload() {
 
 
   async function handleSVS(token) {
-    const previewResponse = await fetch('/api/dicom/preview_svs', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!previewResponse.ok) throw new Error('Failed to load SVS preview');
-  
-    const blob = await previewResponse.blob();
-    document.getElementById('svs-thumbnail').src = URL.createObjectURL(blob);
-    document.getElementById('svs-preview-container').style.display = 'block';
-    document.getElementById('viewer-controls').style.display = 'none';
-  
     try {
-      const metadataRes = await fetch('/api/dicom/svs_metadata', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-  
-      if (!metadataRes.ok) return;
-      const svsMetadata = await metadataRes.json();
-  
-      let metadataHTML = `
-        <h4>Basic Information</h4>
-        <p><strong>Filename:</strong> ${svsMetadata.filename}</p>
-        <p><strong>Dimensions:</strong> ${svsMetadata.dimensions.width.toLocaleString()} × ${svsMetadata.dimensions.height.toLocaleString()} px (Levels: ${svsMetadata.dimensions.levels})</p>
-        <p><strong>Microns per pixel:</strong> ${svsMetadata.basic_info.mpp}</p>
-        <p><strong>Magnification:</strong> ${svsMetadata.basic_info.magnification}x</p>
-        <p><strong>Scan Date:</strong> ${svsMetadata.basic_info.scan_date}</p>
-        <p><strong>Scanner:</strong> ${svsMetadata.basic_info.scanner}</p>
-  
-        <h4>Slide Properties</h4>
-        <table class="metadata-table">
-          <tr><td><strong>Vendor</strong></td><td>${svsMetadata.basic_info.vendor}</td></tr>
-          <tr><td><strong>Format</strong></td><td>${svsMetadata.full_properties?.['tiff.ImageDescription']?.split('|')[0] || 'N/A'}</td></tr>
-        </table>
-  
-        <h4>Level Details</h4>
-        <table class="metadata-table">
-          <thead><tr><th>Level</th><th>Downsample</th><th>Dimensions</th></tr></thead>
-          <tbody>
-            ${svsMetadata.levels.map((lvl, i) => `
-              <tr><td>${i}</td><td>${lvl.downsample.toFixed(1)}</td><td>${lvl.width.toLocaleString()} × ${lvl.height.toLocaleString()}</td></tr>
-            `).join('')}
-          </tbody>
-        </table>
-  
-        <h4>Technical Metadata</h4>
-        <details><summary>Show full metadata</summary><pre>${svsMetadata.full_properties ? Object.entries(svsMetadata.full_properties).map(([k, v]) => `${k}: ${v}`).join('\n') : 'No technical metadata available.'}</pre></details>
-      `;
-  
-      if (svsMetadata.properties && typeof svsMetadata.properties === 'object') {
-        for (const [k, v] of Object.entries(svsMetadata.properties)) {
-          metadataHTML += `<p><strong>${k}:</strong> ${v}</p>`;
-        }
-      }
-  
-      document.getElementById('metadata-container').style.display = 'block';
-      document.getElementById('metadata-content').innerHTML = metadataHTML;
+        // Load preview image
+        const previewResponse = await fetch('/api/dicom/preview_svs', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!previewResponse.ok) throw new Error('Failed to load SVS preview');
+        
+        const blob = await previewResponse.blob();
+        const thumbnail = document.getElementById('svs-thumbnail');
+        thumbnail.src = URL.createObjectURL(blob);
+        document.getElementById('svs-preview-container').style.display = 'block';
+        document.getElementById('viewer-controls').style.display = 'none';
+        
+        // Add click handler to open fullscreen
+        thumbnail.onclick = () => openFullscreenSVS(blob, token);
+        
+        // Load metadata
+        await loadSvsMetadata(token);
     } catch (err) {
-      console.error("Error loading SVS metadata:", err);
+        console.error("Error handling SVS file:", err);
+        document.getElementById('upload-status').textContent = `Error: ${err.message}`;
     }
-  }
+}
+
+async function openFullscreenSVS(blob = null, token = null) {
+    const fullscreenViewer = document.getElementById('svs-fullscreen-viewer');
+    const fullscreenImg = document.getElementById('svs-fullscreen-image');
+    const dcmViewerFrame = document.getElementById('DcmViewerFrame');
+    
+    // Скрываем DICOM viewer если он был показан
+    dcmViewerFrame.classList.add('hidden');
+    
+    // Показываем контейнер для полноэкранного просмотра
+    fullscreenViewer.style.display = 'block';
+    
+    // Добавляем класс loading для индикации загрузки
+    fullscreenImg.classList.add('loading');
+    
+    // Если blob не передан, загружаем изображение с сервера
+    if (!blob) {
+        token = token || getToken();
+        try {
+            const previewResponse = await fetch('/api/dicom/preview_svs?full=true', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!previewResponse.ok) throw new Error('Failed to load SVS preview');
+            blob = await previewResponse.blob();
+        } catch (err) {
+            console.error("Error loading full SVS image:", err);
+            fullscreenImg.classList.remove('loading');
+            return;
+        }
+    }
+    
+    // Создаем объект URL для blob
+    const objectUrl = URL.createObjectURL(blob);
+    
+    // Создаем новое изображение для предварительной загрузки
+    const tempImg = new Image();
+    tempImg.onload = function() {
+        // Устанавливаем источник основного изображения
+        fullscreenImg.src = objectUrl;
+        
+        // Сбрасываем трансформации
+        fullscreenImg.style.transform = 'none';
+        
+        // Удаляем класс loading
+        fullscreenImg.classList.remove('loading');
+        
+        // Освобождаем память после загрузки
+        URL.revokeObjectURL(objectUrl);
+    };
+    tempImg.onerror = function() {
+        console.error("Error loading image");
+        fullscreenImg.classList.remove('loading');
+        URL.revokeObjectURL(objectUrl);
+    };
+    tempImg.src = objectUrl;
+    
+    // Load metadata for fullscreen viewer
+    await loadSvsMetadata(token || getToken(), true);
+    
+    // Add event listeners (если они еще не добавлены)
+    document.querySelector('#svs-fullscreen-viewer .close-btn').onclick = () => {
+        fullscreenViewer.style.display = 'none';
+        if (fullscreenImg.src) {
+            URL.revokeObjectURL(fullscreenImg.src);
+        }
+    };
+    
+    document.querySelector('#svs-fullscreen-viewer .collapse-btn').onclick = () => {
+        document.querySelector('#svs-fullscreen-viewer .svs-metadata-panel').classList.toggle('collapsed');
+    };
+    
+    setupSVSViewerControls();
+}
+
+async function openFullscreenSVSFromThumbnail() {
+    const token = getToken();
+    try {
+        // Загружаем полное изображение
+        const response = await fetch('/api/dicom/preview_svs?full=true', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Failed to load full SVS image');
+        const blob = await response.blob();
+        await openFullscreenSVS(blob, token);
+    } catch (err) {
+        console.error("Error opening fullscreen SVS:", err);
+        alert("Failed to open fullscreen viewer: " + err.message);
+    }
+}
+
+async function loadSvsMetadata(token, isFullscreen = false) {
+    try {
+        const metadataRes = await fetch('/api/dicom/svs_metadata', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!metadataRes.ok) return;
+        const svsMetadata = await metadataRes.json();
+        
+        const metadataHTML = generateSvsMetadataHTML(svsMetadata);
+        
+        if (isFullscreen) {
+            document.getElementById('svs-metadata-content').innerHTML = metadataHTML;
+        } else {
+            document.getElementById('metadata-content').innerHTML = metadataHTML;
+            document.getElementById('metadata-container').style.display = 'block';
+        }
+    } catch (err) {
+        console.error("Error loading SVS metadata:", err);
+    }
+}
+
+function generateSvsMetadataHTML(svsMetadata) {
+    return `
+        <div class="metadata-section">
+            <h4>Basic Information</h4>
+            <div class="metadata-grid">
+                <div class="metadata-item"><span class="metadata-label">Filename:</span> ${svsMetadata.filename}</div>
+                <div class="metadata-item"><span class="metadata-label">Dimensions:</span> ${svsMetadata.dimensions.width.toLocaleString()} × ${svsMetadata.dimensions.height.toLocaleString()} px</div>
+                <div class="metadata-item"><span class="metadata-label">Levels:</span> ${svsMetadata.dimensions.levels}</div>
+                <div class="metadata-item"><span class="metadata-label">MPP:</span> ${svsMetadata.basic_info.mpp}</div>
+                <div class="metadata-item"><span class="metadata-label">Magnification:</span> ${svsMetadata.basic_info.magnification}x</div>
+                <div class="metadata-item"><span class="metadata-label">Scan Date:</span> ${svsMetadata.basic_info.scan_date}</div>
+                <div class="metadata-item"><span class="metadata-label">Scanner:</span> ${svsMetadata.basic_info.scanner}</div>
+            </div>
+        </div>
+
+        <div class="metadata-section">
+            <h4>Level Details</h4>
+            <table class="metadata-table">
+                <thead><tr><th>Level</th><th>Downsample</th><th>Dimensions</th></tr></thead>
+                <tbody>
+                    ${svsMetadata.levels.map((lvl, i) => `
+                        <tr><td>${i}</td><td>${lvl.downsample.toFixed(1)}</td><td>${lvl.width.toLocaleString()} × ${lvl.height.toLocaleString()}</td></tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="metadata-section">
+            <details class="technical-metadata">
+                <summary>Technical Metadata</summary>
+                <pre>${svsMetadata.full_properties ? Object.entries(svsMetadata.full_properties).map(([k, v]) => `${k}: ${v}`).join('\n') : 'No technical metadata available.'}</pre>
+            </details>
+        </div>
+    `;
+}
 
   
   async function handleDICOM(token) {
@@ -185,4 +296,59 @@ function prepareUIBeforeUpload() {
       if (err.message.includes('401')) window.location.href = '/';
     }
 }
-  
+
+
+function setupSVSViewerControls() {
+    const img = document.getElementById('svs-fullscreen-image');
+    const container = document.querySelector('.svs-image-container');
+    let scale = 1;
+    let isPanning = false;
+    let startX, startY, translateX = 0, translateY = 0;
+
+    // Zoom In
+    document.querySelector('.zoom-in').addEventListener('click', () => {
+        scale *= 1.2;
+        updateImageTransform();
+    });
+
+    // Zoom Out
+    document.querySelector('.zoom-out').addEventListener('click', () => {
+        scale /= 1.2;
+        updateImageTransform();
+    });
+
+    // Pan mode toggle
+    document.querySelector('.pan').addEventListener('click', () => {
+        isPanning = !isPanning;
+        document.querySelector('.pan').classList.toggle('active', isPanning);
+    });
+
+    // Mouse/touch events for panning
+    container.addEventListener('mousedown', (e) => {
+        if (!isPanning) return;
+        startX = e.clientX - translateX;
+        startY = e.clientY - translateY;
+        container.style.cursor = 'grabbing';
+    });
+
+    container.addEventListener('mousemove', (e) => {
+        if (!isPanning || !startX) return;
+        translateX = e.clientX - startX;
+        translateY = e.clientY - startY;
+        updateImageTransform();
+    });
+
+    container.addEventListener('mouseup', () => {
+        if (!isPanning) return;
+        startX = startY = null;
+        container.style.cursor = isPanning ? 'grab' : 'default';
+    });
+
+    container.addEventListener('mouseleave', () => {
+        startX = startY = null;
+    });
+
+    function updateImageTransform() {
+        img.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+    }
+}

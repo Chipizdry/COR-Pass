@@ -343,7 +343,10 @@ def get_metadata(current_user: User = Depends(auth_service.get_current_user)):
 
 
 @router.get("/preview_svs")
-def preview_svs(current_user: User = Depends(auth_service.get_current_user)):
+def preview_svs(
+    full: bool = Query(False),
+    current_user: User = Depends(auth_service.get_current_user)
+):
     user_slide_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id), "slides")
     svs_files = [f for f in os.listdir(user_slide_dir) if f.lower().endswith('.svs')]
 
@@ -354,9 +357,30 @@ def preview_svs(current_user: User = Depends(auth_service.get_current_user)):
 
     try:
         slide = OpenSlide(svs_path)
-        thumbnail = slide.get_thumbnail((300, 300))
+        if full:
+            # Полное изображение в максимальном разрешении
+            level = 0  # Максимальное разрешение
+            size = slide.level_dimensions[level]
+            
+            # Читаем регион с небольшим отступом для больших изображений
+            tile_size = (5000, 5000)  # Размер тайла для обработки больших изображений
+            img = Image.new('RGB', size)
+            
+            for x in range(0, size[0], tile_size[0]):
+                for y in range(0, size[1], tile_size[1]):
+                    region_size = (
+                        min(tile_size[0], size[0] - x),
+                        min(tile_size[1], size[1] - y)
+                    )
+                    region = slide.read_region((x, y), level, region_size)
+                    img.paste(region, (x, y))
+        else:
+            # Миниатюра
+            size = (300, 300)
+            img = slide.get_thumbnail(size)
+        
         buf = BytesIO()
-        thumbnail.save(buf, format="PNG")
+        img.save(buf, format="PNG")
         buf.seek(0)
         return StreamingResponse(buf, media_type="image/png")
     except Exception as e:
