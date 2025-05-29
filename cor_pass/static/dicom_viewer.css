@@ -202,20 +202,25 @@ details pre {
   height: 100%;
 }
 
+
 .svs-image-container {
   flex: 1;
   position: relative;
-  overflow: hidden;
+  overflow: auto;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   background: #f0f0f0;
 }
 
+
 .svs-main-image {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  transition: transform 0.2s ease;
 }
 
 .svs-toolbar {
@@ -285,10 +290,16 @@ details pre {
   transform: scale(1.02);
 }
 
+#svs-thumbnail:active {
+  box-shadow: 0 0 5px #555;
+  transform: scale(0.99);
+}
 
 .svs-main-image.loading {
   background: url('/static/loading.gif') center center no-repeat;
   background-size: 50px 50px;
+  min-width: 100px;
+  min-height: 100px;
 }
 
 .svs-image-container {

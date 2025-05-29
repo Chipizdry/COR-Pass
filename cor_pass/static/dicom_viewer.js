@@ -76,87 +76,101 @@ async function openFullscreenSVS(blob = null, token = null) {
     const fullscreenImg = document.getElementById('svs-fullscreen-image');
     const dcmViewerFrame = document.getElementById('DcmViewerFrame');
     
-    // Скрываем DICOM viewer если он был показан
-    dcmViewerFrame.classList.add('hidden');
+    // Скрываем DICOM viewer
+    if (dcmViewerFrame) dcmViewerFrame.classList.add('hidden');
     
-    // Показываем контейнер для полноэкранного просмотра
+    // Показываем контейнер и индикатор загрузки
     fullscreenViewer.style.display = 'block';
-    
-    // Добавляем класс loading для индикации загрузки
     fullscreenImg.classList.add('loading');
     
-    // Если blob не передан, загружаем изображение с сервера
-    if (!blob) {
+    try {
         token = token || getToken();
-        try {
-            const previewResponse = await fetch('/api/dicom/preview_svs?full=true', {
+        
+        // Если blob не передан, загружаем изображение
+        if (!blob) {
+            const response = await fetch('/api/dicom/preview_svs?full=true&level=0', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            if (!previewResponse.ok) throw new Error('Failed to load SVS preview');
-            blob = await previewResponse.blob();
-        } catch (err) {
-            console.error("Error loading full SVS image:", err);
+            if (!response.ok) throw new Error('Failed to load SVS preview');
+            blob = await response.blob();
+        }
+        
+        const objectUrl = URL.createObjectURL(blob);
+        const tempImg = new Image();
+        
+        tempImg.onload = () => {
+            fullscreenImg.src = objectUrl;
             fullscreenImg.classList.remove('loading');
-            return;
+            fullscreenImg.style.transform = 'none';
+            URL.revokeObjectURL(objectUrl);
+        };
+        
+        tempImg.onerror = () => {
+            fullscreenImg.classList.remove('loading');
+            URL.revokeObjectURL(objectUrl);
+            throw new Error('Failed to load image');
+        };
+        
+        tempImg.src = objectUrl;
+        
+        // Загружаем метаданные
+        await loadSvsMetadata(token, true);
+        
+    } catch (err) {
+        console.error("Error in openFullscreenSVS:", err);
+        fullscreenImg.classList.remove('loading');
+        fullscreenViewer.style.display = 'none';
+        if (err.message.includes('401')) {
+            window.location.href = '/';
         }
     }
-    
-    // Создаем объект URL для blob
-    const objectUrl = URL.createObjectURL(blob);
-    
-    // Создаем новое изображение для предварительной загрузки
-    const tempImg = new Image();
-    tempImg.onload = function() {
-        // Устанавливаем источник основного изображения
-        fullscreenImg.src = objectUrl;
-        
-        // Сбрасываем трансформации
-        fullscreenImg.style.transform = 'none';
-        
-        // Удаляем класс loading
-        fullscreenImg.classList.remove('loading');
-        
-        // Освобождаем память после загрузки
-        URL.revokeObjectURL(objectUrl);
-    };
-    tempImg.onerror = function() {
-        console.error("Error loading image");
-        fullscreenImg.classList.remove('loading');
-        URL.revokeObjectURL(objectUrl);
-    };
-    tempImg.src = objectUrl;
-    
-    // Load metadata for fullscreen viewer
-    await loadSvsMetadata(token || getToken(), true);
-    
-    // Add event listeners (если они еще не добавлены)
-    document.querySelector('#svs-fullscreen-viewer .close-btn').onclick = () => {
-        fullscreenViewer.style.display = 'none';
-        if (fullscreenImg.src) {
-            URL.revokeObjectURL(fullscreenImg.src);
-        }
-    };
-    
-    document.querySelector('#svs-fullscreen-viewer .collapse-btn').onclick = () => {
-        document.querySelector('#svs-fullscreen-viewer .svs-metadata-panel').classList.toggle('collapsed');
-    };
-    
-    setupSVSViewerControls();
 }
 
 async function openFullscreenSVSFromThumbnail() {
     const token = getToken();
+    const fullscreenViewer = document.getElementById('svs-fullscreen-viewer');
+    const fullscreenImg = document.getElementById('svs-fullscreen-image');
+    
+    // Показываем контейнер и индикатор загрузки
+    fullscreenViewer.style.display = 'block';
+    fullscreenImg.classList.add('loading');
+    
     try {
-        // Загружаем полное изображение
-        const response = await fetch('/api/dicom/preview_svs?full=true', {
+        // Загружаем полное изображение первого уровня
+        const response = await fetch('/api/dicom/preview_svs?full=true&level=0', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!response.ok) throw new Error('Failed to load full SVS image');
+        
+        if (!response.ok) {
+            throw new Error(`Failed to load full SVS image: ${response.status}`);
+        }
+        
         const blob = await response.blob();
-        await openFullscreenSVS(blob, token);
+        const objectUrl = URL.createObjectURL(blob);
+        
+        // Создаем временное изображение для проверки загрузки
+        const tempImg = new Image();
+        tempImg.onload = () => {
+            fullscreenImg.src = objectUrl;
+            fullscreenImg.classList.remove('loading');
+            fullscreenImg.style.transform = 'none';
+            URL.revokeObjectURL(objectUrl);
+        };
+        tempImg.onerror = () => {
+            fullscreenImg.classList.remove('loading');
+            URL.revokeObjectURL(objectUrl);
+            throw new Error('Failed to load image');
+        };
+        tempImg.src = objectUrl;
+        
+        // Загружаем метаданные
+        await loadSvsMetadata(token, true);
+        
     } catch (err) {
         console.error("Error opening fullscreen SVS:", err);
+        fullscreenImg.classList.remove('loading');
         alert("Failed to open fullscreen viewer: " + err.message);
+        fullscreenViewer.style.display = 'none';
     }
 }
 
