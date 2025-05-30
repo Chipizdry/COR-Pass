@@ -1,0 +1,201 @@
+.specimenWrapper{
+    width: 112px;
+    min-width: 112px;
+    border-right:1px solid #B2AFBA;
+    position: relative;
+}
+.specimenPlaceholder{
+    padding: 16px 12px;
+    background: #FFF;
+    height: 187px;
+    border-right:1px solid #B2AFBA;
+}
+
+.specimenItem{
+    height: 159px;
+    min-height: 159px;
+    padding: 12px 10px;
+    width: 112px;
+    border: 2px solid #EFECF8;
+    border-bottom:1px solid #B2AFBA;
+}
+.specimenItem.active{
+    border: 2px solid #7527B2;
+}
+.specimenItemBottom{
+    gap: 8px;
+    margin-top: 10px;
+}
+.specimenItems{
+    height: calc(100% - 187px - 58px);     /*187 height of placeholder | 58 height of scroll button*/
+    overflow: hidden;
+}
+
+
+
+.glassMark{
+    margin-top: 4px;
+}
+.glassPlaceholder{
+    padding: 12px 8px;
+    background: #FFF;
+    height: 124px;
+    border-bottom: 1px solid #B2AFBA;
+}
+.glassItem{
+    border: 1px solid #FFFFFF;
+    border-radius: 4px;
+    background: #88C6FF;
+    padding: 4px;
+}
+.glassItems{
+    padding: 12px 6px;
+    gap: 12px;
+    height: calc(100% - 124px - 159px);
+    overflow: hidden;
+}
+
+
+.cassettePlaceholder{
+    padding: 16px 11px;
+    background: #FFF;
+    height: 159px;
+    width: 104px;
+    min-width: 104px;
+}
+.cassetteItem{
+    padding: 12px 6px;
+    height: 159px;
+    font-weight: 600;
+    border-bottom: 1px solid #B2AFBA;
+}
+.cassetteColumn{
+    border-left: 1px solid #B2AFBA;
+}
+.cassetteItemImg{
+    position: relative;
+    cursor: pointer;
+}
+.cassetteAction{
+    position: absolute;
+    bottom: 4px;
+    width: 100%;
+    padding: 0 4px;
+}
+.cassetteWrapper{
+    color: #5B4296;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    padding-right: 58px;
+}
+#cassetteItems{
+    overflow: hidden;
+}
+
+
+.casePlate{
+    font-weight: 800;
+    color: #5B4296;
+    padding: 6px 4px 4px;
+    text-align: center;
+    cursor: pointer;
+    border: 1px solid #ffffff;
+}
+.casePlate.active{
+    background: rgba(255, 255, 255, 0.60);
+    border: 1px solid #5B4296;
+    border-radius: 6px;
+}
+#parentMark .casePlate{
+    width: 42.5px;
+}
+#parentMark{
+    margin-bottom: 10px;
+    margin-top: 8px;
+}
+#childMark{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 10px;
+}
+#childMark .casePlate{
+    width: 31px;
+}
+.caseItem{
+    cursor: pointer;
+    padding: 12px 10px;
+    height: 159px;
+    min-height: 159px;
+    width: 159px;
+    border: 2px solid #EFECF8;
+    border-bottom:1px solid #B2AFBA;
+}
+.caseItem.active{
+    border: 2px solid #7527B2;
+}
+.caseItemTop{
+    margin-bottom: 10px;
+}
+.caseItemBottom{
+    gap: 8px;
+}
+.caseItemDate{
+    font-size: 14px;
+    color: #5B4296;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+.caseItemImgCount{
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 17px;
+    font-weight: 800;
+    color: white;
+}
+.caseItemMark{
+    margin-top: 8px;
+    font-weight: 800;
+    color: #5B4296;
+}
+.caseItemImg{
+    width: 50px;
+    position: relative;
+    margin-right: 8px;
+}
+
+.caseWrapper{
+    width: 160px;
+    min-width: 160px;
+    position: relative;
+}
+
+.casePlaceholder{
+    padding: 16px 12px;
+    background: #FFF;
+    height: 187px;
+    border-right:1px solid #B2AFBA;
+}
+.caseItems{
+    height: calc(100% - 187px - 58px);     /*187 height of placeholder | 58 height of scroll button*/
+    overflow: hidden;
+    border-right:1px solid #B2AFBA;
+}
+.cassetteCommentsArea{
+    padding: 16px;
+    border-radius: 20px;
+    border: 1px solid #FFF;
+    resize: none;
+    width: 100%;
+    min-height: 200px;
+    background: rgba(255, 255, 255, 0.60);
+    color: #5B4296;
+    font-size: 18px;
+    font-weight: 600;
+    outline: none;
+}
+.cassetteCommentsArea::placeholder{
+    color: #B1A1DA;
+}

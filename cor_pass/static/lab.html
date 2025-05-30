@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="./css/reset.css">
+    <link rel="stylesheet" href="./css/infoPlate.css">
+    <link rel="stylesheet" href="./css/general.css">
+    <link rel="stylesheet" href="./css/comments.css">
+    <link rel="stylesheet" href="./css/lab.css">
+    <link rel="stylesheet" href="./css/modal.css">
+    <link rel="stylesheet" href="./css/caseSettings.css">
+    <title>Document</title>
+</head>
+<body>
+<div class="wrapper">
+    <div class="pathomorphology df">
+        <div class="caseWrapper">
+            <div class="casePlaceholder placeholder">
+                <div class="df aic jcsb">
+                    <div class="df aic counter">
+                        <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z"
+                                  fill="#7527B2"/>
+                        </svg>
+                        <input id="countOfCase" type="number" minlength="1" min="1" value="1" class="counterInput"
+                               style="color: #ED1064">
+                        <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z"
+                                  fill="#7527B2"/>
+                            <path d="M13 16.9831C13 17.5447 12.5523 18 12 18C11.4477 18 11 17.5447 11 16.9831L11 7.01695C11 6.4553 11.4477 6 12 6C12.5523 6 13 6.4553 13 7.01695V16.9831Z"
+                                  fill="#7527B2"/>
+                        </svg>
+
+                    </div>
+                    <div id="createCase" class="actionButton df aic jcc" style="background: #05B96D">
+                        <img src="./assets/plusCircle.svg" alt="plusCircle">
+                    </div>
+                </div>
+                <div id="parentMark" class="parentMark df aic gap4">
+                    <div data-value="Standard" class="casePlate active">S</div>
+                    <div data-value="Urgent" class="casePlate">U</div>
+                    <div data-value="Frozen" class="casePlate">F</div>
+                </div>
+                <div class="divider"></div>
+                <div id="childMark" class="childMark">
+                    <div class="df aic gap4">
+                        <div data-value="Resectio" class="casePlate active">R</div>
+                        <div data-value="Biopsy" class="casePlate">B</div>
+                        <div data-value="Excisio" class="casePlate">E</div>
+                        <div data-value="Cytology" class="casePlate">C</div>
+                    </div>
+                    <div class="df aic gap4">
+                        <div data-value="Cellblock" class="casePlate">CB</div>
+                        <div data-value="Second Opinion" class="casePlate">S</div>
+                        <div data-value="Autopsy" class="casePlate">A</div>
+                        <div data-value="Electron Microscopy" class="casePlate">EM</div>
+                    </div>
+                </div>
+            </div>
+            <div id="caseItems" class="caseItems df fdc aic"></div>
+            <div class="arrows" id="caseItemsScroll">
+                <div class="prev">
+                    <img src="./assets/arrowDown.svg" alt="arrow">
+                </div>
+                <div class="next">
+                    <img src="./assets/arrowDown.svg" alt="arrow">
+                </div>
+            </div>
+        </div>
+        <div class="specimenWrapper">
+            <div class="specimenPlaceholder placeholder">
+                <div class="df aic gap4 fdc">
+                    <div class="df aic counter">
+                        <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z"
+                                  fill="#7527B2"/>
+                        </svg>
+
+                        <input id="countOfSpecimen" type="number" minlength="1" min="1" value="1" class="counterInput"
+                               style="color: #ED1064">
+                        <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z"
+                                  fill="#7527B2"/>
+                            <path d="M13 16.9831C13 17.5447 12.5523 18 12 18C11.4477 18 11 17.5447 11 16.9831L11 7.01695C11 6.4553 11.4477 6 12 6C12.5523 6 13 6.4553 13 7.01695V16.9831Z"
+                                  fill="#7527B2"/>
+                        </svg>
+
+                    </div>
+                    <div class="df aic counter">
+                        <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z"
+                                  fill="#7527B2"/>
+                        </svg>
+
+                        <input id="countOfCassetteInSpecimen" type="number" minlength="1" min="1" value="1"
+                               class="counterInput"
+                               style="color: #B2AFBA">
+                        <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z"
+                                  fill="#7527B2"/>
+                            <path d="M13 16.9831C13 17.5447 12.5523 18 12 18C11.4477 18 11 17.5447 11 16.9831L11 7.01695C11 6.4553 11.4477 6 12 6C12.5523 6 13 6.4553 13 7.01695V16.9831Z"
+                                  fill="#7527B2"/>
+                        </svg>
+
+                    </div>
+                    <div id="createSpecimen" class="actionButton df aic jcc"
+                         style="margin-top: 8px; background: #ED1064">
+                        <img src="./assets/plusCircle.svg" alt="plusCircle">
+                    </div>
+                </div>
+            </div>
+
+            <div id="specimenItems" class="specimenItems df fdc aic">
+
+            </div>
+
+            <div class="arrows" id="specimenItemsScroll">
+                <div class="prev">
+                    <img src="./assets/arrowDown.svg" alt="arrow">
+                </div>
+                <div class="next">
+                    <img src="./assets/arrowDown.svg" alt="arrow">
+                </div>
+            </div>
+        </div>
+        <div class="content df fdc">
+            <div class="header">
+
+            </div>
+            <div class="df jcsb contentCassette">
+                <div class="cassettePlaceholder placeholder">
+                    <div class="df aic jcc counter">
+                        <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z"
+                                  fill="#7527B2"/>
+                        </svg>
+
+                        <input id="countOfCassette" type="number" minlength="1" min="1" value="1" class="counterInput"
+                               style="color: #B2AFBA">
+                        <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z"
+                                  fill="#7527B2"/>
+                            <path d="M13 16.9831C13 17.5447 12.5523 18 12 18C11.4477 18 11 17.5447 11 16.9831L11 7.01695C11 6.4553 11.4477 6 12 6C12.5523 6 13 6.4553 13 7.01695V16.9831Z"
+                                  fill="#7527B2"/>
+                        </svg>
+
+                    </div>
+                    <div class="df aic jcsb">
+                        <div class="actionButton borderRightNone create" id="createCassette" style="background: #B2AFBA">
+                            <img src="./assets/plusCircle.svg" alt="plusCircle">
+                        </div>
+                        <div class="actionButton borderLeftNone print" style="background: #B2AFBA">
+                            <img src="./assets/print.svg" alt="print">
+                        </div>
+                    </div>
+                </div>
+                <div class="df cassetteWrapper">
+                    <div id="cassetteItems" class="df">
+
+                    </div>
+                    <div class="arrows" id="glassItemsScroll">
+                        <div class="prev">
+                            <img src="./assets/arrowDown.svg" alt="arrow">
+                        </div>
+                        <div class="next">
+                            <img src="./assets/arrowDown.svg" alt="arrow">
+                        </div>
+                    </div>
+                    <div class="arrows right" id="cassetteItemsScroll">
+                        <div class="prev">
+                            <img src="./assets/arrowDown.svg" alt="arrow">
+                        </div>
+                        <div class="next">
+                            <img src="./assets/arrowDown.svg" alt="arrow">
+                        </div>
+                    </div>
+                </div>
+                <div class="commentsWrapper df fdc">
+                    <div class="commentsWrapperTop">
+                        Макроописание
+                    </div>
+                    <textarea></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="caseSettings" class="modal">
+        <div class="modalWrapper">
+            <div class="modalTitle">Параметри кейсу</div>
+            <div class="caseSettings">
+                <div class="df">
+                    <div class="caseSettingsContent df" id="cassetteSettings">
+
+                    </div>
+                    <div class="commentsWrapper df fdc">
+                        <div class="commentsWrapperTop">
+                            Макроопис зразка
+                        </div>
+                        <textarea></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="cassetteComments" class="modal">
+        <div class="modalWrapper">
+            <div class="modalTitle">Комментарий</div>
+            <div>
+                <textarea class="cassetteCommentsArea" placeholder="Текст комментария..."></textarea>
+                <div class="modalSubmit">
+                    Сохранить
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="./js/general.js"></script>
+
+
+<script>
+    let cases = []
+
+    //Draw HTML Template
+    let lastActiveCaseIndex = null;
+    let lastActiveSpecimenIndex = null;
+
+    let casePageIndex = 0;
+    let specimenPageIndex = 0;
+    let cassettePageIndex = 0;
+    let glassPageIndex = 0;
+
+    const specimenContentNODE = document.querySelector("#specimenItems");
+    const cassetteContentNODE = document.querySelector("#cassetteItems");
+    const caseContentNODE = document.querySelector("#caseItems");
+
+    const cassetteCommentModalNODE = document.querySelector("#cassetteComments");
+
+    const scrollContent = (e, contentNODESelector, arrowsNODESelector, paginationUpDown = true, currentPaginationPage) => {
+        const elem = e?.currentTarget;
+        const animationDirection = paginationUpDown ? "top" : "left";
+        let newPaginationPage = currentPaginationPage;
+
+        const caseContentNODE = document.querySelectorAll(contentNODESelector);
+
+
+        let caseContentHeight = 0;
+        let caseContentScrollHeight = 0;
+
+        caseContentNODE.forEach(elem => {
+            if (elem.clientHeight > caseContentHeight) {
+                caseContentHeight = elem[paginationUpDown ? "clientHeight" : "clientWidth"];
+            }
+
+            if (elem.scrollHeight > caseContentScrollHeight) {
+                caseContentScrollHeight = elem[paginationUpDown ? "scrollHeight" : "scrollWidth"];
+            }
+        })
+
+        if (!elem) {
+            caseContentNODE.forEach(elem => {
+                elem.scrollTo({[animationDirection]: caseContentHeight * newPaginationPage, behavior: 'smooth'});
+            })
+        }
+
+        console.log(elem, "elem")
+        if (elem?.classList.contains('prev')) {
+            console.log('HERE 1')
+            newPaginationPage -= 1;
+            caseContentNODE.forEach(elem => {
+                elem.scrollTo({[animationDirection]: caseContentHeight * newPaginationPage, behavior: 'smooth'});
+            })
+        }
+
+        if (elem?.classList.contains('next')) {
+            console.log('HERE 2')
+            newPaginationPage += 1;
+            caseContentNODE.forEach(elem => {
+                elem.scrollTo({[animationDirection]: caseContentHeight * newPaginationPage, behavior: 'smooth'});
+            })
+        }
+        console.log(arrowsNODESelector, "document.querySelector(`${arrowsNODESelector} .next`)")
+        console.log(document.querySelector(`${arrowsNODESelector} .next`), "document.querySelector(`${arrowsNODESelector} .next`)")
+
+        if ((caseContentScrollHeight - caseContentHeight * (newPaginationPage + 1)) < 0) {
+            document.querySelector(`${arrowsNODESelector} .next`).classList.add('disable')
+        } else {
+            document.querySelector(`${arrowsNODESelector} .next`).classList.remove('disable')
+        }
+
+        if (newPaginationPage === 0) {
+            document.querySelector(`${arrowsNODESelector} .prev`).classList.add('disable')
+        } else {
+            document.querySelector(`${arrowsNODESelector} .prev`).classList.remove('disable')
+        }
+
+        return newPaginationPage;
+    };
+
+    const setPathomorphologyTemplate = (activeCaseIndex, activeSpecimenIndex) => {
+        if ((activeCaseIndex === lastActiveCaseIndex) && (activeSpecimenIndex === lastActiveSpecimenIndex)) {
+            return;
+        }
+
+        addActiveClass(".caseItem", activeCaseIndex)
+
+        const currentCase = cases[activeCaseIndex];
+        const currentSpecimen = currentCase.samples[activeSpecimenIndex];
+
+        cassetteContentNODE.innerHTML = ""
+
+        if (activeCaseIndex !== lastActiveCaseIndex) {
+            specimenContentNODE.innerHTML = ""
+
+            currentCase.samples.map((specimen, specimenIndex) => {
+                specimenContentNODE.append(specimenTemplate(specimen))
+
+                if (specimenIndex === activeSpecimenIndex) {
+                    currentSpecimen.cassettes.map((cassette, index) => {
+                        cassetteContentNODE.append(cassetteTemplate(cassette, currentSpecimen.label, index))
+                    })
+                }
+            })
+
+            createOrDeleteGlassHandler()
+            changeEntityCountHandler("#cassetteItems .counter input")
+            addActiveClass(".specimenItem", activeSpecimenIndex)
+
+            lastActiveCaseIndex = activeCaseIndex;
+            lastActiveSpecimenIndex = activeSpecimenIndex;
+            return;
+        }
+
+        currentSpecimen.cassettes.map((cassette, index) => {
+            cassetteContentNODE.append(cassetteTemplate(cassette, currentSpecimen.label, index))
+        })
+
+        createOrDeleteGlassHandler()
+        changeEntityCountHandler("#cassetteItems .counter input")
+        addActiveClass(".specimenItem", activeSpecimenIndex)
+
+        lastActiveCaseIndex = activeCaseIndex;
+        lastActiveSpecimenIndex = activeSpecimenIndex;
+    }
+    const setAllCases = () => {
+        fetch(`${API_BASE_URL}/api/cases/patients/${PATIENT_COR_ID}/overview`, {
+            method: "GET",
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            },
+        })
+            .then(res => res.json())
+            .then(casesList => {
+                cases = casesList.all_cases
+                cases[0].samples = casesList.first_case_details.samples.map(({cassettes, ...sampleData}, index) => {
+                    return {
+                        ...sampleData,
+                        ...(!index ? {cassettes} : {})
+                    }
+                })
+
+                cases.forEach((currentCase, index) => {
+                    caseContentNODE.append(caseTemplate(currentCase, !index))
+                })
+
+                setPathomorphologyTemplate(0, 0)
+            })
+    }
+
+    //ENTITY HTML TEMPLATES
+    const caseTemplate = (currentCase, isActive) => {
+        const caseNewNODE = document.createElement('div');
+        caseNewNODE.classList.add('caseItem', ...(isActive ? ['active'] : []));
+        caseNewNODE.innerHTML = `
+            <div class="caseItemTop df jcsb aic">
+                        <div class="caseItemImg">
+                            <img src="./assets/caseItem.svg" alt="caseItem">
+                            <div class="caseItemImgCount">
+                                ${currentCase.bank_count}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="caseItemDate">
+                                ${new Date(currentCase.creation_date).toLocaleDateString()}
+                            </div>
+                            <div class="caseItemMark">
+                                ${currentCase.case_code}
+                            </div>
+                        </div>
+                    </div>
+            <div class="caseItemBottom df gap8 aic">
+                        <div class="df aic fdc">
+                            <div class="infoPlate qr">
+                                QR
+                            </div>
+                            <div>
+                                <img src="./assets/print.svg" alt="print">
+                            </div>
+                        </div>
+                        <div class="df aic fdc">
+                            <div class="infoPlate cassette">
+                                ${currentCase.cassette_count}
+                            </div>
+                            <div>
+                                <img src="./assets/print.svg" alt="print">
+                            </div>
+                        </div>
+                        <div class="df aic fdc">
+                            <div class="infoPlate glass">
+                                ${currentCase.glass_count}
+                            </div>
+                            <div>
+                                <img src="./assets/print.svg" alt="print">
+                            </div>
+                        </div>
+                    </div>
+        `
+
+        caseNewNODE.addEventListener("click", () => {
+            fetch(`${API_BASE_URL}/api/cases/${currentCase.id}`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                },
+            })
+                .then(res => res.json())
+                .then(currentCase => {
+                    const currentCaseIndex = cases.findIndex(({id}) => id === currentCase.id)
+                    cases[currentCaseIndex].samples = currentCase.samples;
+
+                    setPathomorphologyTemplate(currentCaseIndex, 0)
+                })
+        });
+        return caseNewNODE
+    }
+    const specimenTemplate = (currentSpecimen, isActive) => {
+        const specimenNewNODE = document.createElement('div');
+        specimenNewNODE.classList.add('specimenItem', ...(isActive ? ['active'] : []));
+        specimenNewNODE.innerHTML = `
+           <div class="df jcsb aic">
+                        <div class="caseItemImg">
+                            <img src="./assets/specimenItem.svg" alt="specimenItem">
+                            <div class="caseItemImgCount">
+                                ${currentSpecimen.sample_number}
+                            </div>
+                        </div>
+                        <div class="specimenItemArchive" style="cursor: pointer">
+                            <img src="./assets/archive.svg" alt="archive">
+                        </div>
+                    </div>
+           <div class="specimenItemBottom df gap8 aic">
+                        <div class="df aic fdc">
+                            <div class="infoPlate cassette">
+                                ${currentSpecimen.cassette_count}
+                            </div>
+                            <div>
+                                <img src="./assets/print.svg" alt="print">
+                            </div>
+                        </div>
+                        <div class="df aic fdc">
+                            <div class="infoPlate glass">
+                                ${currentSpecimen.glass_count}
+                            </div>
+                            <div>
+                                <img src="./assets/print.svg" alt="print">
+                            </div>
+                        </div>
+                    </div>
+        `
+
+        specimenNewNODE.addEventListener("click", () => {
+            fetch(`${API_BASE_URL}/api/samples/${currentSpecimen.id}`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                },
+            })
+                .then(res => res.json())
+                .then(currentSpecimen => {
+                    const currentCase = cases[lastActiveCaseIndex]
+                    const currentSpecimenIndex = currentCase.samples.findIndex(({id}) => id === currentSpecimen.id)
+                    currentCase.samples[currentSpecimenIndex] = currentSpecimen;
+
+
+                    setPathomorphologyTemplate(lastActiveCaseIndex, currentSpecimenIndex)
+                })
+        });
+        specimenNewNODE.querySelector('.specimenItemArchive').addEventListener('click', (e) => {
+            e.stopPropagation()
+            const samplesIndex = cases[lastActiveCaseIndex].samples.findIndex(({id}) => id === currentSpecimen.id)
+            const samplesArchiveValue = !cases[lastActiveCaseIndex].samples[samplesIndex].archive;
+
+            cases[lastActiveCaseIndex].samples[samplesIndex].archive = samplesArchiveValue;
+
+            const archiveIcon = samplesArchiveValue ? "archiveActive" : "archive";
+
+            specimenNewNODE.querySelector('.specimenItemArchive img')
+                .setAttribute('src', `./assets/${archiveIcon}.svg`)
+        })
+
+        return specimenNewNODE
+    }
+    const cassetteTemplate = (currentCassette, label, index) => {
+        const glassesTemplate = currentCassette.glasses.map((glass) => glassTemplate(glass)).join('')
+
+        const cassetteColumnNODE = document.createElement('div');
+        cassetteColumnNODE.classList.add("cassetteColumn")
+        cassetteColumnNODE.innerHTML = `
+            <div class="cassetteItem df aic jcc">
+                    <div class="cassetteItemImg">
+                            <img src="./assets/cassetteItem.svg" alt="caseItem">
+                            <div class="cassetteAction df jcsb aic">
+                                <div>${currentCassette.cassette_number}</div>
+                                <div class="cassetteComment"><img src="./assets/comment.svg" alt="comment"></div>
+                                <div class="cassettePrint"><img src="./assets/print.svg" alt="print"></div>
+                            </div>
+                        </div>
+            </div>
+            <div class="glassPlaceholder placeholder" data-glass-index='${index}'>
+                        <div class="df aic jcc counter">
+                            <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z" fill="#7527B2"/>
+                            </svg>
+                            <input type="number" minlength="1" min="1" value="1" class="counterInput" style="color: #88C6FF">
+                            <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z" fill="#7527B2"/>
+                                <path d="M13 16.9831C13 17.5447 12.5523 18 12 18C11.4477 18 11 17.5447 11 16.9831L11 7.01695C11 6.4553 11.4477 6 12 6C12.5523 6 13 6.4553 13 7.01695V16.9831Z" fill="#7527B2"/>
+                            </svg>
+                        </div>
+                        <div class="df aic jcsb glassMark">
+                            <div>
+                                H&E
+                            </div>
+                            <div>
+                                <img src="./assets/arrowDown.svg" alt="arrowDown">
+                            </div>
+                        </div>
+                        <div class="df aic jcsb">
+                            <div class="actionButton borderRightNone create" id="createGlass">
+                                <img src="./assets/plusCircle.svg" alt="plusCircle">
+                            </div>
+                            <div class="actionButton borderLeftNone print">
+                                <img src="./assets/print.svg" alt="print">
+                            </div>
+                        </div>
+                    </div>
+            <div class="glassItems df fdc">
+                ${glassesTemplate}
+            </div>
+        `;
+
+        cassetteColumnNODE.querySelector('.cassetteComment').addEventListener('click', () => {
+            cassetteCommentModalNODE.dataset.id = currentCassette.id;
+            cassetteCommentModalNODE.dataset.index = index;
+            cassetteCommentModalNODE.classList.add('open');
+
+            const currentUpdatedCassette = cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[index];
+
+            cassetteCommentModalNODE.querySelector('textarea').value = currentUpdatedCassette.comment
+        })
+
+        return cassetteColumnNODE
+    }
+    const glassTemplate = (currentGlass) => {
+        return (
+            `<div class="glassItem df aic jcsb">
+                        <div>
+                            ${currentGlass.glass_number} ${currentGlass.staining}
+                        </div>
+                        <div>
+                            <img src="./assets/print.svg" alt="print">
+                        </div>
+                    </div>`
+        )
+    }
+
+    //ENTITY CREATE
+    const createCaseHandler = () => {
+        const createCaseBtn = document.querySelector('#createCase')
+
+        createCaseBtn.addEventListener('click', () => {
+            lastActiveCaseIndex = null;
+            lastActiveSpecimenIndex = null;
+            const countCaseInput = document.querySelector('#countOfCase')
+
+            fetch(`${API_BASE_URL}/api/cases/`, {
+                method: "POST",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    patient_cor_id: PATIENT_COR_ID,
+                    num_cases: +countCaseInput.value,
+                    urgency: parentMark,
+                    material_type: childMark
+                })
+            })
+                .then(res => res.json())
+                .then((newCase) => {
+                    cases = [...cases, ...newCase];
+
+                    newCase.reverse().map(currentCase => {
+                        caseContentNODE.prepend(caseTemplate(currentCase, 0))
+                    })
+
+                    setPathomorphologyTemplate(0, 0)
+                    changeItemCountOnEntity()
+                    casePageIndex = scrollContent(null, '#caseItems', "#caseItemsScroll", true, 0)
+                    specimenPageIndex = scrollContent(null, "#specimenItems", "#specimenItemsScroll", true, 0)
+                    cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
+                    glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
+
+
+                    countCaseInput.value = 1;
+                })
+        })
+    }
+    const createSpecimenHandler = () => {
+        const createSpecimenBtn = document.querySelector('#createSpecimen')
+
+        createSpecimenBtn.addEventListener('click', () => {
+            lastActiveSpecimenIndex = null;
+            const countOfSpecimenInput = document.querySelector('#countOfSpecimen')
+            const countOfCassetteInSpecimenInput = document.querySelector('#countOfCassetteInSpecimen')
+
+            fetch(`${API_BASE_URL}/api/samples/create`, {
+                method: "POST",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    case_id: cases[lastActiveCaseIndex].id,
+                    num_samples: +countOfSpecimenInput.value,
+                })
+            })
+                .then(res => res.json())
+                .then(newSamples => {
+                    cases[lastActiveCaseIndex].samples = [
+                        ...cases[lastActiveCaseIndex].samples,
+                        ...newSamples,
+                    ];
+
+                    newSamples.forEach(specimen => {
+                        specimenContentNODE.append(specimenTemplate(specimen))
+                    })
+
+
+                    setPathomorphologyTemplate(lastActiveCaseIndex, 0)
+                    changeItemCountOnEntity();
+
+                    specimenPageIndex = scrollContent(null, "#specimenItems", "#specimenItemsScroll", true, 0)
+                    cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
+                    glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
+
+                    countOfSpecimenInput.value = 1;
+                    countOfCassetteInSpecimenInput.value = 1;
+                })
+        })
+    }
+    const createCassetteHandler = () => {
+        const createCassetteBtn = document.querySelector('#createCassette')
+        createCassetteBtn.addEventListener('click', () => {
+            const countOfCassetteInput = document.querySelector('#countOfCassette')
+            const currentSamples = cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex];
+
+            fetch(`${API_BASE_URL}/api/cassettes/create`, {
+                method: "POST",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    sample_id: currentSamples.id,
+                    num_cassettes: +countOfCassetteInput.value,
+                    num_glasses_per_cassette: 1,
+                })
+            })
+                .then(res => res.json())
+                .then(newCassettes => {
+                    cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes = [
+                        ...cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes,
+                        ...newCassettes,
+                    ];
+
+
+                    let currentCassettesList = currentSamples.cassettes;
+
+                    cassetteContentNODE.innerHTML = "";
+
+                    currentCassettesList.forEach((cassette, index) => {
+                        cassetteContentNODE.append(cassetteTemplate(cassette, currentSamples.label, index))
+                    })
+
+
+                    setPathomorphologyTemplate(lastActiveCaseIndex, lastActiveSpecimenIndex)
+
+                    countOfCassetteInput.value = 1;
+
+
+                    cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
+                    glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
+                    createOrDeleteGlassHandler()
+                    changeEntityCountHandler("#cassetteItems .counter input")
+                    changeItemCountOnEntity()
+                })
+        })
+    }
+    const createOrDeleteGlassHandler = () => {
+        const createGlassBtns = document.querySelectorAll('*[data-glass-index]')
+
+        createGlassBtns.forEach((elem, index) => {
+            const createGlassBtnNODE = elem.querySelector('#createGlass');
+
+            createGlassBtnNODE.addEventListener('click', () => {
+                const placeholderNODE = createGlassBtnNODE.closest('.placeholder')
+                const isDelete = placeholderNODE.classList.contains('nagative')
+                const countOfGlassInput = elem.querySelector('.counterInput')
+                const currentCassette = cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[index];
+
+                if(isDelete){
+                    const deletedGlassesIds = [...currentCassette.glasses]
+                        .reverse()
+                        .slice(0, +countOfGlassInput.value)
+                        .map(({id}) => id);
+
+                    fetch(`${API_BASE_URL}/api/glasses/glasses`, {
+                        method: "DELETE",
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            glass_ids: deletedGlassesIds,
+                        })
+                    })
+                        .then(res => res.json())
+                        .then(() => {
+                            cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[index].glasses = (
+                                cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[index].glasses
+                                    .filter( glass => !deletedGlassesIds.includes(glass.id))
+                            )
+
+                            const glassContentNODE = elem.nextElementSibling;
+
+                            [...glassContentNODE.querySelectorAll('.glassItem')].reverse().slice(0, +countOfGlassInput.value).forEach(elem => {
+                                elem.remove()
+                            })
+
+                            changeItemCountOnEntity()
+                            glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
+                            countOfGlassInput.value = 1;
+                        })
+                    return;
+                }
+
+                if(!isDelete){
+                    fetch(`${API_BASE_URL}/api/glasses/create`, {
+                        method: "POST",
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            cassette_id: currentCassette.id,
+                            staining_type: "H&E",
+                            num_glasses: +countOfGlassInput.value,
+                        })
+                    })
+                        .then(res => res.json())
+                        .then(newGlasses => {
+                            cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[index].glasses = [
+                                ...cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[index].glasses,
+                                ...newGlasses,
+                            ];
+
+                            const glassContentNODE = elem.nextElementSibling;
+
+                            newGlasses.forEach((glass) => {
+                                glassContentNODE.innerHTML += glassTemplate(glass)
+                            })
+
+                            changeItemCountOnEntity()
+                            glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
+                            countOfGlassInput.value = 1;
+                        })
+                }
+            })
+        })
+    }
+
+    //GENERAL EVENTS
+    const changeEntityCountHandler = (queryNODE) => {
+        const inputsCounterNODE = document.querySelectorAll(queryNODE);
+        const increaseNumber = (currentInputNODE) => {
+            if (currentInputNODE.value === "99") {
+                return;
+            }
+            currentInputNODE.value = +currentInputNODE.value + 1
+            currentInputNODE.dispatchEvent(new Event('input'))
+        }
+        const decreaseNumber = (currentInputNODE, currentCounterNODE) => {
+            if (currentInputNODE.value === "1") {
+                const isNegative = currentCounterNODE.classList.contains('nagative');
+                const classListMethod = isNegative ? "remove" : "add";
+                const placeholderNODE = currentCounterNODE.closest('.placeholder');
+                const createActionBtn = placeholderNODE.querySelector('.actionButton.create')
+                const createActionBtnIcon = createActionBtn.querySelector('img')
+                const createActionBtnIconSrc = isNegative ? "plusCircle" : "minusCircle";
+
+                currentCounterNODE.classList[classListMethod]('nagative')
+                placeholderNODE.classList[classListMethod]('nagative')
+                createActionBtn.classList[classListMethod]('delete')
+                console.log(createActionBtnIcon, "createActionBtnIcon")
+                createActionBtnIcon.setAttribute('src', `./assets/${createActionBtnIconSrc}.svg`);
+
+                return;
+            }
+
+            currentInputNODE.value = +currentInputNODE.value - 1
+            currentInputNODE.dispatchEvent(new Event('input'))
+        }
+
+        inputsCounterNODE.forEach(currentInput => {
+            const currentCounterNODE = currentInput.closest('.counter');
+            currentInput.previousElementSibling.addEventListener("click", (e) => {
+                if (currentCounterNODE.classList.contains('nagative')) {
+                    increaseNumber(currentInput)
+                    return;
+                }
+
+                decreaseNumber(currentInput, currentCounterNODE)
+            })
+            currentInput.nextElementSibling.addEventListener("click", (e) => {
+                if (currentCounterNODE.classList.contains('nagative')) {
+                    decreaseNumber(currentInput, currentCounterNODE)
+                    return;
+                }
+
+                increaseNumber(currentInput)
+            })
+
+            currentInput.addEventListener('paste', (e) => {
+                let paste = (e.clipboardData || window.clipboardData).getData("text");
+
+                if (isNaN(paste)) {
+                    e.preventDefault()
+                }
+
+                if (paste > 99) {
+                    e.preventDefault()
+                    currentInput.value = 99
+                }
+
+                if (paste < 1) {
+                    e.preventDefault()
+                    currentInput.value = 1
+                }
+            })
+        })
+    }
+    const changeItemCountOnEntity = () => {
+        const activeCaseNODE = document.querySelector('.caseItem.active')
+        const activeSpecimenNODE = document.querySelector('.specimenItem.active')
+
+        const currentCase = cases[lastActiveCaseIndex]
+        const currentSpecimen = cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex]
+
+        const currentCaseEntityCount = getItemCountByAllKeys(currentCase, ['specimens', 'cassettes', 'glasses'])
+        const currentSpecimenEntityCount = getItemCountByAllKeys(currentSpecimen, ['cassettes', 'glasses'])
+
+
+        activeCaseNODE.querySelector(".caseItemImgCount").textContent = currentCaseEntityCount.samples
+        activeCaseNODE.querySelector(".infoPlate.cassette").textContent = currentCaseEntityCount.cassettes
+        activeCaseNODE.querySelector(".infoPlate.glass").textContent = currentCaseEntityCount.glasses
+        activeSpecimenNODE.querySelector(".infoPlate.cassette").textContent = currentSpecimenEntityCount.cassettes
+        activeSpecimenNODE.querySelector(".infoPlate.glass").textContent = currentSpecimenEntityCount.glasses
+
+        // const activeCaseNODE = document.querySelector('.caseItem.active .infoPlate.cassette')
+    }
+    const addActiveClass = (className, isActiveIndex) => {
+        document.querySelectorAll(className).forEach(elem => {
+            elem.classList.remove('active')
+        })
+
+        document.querySelector(`${className}:nth-child(${isActiveIndex + 1 || 1})`).classList.add("active");
+    }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", (event) => {
+        createCaseHandler()
+        createSpecimenHandler()
+        createCassetteHandler()
+        changeEntityCountHandler(".counter input")
+
+        setAllCases()
+    });
+</script>
+<script>
+    //PICK MARK
+    let parentMark = "Standard";
+    let childMark = "Resectio";
+
+    document.addEventListener("DOMContentLoaded", (event) => {
+        const parentMarkNODE = document.querySelectorAll('#parentMark .casePlate');
+        const childMarkNODE = document.querySelectorAll('#childMark .casePlate');
+
+        parentMarkNODE.forEach(elem => {
+            elem.addEventListener("click", (e) => {
+                parentMarkNODE.forEach(elem => elem.classList.remove('active'))
+                const currentElem = e.target;
+
+                currentElem.classList.add('active')
+
+                parentMark = currentElem.dataset.value;
+            })
+        })
+
+        childMarkNODE.forEach(elem => {
+            elem.addEventListener("click", (e) => {
+                childMarkNODE.forEach(elem => elem.classList.remove('active'))
+                const currentElem = e.target;
+
+                currentElem.classList.add('active')
+
+                childMark = currentElem.dataset.value;
+            })
+        })
+    });
+</script>
+<script>
+    //ARROWS
+    document.addEventListener("DOMContentLoaded", (event) => {
+        const arrowsCase = document.querySelectorAll("#caseItemsScroll div");
+
+        arrowsCase.forEach(elem => {
+            elem.addEventListener("click", e => {
+                casePageIndex = scrollContent(e, '#caseItems', "#caseItemsScroll", true, casePageIndex)
+                console.log(casePageIndex, "casePageIndex")
+            })
+        })
+    });
+
+    document.addEventListener("DOMContentLoaded", (event) => {
+        const arrowsCase = document.querySelectorAll("#specimenItemsScroll div");
+
+        arrowsCase.forEach(elem => {
+            elem.addEventListener("click", e => {
+                specimenPageIndex = scrollContent(e, "#specimenItems", "#specimenItemsScroll", true, specimenPageIndex)
+            })
+        })
+    });
+
+    document.addEventListener("DOMContentLoaded", (event) => {
+        const arrowsCase = document.querySelectorAll("#cassetteItemsScroll div");
+
+        arrowsCase.forEach(elem => {
+            elem.addEventListener("click", e => {
+                cassettePageIndex = scrollContent(e, "#cassetteItems", "#cassetteItemsScroll", false, cassettePageIndex)
+            })
+        })
+    });
+
+    document.addEventListener("DOMContentLoaded", (event) => {
+        const arrowsGlass = document.querySelectorAll("#glassItemsScroll div");
+
+        arrowsGlass.forEach(elem => {
+            elem.addEventListener("click", e => {
+                glassPageIndex = scrollContent(e, ".glassItems", "#glassItemsScroll", true, glassPageIndex)
+            })
+        })
+    });
+</script>
+<script>
+    //CASSETTE COMMENT
+    document.addEventListener("DOMContentLoaded", (event) => {
+        cassetteCommentModalNODE.querySelector('.modalSubmit').addEventListener('click', () => {
+            const textareaNODE = cassetteCommentModalNODE.querySelector('textarea')
+
+            const cassetteId = cassetteCommentModalNODE.dataset.id;
+            const cassetteIndex = +cassetteCommentModalNODE.dataset.index;
+
+            const commentValue = textareaNODE.value.trim();
+            cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[cassetteIndex].comment = commentValue.trim();
+
+            const commentIconSrc = commentValue.length ? "commentActive" : "comment";
+
+            cassetteContentNODE
+                .querySelector(`.cassetteColumn:nth-child(${cassetteIndex + 1}) .cassetteComment img`)
+                .setAttribute('src', `./assets/${commentIconSrc}.svg`);
+
+            cassetteCommentModalNODE.classList.remove('open')
+        })
+    });
+</script>
+
+<script src="./js/modal.js"></script>
+<script src="./js/caseSettings.js"></script>
+
+</body>
+</html>

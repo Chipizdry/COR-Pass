@@ -1,0 +1,45 @@
+.modal{
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(54, 41, 84, 0.50);
+    height: 100vh;
+    display: none;
+}
+
+.modal.open{
+    display: flex;
+}
+
+.modalWrapper{
+    border-radius: 30px;
+    border: 1px solid #FFF;
+    background: rgba(255, 255, 255, 0.80);
+    backdrop-filter: blur(75px);
+    width: 90%;
+    max-height: 90%;
+    max-width: 90%;
+    margin: auto;
+    overflow: auto;
+    padding: 52px 30px 30px;
+}
+.modalTitle{
+    color: #291161;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 28px;
+}
+.modalSubmit{
+    background: #7527B2;
+    padding: 20px;
+    border-radius: 20px;
+    font-size: 18px;
+    font-weight: 800;
+    text-align: center;
+    color: white;
+    cursor: pointer;
+    margin-top: 28px;
+}

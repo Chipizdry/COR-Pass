@@ -1,0 +1,160 @@
+.wrapper{
+    padding: 30px;
+    background: #EFECF8;
+    min-height: 100vh;
+}
+.df{
+    display: flex;
+}
+.aic{
+    align-items: center;
+}
+.jcc{
+    justify-content: center;
+}
+.mb8{
+    margin-bottom: 8px;
+}
+.gap4{
+    gap: 4px;
+}
+.jcsb{
+    justify-content: space-between;
+}
+.fdc{
+    flex-direction: column;
+}
+
+.counter.nagative .counterAction *{
+    fill: #DF1125;
+}
+.counter.nagative .counterInput{
+    color: #DF1125 !important;
+}
+
+.counterAction{
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+}
+.counterInput{
+    background: 0 0;
+    border: 0;
+    outline: none;
+    width: 25px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 800;
+}
+.counterInput::-webkit-outer-spin-button,
+.counterInput::-webkit-inner-spin-button {
+    /* display: none; <- Crashes Chrome on hover */
+    -webkit-appearance: none;
+    margin: 0; /* <-- Apparently some margin are still there even though it's hidden */
+}
+.counterInput[type=number] {
+    -moz-appearance:textfield; /* Firefox */
+}
+
+.pathomorphologyWrapper{
+    border: 2px solid white;
+    border-radius: 20px;
+    background: #f5f4fc;
+    display: flex;
+    height: 700px
+}
+
+
+.pathomorphologyRight{
+    padding: 16px;
+    gap: 16px;
+}
+
+.divider{
+    height: 1px;
+    background: #EFECF8;
+}
+
+.actionButton{
+    width: 40px;
+    height: 40px;
+    color: #FFF;
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #88C6FF;
+}
+.actionButton.delete{
+    background: #DF1125 !important;
+}
+
+.actionButton.borderRightNone{
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+.actionButton.borderLeftNone{
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.contentCassette{
+    height: calc(100% - 187px);
+}
+
+.content{
+    height: 100%;
+    width: calc(100% - 160px - 112px);
+}
+.header{
+    min-height: 187px;
+    height: 187px;
+    background: #7527B2;
+}
+img{
+    display: block;
+}
+.pathomorphology{
+    height: calc(100vh - 60px);
+}
+.arrows{
+    background: white;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 58px;
+    justify-content: space-around;
+    gap: 5px;
+    padding: 3px;
+}
+.arrows.right{
+    left: initial;
+    top: 0;
+    height: auto;
+    width: 58px;
+    flex-direction: row;
+}
+.arrows.right div{
+    transform: rotate(-90deg);
+}
+.arrows.right .prev{
+    transform: rotate(90deg);
+}
+.arrows div{
+    width: 100%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+}
+.arrows .prev{
+    transform: rotate(180deg);
+}
+.arrows .disable{
+    pointer-events: none;
+}
