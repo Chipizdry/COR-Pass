@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.schemas import (
+    CassetteUpdateComment,
     Sample as SampleModelScheema,
     Cassette as CassetteModelScheema,
     Glass as GlassModelScheema,
@@ -28,72 +29,11 @@ async def get_cassette(
         # Сортируем стекла по glass_number
         cassette_schema.glasses = sorted(
             [GlassModelScheema.model_validate(glass) for glass in cassette_db.glass],
-            key=lambda glass_schema: glass_schema.glass_number
+            key=lambda glass_schema: glass_schema.glass_number,
         )
         return cassette_schema
     return None
 
-
-# async def create_cassette(
-#     db: AsyncSession,
-#     sample_id: str,
-#     num_cassettes: int = 1,
-#     num_glasses_per_cassette: int = 1,
-# ) -> Optional[SampleModelScheema]:
-#     """
-#     Асинхронно создает указанное количество кассет для существующего семпла
-#     и указанное количество стекол для каждой кассеты, обновляя счетчики.
-#     Корректная последовательная нумерация кассет при многократном вызове.
-#     """
-
-#     db_sample = await repository_samples.get_single_sample(db=db, sample_id=sample_id)
-#     if not db_sample:
-#         raise ValueError(f"Семпл с ID {sample_id} не найден")
-
-#     db_case_id = db_sample.case_id
-#     db_case = await repository_cases.get_single_case(db=db, case_id=db_case_id)
-
-#     created_cassettes: List[db_models.Cassette] = []
-
-#     # 2. Создаем указанное количество кассет
-#     for i in range(num_cassettes):
-#         # Получаем актуальное количество кассет перед созданием новой
-#         await db.refresh(db_sample)
-#         next_cassette_number = f"{db_sample.sample_number}{db_sample.cassette_count + 1}"
-#         db_cassette = db_models.Cassette(
-#             sample_id=db_sample.id, cassette_number=next_cassette_number
-#         )
-#         db.add(db_cassette)
-#         created_cassettes.append(db_cassette)
-#         db_sample.cassette_count += 1
-#         db_case.cassette_count += 1
-#         await db.commit()
-#         await db.refresh(db_cassette)
-
-#         # 3. Создаем указанное количество стекол для каждой кассеты
-#         for j in range(num_glasses_per_cassette):
-#             next_glass_number = j
-#             db_glass = db_models.Glass(
-#                 cassette_id=db_cassette.id,
-#                 glass_number=next_glass_number,
-#                 staining=db_models.StainingType.HE,
-#             )
-#             db.add(db_glass)
-#             db_sample.glass_count += 1
-#             db_case.glass_count += 1
-#             db_cassette.glass_count += 1
-#             await db.commit()
-#             await db.refresh(db_glass)
-
-#     await db.commit()
-
-#     # 4. Обновляем объекты в сессии
-#     await db.refresh(db_sample)
-#     await db.refresh(db_case)
-#     for cassette in created_cassettes:
-#         await db.refresh(cassette)
-
-#     return [CassetteModelScheema.model_validate(cassette) for cassette in created_cassettes]
 
 async def create_cassette(
     db: AsyncSession,
@@ -115,7 +55,9 @@ async def create_cassette(
 
     for i in range(num_cassettes):
         await db.refresh(db_sample)
-        next_cassette_number = f"{db_sample.sample_number}{db_sample.cassette_count + 1}"
+        next_cassette_number = (
+            f"{db_sample.sample_number}{db_sample.cassette_count + 1}"
+        )
         db_cassette = db_models.Cassette(
             sample_id=db_sample.id, cassette_number=next_cassette_number
         )
@@ -149,23 +91,86 @@ async def create_cassette(
         cassette_schema = CassetteModelScheema.model_validate(cassette_db)
         cassette_schema.glasses = sorted(
             [GlassModelScheema.model_validate(glass) for glass in cassette_db.glass],
-            key=lambda glass_schema: glass_schema.glass_number
+            key=lambda glass_schema: glass_schema.glass_number,
         )
         created_cassettes_with_glasses.append(cassette_schema.model_dump())
 
     return created_cassettes_with_glasses
 
 
-async def delete_cassette(
-    db: AsyncSession, cassette_id: str
-) -> SampleModelScheema | None:
-    """Асинхронно удаляет касетту."""
+async def update_cassette_comment(
+    db: AsyncSession, cassette_id: str, comment_update: CassetteUpdateComment
+) -> Optional[CassetteModelScheema]:
+    """Асинхронно обновляет комментарий кассеты по ID."""
     result = await db.execute(
         select(db_models.Cassette).where(db_models.Cassette.id == cassette_id)
     )
-    db_cassette = result.scalar_one_or_none()
-    if db_cassette:
-        await db.delete(db_cassette)
+    cassette_db = result.scalar_one_or_none()
+    if cassette_db:
+        if comment_update.comment is not None:
+            cassette_db.comment = comment_update.comment
         await db.commit()
-        return {"message": f"Кассета с ID {cassette_id} успешно удалена"}
+        await db.refresh(cassette_db)
+        return CassetteModelScheema.model_validate(cassette_db)
     return None
+
+
+async def delete_cassettes(
+    db: AsyncSession, cassettes_ids: List[str]
+) -> Dict[str, Any]:
+    """Асинхронно удаляет несколько кассет по их ID и корректно обновляет счетчики."""
+    deleted_count = 0
+    not_found_ids: List[str] = []
+
+    for cassette_id in cassettes_ids:
+        result = await db.execute(
+            select(db_models.Cassette)
+            .where(db_models.Cassette.id == cassette_id)
+            .options(
+                selectinload(db_models.Cassette.glass)
+            )  # Подгружаем связанные стекла
+        )
+        db_cassette = result.scalar_one_or_none()
+        if db_cassette:
+            # Получаем текущий семпл
+            sample_result = await db.execute(
+                select(db_models.Sample)
+                .where(db_models.Sample.id == db_cassette.sample_id)
+                .options(selectinload(db_models.Sample.case))
+            )
+            db_sample = sample_result.scalar_one_or_none()
+            if not db_sample:
+                raise ValueError(f"Семпл с ID {db_cassette.sample_id} не найден")
+
+            db_case = await db.get(db_models.Case, db_sample.case_id)
+
+            # Подсчитываем количество стекол в удаляемой кассете
+            num_glasses_to_decrement = len(db_cassette.glass)
+
+            await db.delete(db_cassette)
+            deleted_count += 1
+
+            # Обновляем счётчики
+            db_sample.glass_count -= num_glasses_to_decrement
+            db_sample.cassette_count -= 1
+
+            db_case.glass_count -= num_glasses_to_decrement
+            db_case.cassette_count -= 1
+
+            await db.commit()
+
+            await db.refresh(db_sample)
+            await db.refresh(db_case)
+
+        else:
+            not_found_ids.append(cassette_id)
+
+    response = {"deleted_count": deleted_count}
+    if not_found_ids:
+        response["message"] = (
+            f"Успешно удалено {deleted_count} кассет. Не найдены ID: {not_found_ids}"
+        )
+    else:
+        response["message"] = f"Успешно удалено {deleted_count} кассет."
+
+    return response

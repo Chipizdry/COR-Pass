@@ -22,7 +22,6 @@ async def create_otp_record(
         private_key=await encrypt_data(
             data=body.private_key, key=await decrypt_user_key(user.unique_cipher_key)
         ),
-        # private_key=body.private_key,
     )
     try:
         otp_password, remaining_time = await cor_otp.generate_and_verify_otp(

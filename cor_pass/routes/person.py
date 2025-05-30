@@ -1,12 +1,14 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from datetime import datetime, timedelta
 from cor_pass.database.db import get_db
+from cor_pass.services import redis_service
 from cor_pass.services.auth import auth_service
 from cor_pass.services.cipher import decrypt_data, decrypt_user_key
+from cor_pass.services.ip2_location import get_ip_geolocation
 from cor_pass.services.qr_code import generate_qr_code
 from cor_pass.services.recovery_file import generate_recovery_file
 from cor_pass.services.email import send_email_code_with_qr
-from cor_pass.database.models import User, Status
+from cor_pass.database.models import User
 from cor_pass.services.access import user_access
 from cor_pass.services.logger import logger
 from cor_pass.schemas import (
@@ -20,6 +22,7 @@ from cor_pass.schemas import (
 from cor_pass.repository import person
 from cor_pass.repository import cor_id as repository_cor_id
 from cor_pass.repository import user_session as repository_session
+from cor_pass.config.config import settings
 from pydantic import EmailStr
 from fastapi.responses import StreamingResponse
 from typing import List
@@ -34,7 +37,6 @@ router = APIRouter(prefix="/user", tags=["User"])
 
 @router.get(
     "/my_core_id",
-    # response_model=ResponseCorIdModel,
     dependencies=[Depends(user_access)],
 )
 async def read_cor_id(
@@ -52,6 +54,30 @@ async def read_cor_id(
             status_code=status.HTTP_404_NOT_FOUND, detail="COR-Id not found"
         )
     return cor_id
+
+@router.get(
+    "/my_core_id_qr",
+    dependencies=[Depends(user_access)],
+)
+async def get_cor_id_qr(
+    current_user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    **Просмотр своего QR COR-id** \n
+    """
+    cor_id = await repository_cor_id.get_cor_id(current_user, db)
+    if cor_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="COR-Id not found"
+        )
+    cor_id_qr_bytes = generate_qr_code(cor_id)
+
+    # Конвертация QR-кода в Base64
+    encoded_qr = base64.b64encode(cor_id_qr_bytes).decode("utf-8")
+    qr_code_data_url = f"data:image/png;base64,{encoded_qr}"
+
+    return JSONResponse(content={"qr_code_url": qr_code_data_url})
 
 
 @router.get("/account_status", dependencies=[Depends(user_access)])
@@ -366,8 +392,10 @@ async def get_last_password_change(
     }
 
 
-@router.get("/send_recovery_keys_email",
-            dependencies=[Depends(RateLimiter(times=5, seconds=60))])
+@router.get(
+    "/send_recovery_keys_email",
+    dependencies=[Depends(RateLimiter(times=5, seconds=60))],
+)
 async def send_recovery_keys_email(
     current_user: User = Depends(auth_service.get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -412,7 +440,8 @@ async def read_sessions(
     :rtype: List[UserSessionResponseModel]
     """
     try:
-        sessions = await repository_session.get_all_user_sessions(
+        # Получаем все сессии пользователя из базы данных
+        sessions_from_db = await repository_session.get_all_user_sessions(
             db, current_user.cor_id, skip, limit
         )
     except Exception as e:
@@ -422,7 +451,29 @@ async def read_sessions(
             detail="Internal server error",
         )
 
-    return sessions
+    # Создаем список для результатов с геолокацией
+    response_sessions = []
+    for session in sessions_from_db:
+        # Для каждой сессии получаем данные геолокации по IP-адресу
+        geolocation_data = get_ip_geolocation(session.ip_address)
+
+        # Создаем экземпляр UserSessionResponseModel, объединяя данные сессии и геолокации
+        session_response = UserSessionResponseModel(
+            id=session.id,
+            user_id=session.user_id,
+            device_type=session.device_type,
+            device_info=session.device_info,
+            ip_address=session.ip_address,
+            device_os=session.device_os,
+            created_at=session.created_at,
+            updated_at=session.updated_at,
+            jti=session.jti,
+            # Распаковываем словарь с геолокацией
+            **geolocation_data
+        )
+        response_sessions.append(session_response)
+
+    return response_sessions
 
 
 @router.get(
@@ -456,7 +507,22 @@ async def read_session_info(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
         )
-    return user_session
+     # Получаем данные геолокации
+    geolocation_data = get_ip_geolocation(user_session.ip_address)
+    response_data = {
+        "id": user_session.id,
+        "user_id": user_session.user_id,
+        "device_type": user_session.device_type,
+        "device_info": user_session.device_info,
+        "ip_address": user_session.ip_address,
+        "device_os": user_session.device_os,
+        "created_at": user_session.created_at,
+        "updated_at": user_session.updated_at,
+        "jti": user_session.jti,
+        **geolocation_data # Распаковываем словарь с геолокацией
+    }
+
+    return UserSessionResponseModel(**response_data)
 
 
 @router.delete("/sessions/{session_id}", response_model=UserSessionResponseModel)
@@ -467,7 +533,6 @@ async def remove_session(
 ):
     """
     **Remove a session. / Удаление сессии** \n
-
     :param session_id: The ID of the session to remove.
     :type session_id: str
     :param db: The database session. Dependency on get_db.
@@ -476,9 +541,20 @@ async def remove_session(
     :rtype: UserSessionResponseModel
     :raises HTTPException 404: If the session with the specified ID does not exist.
     """
+    session_to_revoke = await repository_session.get_session_by_id(db=db, session_id=session_id, user=current_user)
+    if not session_to_revoke:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Сессия не найдена.")
+    
+    if session_to_revoke.user_id != current_user.cor_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Вы не можете отозвать чужую сессию.")
+    if session_to_revoke.jti:
+        blacklist_expires = timedelta(seconds=settings.access_token_expiration)
+        await redis_service.add_jti_to_blacklist(session_to_revoke.jti, blacklist_expires)
+
     session = await repository_session.delete_session(current_user, db, session_id)
     if session is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
         )
+    
     return session

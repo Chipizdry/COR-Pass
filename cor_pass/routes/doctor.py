@@ -66,7 +66,6 @@ async def signup_doctor(
     :rtype: DoctorResponse
     """
 
-
     exist_doctor = await get_doctor(db=db, doctor_id=current_user.cor_id)
     if exist_doctor:
         logger.debug(f"{current_user.cor_id} doctor already exist")
@@ -81,9 +80,7 @@ async def signup_doctor(
             user=current_user,
         )
         cer, dip, clin = await create_doctor_service(
-            doctor_data=doctor_data,
-            db=db,
-            doctor=doctor
+            doctor_data=doctor_data, db=db, doctor=doctor
         )
     except IntegrityError as e:
         logger.error(f"Database integrity error: {e}")
@@ -111,51 +108,49 @@ async def signup_doctor(
         status=doctor.status,
         diploma_id=dip,
         certificates_id=cer,
-        clinic_affiliations_id=clin
+        clinic_affiliations_id=clin,
+        place_of_registration=doctor.place_of_registration,
+        passport_code=doctor.passport_code,
+        taxpayer_identification_number=doctor.taxpayer_identification_number,
     )
 
     return doctor_response
 
 
-
-
-@router.post("/doctors/{doctor_cor_id}/photo",
-             dependencies=[Depends(user_access)]
-          )
-async def upload_doctor_photo(doctor_cor_id: str, 
-                              file: UploadFile = Depends(validate_image_file), 
-                              db: AsyncSession = Depends(get_db)):
+@router.post("/doctors/{doctor_cor_id}/photo", dependencies=[Depends(user_access)])
+async def upload_doctor_photo(
+    doctor_cor_id: str,
+    file: UploadFile = Depends(validate_image_file),
+    db: AsyncSession = Depends(get_db),
+):
     return await upload_doctor_photo_service(doctor_cor_id, file, db)
 
 
-@router.post("/doctors/{doctor_cor_id}/reserv",
-             dependencies=[Depends(user_access)]
-          )
-async def upload_doctor_reserv_data(doctor_cor_id: str, 
-                              file: UploadFile = Depends(validate_document_file), 
-                              db: AsyncSession = Depends(get_db)):
+@router.post("/doctors/{doctor_cor_id}/reserv", dependencies=[Depends(user_access)])
+async def upload_doctor_reserv_data(
+    doctor_cor_id: str,
+    file: UploadFile = Depends(validate_document_file),
+    db: AsyncSession = Depends(get_db),
+):
     return await upload_reserv_data_service(doctor_cor_id, file, db)
 
 
-
-
-@router.post("/diploma/{diploma_id}",
-             dependencies=[Depends(user_access)])
-async def upload_diploma(document_id: str, 
-                         file: UploadFile = Depends(validate_document_file), 
-                         db: AsyncSession = Depends(get_db)):
+@router.post("/diploma/{diploma_id}", dependencies=[Depends(user_access)])
+async def upload_diploma(
+    document_id: str,
+    file: UploadFile = Depends(validate_document_file),
+    db: AsyncSession = Depends(get_db),
+):
     return await upload_diploma_service(document_id, file, db)
 
 
-
-@router.post("/certificate/{certificate_id}",
-             dependencies=[Depends(user_access)])
-async def upload_certificate(document_id: str, 
-                         file: UploadFile = Depends(validate_document_file), 
-                         db: AsyncSession = Depends(get_db)):
+@router.post("/certificate/{certificate_id}", dependencies=[Depends(user_access)])
+async def upload_certificate(
+    document_id: str,
+    file: UploadFile = Depends(validate_document_file),
+    db: AsyncSession = Depends(get_db),
+):
     return await upload_certificate_service(document_id, file, db)
-
-
 
 
 @router.get(

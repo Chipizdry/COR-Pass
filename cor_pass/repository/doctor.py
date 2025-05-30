@@ -23,7 +23,6 @@ from cor_pass.services.cipher import decrypt_data
 from cor_pass.config.config import settings
 
 
-
 async def create_doctor(
     doctor_data: DoctorCreate,
     db: AsyncSession,
@@ -43,6 +42,7 @@ async def create_doctor(
         date_of_last_attestation=doctor_data.date_of_last_attestation,
         passport_code=doctor_data.passport_code,
         taxpayer_identification_number=doctor_data.taxpayer_identification_number,
+        place_of_registration=doctor_data.place_of_registration,
         date_of_next_review=datetime.now() + timedelta(days=180),
         status=Doctor_Status.pending,
     )
@@ -53,9 +53,6 @@ async def create_doctor(
     await db.refresh(doctor)
 
     return doctor
-
-
-
 
 
 async def create_certificates(
@@ -81,8 +78,6 @@ async def create_certificates(
 
     await db.commit()
     return list_of_certificates
-
-
 
 
 async def create_diploma(
@@ -131,9 +126,6 @@ async def create_clinic_affiliation(
 
     await db.commit()
     return list_of_clinics
-
-
-
 
 
 async def create_doctor_service(
@@ -272,9 +264,9 @@ async def get_doctor_patients_with_status(
     return result, total_count
 
 
-
-
-async def upload_doctor_photo_service(doctor_id: str, file: UploadFile, db: AsyncSession):
+async def upload_doctor_photo_service(
+    doctor_id: str, file: UploadFile, db: AsyncSession
+):
     stmt = select(Doctor).where(Doctor.doctor_id == doctor_id)
     result = await db.execute(stmt)
     doctor = result.scalar_one_or_none()
@@ -286,10 +278,9 @@ async def upload_doctor_photo_service(doctor_id: str, file: UploadFile, db: Asyn
     return {"doctor_id": doctor_id, "message": "Фотография врача успешно загружена"}
 
 
-
-
-
-async def upload_reserv_data_service(doctor_id: str, file: UploadFile, db: AsyncSession):
+async def upload_reserv_data_service(
+    doctor_id: str, file: UploadFile, db: AsyncSession
+):
     allowed_types = ["image/jpeg", "image/png", "application/pdf"]
     if file.content_type not in allowed_types:
         raise HTTPException(
@@ -306,8 +297,6 @@ async def upload_reserv_data_service(doctor_id: str, file: UploadFile, db: Async
     doctor.reserv_scan_file_type = file.content_type
     await db.commit()
     return {"doctor_id": doctor_id, "message": "Выписка из резерва успешно загружена"}
-
-
 
 
 async def upload_diploma_service(diploma_id: str, file: UploadFile, db: AsyncSession):
@@ -329,8 +318,9 @@ async def upload_diploma_service(diploma_id: str, file: UploadFile, db: AsyncSes
     return {"document_id": diploma_id, "message": "Диплом успешно загружен"}
 
 
-
-async def upload_certificate_service(certificate_id: str, file: UploadFile, db: AsyncSession):
+async def upload_certificate_service(
+    certificate_id: str, file: UploadFile, db: AsyncSession
+):
     allowed_types = ["image/jpeg", "image/png", "application/pdf"]
     if file.content_type not in allowed_types:
         raise HTTPException(

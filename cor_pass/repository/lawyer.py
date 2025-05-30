@@ -15,7 +15,6 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
-
 async def get_doctors(
     skip: int,
     limit: int,
@@ -120,13 +119,15 @@ async def delete_doctor_by_doctor_id(db: AsyncSession, doctor_id: str):
         print(f"Произошла ошибка при удалении врача: {e}")
 
 
-
 async def get_diploma_by_id(diploma_id: str, db: AsyncSession):
     """Получает информацию о документе по его ID."""
     result = await db.execute(select(Diploma).where(Diploma.id == diploma_id))
     return result.scalar_one_or_none()
 
+
 async def get_certificate_by_id(certificate_id: str, db: AsyncSession):
     """Получает информацию о документе по его ID."""
-    result = await db.execute(select(Certificate).where(Certificate.id == certificate_id))
+    result = await db.execute(
+        select(Certificate).where(Certificate.id == certificate_id)
+    )
     return result.scalar_one_or_none()

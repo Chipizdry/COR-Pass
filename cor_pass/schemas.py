@@ -12,7 +12,20 @@ from pydantic import (
 from typing import List, Optional, Union
 from datetime import datetime
 from cor_pass.database import models
-from cor_pass.database.models import AccessLevel, Status, Doctor_Status, AuthSessionStatus, MacroArchive, DecalcificationType, SampleType, MaterialType, UrgencyType, FixationType, StudyType, StainingType
+from cor_pass.database.models import (
+    AccessLevel,
+    Status,
+    Doctor_Status,
+    AuthSessionStatus,
+    MacroArchive,
+    DecalcificationType,
+    SampleType,
+    MaterialType,
+    UrgencyType,
+    FixationType,
+    StudyType,
+    StainingType,
+)
 import re
 from datetime import date
 
@@ -59,17 +72,20 @@ class ResponseUser(BaseModel):
 
 
 class NewUserRegistration(BaseModel):
-    email: EmailStr = Field(
-        ..., description="Email пользователя"
-    )
+    email: EmailStr = Field(..., description="Email пользователя")
     birth_date: Optional[date] = Field(None, description="Дата рождения пациента")
-    sex: Optional[str] = Field(None, max_length=1, description="Пол пациента, может быть 'M'(мужской) или 'F'(женский)")
+    sex: Optional[str] = Field(
+        None,
+        max_length=1,
+        description="Пол пациента, может быть 'M'(мужской) или 'F'(женский)",
+    )
 
     @field_validator("sex")
     def user_sex_must_be_m_or_f(cls, v):
         if v not in ["M", "F"]:
             raise ValueError('user_sex must be "M" or "F"')
         return v
+
 
 class TokenModel(BaseModel):
     access_token: str
@@ -128,6 +144,7 @@ class UserSessionModel(BaseModel):
     ip_address: str
     device_os: str
     refresh_token: str
+    jti: str
 
 
 class UserSessionResponseModel(BaseModel):
@@ -139,6 +156,11 @@ class UserSessionResponseModel(BaseModel):
     device_os: str
     created_at: datetime
     updated_at: datetime
+    jti: Optional[str]
+    country_code: Optional[str] = None
+    country_name: Optional[str] = None
+    region_name: Optional[str] = None
+    city_name: Optional[str] = None
 
 
 class UserSessionDBModel(BaseModel):
@@ -370,9 +392,7 @@ class DoctorWithRelationsResponse(BaseModel):
     first_name: Optional[str]
     surname: Optional[str]
     last_name: Optional[str]
-    doctors_photo: Optional[str] = Field(
-        None, description="Ссылка на фото"
-    )
+    doctors_photo: Optional[str] = Field(None, description="Ссылка на фото")
     scientific_degree: Optional[str]
     date_of_last_attestation: Optional[date]
     passport_code: Optional[str] = Field(None, description="Номер паспорта")
@@ -389,7 +409,9 @@ class DoctorWithRelationsResponse(BaseModel):
 
 
 class DoctorCreate(BaseModel):
-    work_email: EmailStr = Field(..., description="Рабочий имейл, должен быть уникальным")
+    work_email: EmailStr = Field(
+        ..., description="Рабочий имейл, должен быть уникальным"
+    )
     phone_number: Optional[str] = Field(None, description="Номер телефона")
     first_name: str = Field(..., description="Имя врача")
     surname: str = Field(..., description="Отчество врача")
@@ -398,7 +420,9 @@ class DoctorCreate(BaseModel):
     taxpayer_identification_number: str = Field(..., description="ИНН")
     place_of_registration: str = Field(..., description="Место прописки")
     scientific_degree: Optional[str] = Field(None, description="Научная степень")
-    date_of_last_attestation: Optional[date] = Field(None, description="Дата последней атестации")
+    date_of_last_attestation: Optional[date] = Field(
+        None, description="Дата последней атестации"
+    )
     diplomas: List[DiplomaCreate] = []
     certificates: List[CertificateCreate] = []
     clinic_affiliations: List[ClinicAffiliationCreate] = []
@@ -452,9 +476,7 @@ class DoctorResponse(BaseModel):
     first_name: Optional[str] = Field(None, description="Имя врача")
     surname: Optional[str] = Field(None, description="Отчество врача")
     last_name: Optional[str] = Field(None, description="Фамилия врача")
-    doctors_photo: Optional[str] = Field(
-        None, description="Ссылка на фото врача"
-    )
+    doctors_photo: Optional[str] = Field(None, description="Ссылка на фото врача")
     scientific_degree: Optional[str] = Field(None, description="Научная степень")
     date_of_last_attestation: Optional[date] = Field(
         None, description="Дата последней атестации"
@@ -488,7 +510,6 @@ class DoctorCreateResponse(BaseModel):
     diploma_id: List = Field(..., description="ID дипломов")
     certificates_id: List = Field(..., description="ID сертификатов")
     clinic_affiliations_id: List = Field(..., description="ID записей о клиниках")
-
 
     class Config:
         from_attributes = True
@@ -538,6 +559,7 @@ class ConfirmLoginRequest(BaseModel):
 class ConfirmLoginResponse(BaseModel):
     message: str
 
+
 class CheckSessionRequest(BaseModel):
     email: Optional[EmailStr] = None
     cor_id: Optional[str] = None
@@ -551,6 +573,7 @@ class CheckSessionRequest(BaseModel):
             raise ValueError("Требуется указать либо email, либо cor_id")
         return data
 
+
 class ConfirmCheckSessionResponse(BaseModel):
     status: str = "approved"
     access_token: str
@@ -558,8 +581,8 @@ class ConfirmCheckSessionResponse(BaseModel):
     token_type: str = "bearer"
 
 
-
 # PATIENTS MODELS
+
 
 class PatientResponce(BaseModel):
     patient_cor_id: str
@@ -584,7 +607,11 @@ class NewPatientRegistration(BaseModel):
     first_name: str = Field(..., description="Имя пациента")
     middle_name: Optional[str] = Field(None, description="Отчество пациента")
     birth_date: Optional[date] = Field(None, description="Дата рождения пациента")
-    sex: Optional[str] = Field(None, max_length=1, description="Пол пациента, может быть 'M'(мужской) или 'F'(женский)")
+    sex: Optional[str] = Field(
+        None,
+        max_length=1,
+        description="Пол пациента, может быть 'M'(мужской) или 'F'(женский)",
+    )
     phone_number: Optional[str] = Field(None, description="Номер телефона пациента")
     address: Optional[str] = Field(None, description="Адрес пациента")
     # photo: Optional[str] = Field(None, description="Фото пациента (base64 или blob)")
@@ -634,13 +661,16 @@ class Glass(GlassBase):
 class DeleteGlassesRequest(BaseModel):
     glass_ids: List[str]
 
+
 class DeleteGlassesResponse(BaseModel):
     deleted_count: int
     message: str
     not_found_ids: List[str] | None = None
 
+
 class GetSample(BaseModel):
     sample_id: str
+
 
 class SampleBase(BaseModel):
     sample_number: str
@@ -676,6 +706,7 @@ class Cassette(CassetteBase):
     class Config:
         from_attributes = True
 
+
 class Cassette(CassetteBase):
     id: str
     sample_id: str
@@ -684,40 +715,46 @@ class Cassette(CassetteBase):
     class Config:
         from_attributes = True
 
+
 class DeleteCassetteRequest(BaseModel):
     cassette_ids: List[str]
+
 
 class DeleteCassetteResponse(BaseModel):
     deleted_count: int
     message: str
 
+
 class Sample(SampleBase):
     id: str
     case_id: str
-    macro_description: str
+    macro_description: Optional[str] = None
     cassettes: List[Cassette] = []
+
     class Config:
         from_attributes = True
 
-class UpdateSampleMacrodescription(SampleBase):
+
+class UpdateSampleMacrodescription(BaseModel):
     macro_description: str
 
 
 class DeleteSampleRequest(BaseModel):
     sample_ids: List[str]
 
+
 class DeleteSampleResponse(BaseModel):
     deleted_count: int
     message: str
 
 
-
 class DeleteCasesRequest(BaseModel):
     case_ids: List[str]
 
+
 class DeleteCasesResponse(BaseModel):
     deleted_count: int
-    message: str 
+    message: str
 
 
 class CaseBase(BaseModel):
@@ -732,11 +769,14 @@ class CaseCreate(BaseModel):
     urgency: UrgencyType = Field(
         ...,
         description="Срочность иссследования",
-        example=UrgencyType.S,)
+        example=UrgencyType.S,
+    )
     material_type: MaterialType = Field(
         ...,
         description="Тип исследования",
-        example=MaterialType.R,)
+        example=MaterialType.R,
+    )
+
 
 class CaseCreateResponse(BaseModel):
     id: str
@@ -749,10 +789,14 @@ class CaseCreateResponse(BaseModel):
     glass_count: int
 
 
-
 class UpdateCaseCode(BaseModel):
     case_id: str
-    update_data: str = Field(min_length=5, max_length=5, description="Последние 5 целочисельных символлов кода кейса")
+    update_data: str = Field(
+        min_length=5,
+        max_length=5,
+        description="Последние 5 целочисельных символлов кода кейса",
+    )
+
 
 class Case(BaseModel):
     id: str
@@ -769,6 +813,7 @@ class Case(BaseModel):
     class Config:
         from_attributes = True
 
+
 class UpdateCaseCodeResponce(BaseModel):
     id: str
     patient_id: str
@@ -782,16 +827,17 @@ class UpdateCaseCodeResponce(BaseModel):
         from_attributes = True
 
 
-
 class FirstCaseDetailsSchema(BaseModel):
     id: str
     case_code: str
     creation_date: datetime
     samples: List[Sample]
 
+
 class PatientFirstCaseDetailsResponse(BaseModel):
     all_cases: List[Case]
     first_case_details: Optional[FirstCaseDetailsSchema] = None
+
 
 class CaseParametersScheema(BaseModel):
     case_id: str
@@ -814,6 +860,7 @@ class SampleWithoutCassettesSchema(BaseModel):
     glass_count: int
     cassettes: List = []  # Для остальных семплов список кассет будет пустой
 
+
 class CaseDetailsResponse(BaseModel):
     id: str
     case_code: str
@@ -823,6 +870,7 @@ class CaseDetailsResponse(BaseModel):
     glass_count: int
     samples: List[SampleWithoutCassettesSchema | Sample]
 
+
 class SimpleCaseResponse(BaseModel):
     id: str
     case_code: str
@@ -831,8 +879,10 @@ class SimpleCaseResponse(BaseModel):
     cassette_count: int
     glass_count: int
 
+
 class CaseListResponse(BaseModel):
     items: List[Union[CaseDetailsResponse, SimpleCaseResponse]]
+
 
 class CreateSampleWithDetails(BaseModel):
     created_samples: List[Sample]
@@ -841,18 +891,22 @@ class CreateSampleWithDetails(BaseModel):
 
 # Модели для внешних девайсов
 
+
 class DeviceRegistration(BaseModel):
     device_token: str
 
+
 class DeviceResponse(BaseModel):
-    token: str # JWT токен
+    token: str  # JWT токен
     device_name: str
     user_id: str
+
 
 class GrantDeviceAccess(BaseModel):
     user_id: str
     device_id: int
     access_level: AccessLevel
+
 
 class DeviceAccessResponse(BaseModel):
     id: int
@@ -861,12 +915,12 @@ class DeviceAccessResponse(BaseModel):
     accessing_user_id: str
     access_level: AccessLevel
 
+
 class GenerateManufacturedDevices(BaseModel):
     count: PositiveInt
 
 
 # Модели для принтеров
-
 
 
 """
@@ -894,14 +948,14 @@ class CreatePrintingDevice(BaseModel):
 
 class ResponcePrintingDevice(BaseModel):
     id: str
-    device_class: str 
-    device_identifier: str 
-    subnet_mask: Optional[str] 
-    gateway: Optional[str] 
-    ip_address: str 
-    port: Optional[int] 
-    comment: Optional[str] 
-    location: Optional[str] 
+    device_class: str
+    device_identifier: str
+    subnet_mask: Optional[str]
+    gateway: Optional[str]
+    ip_address: str
+    port: Optional[int]
+    comment: Optional[str]
+    location: Optional[str]
 
 
 class UpdatePrintingDevice(BaseModel):
@@ -915,12 +969,102 @@ class UpdatePrintingDevice(BaseModel):
     location: Optional[str] = Field(None, description="Локация")
 
 
-
-
 class Label(BaseModel):
     models_id: int
     content: str
     uuid: Optional[str] = None
 
+
 class PrintRequest(BaseModel):
     labels: List[Label]
+
+
+
+
+#Схемы для направлений 
+
+# Для использования ResearchType в Pydantic
+# class StudyType(str, Enum):
+#     CYTOLOGY = "Цитология"
+#     PATHOHISTOLOGY = "Патогистология"
+#     IMMUNOHISTOCHEMISTRY = "Иммуногистохимия"
+#     FISH_CISH = "FISH/CISH"
+
+# Схема для прикрепленного файла в ответе
+class ReferralAttachmentResponse(BaseModel):
+    id: str
+    filename: str
+    content_type: str
+    # Вместо file_data будем возвращать URL для получения файла
+    file_url: Optional[str] = Field(None, description="URL файла")
+
+    class Config:
+        from_attributes = True # Для совместимости с SQLAlchemy
+
+# Схема для создания прикрепленного файла (для внутреннего использования или если вы принимаете base64)
+# В случае загрузки через Form-Data, эта схема не всегда напрямую используется для приема данных.
+class ReferralAttachmentCreate(BaseModel):
+    filename: str
+    content_type: str
+    file_data: bytes # Принимаем байты, если это не Form-Data загрузка
+
+# Схема для создания Направления
+class ReferralCreate(BaseModel):
+    case_id: str = Field(..., description="ID связанного кейса")
+    case_number: str = Field(..., description="Номер кейса")
+    research_type: Optional[StudyType] = Field(None, description="Вид исследования")
+    container_count: Optional[int] = Field(None, description="Фактическое количество контейнеров")
+    medical_card_number: Optional[str] = Field(None, description="Номер медкарты")
+    clinical_data: Optional[str] = Field(None, description="Клинические данные")
+    clinical_diagnosis: Optional[str] = Field(None, description="Клинический диагноз")
+    medical_institution: Optional[str] = Field(None, description="Медицинское учреждение")
+    department: Optional[str] = Field(None, description="Отделение")
+    attending_doctor: Optional[str] = Field(None, description="Лечащий врач")
+    doctor_contacts: Optional[str] = Field(None, description="Контакты врача")
+    medical_procedure: Optional[str] = Field(None, description="Медицинская процедура")
+    final_report_delivery: Optional[str] = Field(None, description="Финальный репорт отправить")
+    issued_at: Optional[date] = Field(None, description="Выдано (дата)")
+
+# Схема для ответа Направления (что возвращает API)
+class ReferralResponse(BaseModel):
+    id: str
+    case_id: str
+    case_number: str
+    created_at: datetime
+    research_type: Optional[StudyType]
+    container_count: Optional[int]
+    medical_card_number: Optional[str]
+    clinical_data: Optional[str]
+    clinical_diagnosis: Optional[str]
+    medical_institution: Optional[str]
+    department: Optional[str]
+    attending_doctor: Optional[str]
+    doctor_contacts: Optional[str]
+    medical_procedure: Optional[str]
+    final_report_delivery: Optional[str]
+    issued_at: Optional[date]
+    attachments: List[ReferralAttachmentResponse] = [] # Список прикрепленных файлов
+
+    class Config:
+        from_attributes = True
+
+
+class ReferralUpdate(BaseModel):
+    # case_id не включаем сюда, так как по нему мы ищем
+    case_number: Optional[str] = None
+    research_type: Optional[str] = None
+    container_count: Optional[int] = None
+    medical_card_number: Optional[str] = None
+    clinical_data: Optional[str] = None
+    clinical_diagnosis: Optional[str] = None
+    medical_institution: Optional[str] = None
+    department: Optional[str] = None
+    attending_doctor: Optional[str] = None
+    doctor_contacts: Optional[str] = None
+    medical_procedure: Optional[str] = None
+    final_report_delivery: Optional[str] = None
+    issued_at: Optional[date] = None # Или Field(default_factory=datetime.now) если должно обновляться на текущее время
+
+    class Config:
+        from_attributes = True # Для Pydantic v2
+        # orm_mode = True # Для Pydantic v1

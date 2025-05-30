@@ -1,14 +1,23 @@
 from typing import List
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, Body, HTTPException, Depends, status
 from cor_pass.database.db import get_db
+from cor_pass.repository import lawyer
+from cor_pass.repository.doctor import create_doctor, create_doctor_service
+from cor_pass.repository.lawyer import get_doctor
 from cor_pass.services.auth import auth_service
-from cor_pass.database.models import User, Status
+from cor_pass.database.models import Doctor_Status, User, Status
 from cor_pass.services.access import admin_access
-from cor_pass.schemas import UserDb
+from cor_pass.schemas import (
+    DoctorCreate,
+    DoctorCreateResponse,
+    NewUserRegistration,
+    UserDb,
+)
 from cor_pass.repository import person
 from pydantic import EmailStr
 from cor_pass.database.redis_db import redis_client
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from cor_pass.services.logger import logger
 
@@ -194,3 +203,146 @@ async def kickout_user(email: EmailStr, db: AsyncSession = Depends(get_db)):
         new_token = None
         await person.update_token(user=user, token=new_token, db=db)
         return {"message": f"{email} - delete refresh token"}
+
+
+@router.post(
+    "/signup_as_doctor",
+    response_model=DoctorCreateResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(admin_access)],
+)
+async def signup_user_as_doctor(
+    user_cor_id: str,
+    doctor_data: DoctorCreate = Body(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    **Создание врача со всеми связанными данными**\n
+    Этот маршрут позволяет создать врача вместе с дипломами, сертификатами и привязками к клиникам.
+    Уровень доступа:
+    - Текущий авторизованный пользователь
+    :param doctor_data: str: Данные для создания врача в формате JSON.
+    :param db: AsyncSession: Сессия базы данных.
+    :return: Созданный врач.
+    :rtype: DoctorResponse
+    """
+
+    exist_doctor = await get_doctor(db=db, doctor_id=user_cor_id)
+    if exist_doctor:
+        logger.debug(f"{user_cor_id} doctor already exist")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Doctor account already exists"
+        )
+    user = await person.get_user_by_corid(db=db, cor_id=user_cor_id)
+    if not user:
+        logger.debug(f"User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    try:
+        doctor = await create_doctor(
+            doctor_data=doctor_data,
+            db=db,
+            user=user,
+        )
+        cer, dip, clin = await create_doctor_service(
+            doctor_data=doctor_data, db=db, doctor=doctor
+        )
+    except IntegrityError as e:
+        logger.error(f"Database integrity error: {e}")
+        await db.rollback()
+        detail = "Database error occurred. Please check the data for duplicates or invalid entries."
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail)
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred during doctor creation.",
+        )
+    # Сериализуем ответ
+    doctor_response = DoctorCreateResponse(
+        id=doctor.id,
+        doctor_cor_id=doctor.doctor_id,
+        work_email=doctor.work_email,
+        phone_number=doctor.phone_number,
+        first_name=doctor.first_name,
+        surname=doctor.surname,
+        last_name=doctor.last_name,
+        scientific_degree=doctor.scientific_degree,
+        date_of_last_attestation=doctor.date_of_last_attestation,
+        status=doctor.status,
+        diploma_id=dip,
+        certificates_id=cer,
+        clinic_affiliations_id=clin,
+        place_of_registration=doctor.place_of_registration,
+        passport_code=doctor.passport_code,
+        taxpayer_identification_number=doctor.taxpayer_identification_number,
+    )
+
+    return doctor_response
+
+
+@router.patch("/asign_doctor_status/{doctor_id}", dependencies=[Depends(admin_access)])
+async def assign_status(
+    doctor_id: str,
+    doctor_status: Doctor_Status,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    **Assign a doctor_status to a doctor by doctor_id. / Применение нового статуса доктора (подтвержден / на рассмотрении)**\n
+
+    :param doctor_id: str: doctor_id of the user to whom you want to assign the status.
+
+    :param doctor_status: DoctorStatus: The selected doctor_status for the assignment.
+
+    :param db: AsyncSession: Database Session.
+
+    :return: Message about successful status change.
+
+    :rtype: dict
+    """
+    doctor = await lawyer.get_doctor(doctor_id=doctor_id, db=db)
+
+    if not doctor:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Doctor not found"
+        )
+
+    if doctor_status == doctor.status:
+        return {"message": "The account status has already been assigned"}
+    else:
+        await lawyer.approve_doctor(doctor=doctor, db=db, status=doctor_status)
+        return {
+            "message": f"{doctor.first_name} {doctor.last_name}'s status - {doctor_status.value}"
+        }
+
+
+@router.post(
+    "/register_new_user",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(admin_access)],
+)
+async def register_new_user(
+    body: NewUserRegistration, db: AsyncSession = Depends(get_db)
+):
+    """
+    Создает нового пользователя с временным паролем
+    """
+
+    if body:
+        new_user_info = body
+        exist_user = await person.get_user_by_email(new_user_info.email, db)
+        if exist_user:
+            logger.debug(f"{new_user_info.email} user already exists")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="Account already exists"
+            )
+        new_user = await person.register_new_user(db=db, body=new_user_info)
+        return {"message": f"Новый пользователь {body.email} успешно зарегистрирован."}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Некорректные данные регистрации пользователя.",
+        )

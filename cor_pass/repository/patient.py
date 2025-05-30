@@ -129,7 +129,7 @@ async def add_existing_patient(
 
 
 async def get_patient_by_corid(db: AsyncSession, cor_id: str):
-    
+
     existing_user = await repository_person.get_user_by_corid(cor_id, db)
     if not existing_user:
         raise HTTPException(
@@ -140,7 +140,7 @@ async def get_patient_by_corid(db: AsyncSession, cor_id: str):
     result_patient = await db.execute(stmt_patient)
     existing_patient = result_patient.scalar_one_or_none()
     if not existing_patient:
-                raise HTTPException(
+        raise HTTPException(
             status_code=404, detail=f"Пациент с Cor ID {cor_id} не найден."
         )
     return existing_patient

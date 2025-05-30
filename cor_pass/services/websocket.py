@@ -1,12 +1,10 @@
 import asyncio
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends
+from fastapi import WebSocket
 from sqlalchemy import delete, select
-from sqlalchemy.orm import Session
 from cor_pass.database.models import CorIdAuthSession, AuthSessionStatus
 from datetime import datetime, timedelta
 
 from cor_pass.database.db import async_session_maker
-from sqlalchemy.ext.asyncio import AsyncSession
 
 # Словарь для хранения активных WebSocket-соединений (session_token -> WebSocket)
 active_connections: dict[str, WebSocket] = {}
@@ -70,7 +68,7 @@ async def cleanup_auth_sessions():
                 expired_result = await db.execute(expired_stmt)
                 expired_count = expired_result.rowcount
 
-                cutoff_time = now - timedelta(days=1)  # Завершенные 1 день назад сессии
+                cutoff_time = now - timedelta(minutes=30)  # Завершенные 30 минут назад
                 completed_stmt = delete(CorIdAuthSession).where(
                     CorIdAuthSession.status.in_(
                         [
@@ -92,4 +90,4 @@ async def cleanup_auth_sessions():
                 print(f"Ошибка при асинхронной очистке сессий авторизации: {e}")
                 await db.rollback()
             finally:
-                await asyncio.sleep(3600)  # запуск каждый час
+                await asyncio.sleep(900)  # запуск каждые 15 минут

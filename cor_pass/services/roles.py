@@ -12,13 +12,16 @@ class UserRoleChecker:
     async def is_active(self, user: User = Depends(auth_service.get_current_user)):
         return user.is_active
 
+
 class AdminRoleChecker:
     async def is_admin(self, user: User = Depends(auth_service.get_current_user)):
         return user.email in settings.admin_accounts
 
+
 class LawyerRoleChecker:
     async def is_lawyer(self, user: User = Depends(auth_service.get_current_user)):
         return user.email in settings.lawyer_accounts
+
 
 class DoctorRoleChecker:
     async def is_doctor(
@@ -31,12 +34,14 @@ class DoctorRoleChecker:
         doctor = result.scalar_one_or_none()
         return doctor is not None and doctor.status == Doctor_Status.approved
 
+
 class CorIntRoleChecker:
     async def is_cor_int(self, user: User = Depends(auth_service.get_current_user)):
         """
         Проверяет, принадлежит ли пользователь к роли cor-int.
         """
         return user.email.endswith("@cor-int.com")
+
 
 user_role_checker = UserRoleChecker()
 admin_role_checker = AdminRoleChecker()

@@ -43,6 +43,7 @@ async def create_user_session(
 
     if existing_session:
         existing_session.refresh_token = encrypted_refresh_token
+        existing_session.jti = body.jti
         existing_session.updated_at = func.now()
         try:
             db.add(existing_session)
@@ -60,6 +61,7 @@ async def create_user_session(
             ip_address=body.ip_address,
             device_os=body.device_os,
             refresh_token=encrypted_refresh_token,
+            jti = body.jti
         )
         try:
             db.add(new_session)
@@ -86,8 +88,20 @@ async def get_user_sessions_by_device_info(
     return list(sessions)
 
 
+
+async def update_user_session_jti(db: AsyncSession, session_id: str, new_jti: str):
+    """Обновляет JTI для существующей сессии."""
+    result = await db.execute(select(UserSession).where(UserSession.id == session_id))
+    session = result.scalar_one_or_none()
+    if session:
+        session.jti = new_jti
+        await db.commit()
+        await db.refresh(session)
+    return session
+
+
 async def update_session_token(
-    user: User, token: str | None, device_info: str, db: AsyncSession
+    user: User, token: str | None, device_info: str, jti: str, db: AsyncSession
 ) -> UserSession | None:
     """
     Асинхронно обновляет refresh token для сессии пользователя на указанном устройстве.
@@ -107,6 +121,7 @@ async def update_session_token(
             )
 
             existing_session.refresh_token = encrypted_refresh_token
+            existing_session.jti = jti
             existing_session.updated_at = func.now()
             try:
                 db.add(existing_session)
@@ -125,7 +140,7 @@ async def update_session_token(
         raise Exception("Ошибка при поиске или обновлении сессии")
 
 
-async def get_session_by_id(user: User, db: AsyncSession, session_id: str):
+async def get_session_by_id(user: User, db: AsyncSession, session_id: str) -> UserSession | None:
     """
     Асинхронно получает сессию пользователя по ее ID, проверяя принадлежность пользователя.
     """
@@ -208,6 +223,21 @@ async def get_auth_session(
     stmt = select(CorIdAuthSession).where(
         CorIdAuthSession.session_token == session_token,
         CorIdAuthSession.status == AuthSessionStatus.PENDING,
+        CorIdAuthSession.expires_at > datetime.utcnow(),
+    )
+    result = await db.execute(stmt)
+    return result.scalar_one_or_none()
+
+
+async def get_auth_approved_session(
+    session_token: str, db: AsyncSession
+) -> CorIdAuthSession | None:
+    """
+    Асинхронно получает активную сессию авторизации по ее токену.
+    """
+    stmt = select(CorIdAuthSession).where(
+        CorIdAuthSession.session_token == session_token,
+        CorIdAuthSession.status == AuthSessionStatus.APPROVED,
         CorIdAuthSession.expires_at > datetime.utcnow(),
     )
     result = await db.execute(stmt)

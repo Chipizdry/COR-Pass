@@ -1,4 +1,3 @@
-import base64
 from typing import List, Optional
 from sqlalchemy.future import select
 from sqlalchemy import func
@@ -20,7 +19,6 @@ from cor_pass.schemas import (
     MedicalStorageSettings,
 )
 from cor_pass.services.auth import auth_service
-from cor_pass.config.config import settings
 from cor_pass.services import roles as role_check
 from cor_pass.services.logger import logger
 from cor_pass.services.cipher import (
@@ -29,7 +27,10 @@ from cor_pass.services.cipher import (
     generate_recovery_code,
     encrypt_data,
 )
-from cor_pass.services.email import send_email_code_with_qr, send_email_code_with_temp_pass
+from cor_pass.services.email import (
+    send_email_code_with_qr,
+    send_email_code_with_temp_pass,
+)
 from sqlalchemy.exc import NoResultFound
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -446,11 +447,10 @@ async def get_last_password_change(email: str, db: AsyncSession) -> Optional[dat
     return None
 
 
-
 async def get_user_roles(email: str, db: AsyncSession) -> List[str]:
     roles = []
     user = await get_user_by_email(email, db)
-    
+
     if await role_check.admin_role_checker.is_admin(user=user):
         roles.append("admin")
     if await role_check.lawyer_role_checker.is_lawyer(user=user):
@@ -465,9 +465,7 @@ async def get_user_roles(email: str, db: AsyncSession) -> List[str]:
     return roles
 
 
-async def register_new_user(
-    db: AsyncSession, body: NewUserRegistration
-):
+async def register_new_user(db: AsyncSession, body: NewUserRegistration):
     """
     Асинхронно регистрирует нового пользователя как пациента и связывает его с врачом.
     """
@@ -492,6 +490,4 @@ async def register_new_user(
     await repository_cor_id.create_new_corid(new_user, db)
     await db.commit()
 
-    await send_email_code_with_temp_pass(
-        email=body.email, temp_pass=temp_password
-    )
+    await send_email_code_with_temp_pass(email=body.email, temp_pass=temp_password)

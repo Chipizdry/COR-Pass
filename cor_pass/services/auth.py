@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Optional
+import uuid
 
 from jose import JWTError, jwt
 from fastapi import HTTPException, status, Depends
@@ -14,9 +15,11 @@ from cor_pass.database.models import Device, DeviceAccess
 from cor_pass.repository import person as repository_users
 from cor_pass.repository import device as repository_devices
 from cor_pass.config.config import settings
+from cor_pass.services import redis_service
 from cor_pass.services.logger import logger
 
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class Auth:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -64,15 +67,16 @@ class Auth:
             expire = datetime.now(timezone.utc) + timedelta(
                 seconds=settings.access_token_expiration
             )
+        jti = str(uuid.uuid4())
         to_encode.update(
-            {"iat": datetime.now(timezone.utc), "exp": expire, "scp": "access_token"}
+            {"iat": datetime.now(timezone.utc), "exp": expire, "scp": "access_token", "jti": jti}
         )
 
         encoded_access_token = jwt.encode(
             to_encode, key=self.SECRET_KEY, algorithm=self.ALGORITHM
         )
         logger.debug(f"Access token: {encoded_access_token}")
-        return encoded_access_token
+        return encoded_access_token, jti
 
     async def create_refresh_token(
         self, data: dict, expires_delta: Optional[float] = None
@@ -95,8 +99,9 @@ class Auth:
             expire = datetime.now(timezone.utc) + timedelta(
                 hours=settings.refresh_token_expiration
             )
+        jti = str(uuid.uuid4())
         to_encode.update(
-            {"iat": datetime.now(timezone.utc), "exp": expire, "scp": "refresh_token"}
+            {"iat": datetime.now(timezone.utc), "exp": expire, "scp": "refresh_token", "jti": jti}
         )
 
         encoded_refresh_token = jwt.encode(
@@ -136,56 +141,111 @@ class Auth:
             )
 
     async def get_current_user(
-        self, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+        self, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
     ):
         """
-        The get_current_user function is a dependency that will be used in the protected routes.
-        It takes an access token as input and returns the user object if it's valid.
-        If the token is expired, it raises token_expired exception.
+        Проверяет валидность Access токена и возвращает объект пользователя.
+        Включает проверку на:
+        - Истечение срока действия токена
+        - Наличие JTI в черном списке Redis (отзыв токена)
+        - Корректность структуры токена
+        - Существование пользователя в базе данных
 
-        :param self: Represent the instance of the class
-        :param token: str: Get the token from the request header
-        :param db: Session: Get the database session
-        :return: An object of type user
+        :param token: Access токен из заголовка "Authorization: Bearer".
+        :param db: Асинхронная сессия базы данных.
+        :return: Объект User, если токен валиден и пользователь существует.
+        :raises HTTPException 401: Если токен невалиден, истёк, отозван или пользователь не найден.
         """
-        credentials_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-        token_expired_exception = HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired. Please refresh the token.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
         try:
             payload = jwt.decode(
                 token, key=self.SECRET_KEY, algorithms=[self.ALGORITHM]
             )
-            # Проверяем, есть ли время истечения
+
             exp = payload.get("exp")
-            if exp is None:
-                raise credentials_exception
+            jti = payload.get("jti")
+            if exp is None or jti is None:
+                logger.warning(f"Malformed token: missing 'exp' or 'jti'. Payload: {payload}")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Некорректный токен: отсутствует время истечения или идентификатор.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
 
-            # Сравниваем текущее время с временем истечения токена
-            if datetime.fromtimestamp(exp) < datetime.now():
-                raise token_expired_exception
+            if await redis_service.is_jti_blacklisted(jti):
+                logger.warning(f"Revoked token detected with JTI: {jti}")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Токен отозван. Используйте новый токен или авторизуйтесь заново.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
 
-            if payload["scp"] == "access_token":
-                oid = payload["oid"]
-                if oid is None:
-                    raise credentials_exception
+            if datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
+                logger.warning(f"Expired token detected for JTI: {jti}")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Срок действия токена истёк. Пожалуйста, обновите токен.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+            if payload.get("scp") != "access_token":
+                logger.warning(f"Invalid token scope. Expected 'access_token', got '{payload.get('scp')}'")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Некорректная область действия токена. Ожидается 'access_token'.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+            oid = payload.get("oid")
+            if oid is None:
+                logger.warning(f"Token payload missing 'oid'. Payload: {payload}")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Некорректный токен: отсутствует идентификатор пользователя.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+        except JWTError as e:
+            error_message = str(e).lower()
+            detail_for_user = "Не удалось проверить учетные данные: неверный или поврежденный токен."
+
+            if "signature verification failed" in error_message:
+                detail_for_user = "Недействительная подпись."
+                logger.warning(f"JWT signature error: {error_message}")
+            elif "malformed" in error_message:
+                detail_for_user = "Некорректный формат токена."
+                logger.warning(f"JWT malformed error: {error_message}")
+
+            elif "not enough segments" in error_message:
+                detail_for_user = "Неполный токен: не хватает сегментов."
+                logger.warning(f"JWT malformed error: {error_message}")
+
+            elif "signature has expired" in error_message:
+                detail_for_user = "Срок действия токена истек."
+                logger.warning(f"JWT expiry error: {error_message}")
+
+            elif "invalid issuer" in error_message:
+                detail_for_user = "Неверный издатель токена."
+                logger.warning(f"JWT invalid issuer error: {error_message}")
+            elif "invalid audience" in error_message:
+                detail_for_user = "Токен предназначен для другой аудитории."
+                logger.warning(f"JWT invalid audience error: {error_message}")
             else:
-                raise credentials_exception
-        except JWTError:
-            raise token_expired_exception
+                logger.error(f"Unhandled JWT error: {error_message}", exc_info=True)
 
-        # user = await repository_users.get_user_by_corid(cor_id, db)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=detail_for_user,
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         user = await repository_users.get_user_by_uuid(oid, db)
         if user is None:
-            raise credentials_exception
+            logger.warning(f"User with OID '{oid}' not found for valid token.")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Пользователь не найден.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
         return user
 
@@ -199,14 +259,18 @@ class Auth:
     #         return False
     #     return True
 
-    async def create_device_jwt(self, device_id: str, user_id: str, expires_delta: Optional[float] = None):
+    async def create_device_jwt(
+        self, device_id: str, user_id: str, expires_delta: Optional[float] = None
+    ):
         to_encode = {"sub": device_id, "user_id": user_id}
         if expires_delta:
-            expire = datetime.now(timezone.utc) + + timedelta(hours=expires_delta)
+            expire = datetime.now(timezone.utc) + +timedelta(hours=expires_delta)
             to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(to_encode, key=self.SECRET_KEY, algorithm=self.ALGORITHM)
+        encoded_jwt = jwt.encode(
+            to_encode, key=self.SECRET_KEY, algorithm=self.ALGORITHM
+        )
         return encoded_jwt
-    
+
     async def get_current_device(self, token: str, db: AsyncSession) -> Device:
 
         credentials_exception = HTTPException(
@@ -226,25 +290,32 @@ class Auth:
             if device_id is None:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Не удалось подтвердить учетные данные устройства"
+                    detail="Не удалось подтвердить учетные данные устройства",
                 )
         except JWTError:
             raise credentials_exception
-        
+
         device = await repository_devices.get_device_by_id(db=db, device_id=device_id)
-        
+
         if device is None:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Устройство не найдено"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Устройство не найдено"
             )
         return device
-    
-    async def verify_device_access(self, device_id: str, current_user_id: str, db: AsyncSession, required_level: Optional[Enum] = None) -> Device:
+
+    async def verify_device_access(
+        self,
+        device_id: str,
+        current_user_id: str,
+        db: AsyncSession,
+        required_level: Optional[Enum] = None,
+    ) -> Device:
         result_device = await db.execute(select(Device).where(Device.id == device_id))
         device = result_device.scalar_one_or_none()
         if not device:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Устройство не найдено")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Устройство не найдено"
+            )
 
         if device.user_id == current_user_id:
             return device  # Владелец имеет полный доступ
@@ -252,7 +323,7 @@ class Auth:
         result_access = await db.execute(
             select(DeviceAccess).where(
                 DeviceAccess.device_id == device_id,
-                DeviceAccess.accessing_user_id == current_user_id
+                DeviceAccess.accessing_user_id == current_user_id,
             )
         )
         access = result_access.scalar_one_or_none()
@@ -260,13 +331,17 @@ class Auth:
         if not access:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Нет прав доступа к устройству"
+                detail="Нет прав доступа к устройству",
             )
 
-        if required_level and access.access_level.value not in [required_level.value, "share", "read_write"]: # Владелец имеет все права
+        if required_level and access.access_level.value not in [
+            required_level.value,
+            "share",
+            "read_write",
+        ]:  # Владелец имеет все права
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Требуется уровень доступа: {required_level.value}, ваш уровень: {access.access_level.value}"
+                detail=f"Требуется уровень доступа: {required_level.value}, ваш уровень: {access.access_level.value}",
             )
 
         return device

@@ -1,10 +1,7 @@
 from fastapi import APIRouter, status
 from cor_pass.schemas import PasswordGeneratorSettings, WordPasswordGeneratorSettings
 
-from prometheus_client import start_http_server, Summary
 from prometheus_client import Counter, Histogram
-from prometheus_client import generate_latest
-from starlette.responses import Response
 
 from cor_pass.repository import password_generator as repository_password_generator
 

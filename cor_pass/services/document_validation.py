@@ -1,8 +1,6 @@
 from fastapi import UploadFile, HTTPException, status
-import imghdr
 
 from cor_pass.services.image_validation import ALLOWED_IMAGE_TYPES, validate_image_file
-
 
 
 # Константы для валидации PDF
@@ -25,7 +23,7 @@ async def validate_pdf_file(file: UploadFile):
             detail="Файл должен быть PDF",
         )
 
-    # Дополнительная проверка содержимого файла 
+    # Дополнительная проверка содержимого файла
     # Читаем первые несколько байт и проверяем "magic bytes" PDF
     file_header = await file.read(4)
     await file.seek(0)
@@ -44,7 +42,6 @@ async def validate_pdf_file(file: UploadFile):
         )
 
     return file
-
 
 
 async def validate_document_file(file: UploadFile):

@@ -77,6 +77,9 @@ async def get_all_doctors(
             scientific_degree=doctor.scientific_degree,
             date_of_last_attestation=doctor.date_of_last_attestation,
             status=doctor.status,
+            place_of_registration=doctor.place_of_registration,
+            passport_code=doctor.passport_code,
+            taxpayer_identification_number=doctor.taxpayer_identification_number,
         )
         for doctor in list_doctors
     ]
@@ -90,7 +93,6 @@ def bytes_to_base64(binary_data: bytes):
     if binary_data is None:
         return None
     return base64.b64encode(binary_data).decode("utf-8")
-
 
 
 @router.patch("/asign_status/{doctor_id}", dependencies=[Depends(lawyer_access)])
@@ -140,48 +142,57 @@ async def delete_user(doctor_id: str, db: AsyncSession = Depends(get_db)):
         )
     else:
         await lawyer.delete_doctor_by_doctor_id(db=db, doctor_id=doctor_id)
-        return {
-            "message": f" doctor - was deleted"
-        }
-
-
+        return {"message": f" doctor - was deleted"}
 
 
 @router.get("/doctors/{doctor_id}/photo", dependencies=[Depends(lawyer_access)])
 async def get_doctor_photo(doctor_id: str, db: AsyncSession = Depends(get_db)):
     """Получает фотографию врача из базы данных."""
-    doctor = await lawyer.get_doctor(doctor_id=doctor_id, db=db) # Assuming you have a function to get basic doctor info
+    doctor = await lawyer.get_doctor(
+        doctor_id=doctor_id, db=db
+    )  # Assuming you have a function to get basic doctor info
     if not doctor or not doctor.doctors_photo:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Doctor or photo not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Doctor or photo not found"
+        )
 
     async def image_stream():
         yield doctor.doctors_photo
 
-    return StreamingResponse(image_stream(), media_type="image/jpeg") # Adjust media type as needed
+    return StreamingResponse(
+        image_stream(), media_type="image/jpeg"
+    )  # Adjust media type as needed
+
 
 @router.get("/diplomas/{diploma_id}", dependencies=[Depends(lawyer_access)])
 async def get_diploma_file(diploma_id: str, db: AsyncSession = Depends(get_db)):
     """Получает файл диплома (изображение или PDF) из базы данных."""
     document = await lawyer.get_diploma_by_id(diploma_id=diploma_id, db=db)
     if not document or not document.file_data or not document.file_type:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document or file not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Document or file not found"
+        )
 
     async def document_stream():
         yield document.file_data
 
     return StreamingResponse(document_stream(), media_type=document.file_type)
+
 
 @router.get("/certificates/{certificate_id}", dependencies=[Depends(lawyer_access)])
 async def get_certificate_file(certificate_id: str, db: AsyncSession = Depends(get_db)):
     """Получает файл сертификата (изображение или PDF) из базы данных."""
     document = await lawyer.get_certificate_by_id(certificate_id=certificate_id, db=db)
     if not document or not document.file_data or not document.file_type:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document or file not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Document or file not found"
+        )
 
     async def document_stream():
         yield document.file_data
 
     return StreamingResponse(document_stream(), media_type=document.file_type)
+
 
 @router.get(
     "/get_doctor_info/{doctor_id}",
@@ -218,6 +229,9 @@ async def get_doctor_with_relations(
         surname=doctor.surname,
         doctors_photo=f"/doctors/{doctor_id}/photo" if doctor.doctors_photo else None,
         last_name=doctor.last_name,
+        place_of_registration=doctor.place_of_registration,
+        passport_code=doctor.passport_code,
+        taxpayer_identification_number=doctor.taxpayer_identification_number,
         scientific_degree=doctor.scientific_degree,
         date_of_last_attestation=doctor.date_of_last_attestation,
         status=doctor.status,
@@ -239,7 +253,9 @@ async def get_doctor_with_relations(
                 series=certificate.series,
                 number=certificate.number,
                 university=certificate.university,
-                file_data=f"/certificates/{certificate.id}" if certificate.file_data else None, 
+                file_data=(
+                    f"/certificates/{certificate.id}" if certificate.file_data else None
+                ),
             )
             for certificate in doctor.certificates
         ],

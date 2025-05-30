@@ -1,5 +1,5 @@
 from fastapi import UploadFile, HTTPException, status
-import imghdr  # Встроенный модуль для проверки типа изображения
+import imghdr
 
 ALLOWED_IMAGE_TYPES = {"jpeg", "png", "jpg"}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB

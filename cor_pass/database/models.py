@@ -26,6 +26,12 @@ class Status(enum.Enum):
     basic: str = "basic"
 
 
+class Doctor_Status(enum.Enum):
+    pending: str = "pending"
+    approved: str = "approved"
+    agreed: str = "agreed"
+    rejected: str = "rejected"
+    need_revision: str = "need_revision"
 
 
 class AuthSessionStatus(enum.Enum):
@@ -33,13 +39,6 @@ class AuthSessionStatus(enum.Enum):
     APPROVED: str = "approved"
     REJECTED: str = "rejected"
     TIMEOUT: str = "timeout"
-
-class Doctor_Status(enum.Enum):
-    pending: str = "pending"
-    approved: str = "approved"
-    agreed:  str = "agreed"
-    rejected: str = "rejected"
-    need_revision: str = "need_revision"
 
 
 class PatientStatus(enum.Enum):
@@ -180,10 +179,17 @@ class User(Base):
     )
     patient = relationship("Patient", back_populates="user", uselist=False)
 
-
     devices = relationship("Device", back_populates="user")
-    shared_devices = relationship("DeviceAccess", foreign_keys="[DeviceAccess.granting_user_id]", back_populates="granting_user")
-    access_to_devices = relationship("DeviceAccess", foreign_keys="[DeviceAccess.accessing_user_id]", back_populates="accessing_user")
+    shared_devices = relationship(
+        "DeviceAccess",
+        foreign_keys="[DeviceAccess.granting_user_id]",
+        back_populates="granting_user",
+    )
+    access_to_devices = relationship(
+        "DeviceAccess",
+        foreign_keys="[DeviceAccess.accessing_user_id]",
+        back_populates="accessing_user",
+    )
 
     # Индексы
     __table_args__ = (
@@ -208,10 +214,11 @@ class Doctor(Base):
     date_of_last_attestation = Column(Date, nullable=True)
     status = Column(Enum(Doctor_Status), default=Doctor_Status.pending, nullable=False)
     passport_code = Column(String(20), nullable=True)
-    taxpayer_identification_number = Column(String(20),nullable=True)
+    taxpayer_identification_number = Column(String(20), nullable=True)
     reserv_scan_data = Column(LargeBinary, nullable=True)
     reserv_scan_file_type = Column(String, nullable=True)
     date_of_next_review = Column(Date, nullable=True)
+    place_of_registration = Column(String, nullable=True)
 
     user = relationship("User", back_populates="user_doctors")
     diplomas = relationship(
@@ -223,7 +230,9 @@ class Doctor(Base):
     clinic_affiliations = relationship(
         "ClinicAffiliation", back_populates="doctor", cascade="all, delete-orphan"
     )
-    patient_statuses = relationship("DoctorPatientStatus", back_populates="doctor", cascade="all, delete-orphan")
+    patient_statuses = relationship(
+        "DoctorPatientStatus", back_populates="doctor", cascade="all, delete-orphan"
+    )
 
 
 class Diploma(Base):
@@ -275,6 +284,7 @@ class UserSession(Base):
     device_info = Column(String(250), nullable=True)
     ip_address = Column(String(250), nullable=True)
     device_os = Column(String(250), nullable=True)
+    jti = Column(String, unique=True, nullable=True, comment="JTI последнего Access токена, выданного для этой сессии")
     refresh_token = Column(LargeBinary, nullable=True)
     created_at = Column(DateTime, nullable=False, default=func.now())
     updated_at = Column(
@@ -449,14 +459,12 @@ class Case(Base):
     bank_count = Column(Integer, default=0)
     cassette_count = Column(Integer, default=0)
     glass_count = Column(Integer, default=0)
-    grossing_status = Column(
-        Enum(Grossing_status), default=Grossing_status.PROCESSING
-    )
+    grossing_status = Column(Enum(Grossing_status), default=Grossing_status.PROCESSING)
 
     samples = relationship(
         "Sample", back_populates="case", cascade="all, delete-orphan"
     )
-    # directions = relationship("Direction", back_populates="case")
+    referral = relationship("Referral", back_populates="case", cascade="all, delete-orphan")
     case_parameters = relationship(
         "CaseParameters",
         uselist=False,
@@ -475,6 +483,7 @@ class Sample(Base):
     cassette_count = Column(Integer, default=0)
     glass_count = Column(Integer, default=0)
     archive = Column(Boolean, default=False)
+    macro_description = Column(Text, nullable=True)
 
     case = relationship("Case", back_populates="samples")
     cassette = relationship(
@@ -488,7 +497,9 @@ class Cassette(Base):
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     sample_id = Column(String(36), ForeignKey("samples.id"), nullable=False)
-    cassette_number = Column(String(50))  # Порядковый номер кассеты в рамках конкретной банки
+    cassette_number = Column(
+        String(50)
+    )  # Порядковый номер кассеты в рамках конкретной банки
     comment = Column(String(500), nullable=True)
     glass_count = Column(Integer, default=0)
     glass = relationship(
@@ -530,47 +541,76 @@ class CaseParameters(Base):
 
 
 # Направление на исследование
-# class Direction(Base):
-#     __tablename__ = "directions"
+class Referral(Base):
+    __tablename__ = "referrals"
 
-#     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-#     case_id = Column(String(36), ForeignKey("cases.id"), nullable=False)
-#     study_type = Column(Enum(StudyType), nullable=False)
-#     container_count = Column(String(50), nullable=True)
-#     medical_record_number = Column(String(250), nullable=True)
-#     clinical_data = Column(Text, nullable=True)
-#     medical_institution = Column(String(250), nullable=True)
-#     department = Column(String(250), nullable=True)
-#     doctor_contacts = Column(String(250), nullable=True)
-#     medical_procedure = Column(String(250), nullable=True)
-#     final_report_send_to = Column(String(250), nullable=True)
-#     released = Column(String(250), nullable=True)
+    id = Column(
+        String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
+    )
+    case_id = Column(String, ForeignKey("cases.id"), unique=True ,nullable=False, comment="ID связанного кейса") 
+    case_number = Column(String, index=True, nullable=False, comment="Номер кейса") # Дублируем для удобства поиска
 
-#     case = relationship("Case", back_populates="directions")
+    created_at = Column(DateTime, default=func.now(), comment="Дата создания направления")
+    research_type = Column(Enum(StudyType), nullable=True, comment="Вид исследования")
+    container_count = Column(Integer, nullable=True, comment="Фактическое количество контейнеров")
+    medical_card_number = Column(String, nullable=True, comment="Номер медкарты")
+    clinical_data = Column(Text, nullable=True, comment="Клинические данные")
+    clinical_diagnosis = Column(String, nullable=True, comment="Клинический диагноз")
+    medical_institution = Column(String, nullable=True, comment="Медицинское учреждение")
+    department = Column(String, nullable=True, comment="Отделение")
+    attending_doctor = Column(String, nullable=True, comment="Лечащий врач")
+    doctor_contacts = Column(String, nullable=True, comment="Контакты врача")
+    medical_procedure = Column(String, nullable=True, comment="Медицинская процедура")
+    final_report_delivery = Column(Text, nullable=True, comment="Финальный репорт отправить")
+    issued_at = Column(DateTime, nullable=True, comment="Выдано (дата)")
+
+    case = relationship("Case", back_populates="referral") 
+
+    attachments = relationship("ReferralAttachment", back_populates="referral", cascade="all, delete-orphan", lazy="joined")
 
 
+class ReferralAttachment(Base):
+    __tablename__ = "referral_attachments"
 
-#Модели для девайсов 
+    id = Column(
+        String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
+    )
+    referral_id = Column(String, ForeignKey("referrals.id"), nullable=False, comment="ID связанного направления")
+    filename = Column(String, nullable=False, comment="Имя файла")
+    content_type = Column(String, nullable=False, comment="Тип содержимого (например, image/jpeg, application/pdf)")
+    file_data = Column(LargeBinary, nullable=False, comment="Бинарные данные файла") 
+
+    referral = relationship("Referral", back_populates="attachments")
+
+# Модели для девайсов
+
 
 class DeviceStatus(enum.Enum):
     MANUFACTURED = "manufactured"
     ACTIVATED = "activated"
     BLOCKED = "blocked"
 
+
 class ManufacturedDevice(Base):
     __tablename__ = "manufactured_devices"
 
-    id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
+    id = Column(
+        String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
+    )
     token = Column(String, unique=True, index=True)
     serial_number = Column(String, unique=True)
     status = Column(Enum(DeviceStatus), default=DeviceStatus.MANUFACTURED)
-    
+
 
 class Device(Base):
     __tablename__ = "devices"
 
-    id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
-    token = Column(String, unique=True, index=True) # JWT токен, которые выдается устройству после привязки
+    id = Column(
+        String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
+    )
+    token = Column(
+        String, unique=True, index=True
+    )  # JWT токен, которые выдается устройству после привязки
     name = Column(String(250))
     create_date = Column(DateTime, default=func.now())
     user_id = Column(String, ForeignKey("users.cor_id"))
@@ -585,10 +625,13 @@ class AccessLevel(enum.Enum):
     READ_WRITE = "read_write"
     SHARE = "share"
 
+
 class DeviceAccess(Base):
     __tablename__ = "device_access"
 
-    id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
+    id = Column(
+        String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
+    )
     device_id = Column(String, ForeignKey("devices.id"))
     granting_user_id = Column(String, ForeignKey("users.cor_id"))
     accessing_user_id = Column(String, ForeignKey("users.cor_id"))
@@ -596,14 +639,20 @@ class DeviceAccess(Base):
     create_date = Column(DateTime, default=func.now())
 
     device = relationship("Device")
-    granting_user = relationship("User", foreign_keys=[granting_user_id], back_populates="shared_devices")
-    accessing_user = relationship("User", foreign_keys=[accessing_user_id], back_populates="access_to_devices")
+    granting_user = relationship(
+        "User", foreign_keys=[granting_user_id], back_populates="shared_devices"
+    )
+    accessing_user = relationship(
+        "User", foreign_keys=[accessing_user_id], back_populates="access_to_devices"
+    )
 
 
 class PrintingDevice(Base):
     __tablename__ = "printing_device"
 
-    id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
+    id = Column(
+        String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
+    )
     device_class = Column(String, nullable=False)
     device_identifier = Column(String, nullable=False, unique=True)
     subnet_mask = Column(String, nullable=True)

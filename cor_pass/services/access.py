@@ -35,9 +35,16 @@ class LawyerAccess:
         self.email = email
 
     async def __call__(self, user: User = Depends(auth_service.get_current_user)):
-        if not user.email in settings.lawyer_accounts:
+        has_access = False
+        if user.email in settings.admin_accounts:
+            has_access = True
+        if user.email in settings.lawyer_accounts:
+            has_access = True
+
+        if not has_access:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden operation"
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Недостаточно прав для выполнения этой операции.",
             )
 
 

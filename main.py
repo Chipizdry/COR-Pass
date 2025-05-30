@@ -42,9 +42,10 @@ from cor_pass.routes import (
     glasses,
     dicom_router,
     printing_device,
-    printer
+    printer,
 )
 from cor_pass.config.config import settings
+from cor_pass.services.ip2_location import initialize_ip2location
 from cor_pass.services.logger import logger
 from cor_pass.services.auth import auth_service
 from fastapi.exceptions import RequestValidationError
@@ -72,7 +73,72 @@ console_handler.setFormatter(log_formatter)
 logging.basicConfig(handlers=[console_handler], level=logging.INFO)
 
 
-app = FastAPI()
+all_licenses_info = [
+    {
+        "name": "IP2Location LITE Database License",
+        "url": "https://lite.ip2location.com/",
+        "description": "Используется для IP-геолокации. Требуется указание ссылки как часть условий лицензии."
+    },
+    {
+        "name": "OpenSlide (LGPL v2.1)",
+        "url": "https://openslide.org/license/",
+        "description": "Библиотека для чтения изображений с микроскопа. Распространяется под LGPL v2.1."
+    },
+    {
+        "name": "Psycopg (LGPL 3.0 / Modified BSD)",
+        "url": "https://www.psycopg.org/docs/license.html",
+        "description": "PostgreSQL адаптер для Python. Распространяется под двойной лицензией LGPL 3.0 или Modified BSD."
+    },
+    {
+        "name": "MIT License",
+        "url": "https://opensource.org/licenses/MIT",
+        "description": "Многие компоненты API распространяются под разрешительной лицензией MIT."
+    },
+    {
+        "name": "Apache License 2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0",
+        "description": "Некоторые компоненты API распространяются под разрешительной лицензией Apache 2.0."
+    },
+    {
+        "name": "BSD 3-Clause License",
+        "url": "https://opensource.org/licenses/BSD-3-Clause",
+        "description": "Некоторые компоненты API распространяются под разрешительной лицензией BSD 3-Clause."
+    },
+    {
+        "name": "BSD 2-Clause License",
+        "url": "https://opensource.org/licenses/BSD-2-Clause",
+        "description": "Некоторые компоненты API распространяются под разрешительной лицензией BSD 2-Clause."
+    },
+]
+
+api_description = """
+**COR-ID API** - это основной сервис идентификации и аутентификации пользователей в системе COR
+
+---
+
+### Используемые лицензии:
+"""
+for lic in all_licenses_info:
+    api_description += f"- **{lic['name']}**: [Подробнее]({lic['url']})"
+    if "description" in lic:
+        api_description += f" - {lic['description']}"
+    api_description += "\n"
+
+api_description += """
+---
+*Все торговые марки являются собственностью их соответствующих владельцев.*
+"""
+
+app = FastAPI(
+    title="COR-ID API",
+    description=api_description, 
+    version="1.0.0", 
+    openapi_url="/openapi.json",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+# app = FastAPI()
 app.mount("/static", StaticFiles(directory="cor_pass/static"), name="static")
 
 
@@ -200,6 +266,7 @@ async def startup():
     await FastAPILimiter.init(redis_client, identifier=custom_identifier)
     asyncio.create_task(check_session_timeouts())
     asyncio.create_task(cleanup_auth_sessions())
+    initialize_ip2location()
 
 
 auth_attempts = defaultdict(list)
