@@ -62,6 +62,23 @@ class UserDb(BaseModel):
     class Config:
         from_attributes = True
 
+class UsersResponseForAdmin(BaseModel):
+    id: str
+    cor_id: Optional[str] = Field(None, max_length=15)
+    email: str
+    account_status: Status
+    is_active: bool
+    last_password_change: datetime
+    user_sex: Optional[str] = Field(None, max_length=1)
+    birth: Optional[int] = Field(None, ge=1945, le=2100)
+    user_index: int
+    created_at: datetime
+    last_active: Optional[datetime] = None
+    roles: Optional[List] = None
+
+    class Config:
+        from_attributes = True
+
 
 class ResponseUser(BaseModel):
     user: UserDb

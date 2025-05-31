@@ -12,7 +12,9 @@ from cor_pass.schemas import (
     DoctorCreateResponse,
     NewUserRegistration,
     UserDb,
+    UsersResponseForAdmin,
 )
+from cor_pass.repository import person as repository_person
 from cor_pass.repository import person
 from pydantic import EmailStr
 from cor_pass.database.redis_db import redis_client
@@ -25,7 +27,7 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
 @router.get(
-    "/get_all", response_model=List[UserDb], dependencies=[Depends(admin_access)]
+    "/get_all", response_model=List[UsersResponseForAdmin], dependencies=[Depends(admin_access)]
 )
 async def get_all_users(
     skip: int = 0,
@@ -52,9 +54,10 @@ async def get_all_users(
     for user in list_users:
         oid = str(user.id)  # Convert UUID to string for Redis
         last_active = None
+        user_roles = await repository_person.get_user_roles(email=user.email, db=db)
         if await redis_client.exists(oid):
             users_last_activity = await redis_client.get(oid)
-            user_response = UserDb(
+            user_response = UsersResponseForAdmin(
                 id=user.id,
                 cor_id=user.cor_id,
                 email=user.email,
@@ -66,9 +69,10 @@ async def get_all_users(
                 user_index=user.user_index,
                 created_at=user.created_at,
                 last_active=users_last_activity,
+                roles=user_roles
             )
         else:
-            user_response = UserDb(
+            user_response = UsersResponseForAdmin(
                 id=user.id,
                 cor_id=user.cor_id,
                 email=user.email,
@@ -79,6 +83,7 @@ async def get_all_users(
                 birth=user.birth,
                 user_index=user.user_index,
                 created_at=user.created_at,
+                roles=user_roles
             )
 
         users_list_with_activity.append(user_response)

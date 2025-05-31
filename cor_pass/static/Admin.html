@@ -20,7 +20,7 @@
   
 </head>
 <body>
-  <div class="container">
+  <div class="admin-container">
         <button class="link-button" onclick="goBack('/static/mainscreen.html')" data-translate="back-link-text"><<<назад<<<</button>
         <h1>Пользователи</h1>
 
@@ -114,6 +114,13 @@
     <script src="/static/admin.js"></script>
     <script> 
 
+document.addEventListener('DOMContentLoaded', () => {
+                initAdminPanel();
+                initDateRangePickers();
+                });
+
+
+        let widthsArray= [20, 70, 60, 10, 30,70,50,50,50,50,30];
         let currentPage = 1;
         let rowsPerPage = 5;
         let totalRows = 0;
@@ -156,8 +163,7 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
         if (users.length > 0) {
             console.log('Полученные пользователи:', users); // Логируем массив пользователей
             populateTable(users); // Передаём массив пользователей
-            adjustContainerWidth(); // Убедитесь, что размеры обновлены
-           // adjustColumnWidths();
+            adjustTableLayout();
             return users; // Данные успешно получены
         } else {
             console.log('Пользователи отсутствуют.');
@@ -395,31 +401,7 @@ async function filterTable() {
 
         
  
-            // Функция для переключения отображения колонок
-            function toggleColumn(column) {
-                const header = document.getElementById(`header-${column}`);
-                const isVisible = header.style.display !== 'none';
-                
-                // Переключение видимости колонки
-                header.style.display = isVisible ? 'none' : '';
-                
-                // Сохранение состояния в localStorage
-                const columnState = JSON.parse(localStorage.getItem('columnsState') || '{}');
-                columnState[column] = !isVisible; // Сохраняем новое состояние видимости колонки
-                localStorage.setItem('columnsState', JSON.stringify(columnState));
-                console.log('Записываем состояние в localStorage:', columnState);
-                initializeCheckboxes();
-                // Обновление видимости ячеек на основе нового состояния
-                const cells = document.querySelectorAll(`tbody td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`);
-                cells.forEach(cell => {
-                    cell.style.display = header.style.display;
-                });
-
-                loadPage(); // Загружаем страницу, если нужно
-
-
-                adjustContainerWidth();
-            }
+           
                     
            // Функция для инициализации видимости колонок из localStorage
             function initializeColumns() {
@@ -442,81 +424,128 @@ async function filterTable() {
             }
 
   
-         
-       
+            function adjustContainerWidth() {
+    const table = document.querySelector('#userTable');
+    const container = document.querySelector('.admin-container');
+    if (!table || !container) return;
 
-                function adjustContainerWidth() {
-                const table = document.querySelector('table');
-                const container = document.querySelector('.container');
-                if (table && container) {
-                    container.style.minWidth = `${table.offsetWidth}px`;
-                }
-            }
+    // Временно переключаем layout
+    table.style.tableLayout = 'auto';
+    table.style.width = 'auto';
+
+    // Принудительно пересчитываем ширину таблицы
+    const actualWidth = table.scrollWidth;
+
+    // Применяем ширину контейнеру
+    container.style.width = `${actualWidth}px`;
+    container.style.minWidth = '400px';
+    container.style.maxWidth = '95vw';
+
+    // Возвращаем фиксированный layout
+    table.style.tableLayout = 'fixed';
+    table.style.width = '100%';
+
+    console.log('container width adjusted to:', container.style.width);
+}
+
+function setAllColumnWidths(widthsArray) {
+    const table = document.querySelector('#userTable');
+    if (!table || !widthsArray || !widthsArray.length) return;
+
+    // Временно переключаем на auto layout для корректного расчета
+    table.style.tableLayout = 'auto';
+    
+    // Получаем все заголовки
+    const allHeaders = table.querySelectorAll('thead th');
+    
+    // Применяем ширины
+    widthsArray.forEach((width, index) => {
+        if (index >= allHeaders.length) return;
+        
+        const header = allHeaders[index];
+        const cells = table.querySelectorAll(`tbody td:nth-child(${index + 1})`);
+        
+        // Устанавливаем ширину только если колонка видима
+        if (header.style.display !== 'none') {
+            header.style.width = `${width}px`;
+            header.style.minWidth = `${width}px`;
+            cells.forEach(cell => {
+                cell.style.width = `${width}px`;
+                cell.style.minWidth = `${width}px`;
+            });
+        } else {
+            // Для скрытых колонок сбрасываем ширину
+            header.style.width = '';
+            header.style.minWidth = '';
+            cells.forEach(cell => {
+                cell.style.width = '';
+                cell.style.minWidth = '';
+            });
+        }
+    });
+
+    // Возвращаем фиксированный layout после применения ширин
+    table.style.tableLayout = 'fixed';
+    console.log("Ширины колонок установлены");
+}
 
 
-            function adjustColumnWidths() {
-                const columnsToAdjust = ["user_index", "user_sex", "birth"];
-                columnsToAdjust.forEach(column => {
-                    const header = document.getElementById(`header-${column}`);
-                    if (header) {
-                        const cells = Array.from(document.querySelectorAll(`tbody td:nth-child(${Array.from(header.parentNode.children).indexOf(header) + 1})`));
-                        const maxWidth = Math.max(
-                            header.offsetWidth,
-                            ...cells.map(cell => cell.scrollWidth)
-                        );
-
-                        header.style.width = `${maxWidth}px`; // Подгоняем ширину заголовка
-                        header.style.maxWidth = `${maxWidth}px`; // Ограничиваем максимальную ширину
-                        cells.forEach(cell => {
-                            cell.style.width = `${maxWidth}px`; // Применяем к ячейкам
-                            cell.style.maxWidth = `${maxWidth}px`; // Применяем ограничение
-                        });
-                    }
-                });
-            }
-
-            // Инициализация для выбора диапазона дат (календарик)
-                document.addEventListener('DOMContentLoaded', () => {
-                    const dateInputs = document.querySelectorAll('input[id*="Range"]');
-                    dateInputs.forEach(input => {
-                        input.addEventListener('focus', () => {
-                            // Открытие календаря, чтобы пользователь мог выбрать диапазон дат
-                            const datePicker = new flatpickr(input, {
-                                mode: "range", 
-                                dateFormat: "Y-m-d",
-                                onClose: function(selectedDates) {
-                                    // После выбора диапазона дат отображаем его в поле ввода
-                                    if (selectedDates.length === 2) {
-                                        input.value = `${selectedDates[0].toLocaleDateString()} - ${selectedDates[1].toLocaleDateString()}`;
-                                    }
-                                }
-                            });
-                        });
-                    });
-                });
-
-
-        // Запуск функции после загрузки страницы
-             document.addEventListener('DOMContentLoaded', function() {
-             checkToken();
-             console.log('Страница загружена. Запуск процесса загрузки пользователей...');
-             initializeColumns();
-             initializeCheckboxes();
-             adjustContainerWidth(); // Установить начальную ширину контейнера
-             makeModalDraggable('columnSelectModal');
-             makeModalDraggable('corIdModal');
- 
-             // Функция для отображения модального окна
-             document.getElementById('openModalBtn').onclick = function() {
-             initializeCheckboxes();
-             document.getElementById('columnSelectModal').style.display = 'block';
-            
-             };
-             window.addEventListener('resize', adjustContainerWidth); // Подгонка ширины при изменении размеров окна
-              getAllUsers(); // По умолчанию загружаем 5 пользователей, начиная с 0            
-              
-             });
            
+function initAdminPanel() {
+  // Проверка токена и безопасность
+  checkToken();
+  console.log('Страница загружена. Запуск процесса загрузки пользователей...');
+  initializeColumns();
+  initializeCheckboxes();
+  adjustTableLayout();
+  makeModalDraggable('columnSelectModal');
+  makeModalDraggable('corIdModal');
+  setupEventListeners();
+  getAllUsers();
+}
+
+function initDateRangePickers() {
+  const dateInputs = document.querySelectorAll('input[id*="Range"]');
+  
+  dateInputs.forEach(input => {
+    input.addEventListener('focus', () => initFlatpickr(input));
+  });
+}
+
+
+function initFlatpickr(inputElement) {
+  new flatpickr(inputElement, {
+    mode: "range", 
+    dateFormat: "Y-m-d",
+    onClose: function(selectedDates) {
+      if (selectedDates.length === 2) {
+        inputElement.value = formatDateRange(selectedDates[0], selectedDates[1]);
+      }
+    }
+  });
+}
+
+function formatDateRange(startDate, endDate) {
+  return `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
+}
+
+function setupEventListeners() {
+  // Обработчик изменения размера окна
+  window.addEventListener('resize', adjustTableLayout());
+  
+  // Обработчик открытия модального окна
+  document.getElementById('openModalBtn').addEventListener('click', () => {
+    initializeCheckboxes();
+    document.getElementById('columnSelectModal').style.display = 'block';
+  });
+}
+
+function adjustTableLayout() {
+    
+    setAllColumnWidths(widthsArray);
+   // adjustContainerWidth();
+}
+
 
     </script>
 </body>

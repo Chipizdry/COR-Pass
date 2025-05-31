@@ -10,8 +10,6 @@ function generateQrCodeFromText(corId) {
         console.error("Элемент с ID 'qrcode' не найден.");
         return;
     }
-
-    // Очистка предыдущего QR-кода и генерация нового
     qrCodeDiv.innerHTML = ''; // Очищаем старый QR-код
     new QRCode(qrCodeDiv, {
         text: corId,
@@ -25,6 +23,7 @@ function generateQrCodeFromText(corId) {
 
 
 function showCorIdInfo(corId) {
+    if( checkToken()){
     const accessToken = new URLSearchParams(window.location.search).get('access_token');
            if (!accessToken) {
                console.error('Токен не найден!');
@@ -80,7 +79,7 @@ function showCorIdInfo(corId) {
            console.error("Ошибка:", error);
            alert("Ошибка при загрузке информации о COR-ID");
        });
-   }
+   }}
 
 
 
@@ -107,6 +106,7 @@ function showCorIdInfo(corId) {
 
 
 function populateTable(users) {
+    if( checkToken()){
     console.log("Заполнение таблицы пользователями:", users); // Проверка данных
     const tbody = document.querySelector('#userTable tbody');
     tbody.innerHTML = ''; // Очистить таблицу перед заполнением
@@ -164,10 +164,8 @@ function populateTable(users) {
 
         tbody.appendChild(row);
     });
-
-     // Подгонка размеров после заполнения
-    adjustContainerWidth();
-}
+    adjustTableLayout();
+}}
 
       // Функция для удаления пользователя
       async function deleteUser(email) {
@@ -197,3 +195,29 @@ function populateTable(users) {
             }
         }
     }
+
+
+  // Функция для переключения отображения колонок
+  function toggleColumn(column) {
+    const header = document.getElementById(`header-${column}`);
+    if (!header) return;
+    
+    const isVisible = header.style.display !== 'none';
+    header.style.display = isVisible ? 'none' : '';
+
+    const columnIndex = Array.from(header.parentNode.children).indexOf(header) + 1;
+    document.querySelectorAll(`tbody td:nth-child(${columnIndex})`).forEach(cell => {
+        cell.style.display = header.style.display;
+    });
+
+    const columnState = JSON.parse(localStorage.getItem('columnsState') || '{}');
+    columnState[column] = !isVisible;
+    localStorage.setItem('columnsState', JSON.stringify(columnState));
+
+    initializeCheckboxes();
+
+    // Сначала пересчёт ширины и колонок, потом загрузка данных
+    adjustTableLayout();
+   
+    loadPage();
+}
