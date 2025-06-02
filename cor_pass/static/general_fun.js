@@ -1,10 +1,10 @@
 
 const modalConfigs = {
-    columnSelectModal: { width: '250px', height: '350px', top: '300px', left: '200px' },
+    columnSelectModal: { width: '250px', height:  'auto', top: '300px', left: '200px' },
     corIdModal: { width: '300px', height: '500px', top: '300px', left: '250px' },
     editModal: { width: '250px', height: '520px', top: '50px', left: '50px' },
     myModal: { width: '250px', height: '450px', top: '50px', left: '250px' },
-    settingsModal: { width: '460px', height: '650px', top: '50px', left: '450px' },
+    settingsModal: { width: '460px', height: '660px', top: '50px', left: '450px' },
     sessionsModal: { width: '450px', height: '290px', top: '100px', left: '100px' },
     step1Modal: { width: '460px', height: '650px', top: '20px', left: '300px' },
     step2Modal: { width: '460px', height: '650px', top: '20px', left: '300px' },
@@ -14,6 +14,7 @@ const modalConfigs = {
     addDeviceModal: { width: '250px', height: '550px', top: '50px', left: '250px' },
     Dicom_upload_modal: { width: '460px', height: 'auto', top: '20px', left: '300px' },
     recovery_modal: { width: '250px', height: 'auto', top: '50px', left: '50px' },
+    rolesModal: { width: '250px', height: 'auto', top: '50px', left: '50px' },
 };
 
 

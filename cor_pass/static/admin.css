@@ -165,3 +165,64 @@ margin: 0 5px;
     padding: 4px;
     border: 1px solid #ddd;
 }
+
+
+/* Стили для модального окна выбора колонок */
+#columnSelectModal {
+    padding: 20px;
+}
+
+/* Контейнер для чекбоксов */
+#columnSelectModal .checkbox-container {
+    display: flex;
+    flex-direction: column;
+    padding-left: 20px;
+    margin-top: 25px;
+}
+
+
+/* Кастомные стили для чекбоксов */
+#columnSelectModal input[type="checkbox"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #7B43F2;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+}
+
+#columnSelectModal input[type="checkbox"]:checked {
+    background-color: #7B43F2;
+    border-color: #7B43F2;
+}
+
+#columnSelectModal input[type="checkbox"]:checked::after {
+    content: "✓";
+    position: absolute;
+    color: white;
+    font-size: 14px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+
+/* Стили для label с чекбоксами */
+#columnSelectModal label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: #291161; /* Цвет текста как в других элементах */
+    font-size: 14px;
+    transition: color 0.2s;
+}
+
+#columnSelectModal label:hover {
+    color: #1a0a4e; /* Темнее при наведении */
+}

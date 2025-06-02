@@ -58,7 +58,6 @@ function showCorIdInfo(corId) {
            // Отображение данных в модальном окне
            document.getElementById("corIdValue").textContent = corId;
            const corIdInfo = `
-          
             <div class="cor-text">
                <p><strong>Дата регистрации:</strong> ${formattedDate}</p>
                <p><strong>Номер учреждения:</strong> ${data.facility_number}</p>
@@ -158,6 +157,7 @@ function populateTable(users) {
             <td> <span class="delete-icon" onclick="deleteUser('${user.email}')">🗑️</span>
                 <span class="toggle-status-icon" onclick="toggleUserStatus('${user.email}', ${user.is_active ?? true})">
                  ${user.is_active !== false ? '🔓' : '🔒'}</span>
+                 <span class="roles-icon" onclick="showUserRoles('${user.email}')">👤</span>
                      <span class="activity-indicator" style="background: ${activityColor}; display: inline-block; width: 12px; height: 12px;" title="Активность: ${activityTitle}"></span>
             </td>
         `;

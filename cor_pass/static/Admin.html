@@ -66,29 +66,29 @@
         </div>
   </div>
 
-
-                <!-- Модальное окно выбора отображения колонок --> 
-            <div id="columnSelectModal" class="modal" style="display: none;">
-                <div class="modal-header">
-                    <h1>Поля для отображения </h1>
-                    <div class="modal-buttons">
-                        <button class="modal-button close" data-action="close" id="closeColumnSelectModal">✖</button>
-                    </div>
-                </div>
-                    <label><input type="checkbox" onchange="toggleColumn('user_index')" id="checkbox-user_index" checked >Индекс</label>
-                    <label><input type="checkbox" onchange="toggleColumn('id')" id="checkbox-id" checked >ID</label>
-                    <label><input type="checkbox" onchange="toggleColumn('cor_id')" id="checkbox-cor_id" checked >COR-ID</label>
-                    <label><input type="checkbox" onchange="toggleColumn('user_sex')" id="checkbox-user_sex" checked >Пол</label>
-                    <label><input type="checkbox" onchange="toggleColumn('birth')" id="checkbox-birth" checked >Год рож.</label>
-                    <label><input type="checkbox" onchange="toggleColumn('email')" id="checkbox-email" checked >Email</label>
-                    <label><input type="checkbox" onchange="toggleColumn('created_at')" id="checkbox-created_at" checked >Дата регистрации</label>
-                    <label><input type="checkbox" onchange="toggleColumn('last_password_change')" id="checkbox-last_password_change" checked >Последнее изменение пароля</label>
-                    <label><input type="checkbox" onchange="toggleColumn('last_active')" id="checkbox-last_active" checked >Последняя активность</label>
-            
-                <div class="modal-footer" style="text-align: center; margin-top: 20px;">
-                    <button onclick="closeModal('columnSelectModal')" class="modal-button">ОК</button>
-                </div>
-            </div>
+            <!-- Модальное окно выбора отображения колонок --> 
+<div id="columnSelectModal" class="modal" style="display: none;">
+    <div class="modal-header">
+        <h1>Поля для отображения</h1>
+        <div class="modal-buttons">
+            <button class="modal-button close" data-action="close" id="closeColumnSelectModal">✖</button>
+        </div>
+    </div>
+    <div class="checkbox-container">
+        <label><input type="checkbox" onchange="toggleColumn('user_index')" id="checkbox-user_index" checked>Индекс</label>
+        <label><input type="checkbox" onchange="toggleColumn('id')" id="checkbox-id" checked>ID</label>
+        <label><input type="checkbox" onchange="toggleColumn('cor_id')" id="checkbox-cor_id" checked>COR-ID</label>
+        <label><input type="checkbox" onchange="toggleColumn('user_sex')" id="checkbox-user_sex" checked>Пол</label>
+        <label><input type="checkbox" onchange="toggleColumn('birth')" id="checkbox-birth" checked>Год рож.</label>
+        <label><input type="checkbox" onchange="toggleColumn('email')" id="checkbox-email" checked>Email</label>
+        <label><input type="checkbox" onchange="toggleColumn('created_at')" id="checkbox-created_at" checked>Дата регистрации</label>
+        <label><input type="checkbox" onchange="toggleColumn('last_password_change')" id="checkbox-last_password_change" checked>Последнее изменение пароля</label>
+        <label><input type="checkbox" onchange="toggleColumn('last_active')" id="checkbox-last_active" checked>Последняя активность</label>
+    </div>
+    <div class="modal-footer" style="text-align: center; margin-top: 20px;">
+        <button onclick="closeModal('columnSelectModal')" class="button">ОК</button>
+    </div>
+</div>
 
                 
             <!-- Модальное окно для отображения информации о COR-ID -->
@@ -100,13 +100,33 @@
                         <button class="modal-button close" data-action="close" id="closeCorIDModal">✖</button>
                     </div>
                 </div>
-                <span id="corIdValue"></span>           
+                <div style="text-align: center; margin-top: 30px;">
+                    <span id="corIdValue" style="color: #291161; font-size: 17px;"></span>
+                </div>       
                     <div id="corIdInfo" class="cor-card"> </div>
+                     
                         <!-- Здесь информация о COR-ID -->                              
                     <div id="qrcode"></div>
             </div>
 
-
+           <!-- Модальное окно для управления ролями пользователя -->
+            <div id="rolesModal" class="modal" style="display: none;">
+                <div class="modal-header">
+                    <h3 style="margin-top:30; color:#291161;font-size: 17px;">Управление ролями пользователя:</h3>
+                    <div class="modal-buttons">
+                        <button class="modal-button close" data-action="close" id="closeRolesModal">✖</button>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <span id="rolesEmail" style="color: #291161; font-size: 17px;"></span>
+                </div>       
+                <div id="rolesList" class="roles-container">
+                    <!-- Список ролей будет загружен динамически -->
+                </div>
+                <div class="modal-footer" style="text-align: center; margin-top: 20px;">
+                    <button onclick="saveUserRoles()" class="modal-button">Сохранить</button>
+                </div>
+            </div>
 
 
     <script src="/static/translation.js"></script>
@@ -496,6 +516,7 @@ function initAdminPanel() {
   checkToken();
   console.log('Страница загружена. Запуск процесса загрузки пользователей...');
   initializeColumns();
+  makeModalDraggable('rolesModal');
   initializeCheckboxes();
   adjustTableLayout();
   makeModalDraggable('columnSelectModal');
@@ -546,6 +567,46 @@ function adjustTableLayout() {
    // adjustContainerWidth();
 }
 
+
+function showUserRoles(email) {
+    if (!checkToken()) return;
+
+    const accessToken = new URLSearchParams(window.location.search).get('access_token');
+    if (!accessToken) {
+        console.error('Токен не найден!');
+        return;
+    }
+
+    // Находим пользователя по email
+    const user = allFilteredUsers.find(u => u.email === email);
+    if (!user) {
+        console.error('Пользователь не найден');
+        return;
+    }
+
+    // Заполняем модальное окно
+    document.getElementById("rolesEmail").textContent = email;
+    const rolesList = document.getElementById("rolesList");
+    rolesList.innerHTML = '';
+
+    // Создаем чекбоксы для каждой возможной роли
+    const allRoles = ['admin', 'lawyer', 'cor-int', 'active_user', 'premium_user']; // Все возможные роли
+    allRoles.forEach(role => {
+        const isChecked = user.roles && user.roles.includes(role);
+        const roleItem = document.createElement('div');
+        roleItem.className = 'role-item';
+        roleItem.innerHTML = `
+            <label>
+                <input type="checkbox" name="roles" value="${role}" ${isChecked ? 'checked' : ''}>
+                ${role}
+            </label>
+        `;
+        rolesList.appendChild(roleItem);
+    });
+
+    // Открываем модальное окно
+    document.getElementById("rolesModal").style.display = "block";
+}
 
     </script>
 </body>
