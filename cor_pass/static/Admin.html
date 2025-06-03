@@ -632,12 +632,11 @@ async function showUserRoles(corId) {
         allRoles.forEach(role => {
             const isChecked = userRoles.includes(role);
             const roleItem = document.createElement('div');
-            roleItem.className = 'role-item';
+          //  roleItem.className = 'role-item';
             roleItem.innerHTML = `
-                <label class="checkbox-label">
-                    <input type="checkbox" name="roles" value="${role}" ${isChecked ? 'checked' : ''}>
-                    ${role}
-                </label>
+               
+                 <label class="checkbox-label"> <input type="checkbox" name="roles" value="${role}" ${isChecked ? 'checked' : ''}>
+                    ${role}</label>
             `;
             rolesList.appendChild(roleItem);
         });

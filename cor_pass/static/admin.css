@@ -168,7 +168,7 @@ margin: 0 5px;
 
 
 /* Контейнер для чекбоксов */
-#columnSelectModal .checkbox-container {
+.checkbox-container {
     display: flex;
     flex-direction: column;
     padding-left: 20px;
@@ -211,7 +211,9 @@ margin: 0 5px;
 
 
 /* Стили для label с чекбоксами */
-#columnSelectModal label {
+#columnSelectModal label,
+#rolesModal label
+ {
     display: flex;
     align-items: center;
     gap: 10px;
