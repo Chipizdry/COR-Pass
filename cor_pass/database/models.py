@@ -190,6 +190,7 @@ class User(Base):
         foreign_keys="[DeviceAccess.accessing_user_id]",
         back_populates="accessing_user",
     )
+    profile = relationship("Profile", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
     # Индексы
     __table_args__ = (
@@ -661,6 +662,36 @@ class PrintingDevice(Base):
     port = Column(Integer, nullable=True)
     comment = Column(String, nullable=True)
     location = Column(String, nullable=True)
+
+
+class Profile(Base):
+    __tablename__ = "profiles"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id"), unique=True, nullable=False)
+
+    encrypted_surname = Column(LargeBinary, nullable=True) 
+    encrypted_first_name = Column(LargeBinary, nullable=True) 
+    encrypted_middle_name = Column(LargeBinary, nullable=True)
+
+    birth_date = Column(Date, nullable=True)
+    phone_number = Column(String(20), nullable=True)
+    city = Column(String(100), nullable=True)
+
+    car_brand = Column(String(100), nullable=True)
+    engine_type = Column(String(50), nullable=True) 
+    fuel_tank_volume = Column(Integer, nullable=True) 
+
+    photo_data = Column(LargeBinary, nullable=True)
+    photo_file_type = Column(String, nullable=True) 
+    
+    change_date = Column(DateTime, default=func.now(), onupdate=func.now())
+    create_date = Column(DateTime, default=func.now())
+
+    user = relationship("User", back_populates="profile")
+
+    def __repr__(self):
+        return f"<Profile(id='{self.id}', user_id='{self.user_id}')>"
+
 
 
 # Base.metadata.create_all(bind=engine)

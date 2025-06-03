@@ -177,7 +177,8 @@ margin: 0 5px;
 
 
 /* Кастомные стили для чекбоксов */
-#columnSelectModal input[type="checkbox"] {
+#columnSelectModal input[type="checkbox"],
+#rolesModal input[type="checkbox"] {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
@@ -191,12 +192,14 @@ margin: 0 5px;
     transition: all 0.2s;
 }
 
-#columnSelectModal input[type="checkbox"]:checked {
+#columnSelectModal input[type="checkbox"]:checked,
+#rolesModal input[type="checkbox"]:checked {
     background-color: #7B43F2;
     border-color: #7B43F2;
 }
 
-#columnSelectModal input[type="checkbox"]:checked::after {
+#columnSelectModal input[type="checkbox"]:checked::after,
+#rolesModal input[type="checkbox"]:checked::after  {
     content: "✓";
     position: absolute;
     color: white;
@@ -218,6 +221,7 @@ margin: 0 5px;
     transition: color 0.2s;
 }
 
-#columnSelectModal label:hover {
+#columnSelectModal label:hover,
+#rolesModal label:hover  {
     color: #1a0a4e; /* Темнее при наведении */
 }

@@ -1,4 +1,7 @@
+import base64
+from http.client import HTTPException
 from typing import List, Optional
+from fastapi import UploadFile, status
 from sqlalchemy.future import select
 from sqlalchemy import func
 import uuid
@@ -8,12 +11,14 @@ from cor_pass.database.models import (
     Status,
     Verification,
     UserSettings,
+    Profile
 )
 from cor_pass.repository.password_generator import generate_password
 from cor_pass.repository import cor_id as repository_cor_id
 from cor_pass.schemas import (
     NewUserRegistration,
     PasswordGeneratorSettings,
+    ProfileCreate,
     UserModel,
     PasswordStorageSettings,
     MedicalStorageSettings,
@@ -34,7 +39,7 @@ from cor_pass.services.email import (
 from sqlalchemy.exc import NoResultFound
 
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from cor_pass.config.config import settings
 
 async def get_user_by_email(email: str, db: AsyncSession) -> User | None:
     """
@@ -491,3 +496,78 @@ async def register_new_user(db: AsyncSession, body: NewUserRegistration):
     await db.commit()
 
     await send_email_code_with_temp_pass(email=body.email, temp_pass=temp_password)
+
+
+async def get_profile_by_user_id(db: AsyncSession, user_id: str) -> Optional[Profile]:
+    """
+    Получает профиль пользователя по user_id.
+    """
+
+    from sqlalchemy.orm import selectinload
+    result = await db.execute(
+        select(Profile)
+        .where(Profile.user_id == user_id)
+        .options(selectinload(Profile.user))
+    )
+    return result.scalars().first()
+
+async def upsert_user_profile(db: AsyncSession, user_id: str, profile_data: ProfileCreate) -> Profile:
+    """
+    Создает или обновляет профиль пользователя, обрабатывая шифрование.
+    """
+    db_profile = await get_profile_by_user_id(db, user_id)
+
+    update_data = profile_data.model_dump(exclude_unset=True) # Получаем только переданные поля
+    decoded_key = base64.b64decode(settings.aes_key)
+
+    if db_profile:
+        print(f"Updating existing profile for user_id: {user_id}")
+        for field, value in update_data.items():
+            if field in ["surname", "first_name", "middle_name"]:
+                setattr(db_profile, f"encrypted_{field}", await encrypt_data(value.encode("utf-8"), decoded_key) if value is not None else None)
+            elif field == "photo": 
+                pass 
+            else:
+                setattr(db_profile, field, value)
+        
+        await db.commit()
+        await db.refresh(db_profile)
+    else:
+        print(f"Creating new profile for user_id: {user_id}")
+        profile_dict = {}
+        
+        for field, value in update_data.items():
+            if field in ["surname", "first_name", "middle_name"]:
+                profile_dict[f"encrypted_{field}"] = await encrypt_data(value.encode("utf-8"), decoded_key) if value is not None else None
+            else:
+                profile_dict[field] = value
+        
+        db_profile = Profile(user_id=user_id, **profile_dict)
+        db.add(db_profile)
+        await db.commit()
+        await db.refresh(db_profile)
+    
+    return db_profile
+
+async def upload_profile_photo(db: AsyncSession, user_id: str, file: UploadFile) -> Profile:
+    """
+    Загружает или обновляет фотографию профиля пользователя.
+    """
+    db_profile = await get_profile_by_user_id(db, user_id)    
+    file_data = await file.read()
+    db_profile.photo_data = file_data
+    db_profile.photo_file_type = file.content_type
+
+    await db.commit()
+    await db.refresh(db_profile)
+    return db_profile
+
+async def get_profile_photo(db: AsyncSession, user_id: str) -> Optional[tuple[bytes, str]]:
+    """
+    Получает бинарные данные фотографии профиля и её тип.
+    Возвращает кортеж (photo_data, photo_file_type) или None.
+    """
+    db_profile = await get_profile_by_user_id(db, user_id)
+    if db_profile and db_profile.photo_data:
+        return db_profile.photo_data, db_profile.photo_file_type
+    return None

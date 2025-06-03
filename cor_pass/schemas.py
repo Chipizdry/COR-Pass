@@ -62,23 +62,6 @@ class UserDb(BaseModel):
     class Config:
         from_attributes = True
 
-class UsersResponseForAdmin(BaseModel):
-    id: str
-    cor_id: Optional[str] = Field(None, max_length=15)
-    email: str
-    account_status: Status
-    is_active: bool
-    last_password_change: datetime
-    user_sex: Optional[str] = Field(None, max_length=1)
-    birth: Optional[int] = Field(None, ge=1945, le=2100)
-    user_index: int
-    created_at: datetime
-    last_active: Optional[datetime] = None
-    roles: Optional[List] = None
-
-    class Config:
-        from_attributes = True
-
 
 class ResponseUser(BaseModel):
     user: UserDb
@@ -1080,8 +1063,52 @@ class ReferralUpdate(BaseModel):
     doctor_contacts: Optional[str] = None
     medical_procedure: Optional[str] = None
     final_report_delivery: Optional[str] = None
-    issued_at: Optional[date] = None # Или Field(default_factory=datetime.now) если должно обновляться на текущее время
+    issued_at: Optional[date] = None 
 
     class Config:
-        from_attributes = True # Для Pydantic v2
-        # orm_mode = True # Для Pydantic v1
+        from_attributes = True 
+
+
+
+class ProfileCreate(BaseModel):
+    surname: Optional[str] = Field(None, max_length=25, description="Фамилия")
+    first_name: Optional[str] = Field(None, max_length=25, description="Имя")
+    middle_name: Optional[str] = Field(None, max_length=25, description="Отчество")
+    birth_date: Optional[date] = Field(None, description="Дата рождения")
+    phone_number: Optional[str] = Field(None, max_length=15, description="Номер телефона")
+    city: Optional[str] = Field(None, max_length=50, description="Город")
+    car_brand: Optional[str] = Field(None, max_length=50, description="Марка авто")
+    engine_type: Optional[str] = Field(None, max_length=50, description="Тип двигателя")
+    fuel_tank_volume: Optional[int] = Field(None, ge=0, le=1000, description="Обьем бензобака")
+
+    class Config: 
+        from_attributes = True 
+
+class ProfileResponse(BaseModel):
+    email: str = Field(description="Имейл пользователя")
+    sex: str = Field(description="Пол пользователя")
+    surname: Optional[str] = Field(None, description="Фамилия")
+    first_name: Optional[str] = Field(None, description="Имя")
+    middle_name: Optional[str] = Field(None, description="Отчество")
+    birth_date: Optional[date] = Field(None, description="Дата рождения")
+    phone_number: Optional[str] = Field(None, description="Номер телефона")
+    city: Optional[str] = Field(None, description="Город")
+    car_brand: Optional[str] = Field(None, description="Марка авто")
+    engine_type: Optional[str] = Field(None, description="Тип двигателя")
+    fuel_tank_volume: Optional[int] = Field(None, ge=0, le=1000, description="Обьем бензобака")
+
+    class Config:
+        from_attributes = True 
+
+class DeleteMyAccount(BaseModel):
+    password: str = Field(min_length=6, max_length=20)
+
+
+class FullUserInfoResponse(BaseModel):
+    user_info: UserDb # user_info всегда будет присутствовать
+    user_roles: Optional[List[str]] = None # Список ролей, может отсутствовать
+    profile: Optional[ProfileResponse] = None # Профиль, может отсутствовать
+    doctor_info: Optional[DoctorWithRelationsResponse] = None # Информация о докторе, может отсутствовать
+
+    class Config:
+        from_attributes = True 

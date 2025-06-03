@@ -33,6 +33,11 @@ psycopg = {extras = ["binary", "pool"], version = "^3.2.3"}
 redis = "^5.2.0"
 pydicom = "^3.0.1"
 asyncpg = "^0.30.0"
+numpy = "^2.2.5"
+scikit-image = "^0.25.2"
+openslide-python = "^1.4.2"
+openslide-bin = "^4.0.0.8"
+ip2location = "^8.10.5"
 
 
 [build-system]

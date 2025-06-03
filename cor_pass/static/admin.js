@@ -157,7 +157,7 @@ function populateTable(users) {
             <td> <span class="delete-icon" onclick="deleteUser('${user.email}')">🗑️</span>
                 <span class="toggle-status-icon" onclick="toggleUserStatus('${user.email}', ${user.is_active ?? true})">
                  ${user.is_active !== false ? '🔓' : '🔒'}</span>
-                 <span class="roles-icon" onclick="showUserRoles('${user.email}')">👤</span>
+                 <span class="roles-icon" onclick="showUserRoles('${user.cor_id}')">👤</span>
                      <span class="activity-indicator" style="background: ${activityColor}; display: inline-block; width: 12px; height: 12px;" title="Активность: ${activityTitle}"></span>
             </td>
         `;

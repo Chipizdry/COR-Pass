@@ -1,0 +1,31 @@
+.glassContent{
+    flex-wrap: wrap;
+    height:100%;
+    overflow: auto;
+}
+.glassWrapper{
+    padding: 12px;
+    border: 2px solid #f5f4fb;
+    width: 134px;
+    cursor: pointer;
+}
+.glassWrapper.active{
+    border: 2px solid #5B4296;
+}
+.glassWrapperImg{
+    width: 110px;
+    height: 259px;
+}
+
+.glassWrapperImg img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.glassWrapperText {
+    margin-top: 8px;
+    text-align: center;
+    color: #5B4296;
+    font-weight: 800;
+}

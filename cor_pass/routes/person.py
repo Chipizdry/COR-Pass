@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, File, HTTPException, Depends, UploadFile, status
 from datetime import datetime, timedelta
 from cor_pass.database.db import get_db
 from cor_pass.services import redis_service
 from cor_pass.services.auth import auth_service
 from cor_pass.services.cipher import decrypt_data, decrypt_user_key
+from cor_pass.services.image_validation import validate_image_file
 from cor_pass.services.ip2_location import get_ip_geolocation
 from cor_pass.services.qr_code import generate_qr_code
 from cor_pass.services.recovery_file import generate_recovery_file
@@ -12,11 +13,14 @@ from cor_pass.database.models import User
 from cor_pass.services.access import user_access
 from cor_pass.services.logger import logger
 from cor_pass.schemas import (
+    DeleteMyAccount,
     PasswordStorageSettings,
     MedicalStorageSettings,
     EmailSchema,
     ChangePasswordModel,
     ChangeMyPasswordModel,
+    ProfileCreate,
+    ProfileResponse,
     UserSessionResponseModel,
 )
 from cor_pass.repository import person
@@ -171,23 +175,29 @@ async def get_user_email(
 
 @router.patch("/change_email")
 async def change_email(
-    email: str,
+    body: EmailSchema,
     current_user: User = Depends(auth_service.get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
     **Смена имейла авторизированного пользователя** \n
     """
+    existing_email = await person.get_user_by_email(body.email, db)
+    if existing_email:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Account already exist"
+        )
     user = await person.get_user_by_email(current_user.email, db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+
         )
     else:
-        if email:
-            await person.change_user_email(email, user, db)
-            logger.debug(f"{current_user.id} - changed his email to {email}")
-            return {"message": f"User '{current_user.id}' changed his email to {email}"}
+        if body.email:
+            await person.change_user_email(body.email, user, db)
+            logger.debug(f"{current_user.id} - changed his email to {body.email}")
+            return {"message": f"User '{current_user.id}' changed his email to {body.email}"}
         else:
             logger.warning("Incorrect email input provided for user email change.")
             raise HTTPException(
@@ -348,6 +358,7 @@ async def get_recovery_file(
 
 @router.delete("/delete_my_account")
 async def delete_my_account(
+    body: DeleteMyAccount,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(auth_service.get_current_user),
 ):
@@ -359,9 +370,12 @@ async def delete_my_account(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
     else:
-        await person.delete_user_by_email(db=db, email=current_user.email)
-        logger.info(f"Account for user {current_user.email} was deleted")
-        return {"message": f" user {current_user.email} - was deleted"}
+        if auth_service.verify_password(body.password, current_user.password):
+            await person.delete_user_by_email(db=db, email=current_user.email)
+            logger.info(f"Account for user {current_user.email} was deleted")
+            return {"message": f" user {current_user.email} - was deleted"}
+        else:
+            return {"message": f"Password incorrect"}
 
 
 @router.get("/get_last_password_change")
@@ -558,3 +572,149 @@ async def remove_session(
         )
     
     return session
+
+
+async def _create_profile_response(db_profile, current_user, router_instance) -> ProfileResponse:
+    """Формирует ProfileResponse, дешифруя поля и добавляя данные из User."""
+    response_data = db_profile.__dict__.copy() # Копируем, чтобы не изменять исходный ORM объект
+    decoded_key = base64.b64decode(settings.aes_key)
+
+    # Дешифруем нужные поля для ответа
+    for field_name in ["surname", "first_name", "middle_name"]:
+        encrypted_field = f"encrypted_{field_name}"
+        encrypted_value = response_data.get(encrypted_field)
+        if encrypted_value:
+            response_data[field_name] = await decrypt_data(encrypted_value, decoded_key)
+        else:
+            response_data[field_name] = None
+        # Удаляем зашифрованное поле из ответа
+        response_data.pop(encrypted_field, None)
+
+    # Добавляем данные из User
+    response_data["email"] = current_user.email
+    response_data["sex"] = current_user.user_sex # Если sex есть в User
+
+    # Добавляем URL для фото, если оно существует
+    # if db_profile.photo_data:
+    #     response_data["photo_url"] = router_instance.url_path_for("get_profile_photo_endpoint", user_id=current_user.id)
+    # else:
+    #     response_data["photo_url"] = None
+
+    return ProfileResponse.model_validate(response_data)
+
+
+@router.put("/profile/upsert", response_model=ProfileResponse, status_code=status.HTTP_200_OK)
+async def upsert_user_profile_endpoint(
+    profile_data: ProfileCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user)
+):
+    """
+    **Создание или обновление профиля пользователя**\n
+    Создает новый профиль для текущего авторизованного пользователя, если его нет,
+    или обновляет существующий.
+    """
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    
+    db_profile = await person.upsert_user_profile(db, current_user.id, profile_data)
+    
+    # Формируем ответ, используя вспомогательную функцию
+    return await _create_profile_response(db_profile, current_user, router)
+
+
+@router.get("/profile", response_model=ProfileResponse, status_code=status.HTTP_200_OK)
+async def get_user_profile_endpoint(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user)
+):
+    """
+    **Получение профиля текущего пользователя**\n
+    Возвращает данные профиля для текущего авторизованного пользователя.
+    """
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    
+    db_profile = await person.get_profile_by_user_id(db, current_user.id)
+    
+    if not db_profile:
+        profile_data = ProfileCreate()
+        db_profile = await person.upsert_user_profile(db, current_user.id, profile_data)
+
+    return await _create_profile_response(db_profile, current_user, router)
+
+
+@router.put("/photo", status_code=status.HTTP_200_OK)
+async def upload_profile_photo_endpoint(
+    file: UploadFile = Depends(validate_image_file),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user)
+):
+    """
+    **Загрузка или обновление фотографии профиля.**\n
+    Принимает изображение (JPEG/PNG) и сохраняет его для профиля текущего пользователя.
+    """
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    db_profile = await person.get_profile_by_user_id(db, current_user.id)
+    if not db_profile:
+        profile_data = ProfileCreate()
+        db_profile = await person.upsert_user_profile(db, current_user.id, profile_data)
+
+    await person.upload_profile_photo(db, current_user.id, file)
+    return {"message": "Profile photo uploaded successfully."}
+
+
+@router.get("/photo", status_code=status.HTTP_200_OK)
+async def get_profile_photo_endpoint(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user) 
+):
+    """
+    **Получение фотографии профиля.**\n
+    Возвращает фотографию профиля текущего авторизованного пользователя.
+    """
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    
+    user_id_to_fetch = current_user.id
+
+    photo_data = await person.get_profile_photo(db=db, user_id=user_id_to_fetch)
+    
+    if not photo_data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile photo not found.")
+    
+    async def image_stream():
+        yield photo_data[0]
+
+    return StreamingResponse(
+        image_stream(), media_type=photo_data[1])
+
+
+
+@router.get("/photo/base64", status_code=status.HTTP_200_OK) 
+async def get_profile_photo_base64_endpoint(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user) 
+):
+    """
+    **Получение фотографии профиля в формате Base64.**\n
+    Возвращает фотографию профиля текущего авторизованного пользователя
+    в виде Base64-строки, встраиваемой в Data URL.
+    """
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    
+    user_id_to_fetch = current_user.id
+
+    photo_data = await person.get_profile_photo(db=db, user_id=user_id_to_fetch) 
+    
+    if not photo_data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile photo not found.")
+    
+    encoded_photo = base64.b64encode(photo_data[0]).decode("utf-8")
+    
+    photo_data_url = f"data:{photo_data[1]};base64,{encoded_photo}"
+
+    return JSONResponse(content={"photo_data_url": photo_data_url})
+    

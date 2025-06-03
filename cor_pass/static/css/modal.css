@@ -43,3 +43,18 @@
     cursor: pointer;
     margin-top: 28px;
 }
+.modalButton{
+    border-radius: 20px;
+    background: #7527B2;
+    color: #FFF;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 800;
+    margin: auto;
+    width: 30%;
+    display: block;
+    margin-top: 5px;
+    padding: 10px 50px;
+    border: 0;
+    cursor: pointer;
+}

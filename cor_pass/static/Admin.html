@@ -115,12 +115,15 @@
                 </div>
                 <div style="text-align: center; margin-top: 30px;">
                     <span id="rolesEmail" style="color: #291161; font-size: 17px;"></span>
+                </div> 
+                <div style="text-align: center; margin-top: 10px;">
+                    <span id="rolesСorId" style="color: #291161; font-size: 17px;"></span>
                 </div>       
-                <div id="rolesList" class="roles-container">
+                <div id="rolesList"  class="checkbox-container">
                     <!-- Список ролей будет загружен динамически -->
                 </div>
                 <div class="modal-footer" style="text-align: center; margin-top: 20px;">
-                    <button onclick="saveUserRoles()" class="modal-button">Сохранить</button>
+                    <button onclick="saveUserRoles()" class="button">Сохранить</button>
                 </div>
             </div>
 
@@ -135,6 +138,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 initDateRangePickers();
                 });
 
+
+
+                document.addEventListener('DOMContentLoaded', function () {
+    const tableBody = document.querySelector("#userTable tbody");
+    if (!tableBody) return;
+
+    tableBody.addEventListener('click', function (event) {
+        // Обработка клика на COR-ID
+        if (event.target.tagName === 'TD' && event.target.classList.contains('cor-id-cell')) {
+            const corId = event.target.textContent.trim();
+            if (corId) showCorIdInfo(corId);
+        }
+        
+        // Обработка клика на иконку ролей
+        if (event.target.classList.contains('roles-icon')) {
+            const row = event.target.closest('tr');
+            if (row) {
+                const corIdCell = row.querySelector('.cor-id-cell');
+                if (corIdCell) {
+                    const corId = corIdCell.textContent.trim();
+                    if (corId) showUserRoles(corId);
+                }
+            }
+        }
+    });
+});                
 
         let widthsArray= [20, 70, 60, 10, 30,70,50,50,50,50,30];
         let currentPage = 1;
@@ -564,7 +593,7 @@ function adjustTableLayout() {
 }
 
 
-function showUserRoles(email) {
+async function showUserRoles(corId) {
     if (!checkToken()) return;
 
     const accessToken = new URLSearchParams(window.location.search).get('access_token');
@@ -573,35 +602,56 @@ function showUserRoles(email) {
         return;
     }
 
-    // Находим пользователя по email
-    const user = allFilteredUsers.find(u => u.email === email);
-    if (!user) {
-        console.error('Пользователь не найден');
-        return;
+    try {
+        const response = await fetch(`/api/admin/get_user_info/${corId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ошибка: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const userInfo = data.user_info;
+        const userRoles = data.user_roles || [];
+        console.log("Полученные данные от сервера:", data);
+
+        // Заполняем модальное окно
+        document.getElementById("rolesEmail").textContent = userInfo.email;
+        document.getElementById("rolesСorId").textContent = userInfo.cor_id;
+
+        const rolesList = document.getElementById("rolesList");
+        rolesList.innerHTML = '';
+
+        // Создаем чекбоксы для каждой возможной роли
+        const allRoles = ['admin', 'lawyer', 'cor-int', 'active_user', 'doctor']; // Все возможные роли
+        allRoles.forEach(role => {
+            const isChecked = userRoles.includes(role);
+            const roleItem = document.createElement('div');
+            roleItem.className = 'role-item';
+            roleItem.innerHTML = `
+                <label class="checkbox-label">
+                    <input type="checkbox" name="roles" value="${role}" ${isChecked ? 'checked' : ''}>
+                    ${role}
+                </label>
+            `;
+            rolesList.appendChild(roleItem);
+        });
+
+        // Сохраняем corId в data-атрибут для использования при сохранении
+        rolesList.setAttribute('data-cor-id', corId);
+
+        // Открываем модальное окно
+        document.getElementById("rolesModal").style.display = "block";
+
+    } catch (error) {
+        console.error('Ошибка при загрузке информации о пользователе:', error);
+        alert('Произошла ошибка при загрузке информации о пользователе');
     }
-
-    // Заполняем модальное окно
-    document.getElementById("rolesEmail").textContent = email;
-    const rolesList = document.getElementById("rolesList");
-    rolesList.innerHTML = '';
-
-    // Создаем чекбоксы для каждой возможной роли
-    const allRoles = ['admin', 'lawyer', 'cor-int', 'active_user', 'premium_user']; // Все возможные роли
-    allRoles.forEach(role => {
-        const isChecked = user.roles && user.roles.includes(role);
-        const roleItem = document.createElement('div');
-        roleItem.className = 'role-item';
-        roleItem.innerHTML = `
-            <label>
-                <input type="checkbox" name="roles" value="${role}" ${isChecked ? 'checked' : ''}>
-                ${role}
-            </label>
-        `;
-        rolesList.appendChild(roleItem);
-    });
-
-    // Открываем модальное окно
-    document.getElementById("rolesModal").style.display = "block";
 }
 
     </script>

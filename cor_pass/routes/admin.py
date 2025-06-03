@@ -1,3 +1,4 @@
+import base64
 from typing import List
 from fastapi import APIRouter, Body, HTTPException, Depends, status
 from cor_pass.database.db import get_db
@@ -10,24 +11,28 @@ from cor_pass.services.access import admin_access
 from cor_pass.schemas import (
     DoctorCreate,
     DoctorCreateResponse,
+    DoctorResponse,
+    DoctorWithRelationsResponse,
+    FullUserInfoResponse,
     NewUserRegistration,
+    ProfileResponse,
     UserDb,
-    UsersResponseForAdmin,
 )
-from cor_pass.repository import person as repository_person
 from cor_pass.repository import person
 from pydantic import EmailStr
 from cor_pass.database.redis_db import redis_client
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
+from cor_pass.services.cipher import decrypt_data
 from cor_pass.services.logger import logger
+from cor_pass.config.config import settings
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
 @router.get(
-    "/get_all", response_model=List[UsersResponseForAdmin], dependencies=[Depends(admin_access)]
+    "/get_all", response_model=List[UserDb], dependencies=[Depends(admin_access)]
 )
 async def get_all_users(
     skip: int = 0,
@@ -54,10 +59,9 @@ async def get_all_users(
     for user in list_users:
         oid = str(user.id)  # Convert UUID to string for Redis
         last_active = None
-        user_roles = await repository_person.get_user_roles(email=user.email, db=db)
         if await redis_client.exists(oid):
             users_last_activity = await redis_client.get(oid)
-            user_response = UsersResponseForAdmin(
+            user_response = UserDb(
                 id=user.id,
                 cor_id=user.cor_id,
                 email=user.email,
@@ -69,10 +73,9 @@ async def get_all_users(
                 user_index=user.user_index,
                 created_at=user.created_at,
                 last_active=users_last_activity,
-                roles=user_roles
             )
         else:
-            user_response = UsersResponseForAdmin(
+            user_response = UserDb(
                 id=user.id,
                 cor_id=user.cor_id,
                 email=user.email,
@@ -83,12 +86,106 @@ async def get_all_users(
                 birth=user.birth,
                 user_index=user.user_index,
                 created_at=user.created_at,
-                roles=user_roles
             )
 
         users_list_with_activity.append(user_response)
 
     return users_list_with_activity
+
+
+
+async def _create_profile_response(db_profile, current_user, router_instance) -> ProfileResponse:
+    """Формирует ProfileResponse, дешифруя поля и добавляя данные из User."""
+    response_data = db_profile.__dict__.copy() # Копируем, чтобы не изменять исходный ORM объект
+    decoded_key = base64.b64decode(settings.aes_key)
+
+    # Дешифруем нужные поля для ответа
+    for field_name in ["surname", "first_name", "middle_name"]:
+        encrypted_field = f"encrypted_{field_name}"
+        encrypted_value = response_data.get(encrypted_field)
+        if encrypted_value:
+            response_data[field_name] = await decrypt_data(encrypted_value, decoded_key)
+        else:
+            response_data[field_name] = None
+        # Удаляем зашифрованное поле из ответа
+        response_data.pop(encrypted_field, None)
+
+    # Добавляем данные из User
+    response_data["email"] = current_user.email
+    response_data["sex"] = current_user.user_sex # Если sex есть в User
+
+    # Добавляем URL для фото, если оно существует
+    # if db_profile.photo_data:
+    #     response_data["photo_url"] = router_instance.url_path_for("get_profile_photo_endpoint", user_id=current_user.id)
+    # else:
+    #     response_data["photo_url"] = None
+
+    return ProfileResponse.model_validate(response_data)
+
+
+
+@router.get(
+    "/get_user_info/{user_cor_id}", 
+    response_model=FullUserInfoResponse, 
+    dependencies=[Depends(admin_access)]
+)
+async def get_all_user_info(
+    user_cor_id: str,
+    current_user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    **Get a list of user's info. / Получение всей информации по пользователю**\n
+    Level of Access:
+    - Admin
+    """
+    full_user_data = {}
+
+    user = await person.get_user_by_corid(db=db, cor_id=user_cor_id)
+    if not user:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found.")
+
+    last_active = None
+    if await redis_client.exists(str(user.id)): 
+        users_last_activity_str = await redis_client.get(str(user.id))
+        try:
+            last_active = users_last_activity_str
+        except (ValueError, TypeError) as e:
+            print(f"Error parsing last_active from Redis: {e}")
+            last_active = None 
+
+    full_user_data["user_info"] = UserDb(
+        id=user.id,
+        cor_id=user.cor_id,
+        email=user.email,
+        account_status=user.account_status,
+        is_active=user.is_active,
+        last_password_change=user.last_password_change,
+        user_sex=user.user_sex, 
+        birth=user.birth, 
+        user_index=user.user_index,
+        created_at=user.created_at,
+        last_active=last_active, 
+    )
+
+    user_roles = await person.get_user_roles(email=user.email, db=db)
+    if user_roles:
+        full_user_data["user_roles"] = user_roles
+
+    profile = await person.get_profile_by_user_id(db=db, user_id=user.id)
+    if profile:
+        profile_response = await _create_profile_response(profile, user, router) 
+        full_user_data["profile"] = profile_response
+
+
+    doctor = await lawyer.get_all_doctor_info(doctor_id=user.cor_id, db=db)
+    if doctor:
+        full_user_data["doctor_info"] = DoctorWithRelationsResponse.model_validate(doctor)
+
+    return full_user_data
+
+
+
 
 
 @router.patch("/asign_status/{account_status}", dependencies=[Depends(admin_access)])

@@ -620,7 +620,7 @@ async def confirm_email(body: VerificationModel, db: AsyncSession = Depends(get_
         confirmation = True
         logger.debug(f"Your {body.email} is confirmed")
         if exist_user:
-            access_token = await auth_service.create_access_token(
+            access_token, jti = await auth_service.create_access_token(
                 data={"oid": str(exist_user.id), "corid": exist_user.cor_id}
             )
         return {
@@ -752,10 +752,8 @@ async def restore_account_by_text(
         db=db,
     )
 
-    # Логируем успешный вход
     logger.debug(f"{user.email} login success via recovery code")
 
-    # Возвращаем ответ
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,

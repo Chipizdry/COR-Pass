@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="./css/lab.css">
     <link rel="stylesheet" href="./css/modal.css">
     <link rel="stylesheet" href="./css/caseSettings.css">
+    <link rel="stylesheet" href="./css/header.css">
     <title>Document</title>
 </head>
 <body>
@@ -26,9 +27,10 @@
                             <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z"
                                   fill="#7527B2"/>
                         </svg>
-                        <input id="countOfCase" type="number" minlength="1" min="1" value="1" class="counterInput"
+                        <input id="countOfCase" type="number" value="1" class="counterInput"
                                style="color: #ED1064">
-                        <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
                             <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z"
                                   fill="#7527B2"/>
                             <path d="M13 16.9831C13 17.5447 12.5523 18 12 18C11.4477 18 11 17.5447 11 16.9831L11 7.01695C11 6.4553 11.4477 6 12 6C12.5523 6 13 6.4553 13 7.01695V16.9831Z"
@@ -36,7 +38,7 @@
                         </svg>
 
                     </div>
-                    <div id="createCase" class="actionButton df aic jcc" style="background: #05B96D">
+                    <div id="createCase" class="actionButton create df aic jcc" style="background: #05B96D">
                         <img src="./assets/plusCircle.svg" alt="plusCircle">
                     </div>
                 </div>
@@ -81,35 +83,18 @@
                                   fill="#7527B2"/>
                         </svg>
 
-                        <input id="countOfSpecimen" type="number" minlength="1" min="1" value="1" class="counterInput"
+                        <input id="countOfSpecimen" type="number" value="1" class="counterInput"
                                style="color: #ED1064">
-                        <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z"
-                                  fill="#7527B2"/>
-                            <path d="M13 16.9831C13 17.5447 12.5523 18 12 18C11.4477 18 11 17.5447 11 16.9831L11 7.01695C11 6.4553 11.4477 6 12 6C12.5523 6 13 6.4553 13 7.01695V16.9831Z"
-                                  fill="#7527B2"/>
-                        </svg>
-
-                    </div>
-                    <div class="df aic counter">
                         <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none"
                              xmlns="http://www.w3.org/2000/svg">
                             <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z"
                                   fill="#7527B2"/>
-                        </svg>
-
-                        <input id="countOfCassetteInSpecimen" type="number" minlength="1" min="1" value="1"
-                               class="counterInput"
-                               style="color: #B2AFBA">
-                        <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z"
-                                  fill="#7527B2"/>
                             <path d="M13 16.9831C13 17.5447 12.5523 18 12 18C11.4477 18 11 17.5447 11 16.9831L11 7.01695C11 6.4553 11.4477 6 12 6C12.5523 6 13 6.4553 13 7.01695V16.9831Z"
                                   fill="#7527B2"/>
                         </svg>
 
                     </div>
-                    <div id="createSpecimen" class="actionButton df aic jcc"
+                    <div id="createSpecimen" class="actionButton create df aic jcc"
                          style="margin-top: 8px; background: #ED1064">
                         <img src="./assets/plusCircle.svg" alt="plusCircle">
                     </div>
@@ -130,8 +115,50 @@
             </div>
         </div>
         <div class="content df fdc">
-            <div class="header">
+            <div class="header-container">
+                <div class="header-row top">
+                    <div class="search-container">
+                        <input type="text" placeholder="Search">
+                        <svg class="search-icon" viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="7"/><line x1="16.65" y1="16.65" x2="21" y2="21"/>
+                        </svg>
+                    </div>
+                    <div class="role-container">
+                        <button class="role-icon" aria-label="User roles">
+                            <svg class="icon-group" viewBox="0 0 24 24">
+                                <circle cx="9" cy="7" r="4"/>
+                                <circle cx="17" cy="7" r="4"/>
+                                <path d="M5 21v-2a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v2"/>
+                                <path d="M13 21v-2a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v2"/>
+                            </svg>
+                        </button>
+                        <div class="role-toggle">
+                            <button class="role-btn active">Добавить пациента</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="header-row bottom">
+                    <div>
+                        <div class="meta-info">
+                            <div>
+                                <span id="searchCaseId"></span>
+                                <button class="edit-btn" aria-label="Edit case">
+                                    <svg class="icon-edit" viewBox="0 0 24 24">
+                                        <path d="M4 20h16"/>
+                                        <path d="M14.7 5.3l4 4L9 19.3l-4-4L14.7 5.3z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div>Кукліс Олег Геннадійович</div>
+                            <div>Чол 65р</div>
+                        </div>
+                        <div class="tabs">
+                            <button class="tab">Направлення</button>
+                            <button class="tab" id="caseSettingsModalBtn">Параметри кейсу</button>
+                        </div>
+                    </div>
 
+                </div>
             </div>
             <div class="df jcsb contentCassette">
                 <div class="cassettePlaceholder placeholder">
@@ -142,9 +169,10 @@
                                   fill="#7527B2"/>
                         </svg>
 
-                        <input id="countOfCassette" type="number" minlength="1" min="1" value="1" class="counterInput"
+                        <input id="countOfCassette" type="number" value="1" class="counterInput"
                                style="color: #B2AFBA">
-                        <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                             xmlns="http://www.w3.org/2000/svg">
                             <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z"
                                   fill="#7527B2"/>
                             <path d="M13 16.9831C13 17.5447 12.5523 18 12 18C11.4477 18 11 17.5447 11 16.9831L11 7.01695C11 6.4553 11.4477 6 12 6C12.5523 6 13 6.4553 13 7.01695V16.9831Z"
@@ -153,7 +181,8 @@
 
                     </div>
                     <div class="df aic jcsb">
-                        <div class="actionButton borderRightNone create" id="createCassette" style="background: #B2AFBA">
+                        <div class="actionButton borderRightNone create" id="createCassette"
+                             style="background: #B2AFBA">
                             <img src="./assets/plusCircle.svg" alt="plusCircle">
                         </div>
                         <div class="actionButton borderLeftNone print" style="background: #B2AFBA">
@@ -186,26 +215,30 @@
                     <div class="commentsWrapperTop">
                         Макроописание
                     </div>
-                    <textarea></textarea>
+                    <textarea id="sampleMacroDescription"></textarea>
+                    <button class="commentsWrapperButton">Зберегти</button>
                 </div>
             </div>
         </div>
     </div>
-    <div id="caseSettings" class="modal">
+    <div id="caseSettingsModal" class="modal">
         <div class="modalWrapper">
             <div class="modalTitle">Параметри кейсу</div>
             <div class="caseSettings">
                 <div class="df">
-                    <div class="caseSettingsContent df" id="cassetteSettings">
+                    <div class="caseSettingsContent df">
 
                     </div>
                     <div class="commentsWrapper df fdc">
                         <div class="commentsWrapperTop">
                             Макроопис зразка
                         </div>
-                        <textarea></textarea>
+                        <textarea id="caseSettingsComments"></textarea>
                     </div>
                 </div>
+                <button class="modalButton">
+                    Зберегти
+                </button>
             </div>
         </div>
     </div>
@@ -224,7 +257,6 @@
 
 <script src="./js/general.js"></script>
 
-
 <script>
     let cases = []
 
@@ -237,11 +269,17 @@
     let cassettePageIndex = 0;
     let glassPageIndex = 0;
 
+    const caseContentNODE = document.querySelector("#caseItems");
     const specimenContentNODE = document.querySelector("#specimenItems");
     const cassetteContentNODE = document.querySelector("#cassetteItems");
-    const caseContentNODE = document.querySelector("#caseItems");
 
     const cassetteCommentModalNODE = document.querySelector("#cassetteComments");
+
+    const countCaseInputNODE = document.querySelector('#countOfCase')
+    const countOfSpecimenInputNODE = document.querySelector('#countOfSpecimen')
+    const countOfCassetteInputNODE = document.querySelector('#countOfCassette')
+
+    const macroDescriptionTextareaNODE = document.querySelector('#sampleMacroDescription')
 
     const scrollContent = (e, contentNODESelector, arrowsNODESelector, paginationUpDown = true, currentPaginationPage) => {
         const elem = e?.currentTarget;
@@ -270,9 +308,7 @@
             })
         }
 
-        console.log(elem, "elem")
         if (elem?.classList.contains('prev')) {
-            console.log('HERE 1')
             newPaginationPage -= 1;
             caseContentNODE.forEach(elem => {
                 elem.scrollTo({[animationDirection]: caseContentHeight * newPaginationPage, behavior: 'smooth'});
@@ -280,14 +316,11 @@
         }
 
         if (elem?.classList.contains('next')) {
-            console.log('HERE 2')
             newPaginationPage += 1;
             caseContentNODE.forEach(elem => {
                 elem.scrollTo({[animationDirection]: caseContentHeight * newPaginationPage, behavior: 'smooth'});
             })
         }
-        console.log(arrowsNODESelector, "document.querySelector(`${arrowsNODESelector} .next`)")
-        console.log(document.querySelector(`${arrowsNODESelector} .next`), "document.querySelector(`${arrowsNODESelector} .next`)")
 
         if ((caseContentScrollHeight - caseContentHeight * (newPaginationPage + 1)) < 0) {
             document.querySelector(`${arrowsNODESelector} .next`).classList.add('disable')
@@ -313,6 +346,9 @@
 
         const currentCase = cases[activeCaseIndex];
         const currentSpecimen = currentCase.samples[activeSpecimenIndex];
+        macroDescriptionTextareaNODE.value = currentSpecimen.macro_description || "";
+
+        document.querySelector('#searchCaseId').innerHTML = currentCase.case_code
 
         cassetteContentNODE.innerHTML = ""
 
@@ -335,6 +371,9 @@
 
             lastActiveCaseIndex = activeCaseIndex;
             lastActiveSpecimenIndex = activeSpecimenIndex;
+            countOfSpecimenInputNODE.setAttribute('data-delete-count', currentCase.samples.length - 1)
+            countOfCassetteInputNODE.setAttribute('data-delete-count', currentSpecimen.cassettes.length - 1)
+
             return;
         }
 
@@ -346,6 +385,7 @@
         changeEntityCountHandler("#cassetteItems .counter input")
         addActiveClass(".specimenItem", activeSpecimenIndex)
 
+        countOfCassetteInputNODE.setAttribute('data-delete-count', currentSpecimen.cassettes.length - 1)
         lastActiveCaseIndex = activeCaseIndex;
         lastActiveSpecimenIndex = activeSpecimenIndex;
     }
@@ -366,11 +406,14 @@
                     }
                 })
 
+                macroDescriptionTextareaNODE.value = cases[0].samples.macro_description || "";
+
                 cases.forEach((currentCase, index) => {
                     caseContentNODE.append(caseTemplate(currentCase, !index))
                 })
 
                 setPathomorphologyTemplate(0, 0)
+                countCaseInputNODE.setAttribute('data-delete-count', cases.length - 1)
             })
     }
 
@@ -452,7 +495,7 @@
                             </div>
                         </div>
                         <div class="specimenItemArchive" style="cursor: pointer">
-                            <img src="./assets/archive.svg" alt="archive">
+                            <img src="./assets/${currentSpecimen.archive ? "archiveActive" : "archive"}.svg" alt="archive">
                         </div>
                     </div>
            <div class="specimenItemBottom df gap8 aic">
@@ -497,12 +540,23 @@
             const samplesIndex = cases[lastActiveCaseIndex].samples.findIndex(({id}) => id === currentSpecimen.id)
             const samplesArchiveValue = !cases[lastActiveCaseIndex].samples[samplesIndex].archive;
 
-            cases[lastActiveCaseIndex].samples[samplesIndex].archive = samplesArchiveValue;
+            fetch(`${API_BASE_URL}/api/samples/archive/${currentSpecimen.id}?archive=${samplesArchiveValue}`, {
+                method: "PUT",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+            })
+                .then(res => res.json())
+                .then(() => {
+                    cases[lastActiveCaseIndex].samples[samplesIndex].archive = samplesArchiveValue;
 
-            const archiveIcon = samplesArchiveValue ? "archiveActive" : "archive";
+                    const archiveIcon = samplesArchiveValue ? "archiveActive" : "archive";
 
-            specimenNewNODE.querySelector('.specimenItemArchive img')
-                .setAttribute('src', `./assets/${archiveIcon}.svg`)
+                    specimenNewNODE.querySelector('.specimenItemArchive img')
+                        .setAttribute('src', `./assets/${archiveIcon}.svg`)
+                })
+
         })
 
         return specimenNewNODE
@@ -518,7 +572,7 @@
                             <img src="./assets/cassetteItem.svg" alt="caseItem">
                             <div class="cassetteAction df jcsb aic">
                                 <div>${currentCassette.cassette_number}</div>
-                                <div class="cassetteComment"><img src="./assets/comment.svg" alt="comment"></div>
+                                <div class="cassetteComment"><img src="./assets/${currentCassette.comment?.length ? "commentActive" : "comment"}.svg" alt="comment"></div>
                                 <div class="cassettePrint"><img src="./assets/print.svg" alt="print"></div>
                             </div>
                         </div>
@@ -528,7 +582,7 @@
                             <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z" fill="#7527B2"/>
                             </svg>
-                            <input type="number" minlength="1" min="1" value="1" class="counterInput" style="color: #88C6FF">
+                            <input  data-delete-count="${currentCassette.glasses.length - 1}" type="number" value="1" class="counterInput" style="color: #88C6FF">
                             <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z" fill="#7527B2"/>
                                 <path d="M13 16.9831C13 17.5447 12.5523 18 12 18C11.4477 18 11 17.5447 11 16.9831L11 7.01695C11 6.4553 11.4477 6 12 6C12.5523 6 13 6.4553 13 7.01695V16.9831Z" fill="#7527B2"/>
@@ -582,136 +636,310 @@
     }
 
     //ENTITY CREATE
-    const createCaseHandler = () => {
+    const createOrDeleteCaseHandler = () => {
         const createCaseBtn = document.querySelector('#createCase')
 
         createCaseBtn.addEventListener('click', () => {
             lastActiveCaseIndex = null;
             lastActiveSpecimenIndex = null;
-            const countCaseInput = document.querySelector('#countOfCase')
 
-            fetch(`${API_BASE_URL}/api/cases/`, {
-                method: "POST",
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    patient_cor_id: PATIENT_COR_ID,
-                    num_cases: +countCaseInput.value,
-                    urgency: parentMark,
-                    material_type: childMark
-                })
-            })
-                .then(res => res.json())
-                .then((newCase) => {
-                    cases = [...cases, ...newCase];
+            const placeholderNODE = createCaseBtn.closest('.placeholder')
+            const isDelete = placeholderNODE.classList.contains('negative')
 
-                    newCase.reverse().map(currentCase => {
-                        caseContentNODE.prepend(caseTemplate(currentCase, 0))
+            if (isDelete) {
+                const deletedCasesIds = [...cases]
+                    .reverse()
+                    .slice(0, +countCaseInputNODE.value)
+                    .map(({id}) => id);
+
+                fetch(`${API_BASE_URL}/api/cases/delete`, {
+                    method: "DELETE",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        case_ids: deletedCasesIds,
                     })
-
-                    setPathomorphologyTemplate(0, 0)
-                    changeItemCountOnEntity()
-                    casePageIndex = scrollContent(null, '#caseItems', "#caseItemsScroll", true, 0)
-                    specimenPageIndex = scrollContent(null, "#specimenItems", "#specimenItemsScroll", true, 0)
-                    cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
-                    glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
-
-
-                    countCaseInput.value = 1;
                 })
+                    .then(res => res.json())
+                    .then(() => {
+                        cases = cases.filter(currentCase => !deletedCasesIds.includes(currentCase.id));
+                        [...caseContentNODE.querySelectorAll('.caseItem')]
+                            .reverse()
+                            .slice(0, +countCaseInputNODE.value).forEach(elem => {
+                            elem.remove()
+                        });
+                        setPathomorphologyTemplate(0, 0);
+
+
+                        casePageIndex = scrollContent(null, '#caseItems', "#caseItemsScroll", true, 0)
+                        specimenPageIndex = scrollContent(null, "#specimenItems", "#specimenItemsScroll", true, 0)
+                        cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
+                        glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
+
+                        alert(`Кейс${+countCaseInputNODE.value>1 ? "и" : ""} успішно видаленно`)
+
+                        countCaseInputNODE.value = 1;
+                        countCaseInputNODE.setAttribute('data-delete-count', cases.length - 1)
+
+                    })
+            }
+            if (!isDelete) {
+                fetch(`${API_BASE_URL}/api/cases/create`, {
+                    method: "POST",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        patient_cor_id: PATIENT_COR_ID,
+                        num_cases: +countCaseInputNODE.value,
+                        urgency: parentMark,
+                        material_type: childMark
+                    })
+                })
+                    .then(res => res.json())
+                    .then((newCase) => {
+                        const newCaseWithInfo = newCase.all_cases.reverse();
+                        newCaseWithInfo[0].samples = newCase.first_case_details.samples;
+                        cases = [...newCaseWithInfo, ...cases];
+
+                        newCaseWithInfo.reverse().map(currentCase => {
+                            caseContentNODE.prepend(caseTemplate(currentCase, 0))
+                        })
+
+                        setPathomorphologyTemplate(0, 0)
+                        casePageIndex = scrollContent(null, '#caseItems', "#caseItemsScroll", true, 0)
+                        specimenPageIndex = scrollContent(null, "#specimenItems", "#specimenItemsScroll", true, 0)
+                        cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
+                        glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
+
+                        alert(`Кейс${+countCaseInputNODE.value>1 ? "и" : ""} успішно створенно`)
+
+                        countCaseInputNODE.value = 1;
+                        countCaseInputNODE.setAttribute('data-delete-count', cases.length - 1)
+                    })
+            }
+
+            counterReset()
         })
     }
-    const createSpecimenHandler = () => {
+    const createOrDeleteSpecimenHandler = () => {
         const createSpecimenBtn = document.querySelector('#createSpecimen')
 
         createSpecimenBtn.addEventListener('click', () => {
             lastActiveSpecimenIndex = null;
-            const countOfSpecimenInput = document.querySelector('#countOfSpecimen')
-            const countOfCassetteInSpecimenInput = document.querySelector('#countOfCassetteInSpecimen')
 
-            fetch(`${API_BASE_URL}/api/samples/create`, {
-                method: "POST",
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    case_id: cases[lastActiveCaseIndex].id,
-                    num_samples: +countOfSpecimenInput.value,
+            const placeholderNODE = createSpecimenBtn.closest('.placeholder')
+            const isDelete = placeholderNODE.classList.contains('negative')
+
+            if (isDelete) {
+                const deletedSamplesList = [...cases[lastActiveCaseIndex].samples]
+                    .reverse()
+                    .slice(0, +countOfSpecimenInputNODE.value);
+
+                fetch(`${API_BASE_URL}/api/samples/delete`, {
+                    method: "DELETE",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        sample_ids: deletedSamplesList.map(({id}) => id),
+                    }),
                 })
-            })
-                .then(res => res.json())
-                .then(newSamples => {
-                    cases[lastActiveCaseIndex].samples = [
-                        ...cases[lastActiveCaseIndex].samples,
-                        ...newSamples,
-                    ];
+                    .then(res => res.json())
+                    .then(() => {
+                        cases[lastActiveCaseIndex].samples = cases[lastActiveCaseIndex].samples
+                            .filter(sample => !deletedSamplesList.map(({id}) => id).includes(sample.id))
 
-                    newSamples.forEach(specimen => {
-                        specimenContentNODE.append(specimenTemplate(specimen))
+                        setPathomorphologyTemplate(lastActiveCaseIndex, 0);
+
+                        [...specimenContentNODE.querySelectorAll('.specimenItem')]
+                            .reverse()
+                            .slice(0, +countOfSpecimenInputNODE.value)
+                            .forEach(elem => {
+                                elem.remove()
+                            })
+
+
+                        const deletedGlassCount = deletedSamplesList.reduce((deletedGlassCount, sample) => {
+                            return deletedGlassCount + sample.glass_count
+                        }, 0);
+                        const deletedCassettesCount = deletedSamplesList.reduce((deletedGlassCount, sample) => {
+                            return deletedGlassCount + sample.cassette_count
+                        }, 0);
+                        cases[lastActiveCaseIndex].cassette_count -= deletedCassettesCount;
+                        cases[lastActiveCaseIndex].glass_count -= deletedGlassCount;
+                        cases[lastActiveCaseIndex].bank_count -= +countOfSpecimenInputNODE.value;
+
+                        specimenPageIndex = scrollContent(null, "#specimenItems", "#specimenItemsScroll", true, 0)
+                        cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
+                        glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
+
+                        changeItemCountOnEntity()
+                        alert(`Сампл${+countOfSpecimenInputNODE.value> 1 ? "и" : ""} успішно видаленно`)
+
+                        countOfSpecimenInputNODE.setAttribute('data-delete-count', cases[lastActiveCaseIndex].samples.length - 1)
+                        countOfSpecimenInputNODE.value = 1;
                     })
+            }
 
-
-                    setPathomorphologyTemplate(lastActiveCaseIndex, 0)
-                    changeItemCountOnEntity();
-
-                    specimenPageIndex = scrollContent(null, "#specimenItems", "#specimenItemsScroll", true, 0)
-                    cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
-                    glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
-
-                    countOfSpecimenInput.value = 1;
-                    countOfCassetteInSpecimenInput.value = 1;
+            if (!isDelete) {
+                fetch(`${API_BASE_URL}/api/samples/create`, {
+                    method: "POST",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        case_id: cases[lastActiveCaseIndex].id,
+                        num_samples: +countOfSpecimenInputNODE.value,
+                    })
                 })
+                    .then(res => res.json())
+                    .then(newSamples => {
+                        const newSamplesInfo = newSamples.created_samples;
+                        newSamplesInfo[0].cassettes = newSamples.first_sample_details.cassettes;
+
+                        cases[lastActiveCaseIndex].samples = [
+                            ...cases[lastActiveCaseIndex].samples,
+                            ...newSamplesInfo,
+                        ];
+                        cases[lastActiveCaseIndex].cassette_count += +countOfSpecimenInputNODE.value
+                        cases[lastActiveCaseIndex].bank_count += +countOfSpecimenInputNODE.value
+                        cases[lastActiveCaseIndex].glass_count += +countOfSpecimenInputNODE.value
+
+                        newSamples.created_samples.forEach(specimen => {
+                            specimenContentNODE.append(specimenTemplate(specimen))
+                        })
+
+
+                        setPathomorphologyTemplate(lastActiveCaseIndex, 0)
+                        changeItemCountOnEntity();
+
+                        specimenPageIndex = scrollContent(null, "#specimenItems", "#specimenItemsScroll", true, 0)
+                        cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
+                        glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
+
+                        alert(`Сампл${+countOfSpecimenInputNODE.value>1 ? "и" : ""} успішно створенно`)
+
+                        countOfSpecimenInputNODE.setAttribute('data-delete-count', cases[lastActiveCaseIndex].samples.length - 1)
+                        countOfSpecimenInputNODE.value = 1;
+                    })
+            }
+
+            counterReset()
         })
     }
-    const createCassetteHandler = () => {
+    const createOrDeleteCassetteHandler = () => {
         const createCassetteBtn = document.querySelector('#createCassette')
         createCassetteBtn.addEventListener('click', () => {
-            const countOfCassetteInput = document.querySelector('#countOfCassette')
             const currentSamples = cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex];
 
-            fetch(`${API_BASE_URL}/api/cassettes/create`, {
-                method: "POST",
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    sample_id: currentSamples.id,
-                    num_cassettes: +countOfCassetteInput.value,
-                    num_glasses_per_cassette: 1,
-                })
-            })
-                .then(res => res.json())
-                .then(newCassettes => {
-                    cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes = [
-                        ...cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes,
-                        ...newCassettes,
-                    ];
+            const placeholderNODE = createCassetteBtn.closest('.placeholder')
+            const isDelete = placeholderNODE.classList.contains('negative')
 
+            if (isDelete) {
+                const deletedCassettesList = [...currentSamples.cassettes]
+                    .reverse()
+                    .slice(0, +countOfCassetteInputNODE.value)
 
-                    let currentCassettesList = currentSamples.cassettes;
-
-                    cassetteContentNODE.innerHTML = "";
-
-                    currentCassettesList.forEach((cassette, index) => {
-                        cassetteContentNODE.append(cassetteTemplate(cassette, currentSamples.label, index))
+                fetch(`${API_BASE_URL}/api/cassettes/delete`, {
+                    method: "DELETE",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        cassette_ids: deletedCassettesList.map(({id}) => id),
                     })
-
-
-                    setPathomorphologyTemplate(lastActiveCaseIndex, lastActiveSpecimenIndex)
-
-                    countOfCassetteInput.value = 1;
-
-
-                    cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
-                    glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
-                    createOrDeleteGlassHandler()
-                    changeEntityCountHandler("#cassetteItems .counter input")
-                    changeItemCountOnEntity()
                 })
+                    .then(res => res.json())
+                    .then(() => {
+                        cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes = (
+                            cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes
+                                .filter(cassette => !deletedCassettesList.map(({id}) => id).includes(cassette.id))
+                        );
+
+                        const deletedGlassCount = deletedCassettesList.reduce((deletedGlassCount, cassette) => {
+                            return deletedGlassCount + cassette.glasses.length
+                        }, 0);
+                        cases[lastActiveCaseIndex].cassette_count -= +countOfCassetteInputNODE.value;
+                        cases[lastActiveCaseIndex].glass_count -= deletedGlassCount;
+                        cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassette_count -= +countOfCassetteInputNODE.value;
+                        cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].glass_count -= deletedGlassCount;
+
+
+                        [...cassetteContentNODE.querySelectorAll('.cassetteColumn')]
+                            .reverse()
+                            .slice(0, +countOfCassetteInputNODE.value).forEach(elem => {
+                            elem.remove()
+                        })
+
+                        changeItemCountOnEntity()
+
+                        cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
+                        glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
+
+                        alert(`Касет${+countOfCassetteInputNODE.value>1 ? "и" : "а"} успішно видаленн${+countOfCassetteInputNODE.value>1 ? "и" : "а"}`)
+
+                        countOfCassetteInputNODE.setAttribute('data-delete-count', cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes.length - 1)
+                        countOfCassetteInputNODE.value = 1;
+                    })
+            }
+
+            if (!isDelete) {
+                fetch(`${API_BASE_URL}/api/cassettes/create`, {
+                    method: "POST",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        sample_id: currentSamples.id,
+                        num_cassettes: +countOfCassetteInputNODE.value,
+                        num_glasses_per_cassette: 1,
+                    })
+                })
+                    .then(res => res.json())
+                    .then(newCassettes => {
+                        cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes = [
+                            ...cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes,
+                            ...newCassettes,
+                        ];
+                        cases[lastActiveCaseIndex].cassette_count += +countOfCassetteInputNODE.value;
+                        cases[lastActiveCaseIndex].glass_count += +countOfCassetteInputNODE.value;
+                        cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassette_count += +countOfCassetteInputNODE.value;
+                        cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].glass_count += +countOfCassetteInputNODE.value;
+
+                        let currentCassettesList = currentSamples.cassettes;
+
+                        cassetteContentNODE.innerHTML = "";
+
+                        currentCassettesList.forEach((cassette, index) => {
+                            cassetteContentNODE.append(cassetteTemplate(cassette, currentSamples.label, index))
+                        })
+
+
+                        setPathomorphologyTemplate(lastActiveCaseIndex, lastActiveSpecimenIndex)
+
+                        countOfCassetteInputNODE.setAttribute('data-delete-count', currentCassettesList.length - 1)
+
+
+                        cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
+                        glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
+                        createOrDeleteGlassHandler()
+                        changeEntityCountHandler("#cassetteItems .counter input")
+                        changeItemCountOnEntity()
+                        alert(`Касет${+countOfCassetteInputNODE.value>1 ? "и" : "а"} успішно ствернн${+countOfCassetteInputNODE.value>1 ? "і" : "а"}`)
+
+                        countOfCassetteInputNODE.value = 1;
+                    })
+            }
+
+            counterReset()
         })
     }
     const createOrDeleteGlassHandler = () => {
@@ -722,17 +950,17 @@
 
             createGlassBtnNODE.addEventListener('click', () => {
                 const placeholderNODE = createGlassBtnNODE.closest('.placeholder')
-                const isDelete = placeholderNODE.classList.contains('nagative')
+                const isDelete = placeholderNODE.classList.contains('negative')
                 const countOfGlassInput = elem.querySelector('.counterInput')
                 const currentCassette = cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[index];
 
-                if(isDelete){
+                if (isDelete) {
                     const deletedGlassesIds = [...currentCassette.glasses]
                         .reverse()
                         .slice(0, +countOfGlassInput.value)
                         .map(({id}) => id);
 
-                    fetch(`${API_BASE_URL}/api/glasses/glasses`, {
+                    fetch(`${API_BASE_URL}/api/glasses/delete`, {
                         method: "DELETE",
                         headers: {
                             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -746,8 +974,10 @@
                         .then(() => {
                             cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[index].glasses = (
                                 cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[index].glasses
-                                    .filter( glass => !deletedGlassesIds.includes(glass.id))
+                                    .filter(glass => !deletedGlassesIds.includes(glass.id))
                             )
+                            cases[lastActiveCaseIndex].glass_count -= +countOfGlassInput.value;
+                            cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].glass_count -= +countOfGlassInput.value;
 
                             const glassContentNODE = elem.nextElementSibling;
 
@@ -757,12 +987,12 @@
 
                             changeItemCountOnEntity()
                             glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
+                            alert(`Скельц${+countOfGlassInput.value>1 ? "я" : "е"} успішно видаленн${+countOfGlassInput.value>1 ? "і" : "е"}`)
                             countOfGlassInput.value = 1;
                         })
-                    return;
                 }
 
-                if(!isDelete){
+                if (!isDelete) {
                     fetch(`${API_BASE_URL}/api/glasses/create`, {
                         method: "POST",
                         headers: {
@@ -781,6 +1011,8 @@
                                 ...cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[index].glasses,
                                 ...newGlasses,
                             ];
+                            cases[lastActiveCaseIndex].glass_count += +countOfGlassInput.value;
+                            cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].glass_count += +countOfGlassInput.value;
 
                             const glassContentNODE = elem.nextElementSibling;
 
@@ -790,9 +1022,12 @@
 
                             changeItemCountOnEntity()
                             glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
+                            alert(`Скельц${+countOfGlassInput.value > 1 ? "я" : "е"} успішно ствернн${+countOfGlassInput.value>1 ? "і" : "е"}`)
                             countOfGlassInput.value = 1;
                         })
                 }
+
+                counterReset()
             })
         })
     }
@@ -800,26 +1035,40 @@
     //GENERAL EVENTS
     const changeEntityCountHandler = (queryNODE) => {
         const inputsCounterNODE = document.querySelectorAll(queryNODE);
-        const increaseNumber = (currentInputNODE) => {
+        const increaseNumber = (currentInputNODE, currentCounterNODE) => {
             if (currentInputNODE.value === "99") {
                 return;
             }
+            const newValue = +currentInputNODE.value + 1;
+
             currentInputNODE.value = +currentInputNODE.value + 1
             currentInputNODE.dispatchEvent(new Event('input'))
+
+
+            const isNegative = currentCounterNODE.classList.contains('negative');
+            if (isNegative) {
+                const maxDeleteCount = +currentInputNODE.dataset.deleteCount;
+                if (newValue > maxDeleteCount) {
+                    currentInputNODE.value = +currentInputNODE.value - 1
+                }
+            }
         }
         const decreaseNumber = (currentInputNODE, currentCounterNODE) => {
             if (currentInputNODE.value === "1") {
-                const isNegative = currentCounterNODE.classList.contains('nagative');
+                if (!+currentInputNODE.dataset.deleteCount) {
+                    return;
+                }
+
+                const isNegative = currentCounterNODE.classList.contains('negative');
                 const classListMethod = isNegative ? "remove" : "add";
                 const placeholderNODE = currentCounterNODE.closest('.placeholder');
                 const createActionBtn = placeholderNODE.querySelector('.actionButton.create')
                 const createActionBtnIcon = createActionBtn.querySelector('img')
                 const createActionBtnIconSrc = isNegative ? "plusCircle" : "minusCircle";
 
-                currentCounterNODE.classList[classListMethod]('nagative')
-                placeholderNODE.classList[classListMethod]('nagative')
+                currentCounterNODE.classList[classListMethod]('negative')
+                placeholderNODE.classList[classListMethod]('negative')
                 createActionBtn.classList[classListMethod]('delete')
-                console.log(createActionBtnIcon, "createActionBtnIcon")
                 createActionBtnIcon.setAttribute('src', `./assets/${createActionBtnIconSrc}.svg`);
 
                 return;
@@ -832,20 +1081,20 @@
         inputsCounterNODE.forEach(currentInput => {
             const currentCounterNODE = currentInput.closest('.counter');
             currentInput.previousElementSibling.addEventListener("click", (e) => {
-                if (currentCounterNODE.classList.contains('nagative')) {
-                    increaseNumber(currentInput)
+                if (currentCounterNODE.classList.contains('negative')) {
+                    increaseNumber(currentInput, currentCounterNODE)
                     return;
                 }
 
                 decreaseNumber(currentInput, currentCounterNODE)
             })
             currentInput.nextElementSibling.addEventListener("click", (e) => {
-                if (currentCounterNODE.classList.contains('nagative')) {
+                if (currentCounterNODE.classList.contains('negative')) {
                     decreaseNumber(currentInput, currentCounterNODE)
                     return;
                 }
 
-                increaseNumber(currentInput)
+                increaseNumber(currentInput, currentCounterNODE)
             })
 
             currentInput.addEventListener('paste', (e) => {
@@ -874,17 +1123,11 @@
         const currentCase = cases[lastActiveCaseIndex]
         const currentSpecimen = cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex]
 
-        const currentCaseEntityCount = getItemCountByAllKeys(currentCase, ['specimens', 'cassettes', 'glasses'])
-        const currentSpecimenEntityCount = getItemCountByAllKeys(currentSpecimen, ['cassettes', 'glasses'])
-
-
-        activeCaseNODE.querySelector(".caseItemImgCount").textContent = currentCaseEntityCount.samples
-        activeCaseNODE.querySelector(".infoPlate.cassette").textContent = currentCaseEntityCount.cassettes
-        activeCaseNODE.querySelector(".infoPlate.glass").textContent = currentCaseEntityCount.glasses
-        activeSpecimenNODE.querySelector(".infoPlate.cassette").textContent = currentSpecimenEntityCount.cassettes
-        activeSpecimenNODE.querySelector(".infoPlate.glass").textContent = currentSpecimenEntityCount.glasses
-
-        // const activeCaseNODE = document.querySelector('.caseItem.active .infoPlate.cassette')
+        activeCaseNODE.querySelector(".caseItemImgCount").textContent = currentCase.bank_count
+        activeCaseNODE.querySelector(".infoPlate.cassette").textContent = currentCase.cassette_count
+        activeCaseNODE.querySelector(".infoPlate.glass").textContent = currentCase.glass_count
+        activeSpecimenNODE.querySelector(".infoPlate.cassette").textContent = currentSpecimen.cassette_count
+        activeSpecimenNODE.querySelector(".infoPlate.glass").textContent = currentSpecimen.glass_count
     }
     const addActiveClass = (className, isActiveIndex) => {
         document.querySelectorAll(className).forEach(elem => {
@@ -893,14 +1136,45 @@
 
         document.querySelector(`${className}:nth-child(${isActiveIndex + 1 || 1})`).classList.add("active");
     }
+    const counterReset = () => {
+        const allPlaceholder = document.querySelectorAll('.placeholder');
+        allPlaceholder.forEach(elem => {
+
+            elem.classList.remove('negative')
+            elem.querySelector('.counter').classList.remove('negative')
+            elem.querySelector('.actionButton.create').classList.remove('delete')
+            elem.querySelector('.actionButton.create img').setAttribute('src',  `./assets/plusCircle.svg`)
+        })}
+    const changeMacroDescription = () => {
+
+        macroDescriptionTextareaNODE.nextElementSibling.addEventListener('click', () => {
+            const currentSample = cases[lastActiveCaseIndex]?.samples[lastActiveSpecimenIndex];
+
+            fetch(`${API_BASE_URL}/api/samples/macrodescription/${currentSample.id}`, {
+                method: "PUT",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    macro_description: macroDescriptionTextareaNODE.value.trim(),
+                })
+            })
+                .then(res => res.json())
+                .then(() => {
+                    alert('Макро опис успішно оновлений')
+                })
+        })
+    }
 </script>
 <script>
     document.addEventListener("DOMContentLoaded", (event) => {
-        createCaseHandler()
-        createSpecimenHandler()
-        createCassetteHandler()
+        createOrDeleteCaseHandler()
+        createOrDeleteSpecimenHandler()
+        createOrDeleteCassetteHandler()
         changeEntityCountHandler(".counter input")
 
+        changeMacroDescription()
         setAllCases()
     });
 </script>
@@ -944,7 +1218,6 @@
         arrowsCase.forEach(elem => {
             elem.addEventListener("click", e => {
                 casePageIndex = scrollContent(e, '#caseItems', "#caseItemsScroll", true, casePageIndex)
-                console.log(casePageIndex, "casePageIndex")
             })
         })
     });
@@ -987,17 +1260,29 @@
 
             const cassetteId = cassetteCommentModalNODE.dataset.id;
             const cassetteIndex = +cassetteCommentModalNODE.dataset.index;
-
             const commentValue = textareaNODE.value.trim();
-            cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[cassetteIndex].comment = commentValue.trim();
 
-            const commentIconSrc = commentValue.length ? "commentActive" : "comment";
+            fetch(`${API_BASE_URL}/api/cassettes/${cassetteId}`, {
+                method: "PATCH",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    comment: commentValue,
+                })
+            })
+                .then(res => res.json())
+                .then(() => {
+                    cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[cassetteIndex].comment = commentValue;
+                    const commentIconSrc = commentValue.length ? "commentActive" : "comment";
 
-            cassetteContentNODE
-                .querySelector(`.cassetteColumn:nth-child(${cassetteIndex + 1}) .cassetteComment img`)
-                .setAttribute('src', `./assets/${commentIconSrc}.svg`);
+                    cassetteContentNODE
+                        .querySelector(`.cassetteColumn:nth-child(${cassetteIndex + 1}) .cassetteComment img`)
+                        .setAttribute('src', `./assets/${commentIconSrc}.svg`);
 
-            cassetteCommentModalNODE.classList.remove('open')
+                    cassetteCommentModalNODE.classList.remove('open')
+                })
         })
     });
 </script>

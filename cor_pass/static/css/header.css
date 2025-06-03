@@ -1,0 +1,140 @@
+.header-container {
+    padding: 24px;
+}
+
+.header-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+.header-row.top {
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+.header-row.bottom {
+    justify-content: space-between;
+}
+
+.search-container {
+    position: relative;
+    flex: 1;
+    margin-right: 24px;
+}
+.search-container input {
+    width: 100%;
+    height: 56px;
+    padding: 14px 16px 14px 48px;
+    border: 1px solid #E7E4F7;
+    border-radius: 12px;
+    font-size: 16px;
+    color: #23155B;
+    background: #FFFFFF;
+}
+.search-container .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    stroke: #6F66B1;
+    stroke-width: 2;
+    fill: none;
+    transform: translateY(-50%);
+}
+
+.role-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.role-icon {
+    width: 48px;
+    height: 48px;
+    background: #FFFFFF;
+    border: 1px solid #E7E4F7;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.role-icon .icon-group {
+    width: 24px;
+    height: 24px;
+    stroke: #6F66B1;
+    stroke-width: 2;
+    fill: none;
+}
+
+.role-toggle {
+    display: flex;
+    background: #FFFFFF;
+    border: 1px solid #E7E4F7;
+    border-radius: 8px;
+}
+.role-toggle .role-btn {
+    padding: 12px 24px;
+    border: none;
+    background: none;
+    font-size: 16px;
+    color: #6F66B1;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+}
+.role-toggle .role-btn.active {
+    background: #6C00FF;
+    color: #FFFFFF;
+    border-radius: 8px;
+}
+
+.tabs {
+    display: flex;
+    gap: 24px;
+}
+.tab {
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: #6F66B1;
+    padding: 8px 0;
+    cursor: pointer;
+    position: relative;
+    transition: color .2s;
+}
+.tab:hover,
+.tab.active {
+    color: #6C00FF;
+}
+.tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #6C00FF;
+    border-radius: 2px 2px 0 0;
+}
+
+.meta-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-left: auto;
+    color: #291161;
+    font-size: 18px;
+    font-weight: 800;
+}
+.meta-info .edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+}
+.meta-info .icon-edit {
+    width: 16px;
+    height: 16px;
+    stroke: #6F66B1;
+    stroke-width: 2;
+    fill: none;
+}
