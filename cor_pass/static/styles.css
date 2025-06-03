@@ -803,17 +803,3 @@ select#user_sex option:checked {
     max-height: none; /* Отключаем ограничение по высоте */
     display: none;
 }
-
-/*
-select {
-    width: 200px;
-    padding: 10px;         
-    font-size: 14px;
-    color: #5B4296;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    box-sizing: border-box;
-    background-color: white;
-    appearance: none;  
-    margin-bottom: 10px;
-} */

@@ -167,11 +167,6 @@ margin: 0 5px;
 }
 
 
-/* Стили для модального окна выбора колонок */
-#columnSelectModal {
-    padding: 20px;
-}
-
 /* Контейнер для чекбоксов */
 #columnSelectModal .checkbox-container {
     display: flex;
