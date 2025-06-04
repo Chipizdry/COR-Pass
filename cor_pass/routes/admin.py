@@ -351,6 +351,8 @@ async def signup_user_as_doctor(
         cer, dip, clin = await create_doctor_service(
             doctor_data=doctor_data, db=db, doctor=doctor
         )
+        
+        await lawyer.approve_doctor(doctor=doctor, db=db, status=Doctor_Status.approved)
     except IntegrityError as e:
         logger.error(f"Database integrity error: {e}")
         await db.rollback()

@@ -83,62 +83,84 @@ function setupSVSViewerControls() {
 }
 
 
-
 async function openFullscreenSVS(blob = null, token = null) {
-    const fullscreenViewer = document.getElementById('svs-fullscreen-viewer');
-    const fullscreenImg = document.getElementById('svs-fullscreen-image');
-    const dcmViewerFrame = document.getElementById('DcmViewerFrame');
-    
-    // Скрываем DICOM viewer
-    if (dcmViewerFrame) dcmViewerFrame.classList.add('hidden');
-    
-    // Показываем контейнер и индикатор загрузки
-    fullscreenViewer.style.display = 'block';
-    fullscreenImg.classList.add('loading');
-    
-    try {
-        token = token || getToken();
+    if (checkToken()) {
+        const fullscreenViewer = document.getElementById('svs-fullscreen-viewer');
+        const dcmViewerFrame = document.getElementById('DcmViewerFrame');
         
-        // Если blob не передан, загружаем изображение
-        if (!blob) {
-            const response = await fetch('/api/dicom/preview_svs?full=true&level=0', {
-                headers: { 'Authorization': `Bearer ${token}` }
+        if (dcmViewerFrame) dcmViewerFrame.classList.add('hidden');
+        fullscreenViewer.style.display = 'block';
+        
+        try {
+            token = token || getToken();
+            
+            // First load the metadata before initializing OpenSeadragon
+            const metadata = await loadSvsMetadata(token, true);
+            if (!metadata) throw new Error('Failed to load SVS metadata');
+            
+            // Initialize OpenSeadragon after metadata is loaded
+            if (viewer) {
+                viewer.destroy();
+            }
+            
+            // Современный формат конфигурации для OpenSeadragon
+            viewer = OpenSeadragon({
+                id: "svs-fullscreen-viewer",
+                prefixUrl: "/static/SVS_Viewer/images/",
+                tileSources: {
+                    type: 'image',
+                    url: '/api/dicom/svs_tiles',
+                    ajaxWithCredentials: true,
+                    ajaxHeaders: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    // УДАЛИТЬ: tileSize: 256, // Этот параметр больше не нужен
+                    width: metadata.dimensions.width,
+                    height: metadata.dimensions.height,
+                    tileWidth: 256,  // Явно указываем ширину тайла
+                    tileHeight: 256,  // Явно указываем высоту тайла
+                    minLevel: 0,
+                    maxLevel: metadata.dimensions.levels - 1,
+                    getTileUrl: function(level, x, y) {
+                        // Убедитесь, что размер соответствует tileWidth/tileHeight
+                        return `/api/dicom/svs_tiles?level=${level}&x=${x*256}&y=${y*256}&size=256`;
+                    }
+                },
+                showNavigationControl: false,
+                showZoomControl: false,
+                showHomeControl: false,
+                showFullPageControl: false,
+                showRotationControl: false,
+                showFlipControl: false,
+                showNavigator: false,
+                gestureSettingsMouse: {
+                    scrollToZoom: false,
+                    clickToZoom: false,
+                    dblClickToZoom: false,
+                    pinchToZoom: false
+                },
+                gestureSettingsTouch: {
+                    scrollToZoom: false,
+                    clickToZoom: false,
+                    dblClickToZoom: false,
+                    pinchToZoom: false
+                },
+                gestureSettingsPen: {
+                    scrollToZoom: false,
+                    clickToZoom: false,
+                    dblClickToZoom: false,
+                    pinchToZoom: false
+                }
             });
-            if (!response.ok) throw new Error('Failed to load SVS preview');
-            blob = await response.blob();
-        }
-        
-        const objectUrl = URL.createObjectURL(blob);
-        const tempImg = new Image();
-        
-        tempImg.onload = () => {
-            fullscreenImg.src = objectUrl;
-            fullscreenImg.classList.remove('loading');
-            fullscreenImg.style.transform = 'none';
-            URL.revokeObjectURL(objectUrl);
-        };
-        
-        tempImg.onerror = () => {
-            fullscreenImg.classList.remove('loading');
-            URL.revokeObjectURL(objectUrl);
-            throw new Error('Failed to load image');
-        };
-        
-        tempImg.src = objectUrl;
-        
-        // Загружаем метаданные
-        await loadSvsMetadata(token, true);
-        
-    } catch (err) {
-        console.error("Error in openFullscreenSVS:", err);
-        fullscreenImg.classList.remove('loading');
-        fullscreenViewer.style.display = 'none';
-        if (err.message.includes('401')) {
-            window.location.href = '/';
+            
+        } catch (err) {
+            console.error("Error in openFullscreenSVS:", err);
+            if (err.message.includes('401')) {
+                window.location.href = '/';
+            }
         }
     }
 }
-
 
 
 
@@ -196,7 +218,7 @@ async function loadSvsMetadata(token, isFullscreen = false) {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         
-        if (!metadataRes.ok) return;
+        if (!metadataRes.ok) return null;
         const svsMetadata = await metadataRes.json();
         
         const metadataHTML = generateSvsMetadataHTML(svsMetadata);
@@ -207,8 +229,11 @@ async function loadSvsMetadata(token, isFullscreen = false) {
             document.getElementById('metadata-content').innerHTML = metadataHTML;
             document.getElementById('metadata-container').style.display = 'block';
         }
+        
+        return svsMetadata; // <- Важно: возвращаем метаданные
     } catch (err) {
         console.error("Error loading SVS metadata:", err);
+        return null;
     }
 }
 

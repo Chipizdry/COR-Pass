@@ -447,7 +447,7 @@ def get_svs_slide(
     try:
         slide = OpenSlide(slide_path)
 
-        # Получаем самый высокий уровень детализации (обычно 0)
+       
         img = slide.read_region((0, 0), 0, slide.dimensions)
         img = img.convert("RGB")
 
@@ -459,4 +459,38 @@ def get_svs_slide(
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка при чтении SVS: {e}")
+
+
+
+@router.get("/svs_tiles")
+def get_svs_tile(
+    level: int = Query(...),
+    x: int = Query(...),
+    y: int = Query(...),
+    size: int = Query(256),
+    current_user: User = Depends(auth_service.get_current_user)
+):
+    try:
+        user_slide_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id), "slides")
+        svs_files = [f for f in os.listdir(user_slide_dir) if f.lower().endswith('.svs')]
+        
+        if not svs_files:
+            raise HTTPException(status_code=404, detail="No SVS found.")
+
+        svs_path = os.path.join(user_slide_dir, svs_files[0])
+        
+        with OpenSlide(svs_path) as slide:
+            level = min(level, slide.level_count - 1)
+            img = slide.read_region((x, y), level, (size, size))
+            
+            if img.mode == 'RGBA':
+                img = img.convert('RGB')
+            
+            buf = BytesIO()
+            img.save(buf, format="JPEG", quality=90) 
+            buf.seek(0)
+            return StreamingResponse(buf, media_type="image/jpeg")
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))   
 

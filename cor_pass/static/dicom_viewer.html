@@ -97,15 +97,15 @@
 
   <div id="svs-fullscreen-viewer" class="svs-fullscreen-viewer" style="display: none;">
     <div class="svs-viewer-container">
-        <div class="svs-image-container">
-            <img id="svs-fullscreen-image" class="svs-main-image"/>
-            <div class="svs-toolbar">
-                <button class="tool-btn zoom-in" title="Zoom In">+</button>
-                <button class="tool-btn zoom-out" title="Zoom Out">-</button>
-                <button class="tool-btn pan" title="Pan">↔</button>
-                <button class="tool-btn close-btn" title="Close">×</button>
-            </div>
+
+      <div id="svs-osd-viewer" style="width: 100%; height: 100%;"></div>
+        <div class="svs-toolbar">
+            <button class="tool-btn zoom-in">+</button>
+            <button class="tool-btn zoom-out">-</button>
+            <button class="tool-btn home">⌂</button>
+            <button class="tool-btn close-btn">×</button>
         </div>
+        <div id="svs-fullscreen-viewer" style="width: 100%; height: 100%;"></div>
         <div class="svs-metadata-panel">
             <div class="metadata-header">
                 <h3>Slide Metadata</h3>
@@ -114,6 +114,7 @@
             <div id="svs-metadata-content" class="metadata-content"></div>
         </div>
     </div>
+    <button class="close-btn" title="Close">×</button>
 </div>
 </div>
 
@@ -125,6 +126,9 @@
   <script src="/static/SVS_Viewer/SVS_viewer.js"></script>
   
   <script>
+
+    let viewer = null;
+
     let markers3D = [];
 
     let currentMode = 'auto';
@@ -190,6 +194,15 @@ function formatFileSize(bytes) {
 function showMainContent() {
   document.getElementById('main-content').style.display = 'block';
 }
+
+
+document.querySelector('.zoom-in').addEventListener('click', () => viewer.viewport.zoomBy(1.5));
+document.querySelector('.zoom-out').addEventListener('click', () => viewer.viewport.zoomBy(0.5));
+document.querySelector('.home').addEventListener('click', () => viewer.viewport.goHome());
+document.querySelector('.close-btn').addEventListener('click', () => {
+    viewer.destroy();
+    document.getElementById('svs-fullscreen-viewer').style.display = 'none';
+});
 </script>
 
 </body>
