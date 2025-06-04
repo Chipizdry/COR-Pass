@@ -105,7 +105,8 @@
                     <div id="qrcode"></div>
             </div>
 
-           <!-- Модальное окно для управления ролями пользователя -->
+
+
             <div id="rolesModal" class="modal" style="display: none;">
                 <div class="modal-header">
                     <h3 style="margin-top:30; color:#291161;font-size: 17px;">Управление ролями пользователя:</h3>
@@ -119,13 +120,26 @@
                 <div style="text-align: center; margin-top: 10px;">
                     <span id="rolesСorId" style="color: #291161; font-size: 17px;"></span>
                 </div>       
-                <div id="rolesList"  class="checkbox-container">
+                <div id="rolesList" class="checkbox-container">
                     <!-- Список ролей будет загружен динамически -->
                 </div>
                 <div class="modal-footer" style="text-align: center; margin-top: 20px;">
                     <button onclick="saveUserRoles()" class="button">Сохранить</button>
                 </div>
             </div>
+            
+            <!-- Модальное окно с характеристиками роли -->
+            <div id="roleInfoModal" class="modal" style="display: none;">
+                <div class="modal-header">
+                    <h3 style="margin-top:30; color:#291161;font-size: 17px;">Характеристики роли:</h3>
+                    <div class="modal-buttons">
+                        <button class="modal-button close" data-action="close" id="closeRoleInfoModal">✖</button>
+                    </div>
+                </div>
+                <div id="roleInfoContent" style="padding: 20px;">
+                    <!-- Здесь будет информация о роли -->
+                </div>
+            </div> 
 
 
     <script src="/static/translation.js"></script>
@@ -134,8 +148,13 @@
     <script> 
 
 document.addEventListener('DOMContentLoaded', () => {
-                initAdminPanel();
-                initDateRangePickers();
+        initAdminPanel();
+        initDateRangePickers();
+        document.getElementById('closeRolesModal')?.addEventListener('click', () => closeModal('rolesModal'));
+        document.getElementById('closeRoleInfoModal')?.addEventListener('click', () => closeModal('roleInfoModal'));
+        document.getElementById('closeColumnSelectModal')?.addEventListener('click', () => closeModal('columnSelectModal'));
+        document.getElementById('closeCorIDModal')?.addEventListener('click', () => closeModal('corIdModal'));
+
                 });
 
 
@@ -416,21 +435,6 @@ async function filterTable() {
                 
             }
 
-            function closeCorIdModal() {
-                document.getElementById("corIdModal").style.display = "none";
-            }
-
-            // Функция для закрытия модального окна
-            function closeModal() {
-                document.getElementById('columnSelectModal').style.display = 'none';
-            }
-
-
-                    // Закрытие модального окна
-            document.getElementById('closeCorIDModal').addEventListener('click', function() {
-                document.getElementById('corIdModal').style.display = 'none';
-            });
-
             document.addEventListener('DOMContentLoaded', function () {
                 const tableBody = document.querySelector("#userTable tbody");
                 if (!tableBody) return;
@@ -593,6 +597,7 @@ function adjustTableLayout() {
 }
 
 
+
 async function showUserRoles(corId) {
     if (!checkToken()) return;
 
@@ -628,17 +633,32 @@ async function showUserRoles(corId) {
         rolesList.innerHTML = '';
 
         // Создаем чекбоксы для каждой возможной роли
-        const allRoles = ['admin', 'lawyer', 'cor-int', 'active_user', 'doctor']; // Все возможные роли
+        const allRoles = ['admin', 'lawyer', 'cor-int', 'active_user', 'doctor'];
         allRoles.forEach(role => {
             const isChecked = userRoles.includes(role);
-            const roleItem = document.createElement('div');
-          //  roleItem.className = 'role-item';
-            roleItem.innerHTML = `
-               
-                 <label class="checkbox-label"> <input type="checkbox" name="roles" value="${role}" ${isChecked ? 'checked' : ''}>
-                    ${role}</label>
+            const checkboxId = `role-${role}-${Date.now()}`;
+            
+            const label = document.createElement('label');
+            label.className = 'role-label';
+            label.innerHTML = `
+                <input type="checkbox" name="roles" value="${role}" id="${checkboxId}" ${isChecked ? 'checked' : ''}>
+                <span class="role-name">${role}</span>
             `;
-            rolesList.appendChild(roleItem);
+            
+            // Обработчик клика по названию роли
+            const roleName = label.querySelector('.role-name');
+            roleName.addEventListener('click', (e) => {
+                e.preventDefault();
+                showRoleInfo(role);
+            });
+            
+            // Обработчик для чекбокса
+            const checkbox = label.querySelector('input');
+            checkbox.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+            
+            rolesList.appendChild(label);
         });
 
         // Сохраняем corId в data-атрибут для использования при сохранении
@@ -652,6 +672,78 @@ async function showUserRoles(corId) {
         alert('Произошла ошибка при загрузке информации о пользователе');
     }
 }
+
+function showRoleInfo(role) {
+    const roleInfoContent = document.getElementById("roleInfoContent");
+    roleInfoContent.innerHTML = '';
+    
+    // Здесь можно добавить информацию о каждой роли
+    let roleDescription = '';
+    switch(role) {
+        case 'admin':
+            roleDescription = `
+                <h3>Администратор</h3>
+                <p>Полный доступ ко всем функциям системы.</p>
+                <ul>
+                    <li>Управление пользователями</li>
+                    <li>Настройка системы</li>
+                    <li>Доступ ко всем данным</li>
+                </ul>
+            `;
+            break;
+        case 'lawyer':
+            roleDescription = `
+                <h3>Юрист</h3>
+                <p>Доступ к юридическим документам и функциям.</p>
+                <ul>
+                    <li>Просмотр и редактирование документов</li>
+                    <li>Создание юридических заключений</li>
+                    <li>Доступ к юридической базе</li>
+                </ul>
+            `;
+            break;
+        case 'cor-int':
+            roleDescription = `
+                <h3>Корпоративный интернационал</h3>
+                <p>Доступ к международным функциям.</p>
+                <ul>
+                    <li>Международные документы</li>
+                    <li>Переводы</li>
+                    <li>Международные стандарты</li>
+                </ul>
+            `;
+            break;
+        case 'active_user':
+            roleDescription = `
+                <h3>Активный пользователь</h3>
+                <p>Стандартные права пользователя.</p>
+                <ul>
+                    <li>Доступ к основным функциям</li>
+                    <li>Создание и редактирование своих документов</li>
+                    <li>Ограниченный доступ к данным</li>
+                </ul>
+            `;
+            break;
+        case 'doctor':
+            roleDescription = `
+                <h3>Врач</h3>
+                <p>Доступ к медицинским данным и функциям.</p>
+                <ul>
+                    <li>Просмотр медицинских карт</li>
+                    <li>Создание медицинских заключений</li>
+                    <li>Доступ к медицинской базе</li>
+                </ul>
+            `;
+            break;
+        default:
+            roleDescription = `<p>Информация о роли "${role}" отсутствует.</p>`;
+    }
+    
+    roleInfoContent.innerHTML = roleDescription;
+    document.getElementById("roleInfoModal").style.display = "block";
+}
+
+
 
     </script>
 </body>
