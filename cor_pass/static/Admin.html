@@ -632,37 +632,43 @@ async function showUserRoles(corId) {
         const rolesList = document.getElementById("rolesList");
         rolesList.innerHTML = '';
 
-        // Создаем чекбоксы для каждой возможной роли
+        // Создаем элементы только для отображения ролей
         const allRoles = ['admin', 'lawyer', 'cor-int', 'active_user', 'doctor'];
         allRoles.forEach(role => {
             const isChecked = userRoles.includes(role);
-            const checkboxId = `role-${role}-${Date.now()}`;
             
-            const label = document.createElement('label');
-            label.className = 'role-label';
-            label.innerHTML = `
-                <input type="checkbox" name="roles" value="${role}" id="${checkboxId}" ${isChecked ? 'checked' : ''}>
-                <span class="role-name">${role}</span>
-            `;
+            // Создаем контейнер для роли
+            const roleContainer = document.createElement('div');
+            roleContainer.className = 'role-container';
             
-            // Обработчик клика по названию роли
-            const roleName = label.querySelector('.role-name');
+            // Создаем "чекбокс" (на самом деле просто картинка)
+            const checkboxIcon = document.createElement('span');
+            checkboxIcon.className = 'role-checkbox-icon';
+            checkboxIcon.innerHTML = isChecked ? '✓' : '✗'; // или используйте иконки
+            checkboxIcon.style.color = isChecked ? 'green' : 'red';
+            
+            // Создаем название роли
+            const roleName = document.createElement('span');
+            roleName.className = 'role-name';
+            roleName.textContent = role;
+            
+            // Добавляем обработчик клика по названию роли
             roleName.addEventListener('click', (e) => {
                 e.preventDefault();
                 showRoleInfo(role);
             });
             
-            // Обработчик для чекбокса
-            const checkbox = label.querySelector('input');
-            checkbox.addEventListener('click', (e) => {
-                e.stopPropagation();
-            });
-            
-            rolesList.appendChild(label);
+            // Собираем все вместе
+            roleContainer.appendChild(checkboxIcon);
+            roleContainer.appendChild(roleName);
+            rolesList.appendChild(roleContainer);
         });
 
-        // Сохраняем corId в data-атрибут для использования при сохранении
-        rolesList.setAttribute('data-cor-id', corId);
+        // Удаляем кнопку "Сохранить", так как изменения теперь невозможны
+        const saveButton = document.querySelector('#rolesModal .modal-footer button');
+        if (saveButton) {
+            saveButton.style.display = 'none';
+        }
 
         // Открываем модальное окно
         document.getElementById("rolesModal").style.display = "block";
@@ -683,56 +689,31 @@ function showRoleInfo(role) {
         case 'admin':
             roleDescription = `
                 <h3>Администратор</h3>
-                <p>Полный доступ ко всем функциям системы.</p>
-                <ul>
-                    <li>Управление пользователями</li>
-                    <li>Настройка системы</li>
-                    <li>Доступ ко всем данным</li>
-                </ul>
+              
             `;
             break;
         case 'lawyer':
             roleDescription = `
                 <h3>Юрист</h3>
-                <p>Доступ к юридическим документам и функциям.</p>
-                <ul>
-                    <li>Просмотр и редактирование документов</li>
-                    <li>Создание юридических заключений</li>
-                    <li>Доступ к юридической базе</li>
-                </ul>
+               
             `;
             break;
         case 'cor-int':
             roleDescription = `
-                <h3>Корпоративный интернационал</h3>
-                <p>Доступ к международным функциям.</p>
-                <ul>
-                    <li>Международные документы</li>
-                    <li>Переводы</li>
-                    <li>Международные стандарты</li>
-                </ul>
+                <h3>Корпоративный</h3>
+              
             `;
             break;
         case 'active_user':
             roleDescription = `
                 <h3>Активный пользователь</h3>
-                <p>Стандартные права пользователя.</p>
-                <ul>
-                    <li>Доступ к основным функциям</li>
-                    <li>Создание и редактирование своих документов</li>
-                    <li>Ограниченный доступ к данным</li>
-                </ul>
+                
             `;
             break;
         case 'doctor':
             roleDescription = `
                 <h3>Врач</h3>
-                <p>Доступ к медицинским данным и функциям.</p>
-                <ul>
-                    <li>Просмотр медицинских карт</li>
-                    <li>Создание медицинских заключений</li>
-                    <li>Доступ к медицинской базе</li>
-                </ul>
+               
             `;
             break;
         default:
