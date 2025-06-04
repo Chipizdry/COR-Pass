@@ -45,193 +45,6 @@ function prepareUIBeforeUpload() {
     return response.json();
   }
 
-
-  async function handleSVS(token) {
-    try {
-        // Load preview image
-        const previewResponse = await fetch('/api/dicom/preview_svs', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!previewResponse.ok) throw new Error('Failed to load SVS preview');
-        
-        const blob = await previewResponse.blob();
-        const thumbnail = document.getElementById('svs-thumbnail');
-        thumbnail.src = URL.createObjectURL(blob);
-        document.getElementById('svs-preview-container').style.display = 'block';
-        document.getElementById('viewer-controls').style.display = 'none';
-        
-        // Add click handler to open fullscreen
-        thumbnail.onclick = () => openFullscreenSVS(blob, token);
-        
-        // Load metadata
-        await loadSvsMetadata(token);
-    } catch (err) {
-        console.error("Error handling SVS file:", err);
-        document.getElementById('upload-status').textContent = `Error: ${err.message}`;
-    }
-}
-
-async function openFullscreenSVS(blob = null, token = null) {
-    const fullscreenViewer = document.getElementById('svs-fullscreen-viewer');
-    const fullscreenImg = document.getElementById('svs-fullscreen-image');
-    const dcmViewerFrame = document.getElementById('DcmViewerFrame');
-    
-    // Скрываем DICOM viewer
-    if (dcmViewerFrame) dcmViewerFrame.classList.add('hidden');
-    
-    // Показываем контейнер и индикатор загрузки
-    fullscreenViewer.style.display = 'block';
-    fullscreenImg.classList.add('loading');
-    
-    try {
-        token = token || getToken();
-        
-        // Если blob не передан, загружаем изображение
-        if (!blob) {
-            const response = await fetch('/api/dicom/preview_svs?full=true&level=0', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('Failed to load SVS preview');
-            blob = await response.blob();
-        }
-        
-        const objectUrl = URL.createObjectURL(blob);
-        const tempImg = new Image();
-        
-        tempImg.onload = () => {
-            fullscreenImg.src = objectUrl;
-            fullscreenImg.classList.remove('loading');
-            fullscreenImg.style.transform = 'none';
-            URL.revokeObjectURL(objectUrl);
-        };
-        
-        tempImg.onerror = () => {
-            fullscreenImg.classList.remove('loading');
-            URL.revokeObjectURL(objectUrl);
-            throw new Error('Failed to load image');
-        };
-        
-        tempImg.src = objectUrl;
-        
-        // Загружаем метаданные
-        await loadSvsMetadata(token, true);
-        
-    } catch (err) {
-        console.error("Error in openFullscreenSVS:", err);
-        fullscreenImg.classList.remove('loading');
-        fullscreenViewer.style.display = 'none';
-        if (err.message.includes('401')) {
-            window.location.href = '/';
-        }
-    }
-}
-
-async function openFullscreenSVSFromThumbnail() {
-    const token = getToken();
-    const fullscreenViewer = document.getElementById('svs-fullscreen-viewer');
-    const fullscreenImg = document.getElementById('svs-fullscreen-image');
-    
-    // Показываем контейнер и индикатор загрузки
-    fullscreenViewer.style.display = 'block';
-    fullscreenImg.classList.add('loading');
-    
-    try {
-        // Загружаем полное изображение первого уровня
-        const response = await fetch('/api/dicom/preview_svs?full=true&level=0', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Failed to load full SVS image: ${response.status}`);
-        }
-        
-        const blob = await response.blob();
-        const objectUrl = URL.createObjectURL(blob);
-        
-        // Создаем временное изображение для проверки загрузки
-        const tempImg = new Image();
-        tempImg.onload = () => {
-            fullscreenImg.src = objectUrl;
-            fullscreenImg.classList.remove('loading');
-            fullscreenImg.style.transform = 'none';
-            URL.revokeObjectURL(objectUrl);
-        };
-        tempImg.onerror = () => {
-            fullscreenImg.classList.remove('loading');
-            URL.revokeObjectURL(objectUrl);
-            throw new Error('Failed to load image');
-        };
-        tempImg.src = objectUrl;
-        
-        // Загружаем метаданные
-        await loadSvsMetadata(token, true);
-        
-    } catch (err) {
-        console.error("Error opening fullscreen SVS:", err);
-        fullscreenImg.classList.remove('loading');
-        alert("Failed to open fullscreen viewer: " + err.message);
-        fullscreenViewer.style.display = 'none';
-    }
-}
-
-async function loadSvsMetadata(token, isFullscreen = false) {
-    try {
-        const metadataRes = await fetch('/api/dicom/svs_metadata', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (!metadataRes.ok) return;
-        const svsMetadata = await metadataRes.json();
-        
-        const metadataHTML = generateSvsMetadataHTML(svsMetadata);
-        
-        if (isFullscreen) {
-            document.getElementById('svs-metadata-content').innerHTML = metadataHTML;
-        } else {
-            document.getElementById('metadata-content').innerHTML = metadataHTML;
-            document.getElementById('metadata-container').style.display = 'block';
-        }
-    } catch (err) {
-        console.error("Error loading SVS metadata:", err);
-    }
-}
-
-function generateSvsMetadataHTML(svsMetadata) {
-    return `
-        <div class="metadata-section">
-            <h4>Basic Information</h4>
-            <div class="metadata-grid">
-                <div class="metadata-item"><span class="metadata-label">Filename:</span> ${svsMetadata.filename}</div>
-                <div class="metadata-item"><span class="metadata-label">Dimensions:</span> ${svsMetadata.dimensions.width.toLocaleString()} × ${svsMetadata.dimensions.height.toLocaleString()} px</div>
-                <div class="metadata-item"><span class="metadata-label">Levels:</span> ${svsMetadata.dimensions.levels}</div>
-                <div class="metadata-item"><span class="metadata-label">MPP:</span> ${svsMetadata.basic_info.mpp}</div>
-                <div class="metadata-item"><span class="metadata-label">Magnification:</span> ${svsMetadata.basic_info.magnification}x</div>
-                <div class="metadata-item"><span class="metadata-label">Scan Date:</span> ${svsMetadata.basic_info.scan_date}</div>
-                <div class="metadata-item"><span class="metadata-label">Scanner:</span> ${svsMetadata.basic_info.scanner}</div>
-            </div>
-        </div>
-
-        <div class="metadata-section">
-            <h4>Level Details</h4>
-            <table class="metadata-table">
-                <thead><tr><th>Level</th><th>Downsample</th><th>Dimensions</th></tr></thead>
-                <tbody>
-                    ${svsMetadata.levels.map((lvl, i) => `
-                        <tr><td>${i}</td><td>${lvl.downsample.toFixed(1)}</td><td>${lvl.width.toLocaleString()} × ${lvl.height.toLocaleString()}</td></tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        </div>
-
-        <div class="metadata-section">
-            <details class="technical-metadata">
-                <summary>Technical Metadata</summary>
-                <pre>${svsMetadata.full_properties ? Object.entries(svsMetadata.full_properties).map(([k, v]) => `${k}: ${v}`).join('\n') : 'No technical metadata available.'}</pre>
-            </details>
-        </div>
-    `;
-}
-
   
   async function handleDICOM(token) {
     const svsPreview = document.getElementById('svs-preview-container');
@@ -311,58 +124,201 @@ function generateSvsMetadataHTML(svsMetadata) {
     }
 }
 
+async function update(plane, callback) {
+    const idx = parseInt(document.getElementById(plane).value);
+    const canvas = document.getElementById('canvas-' + plane);
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    // Получаем токен из localStorage или URL
+    const token = localStorage.getItem('authToken') || 
+                  new URLSearchParams(window.location.search).get('access_token');
 
-function setupSVSViewerControls() {
-    const img = document.getElementById('svs-fullscreen-image');
-    const container = document.querySelector('.svs-image-container');
-    let scale = 1;
-    let isPanning = false;
-    let startX, startY, translateX = 0, translateY = 0;
+    img.onload = function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        drawCrossOnPlane(ctx, plane);
+        // Добавляем проверку, является ли callback функцией перед вызовом
+        if (callback && typeof callback === 'function') {
+            callback();
+        }
+    };
 
-    // Zoom In
-    document.querySelector('.zoom-in').addEventListener('click', () => {
-        scale *= 1.2;
-        updateImageTransform();
+    // Создаем URL с параметрами
+    const params = new URLSearchParams({
+        index: idx,
+        mode: currentMode,
+        t: Date.now()
     });
 
-    // Zoom Out
-    document.querySelector('.zoom-out').addEventListener('click', () => {
-        scale /= 1.2;
-        updateImageTransform();
-    });
+    if (currentMode === 'window') {
+        params.append('window_center', manualWindowCenter);
+        params.append('window_width', manualWindowWidth);
+    }
 
-    // Pan mode toggle
-    document.querySelector('.pan').addEventListener('click', () => {
-        isPanning = !isPanning;
-        document.querySelector('.pan').classList.toggle('active', isPanning);
-    });
+    try {
+        const response = await fetch(`/api/dicom/reconstruct/${plane}?${params.toString()}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
 
-    // Mouse/touch events for panning
-    container.addEventListener('mousedown', (e) => {
-        if (!isPanning) return;
-        startX = e.clientX - translateX;
-        startY = e.clientY - translateY;
-        container.style.cursor = 'grabbing';
-    });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-    container.addEventListener('mousemove', (e) => {
-        if (!isPanning || !startX) return;
-        translateX = e.clientX - startX;
-        translateY = e.clientY - startY;
-        updateImageTransform();
-    });
-
-    container.addEventListener('mouseup', () => {
-        if (!isPanning) return;
-        startX = startY = null;
-        container.style.cursor = isPanning ? 'grab' : 'default';
-    });
-
-    container.addEventListener('mouseleave', () => {
-        startX = startY = null;
-    });
-
-    function updateImageTransform() {
-        img.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+        const blob = await response.blob();
+        img.src = URL.createObjectURL(blob);
+    } catch (error) {
+        console.error('Error loading DICOM image:', error);
+        // Обработка ошибок (например, показать сообщение)
+        if (error.message.includes('401')) {
+            alert('Session expired. Please login again.');
+            window.location.href = '/';
+        }
     }
 }
+
+
+  // Добавление метки по клику
+  function addMarker(event, plane) {
+    const canvas = event.target;
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.round(event.clientX - rect.left);
+    const y = Math.round(event.clientY - rect.top);
+  
+    // Получаем фактические размеры изображения на canvas
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const scaleX = 512 / imgWidth;
+    const scaleY = 512 / imgHeight;
+  
+    const indices = {
+      axial: parseInt(document.getElementById('axial').value),
+      sagittal: parseInt(document.getElementById('sagittal').value),
+      coronal: parseInt(document.getElementById('coronal').value),
+    };
+  
+    let point3D;
+  
+    if (plane === 'axial') {
+      point3D = { 
+        x: x * scaleX, 
+        y: y * scaleY, 
+        z: indices.axial 
+      };
+    } else if (plane === 'sagittal') {
+      point3D = {
+        x: indices.sagittal,
+        y: 512 - (x * scaleX),  // учитываем переворот изображения
+        z: 512 - (y * scaleY)    // x на изображении становится z в объеме
+      };
+    } else if (plane === 'coronal') {
+      point3D = {
+        x: x * scaleX,
+        y: indices.coronal,
+        z: 512 - (y * scaleY)    // учитываем переворот изображения
+      };
+    }
+  
+    markers3D = [point3D];
+    drawCrossOnSlices(point3D);
+  }
+
+
+  
+function updateSliders(volumeInfo) {
+    // Используем slices вместо depth, если shape отсутствует
+    const depth = volumeInfo.shape?.depth ?? volumeInfo.slices;
+    const width = volumeInfo.shape?.width ?? volumeInfo.width;
+    const height = volumeInfo.shape?.height ?? volumeInfo.height;
+  
+    // Устанавливаем максимальные значения для каждого ползунка
+    document.getElementById('axial').max = Math.max(0, depth - 1);
+    document.getElementById('sagittal').max = Math.max(0, width - 1);
+    document.getElementById('coronal').max = Math.max(0, height - 1);
+    
+    // Устанавливаем средние значения
+    document.getElementById('axial').value = Math.floor(depth / 2);
+    document.getElementById('sagittal').value = Math.floor(width / 2);
+    document.getElementById('coronal').value = Math.floor(height / 2);
+    
+    // Обновляем отображаемые значения
+    updateSliderValue('axial');
+    updateSliderValue('sagittal');
+    updateSliderValue('coronal');
+  }
+  
+  // Функция для обновления отображаемого значения ползунка
+  function updateSliderValue(plane) {
+    const slider = document.getElementById(plane);
+    const valueDisplay = slider.nextElementSibling; 
+    if (valueDisplay && valueDisplay.classList.contains('dcm-range-value')) {
+      valueDisplay.textContent = slider.value;
+    }
+  }
+  
+
+
+ // Рисование перекрестия на конкретном срезе
+ function drawCrossOnPlane(ctx, plane, point3D = markers3D[0]) {
+    if (!point3D) return;
+  
+    // Получаем размеры изображения на canvas
+    const canvas = ctx.canvas;
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    
+    // Рассчитываем масштабные коэффициенты
+    const scaleX = imgWidth / 512;
+    const scaleY = imgHeight / 512;
+  
+    ctx.strokeStyle = 'lime';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+  
+    if (plane === 'axial') {
+      // Для аксиальной плоскости просто используем x и y
+      const yPos = point3D.y * scaleY;
+      ctx.moveTo(0, yPos);
+      ctx.lineTo(imgWidth, yPos);
+      
+      const xPos = point3D.x * scaleX;
+      ctx.moveTo(xPos, 0);
+      ctx.lineTo(xPos, imgHeight);
+    } else if (plane === 'sagittal') {
+      // Для сагиттальной плоскости
+      const imgZ = (512 - point3D.z) * scaleY;
+      ctx.moveTo(0, imgZ);
+      ctx.lineTo(imgWidth, imgZ);
+  
+      const yPos = (512 - point3D.y) * scaleX;
+      ctx.moveTo(yPos, 0);
+      ctx.lineTo(yPos, imgHeight);
+    } else if (plane === 'coronal') {
+      // Для корональной плоскости
+      const imgZ = (512 - point3D.z) * scaleY;
+      ctx.moveTo(0, imgZ);
+      ctx.lineTo(imgWidth, imgZ);
+      
+      const xPos = point3D.x * scaleX;
+      ctx.moveTo(xPos, 0);
+      ctx.lineTo(xPos, imgHeight);
+    }
+  
+    ctx.stroke();
+  } 
+
+
+  
+
+    // Рисование перекрестия на всех срезах
+    function drawCrossOnSlices(point3D) {
+        ['axial', 'sagittal', 'coronal'].forEach(plane => {
+          update(plane, () => {
+            const canvas = document.getElementById('canvas-' + plane);
+            const ctx = canvas.getContext('2d');
+            drawCrossOnPlane(ctx, plane, point3D);
+          });
+        });
+      }
