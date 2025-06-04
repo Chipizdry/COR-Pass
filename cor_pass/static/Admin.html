@@ -644,7 +644,7 @@ async function showUserRoles(corId) {
             // Создаем "чекбокс" (на самом деле просто картинка)
             const checkboxIcon = document.createElement('span');
             checkboxIcon.className = 'role-checkbox-icon';
-            checkboxIcon.innerHTML = isChecked ? '✓' : '✗'; // или используйте иконки
+            checkboxIcon.innerHTML = isChecked ? '✓' : '✗';
             checkboxIcon.style.color = isChecked ? 'green' : 'red';
             
             // Создаем название роли
@@ -655,7 +655,7 @@ async function showUserRoles(corId) {
             // Добавляем обработчик клика по названию роли
             roleName.addEventListener('click', (e) => {
                 e.preventDefault();
-                showRoleInfo(role);
+                showRoleInfo(role, data); // Передаем все данные пользователя
             });
             
             // Собираем все вместе
@@ -664,7 +664,6 @@ async function showUserRoles(corId) {
             rolesList.appendChild(roleContainer);
         });
 
-        // Удаляем кнопку "Сохранить", так как изменения теперь невозможны
         const saveButton = document.querySelector('#rolesModal .modal-footer button');
         if (saveButton) {
             saveButton.style.display = 'none';
@@ -679,43 +678,84 @@ async function showUserRoles(corId) {
     }
 }
 
-function showRoleInfo(role) {
+
+function showRoleInfo(role, userData) {
     const roleInfoContent = document.getElementById("roleInfoContent");
     roleInfoContent.innerHTML = '';
     
-    // Здесь можно добавить информацию о каждой роли
     let roleDescription = '';
+    
     switch(role) {
         case 'admin':
             roleDescription = `
                 <h3>Администратор</h3>
-              
+               
             `;
             break;
+            
         case 'lawyer':
             roleDescription = `
                 <h3>Юрист</h3>
-               
-            `;
-            break;
-        case 'cor-int':
-            roleDescription = `
-                <h3>Корпоративный</h3>
-              
-            `;
-            break;
-        case 'active_user':
-            roleDescription = `
-                <h3>Активный пользователь</h3>
                 
             `;
             break;
+            
+        case 'cor-int':
+            roleDescription = `
+                <h3>Корпоративный пользователь</h3>
+                
+            `;
+            break;
+            
+        case 'active_user':
+            roleDescription = `
+                <h3>Активный пользователь</h3>
+                <div class="role-details">
+                   
+                    ${userData.profile ? `
+                        <div class="profile-section">
+                            <h4>Профиль:</h4>
+                            <p><strong>Имя:</strong> ${userData.profile.first_name}</p>
+                            <p><strong>Город:</strong> ${userData.profile.city}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            break;
+            
         case 'doctor':
             roleDescription = `
                 <h3>Врач</h3>
-               
+                <div class="role-details">
+                   
+                    ${userData.doctor_info ? `
+                        <div class="doctor-section">
+                            <h4>Профессиональная информация:</h4>
+                            <p><strong>ФИО:</strong> ${userData.doctor_info.surname} ${userData.doctor_info.first_name} ${userData.doctor_info.last_name || ''}</p>
+                            <p><strong>Рабочий email:</strong> ${userData.doctor_info.work_email}</p>
+                            <p><strong>Телефон:</strong> ${userData.doctor_info.phone_number}</p>
+                            <p><strong>Научная степень:</strong> ${userData.doctor_info.scientific_degree || 'нет'}</p>
+                            <p><strong>Статус:</strong> ${userData.doctor_info.status}</p>
+                            
+                            ${userData.doctor_info.diplomas && userData.doctor_info.diplomas.length > 0 ? `
+                                <h4>Дипломы:</h4>
+                                <ul class="documents-list">
+                                    ${userData.doctor_info.diplomas.map(diploma => `<li>${diploma}</li>`).join('')}
+                                </ul>
+                            ` : ''}
+                            
+                            ${userData.doctor_info.certificates && userData.doctor_info.certificates.length > 0 ? `
+                                <h4>Сертификаты:</h4>
+                                <ul class="documents-list">
+                                    ${userData.doctor_info.certificates.map(cert => `<li>${cert}</li>`).join('')}
+                                </ul>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                </div>
             `;
             break;
+            
         default:
             roleDescription = `<p>Информация о роли "${role}" отсутствует.</p>`;
     }
@@ -723,8 +763,6 @@ function showRoleInfo(role) {
     roleInfoContent.innerHTML = roleDescription;
     document.getElementById("roleInfoModal").style.display = "block";
 }
-
-
 
     </script>
 </body>
