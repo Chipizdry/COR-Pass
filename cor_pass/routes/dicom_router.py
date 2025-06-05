@@ -510,29 +510,23 @@ def get_dzi_info(current_user: User = Depends(auth_service.get_current_user)):
     try:
         slide_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id), "slides")
         svs_files = [f for f in os.listdir(slide_dir) if f.lower().endswith('.svs')]
-
         if not svs_files:
             raise HTTPException(status_code=404, detail="No SVS file found.")
 
         svs_path = os.path.join(slide_dir, svs_files[0])
-
         with OpenSlide(svs_path) as slide:
             width, height = slide.dimensions
             tile_size = 256
-            format = "jpeg"
             overlap = 0
+            format = "jpeg"
 
-            # Используем количество уровней из OpenSlide
-            max_level = slide.level_count - 1
-
-            # Генерируем DZI XML вручную
+            # Важно! OpenSeadragon сам вычислит уровни
             image = ET.Element("Image", TileSize=str(tile_size), Overlap=str(overlap),
                                Format=format, xmlns="http://schemas.microsoft.com/deepzoom/2008")
             ET.SubElement(image, "Size", Width=str(width), Height=str(height))
             xml_bytes = ET.tostring(image, encoding="utf-8", method="xml")
-
             return Response(content=xml_bytes, media_type="application/xml")
 
     except Exception as e:
-        print("Ошибка при генерации DZI:", str(e))  # для отладки
+        print("Ошибка при генерации DZI:", str(e))
         raise HTTPException(status_code=500, detail=f"DZI generation failed: {str(e)}")

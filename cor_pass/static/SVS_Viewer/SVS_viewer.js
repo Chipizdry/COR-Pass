@@ -94,11 +94,12 @@ async function openFullscreenSVS(blob = null, token = null) {
         token = token || localStorage.getItem('authToken');
         if (!token) throw new Error("No token found. Please log in.");
 
-        if (viewer && typeof viewer.destroy === 'function') {
+        // Удаляем старый viewer, если он есть
+        if (window.viewer && typeof viewer.destroy === 'function') {
             viewer.destroy();
         }
 
-        // Загружаем DZI XML вручную
+        // Загружаем DZI-XML вручную с токеном
         const dziResponse = await fetch('/api/dicom/dzi_info', {
             headers: {
                 'Authorization': 'Bearer ' + token
@@ -113,43 +114,52 @@ async function openFullscreenSVS(blob = null, token = null) {
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(dziText, "application/xml");
 
-        const imageNode = xmlDoc.querySelector("Image");
+        const imageNode = xmlDoc.documentElement;
+        if (!imageNode || imageNode.nodeName !== "Image") {
+            throw new Error("Invalid DZI XML format");
+        }
+
+        const svsMetadata = await loadSvsMetadata(token, true);
+    if (!svsMetadata) throw new Error("Failed to load SVS metadata");
+
+    const width = svsMetadata.dimensions.width;
+    const height = svsMetadata.dimensions.height;
+    const maxLevel = svsMetadata.dimensions.levels - 1;
+    const tileSize = 256; 
+
         const sizeNode = imageNode.querySelector("Size");
+       // const width = parseInt(sizeNode.getAttribute("Width"));
+       // const height = parseInt(sizeNode.getAttribute("Height"));
+      //  const tileSize = parseInt(imageNode.getAttribute("TileSize"));
 
-        const tileSize = parseInt(imageNode.getAttribute("TileSize"), 10);
-        const overlap = parseInt(imageNode.getAttribute("Overlap"), 10);
-        const format = imageNode.getAttribute("Format");
-        const width = parseInt(sizeNode.getAttribute("Width"), 10);
-        const height = parseInt(sizeNode.getAttribute("Height"), 10);
-
-        // Теперь вручную передаём конфигурацию tileSources
-        viewer = OpenSeadragon({
+        // Инициализация OpenSeadragon
+        window.viewer = OpenSeadragon({
             id: "openseadragon1",
-            showNavigationControl: false,
+            showNavigationControl: true,
             loadTilesWithAjax: true,
-            ajaxHeaders: {
-                "Authorization": "Bearer " + token
-            },
+            ajaxWithCredentials: false,
+            ajaxHeaders: { 'Authorization': 'Bearer ' + token },
             tileSources: {
                 height: height,
                 width: width,
-                tileSize: tileSize,
-                tileOverlap: overlap,
+                tileWidth: tileSize,
+                tileHeight: tileSize,
                 minLevel: 0,
-                maxLevel: levelCount - 1,
-                getTileUrl: function(level, x, y) {
-                    return `/api/dicom/svs_tiles?level=${level}&x=${x * tileSize}&y=${y * tileSize}&size=${tileSize}`;
+                maxLevel: maxLevel,
+              //  getTileUrl: function (level, x, y) {
+              //      return `/api/dicom/svs_tiles?level=${level}&x=${x * tileSize}&y=${y * tileSize}&size=${tileSize}`;
+              //  }
+                getTileUrl: function (level, x, y) {
+                    return `/api/dicom/svs_tiles?level=${level}&x=${x}&y=${y}&size=${tileSize}`;
                 }
             }
         });
-
         await loadSvsMetadata(token, true);
 
     } catch (err) {
         console.error("Error in openFullscreenSVS:", err);
         alert("Ошибка при открытии SVS: " + err.message);
         fullscreenViewer.style.display = 'none';
-
         if (err.message.includes('401')) {
             window.location.href = '/';
         }
@@ -161,6 +171,7 @@ async function openFullscreenSVSFromThumbnail() {
     const token = getToken();
     const fullscreenViewer = document.getElementById('svs-fullscreen-viewer');
     const fullscreenImg = document.getElementById('svs-fullscreen-image');
+    
     
     // Показываем контейнер и индикатор загрузки
     fullscreenViewer.style.display = 'block';
