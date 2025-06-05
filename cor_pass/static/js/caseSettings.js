@@ -57,12 +57,16 @@ document.addEventListener("DOMContentLoaded", (event) => {
                     name: "B"
                 },
                 {
+                    id: "Excisio",
+                    name: "E"
+                },
+                {
                     id: "Cytology",
                     name: "C"
                 },
                 {
                     id: "Cellblock",
-                    name: "CB"
+                    name: "X"
                 },
                 {
                     id: "Second Opinion",
@@ -74,7 +78,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
                 },
                 {
                     id: "Electron Microscopy",
-                    name: "EM"
+                    name: "Y"
                 },
             ],
         },

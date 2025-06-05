@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="./css/reset.css">
+    <link rel="stylesheet" href="./css/general.css">
+    <link rel="stylesheet" href="./css/infoPlate.css">
+    <link rel="stylesheet" href="./css/comments.css">
+    <link rel="stylesheet" href="./css/header.css">
+    <link rel="stylesheet" href="./css/glass.css">
+    <link rel="stylesheet" href="./css/exploration.css">
+</head>
+<body>
+
+<div class="glassPageWrapper df fdc">
+    <div class="header-container">
+        <div class="header-row top">
+            <div class="search-container">
+                <input type="text" placeholder="Search">
+                <svg class="search-icon" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="7"/><line x1="16.65" y1="16.65" x2="21" y2="21"/>
+                </svg>
+            </div>
+            <div class="role-container">
+                <button class="role-icon" aria-label="User roles">
+                    <svg class="icon-group" viewBox="0 0 24 24">
+                        <circle cx="9" cy="7" r="4"/>
+                        <circle cx="17" cy="7" r="4"/>
+                        <path d="M5 21v-2a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v2"/>
+                        <path d="M13 21v-2a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v2"/>
+                    </svg>
+                </button>
+                <div class="role-toggle">
+                    <button class="role-btn">Лікар</button>
+                </div>
+                <div class="role-toggle">
+                    <button class="role-btn">Лаборант</button>
+                </div>
+            </div>
+        </div>
+        <div class="header-row bottom">
+            <div>
+                <div class="tabs">
+                    <button class="tab">Направлення</button>
+                    <button class="tab">Вирізка</button>
+                    <button class="tab">Скельця</button>
+                    <button class="tab">Заключення</button>
+                    <button class="tab active">Дослідження</button>
+                </div>
+            </div>
+            <div class="meta-info">
+                <div>
+                    <span id="searchCaseId"></span>
+                    <button class="edit-btn" aria-label="Edit case">
+                        <svg class="icon-edit" viewBox="0 0 24 24">
+                            <path d="M4 20h16"/>
+                            <path d="M14.7 5.3l4 4L9 19.3l-4-4L14.7 5.3z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div>Кукліс Олег Геннадійович</div>
+                <div>Чол</div>
+                <div>65р</div>
+            </div>
+        </div>
+    </div>
+    <div class="glassPageContent df jcsb">
+        <div class="left">
+            <div class="top borderRadiusLeft">
+                Поточні кейси
+            </div>
+            <div class="bottom">
+                <div id="caseItems" class="caseItems">
+                    <div class="caseItem df aic jcsb">
+                        <div>
+                            <div class="caseItemDate">27.03.2025</div>
+                            <div class="caseItemLabel">S25B01251</div>
+                        </div>
+                        <div class="caseItemSample df aic jcc">
+                            1
+                        </div>
+                        <div>
+                            <div class="infoPlate cassette">
+                                1
+                            </div>
+                        </div>
+                        <div>
+                            <div class="infoPlate glass">
+                                1
+                            </div>
+                        </div>
+                    </div>
+                    <div class="caseItem df aic jcsb">
+                        <div>
+                            <div class="caseItemDate">27.03.2025</div>
+                            <div class="caseItemLabel">S25B01251</div>
+                        </div>
+                        <div class="caseItemSample df aic jcc">
+                            1
+                        </div>
+                        <div>
+                            <div class="infoPlate cassette">
+                                1
+                            </div>
+                        </div>
+                        <div>
+                            <div class="infoPlate glass">
+                                1
+                            </div>
+                        </div>
+                    </div>
+                    <div class="caseItem df active aic jcsb">
+                        <div>
+                            <div class="caseItemDate">27.03.2025</div>
+                            <div class="caseItemLabel">S25B01251</div>
+                        </div>
+                        <div class="caseItemSample df aic jcc">
+                            1
+                        </div>
+                        <div>
+                            <div class="infoPlate cassette">
+                                1
+                            </div>
+                        </div>
+                        <div>
+                            <div class="infoPlate glass">
+                                1
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="middle df fdc">
+            <div class="top">
+                Скельця
+            </div>
+            <div class="bottom df ">
+                <div class="report-wrapper">
+                    <div class="report-container">
+
+                        <header class="report-header">
+                            <div class="hdr-left">
+                                Kyiv, Ukraine 02000,<br>
+                                Akademika Dobrokhotova St. 13
+                            </div>
+                            <div class="hdr-center">
+                                <img src="./assets/logo.png" alt="Logo" class="logo">
+                            </div>
+                            <div class="hdr-right">
+                                info@limbachgruppe.net,<br>
+                                +38 (044) 333 75 01
+                            </div>
+                        </header>
+
+                        <div class="report-content">
+
+                            <h1 class="main-title">Патоморфологічне дослідження</h1>
+                            <div class="doc-subtitle">
+                                <strong>МЕДИЧНА ДОКУМЕНТАЦІЯ 014/о</strong> Затверджена наказом МОЗ України 29.05.2013 р. № 435
+                            </div>
+                            <div class="report-number">№ U24B0826</div>
+                            <div class="report-type">Патогістологія</div>
+                            <hr>
+
+                            <section class="report-dates">
+                                <div><strong>Дата біопсії:</strong> 28.05.2024 | 20:11</div>
+                                <div><strong>Дата надходження:</strong> 28.05.2024 | 17:09</div>
+                                <div><strong>Дата завершення:</strong> 28.05.2024 | 20:11</div>
+                            </section>
+                            <hr>
+
+                            <section class="patient-section">
+                                <div class="patient-name">
+                                    <strong>Пацієнт:</strong> Іванова Оксана Володимирівна
+                                </div>
+                                <hr class="patient-hr">
+                                <div class="patient-details">
+                                    <span><strong>Стать:</strong> Жін</span>
+                                    <span><strong>Д/н:</strong> 22.03.1955</span>
+                                    <span><strong>Вік:</strong> 69 років</span>
+                                    <span><strong>Контакт:</strong> +38 (050) 398 75 01, 456@gmail.com</span>
+                                </div>
+                            </section>
+                            <hr>
+
+                            <section class="case-info">
+                                <div class="info-item">
+                                    <div class="info-label"><strong>Медична карта:</strong></div>
+                                    <div class="info-value">№ 12387387439</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label"><strong>Медичний заклад:</strong></div>
+                                    <div class="info-value">Яківська лікарня ім. Корчо</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label"><strong>Відділення:</strong></div>
+                                    <div class="info-value">Патологічне</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label"><strong>Лікуючий лікар:</strong></div>
+                                    <div class="info-value">Тодуров I.M.</div>
+                                </div>
+                            </section>
+                            <hr>
+
+                            <section class="clinical-section">
+                                <p><strong>Клінічні дані:</strong> Lorem ipsum dolor sit amet.</p>
+                                <hr class="mini-hr">
+                                <p><strong>Клінічний діагноз:</strong> Aenean leo ligula, porttitor eu.</p>
+                            </section>
+                            <hr>
+
+                            <section class="stats-section">
+                                <div class="stats-item">
+                                    <strong>Кількість контейнерів:</strong>
+                                    <div class="stats-line">
+                                        <strong>Отримано</strong> <span class="stats-value">6</span>
+                                        <strong>Заявлено</strong> <span class="stats-value">6</span>
+                                    </div>
+                                </div>
+                                <div class="stats-item">
+                                    <strong>Кількість блоків:</strong>
+                                    <div class="stats-line">
+                                        <span class="stats-value">6</span>
+                                    </div>
+                                </div>
+                                <div class="stats-item">
+                                    <strong>Фіксація:</strong>
+                                    <div class="stats-line">
+                                        <span class="stats-value">10% NBF</span>
+                                    </div>
+                                </div>
+                                <div class="stats-item">
+                                    <strong>Декальцинація:</strong>
+                                    <div class="stats-line">
+                                        <span class="stats-value">Відсутня</span>
+                                    </div>
+                                </div>
+                                <div class="stats-item">
+                                    <strong>Макрохран:</strong>
+                                    <div class="stats-line">
+                                        <span class="stats-value">ESS—Без запасу</span>
+                                    </div>
+                                </div>
+                                <div class="stats-item">
+                                    <strong>Фарбування:</strong>
+                                    <div class="stats-line">
+                                        <span class="stats-value">H&E</span>
+                                    </div>
+                                </div>
+                            </section>
+                            <hr>
+
+                            <section class="text-section">
+                                <p><strong>Макроскопічний опис:</strong> Cytokeratin 7 – виражена реакція.</p>
+                            </section>
+                            <hr>
+                            <section class="text-section">
+                                <p><strong>Мікроскопічний опис:</strong> Низькодиференційована пухлина.</p>
+                            </section>
+                            <hr>
+                            <section class="text-section">
+                                <p><strong>Патоморфологічний діагноз:</strong> Lorem ipsum dolor sit amet.</p>
+                            </section>
+                            <hr>
+                            <section class="text-section">
+                                <p><strong>Коментар:</strong> Потрібна клінічна кореляція.</p>
+                            </section>
+                            <hr>
+
+                            <section class="images-section">
+                                <img src="./assets/pato1.jfif" alt="slide1">
+                                <img src="./assets/pato2.jfif" alt="slide2">
+                            </section>
+
+                            <section class="signoff-section">
+                                <div class="signoff-left">
+                                    <strong>Лікар-патологоанатом:</strong> Григорчук О.В.
+                                    <img src="./assets/sign.jpg" alt="signature">
+                                </div>
+                                <div class="signoff-right"><strong>Дата:</strong> 28.05.2024 | 17:27</div>
+                            </section>
+
+                        </div>
+
+                        <div class="doc-footer">
+                            <div class="footer-left">
+                                <strong>МЕДИЧНА ДОКУМЕНТАЦІЯ 014/о</strong> Затверджена наказом МОЗ України 29.05.2013 р. № 435
+                            </div>
+                            <div class="footer-right">Документ створено ПЗ COR-Lab</div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="right">
+            <div style="height: 50%" class="df fdc">
+                <div class="commentsWrapper df fdc" style="height: 100%">
+                    <div class="commentsWrapperTop">
+                        Патогістологічний висновок
+                    </div>
+                    <textarea></textarea>
+                </div>
+            </div>
+            <div style="height: 50%" class="df fdc">
+                <div class="commentsWrapper df fdc" style="height: 100%">
+                    <div class="commentsWrapperTop">
+                        Мікроопис
+                    </div>
+                    <textarea></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</body>
+</html>

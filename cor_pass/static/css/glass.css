@@ -1,3 +1,4 @@
+
 .glassContent{
     flex-wrap: wrap;
     height:100%;
@@ -5,7 +6,6 @@
 }
 .glassWrapper{
     padding: 12px;
-    border: 2px solid #f5f4fb;
     width: 134px;
     cursor: pointer;
 }
@@ -28,4 +28,64 @@
     text-align: center;
     color: #5B4296;
     font-weight: 800;
+}
+.glassPageWrapper{
+    background: #EFECF8;
+}
+.glassPageContent{
+    height: calc(100vh - 155px);
+    padding: 30px;
+    padding-top: 0;
+    background: rgba(255, 255, 255, 0.40);
+}
+.glassPageContent .top{
+    height: 60px;
+    min-height: 60px;
+    padding: 12px 16px;
+    font-size: 18px;
+    font-weight: 800;
+    color: #291161;
+    background: #FFFFFF;
+}
+.glassPageContent .middle{
+    width: 100%;
+}
+.glassPageContent .bottom{
+    height: calc(100% - 60px);
+}
+.glassPageContent .left{
+    width: 255px;
+    min-width: 255px;
+}
+
+.caseItem{
+    padding: 12px;
+    border: 1px solid #EFECF8;
+    border-bottom: none;
+    color: #5B4296;
+    cursor: pointer;
+}
+.caseItem.active{
+    border: 2px solid #7527B2 !important;
+
+}
+.caseItemDate{
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+.caseItemSample{
+    width: 30px;
+    height: 30px;
+    border-radius: 100%;
+    background: #ED1064;
+    color:#FFF;
+    font-weight: 800;
+}
+.caseItemLabel{
+    font-weight: 800;
+}
+
+.caseItem:last-child{
+    border-bottom: 1px solid #EFECF8;
 }

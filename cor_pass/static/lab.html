@@ -56,10 +56,10 @@
                         <div data-value="Cytology" class="casePlate">C</div>
                     </div>
                     <div class="df aic gap4">
-                        <div data-value="Cellblock" class="casePlate">CB</div>
+                        <div data-value="Cellblock" class="casePlate">X</div>
                         <div data-value="Second Opinion" class="casePlate">S</div>
                         <div data-value="Autopsy" class="casePlate">A</div>
-                        <div data-value="Electron Microscopy" class="casePlate">EM</div>
+                        <div data-value="Electron Microscopy" class="casePlate">Y</div>
                     </div>
                 </div>
             </div>
@@ -149,8 +149,9 @@
                                     </svg>
                                 </button>
                             </div>
-                            <div>Кукліс Олег Геннадійович</div>
-                            <div>Чол 65р</div>
+                            <div id="userName">Кукліс Олег Геннадійович</div>
+                            <div id="userGender">Чол</div>
+                            <div id="userAge">65р</div>
                         </div>
                         <div class="tabs">
                             <button class="tab">Направлення</button>
@@ -390,31 +391,45 @@
         lastActiveSpecimenIndex = activeSpecimenIndex;
     }
     const setAllCases = () => {
-        fetch(`${API_BASE_URL}/api/cases/patients/${PATIENT_COR_ID}/overview`, {
+        fetch(`${API_BASE_URL}/api/doctor/patients/${PATIENT_COR_ID}`, {
             method: "GET",
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
             },
         })
             .then(res => res.json())
-            .then(casesList => {
-                cases = casesList.all_cases
-                cases[0].samples = casesList.first_case_details.samples.map(({cassettes, ...sampleData}, index) => {
-                    return {
-                        ...sampleData,
-                        ...(!index ? {cassettes} : {})
-                    }
+            .then(userData => {
+                document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
+                document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
+                document.querySelector('#userAge').innerHTML = `${userData.age}р`;
+
+                    fetch(`${API_BASE_URL}/api/cases/patients/${PATIENT_COR_ID}/overview`, {
+                    method: "GET",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    },
                 })
+                        .then(res => res.json())
+                        .then(casesList => {
+                            cases = casesList.all_cases
+                            cases[0].samples = casesList.first_case_details.samples.map(({cassettes, ...sampleData}, index) => {
+                                return {
+                                    ...sampleData,
+                                    ...(!index ? {cassettes} : {})
+                                }
+                            })
 
-                macroDescriptionTextareaNODE.value = cases[0].samples.macro_description || "";
+                            macroDescriptionTextareaNODE.value = cases[0].samples.macro_description || "";
 
-                cases.forEach((currentCase, index) => {
-                    caseContentNODE.append(caseTemplate(currentCase, !index))
-                })
+                            cases.forEach((currentCase, index) => {
+                                caseContentNODE.append(caseTemplate(currentCase, !index))
+                            })
 
-                setPathomorphologyTemplate(0, 0)
-                countCaseInputNODE.setAttribute('data-delete-count', cases.length - 1)
+                            setPathomorphologyTemplate(0, 0)
+                            countCaseInputNODE.setAttribute('data-delete-count', cases.length - 1)
+                        })
             })
+
     }
 
     //ENTITY HTML TEMPLATES

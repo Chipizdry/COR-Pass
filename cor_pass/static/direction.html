@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="./css/reset.css">
+    <link rel="stylesheet" href="./css/general.css">
+    <link rel="stylesheet" href="./css/infoPlate.css">
+    <link rel="stylesheet" href="./css/comments.css">
+    <link rel="stylesheet" href="./css/header.css">
+    <link rel="stylesheet" href="./css/glass.css">
+    <link rel="stylesheet" href="./css/direction.css">
+</head>
+<body>
+
+<div class="glassPageWrapper df fdc">
+    <div class="header-container">
+        <div class="header-row top">
+            <div class="search-container">
+                <input type="text" placeholder="Search">
+                <svg class="search-icon" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="7"/><line x1="16.65" y1="16.65" x2="21" y2="21"/>
+                </svg>
+            </div>
+            <div class="role-container">
+                <button class="role-icon" aria-label="User roles">
+                    <svg class="icon-group" viewBox="0 0 24 24">
+                        <circle cx="9" cy="7" r="4"/>
+                        <circle cx="17" cy="7" r="4"/>
+                        <path d="M5 21v-2a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v2"/>
+                        <path d="M13 21v-2a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v2"/>
+                    </svg>
+                </button>
+                <div class="role-toggle">
+                    <button class="role-btn">Лікар</button>
+                </div>
+                <div class="role-toggle">
+                    <button class="role-btn">Лаборант</button>
+                </div>
+            </div>
+        </div>
+        <div class="header-row bottom">
+            <div>
+                <div class="tabs">
+                    <button class="tab active">Направлення</button>
+                    <button class="tab">Вирізка</button>
+                    <button class="tab">Скельця</button>
+                    <button class="tab">Заключення</button>
+                    <button class="tab">Дослідження</button>
+                </div>
+            </div>
+            <div class="meta-info">
+                <div>
+                    <span id="searchCaseId"></span>
+                    <button class="edit-btn" aria-label="Edit case">
+                        <svg class="icon-edit" viewBox="0 0 24 24">
+                            <path d="M4 20h16"/>
+                            <path d="M14.7 5.3l4 4L9 19.3l-4-4L14.7 5.3z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div>Кукліс Олег Геннадійович</div>
+                <div>Чол</div>
+                <div>65р</div>
+            </div>
+        </div>
+    </div>
+    <div class="glassPageContent df jcsb">
+        <div class="left">
+            <div class="top borderRadiusLeft">
+                Поточні кейси
+            </div>
+            <div class="bottom">
+                <div id="caseItems" class="caseItems">
+                    <div class="caseItem df aic jcsb">
+                        <div>
+                            <div class="caseItemDate">27.03.2025</div>
+                            <div class="caseItemLabel">S25B01251</div>
+                        </div>
+                        <div class="caseItemSample df aic jcc">
+                            1
+                        </div>
+                        <div>
+                            <div class="infoPlate cassette">
+                                1
+                            </div>
+                        </div>
+                        <div>
+                            <div class="infoPlate glass">
+                                1
+                            </div>
+                        </div>
+                    </div>
+                    <div class="caseItem df aic jcsb">
+                        <div>
+                            <div class="caseItemDate">27.03.2025</div>
+                            <div class="caseItemLabel">S25B01251</div>
+                        </div>
+                        <div class="caseItemSample df aic jcc">
+                            1
+                        </div>
+                        <div>
+                            <div class="infoPlate cassette">
+                                1
+                            </div>
+                        </div>
+                        <div>
+                            <div class="infoPlate glass">
+                                1
+                            </div>
+                        </div>
+                    </div>
+                    <div class="caseItem df active aic jcsb">
+                        <div>
+                            <div class="caseItemDate">27.03.2025</div>
+                            <div class="caseItemLabel">S25B01251</div>
+                        </div>
+                        <div class="caseItemSample df aic jcc">
+                            1
+                        </div>
+                        <div>
+                            <div class="infoPlate cassette">
+                                1
+                            </div>
+                        </div>
+                        <div>
+                            <div class="infoPlate glass">
+                                1
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="middle df fdc">
+            <div class="top">
+                Скельця
+            </div>
+            <div class="bottom df ">
+                <div class="directionWrapper">
+                    <img class="directionImg" src="./assets/document.png" alt="doc">
+                </div>
+            </div>
+        </div>
+        <div class="right">
+            <div style="height: 50%" class="df fdc">
+                <div class="commentsWrapper df fdc" style="height: 100%">
+                    <div class="commentsWrapperTop">
+                        Патогістологічний висновок
+                    </div>
+                    <textarea></textarea>
+                </div>
+            </div>
+            <div style="height: 50%" class="df fdc">
+                <div class="commentsWrapper df fdc" style="height: 100%">
+                    <div class="commentsWrapperTop">
+                        Мікроопис
+                    </div>
+                    <textarea></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</body>
+</html>

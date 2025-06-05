@@ -1,0 +1,18 @@
+.tenderloinContent{
+    width: 100%;
+    padding: 12px;
+    color: #5B4296;
+}
+.tenderloinTitle{
+    color: #291161;
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+
+.tenderloinSubTitle{
+    font-weight: 600;
+}
+.tenderloinMargin{
+    margin-bottom: 12px;
+}

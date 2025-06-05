@@ -1,0 +1,324 @@
+.report-wrapper{
+  overflow: auto;
+  margin: auto;
+  height: 100%;
+}
+.report-container {
+  width: 820px;
+  margin: 20px auto;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.report-content {
+  padding: 0 24px;
+}
+
+hr {
+  border: none;
+  border-bottom: 1px solid #ccc;
+}
+.mini-hr {
+  border: none;
+  border-bottom: 1px solid #ccc;
+  margin: 4px 0;
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 24px 8px;
+  font-size: 10px;
+  color: #666;
+  background: #fff;
+}
+.hdr-left {
+  width: 200px;
+  text-align: left;
+  line-height: 1.3;
+}
+.hdr-center {
+  flex: 1;
+  text-align: center;
+}
+.hdr-right {
+  width: 200px;
+  text-align: right;
+  line-height: 1.3;
+}
+.logo {
+  width: 80px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.main-title {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 800;
+  margin-top: 8px;
+}
+.doc-subtitle {
+  text-align: center;
+  font-size: 10px;
+  color: #666;
+  margin: 4px 0;
+}
+.report-number {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+.report-type {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.report-dates {
+  display: flex;
+  font-size: 10px;
+  color: #555;
+  margin-bottom: 8px;
+}
+.report-dates > div {
+  flex: 1;
+  position: relative;
+  padding: 0 8px;
+}
+.report-dates > div:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 1px;
+  background: #ccc;
+}
+
+.patient-section {
+  margin-bottom: 8px;
+}
+.patient-name {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.patient-hr {
+  margin: 4px 0;
+}
+.patient-details {
+  display: flex;
+  font-size: 10px;
+  color: #555;
+  margin-bottom: 8px;
+}
+.patient-details span {
+  flex: 1;
+  position: relative;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+.patient-details span:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 1px;
+  background: #ccc;
+}
+
+.case-info {
+  display: flex;
+  font-size: 10px;
+  color: #555;
+  margin-bottom: 8px;
+}
+.case-info .info-item {
+  flex: 1;
+  position: relative;
+  padding: 0 8px;
+}
+.case-info .info-item:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 1px;
+  background: #ccc;
+}
+.info-label {
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.info-value {
+  margin-top: 2px;
+}
+
+.clinical-section {
+  font-size: 10px;
+  color: #555;
+  margin-bottom: 8px;
+}
+.clinical-section p {
+  margin: 4px 0;
+}
+
+
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(6,1fr);
+  font-size: 10px;
+  color: #555;
+  margin-bottom: 8px;
+}
+.stats-item {
+  padding: 4px 8px;
+  position: relative;
+}
+.stats-item:not(:first-child)::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 1px;
+  background: #ccc;
+}
+.stats-line {
+  margin-top: 2px;
+  white-space: nowrap;
+}
+.stats-value {
+  display: inline-block;
+  background: #f5f5f5;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-left: 4px;
+}
+
+.text-section {
+  margin-bottom: 8px;
+}
+.text-section p {
+  font-size: 10px;
+  color: #555;
+  margin: 4px 0;
+}
+.text-section strong {
+  font-weight: 700;
+}
+
+
+.images-section {
+  display: flex;
+  justify-content: space-between;
+  margin: 12px 0;
+}
+
+.images-section img {
+  width: 800px;
+  max-width: 48%;
+  height: 400px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #f0f0f0;
+}
+
+
+.signoff-section {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #999;
+  margin-bottom: 8px;
+}
+.signoff-left {
+  display: flex;
+  align-items: center;
+}
+.signoff-left img {
+  width: 60px;
+  height: 45px;
+  margin-left: 8px;
+  object-fit: contain;
+}
+.signoff-right {
+  text-align: right;
+}
+
+.doc-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #666;
+  padding: 8px 24px;
+}
+.footer-left {
+  text-align: left;
+}
+.footer-right {
+  text-align: right;
+}
+
+.report-dates > div,
+.patient-details span,
+.case-info .info-item,
+.stats-item {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.report-dates,
+.patient-details,
+.case-info {
+  display: flex;
+  gap: 24px;
+}
+
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 24px;
+}
+.stats-item {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.report-dates > div:not(:first-child),
+.patient-details span:not(:first-child),
+.case-info .info-item:not(:first-child),
+.stats-item:not(:first-child) {
+  padding-left: 0.5em;
+}
+
+.report-container strong {
+  font-weight: 700 !important;
+}
+
+.stats-line strong {
+  font-weight: normal !important;
+}
+
+.report-dates > div:nth-child(1) {
+  text-align: left;
+}
+.report-dates > div:nth-child(2) {
+  text-align: center;
+}
+.report-dates > div:nth-child(3) {
+  text-align: right;
+}
+
+.signoff-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+.signoff-left,
+.signoff-right {
+  white-space: nowrap;
+}
+
+.clinical-section p > strong {
+  font-weight: normal !important;
+}

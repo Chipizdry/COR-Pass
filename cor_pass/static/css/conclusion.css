@@ -1,0 +1,38 @@
+.conclusionContent{
+  min-width: 50%;
+  width: 50%;
+  padding: 12px;
+  overflow: auto;
+}
+.conclusionFormGroup{
+  margin-bottom: 16px;
+}
+.conclusionFormGroupLabel{
+  color:  #B1A1DA;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.conclusionFormGroupInput{
+  background: white;
+  border: none;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.60);
+  width: 100%;
+}
+.conclusionBottom{
+  color: #7B43F2;
+  font-weight: 600;
+}
+.conclusionTop{
+  margin-bottom: 18px;
+}
+.conclusionTopLabel{
+  color: #5B4296;
+  font-weight: 800;
+}
+.conclusionTopDate{
+  color: #5B4296;
+  font-size: 14px;
+  font-weight: 600;
+}
