@@ -136,6 +136,7 @@ async function openFullscreenSVS(blob = null, token = null) {
                 tileSize: tileSize,
                 tileOverlap: overlap,
                 minLevel: 0,
+                maxLevel: levelCount - 1,
                 getTileUrl: function(level, x, y) {
                     return `/api/dicom/svs_tiles?level=${level}&x=${x * tileSize}&y=${y * tileSize}&size=${tileSize}`;
                 }
