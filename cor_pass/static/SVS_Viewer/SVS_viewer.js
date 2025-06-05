@@ -95,8 +95,9 @@ async function openFullscreenSVS(blob = null, token = null) {
         if (!token) throw new Error("No token found. Please log in.");
 
         // Удаляем старый viewer, если он есть
-        if (window.viewer && typeof viewer.destroy === 'function') {
-            viewer.destroy();
+        if (window.viewer && typeof window.viewer.destroy === 'function') {
+            window.viewer.destroy();
+            window.viewer = null;
         }
 
         // Загружаем DZI-XML вручную с токеном
@@ -135,7 +136,8 @@ async function openFullscreenSVS(blob = null, token = null) {
         // Инициализация OpenSeadragon
         window.viewer = OpenSeadragon({
             id: "openseadragon1",
-            showNavigationControl: true,
+            showNavigationControl: false,
+            showNavigator: false,
             loadTilesWithAjax: true,
             ajaxWithCredentials: false,
             ajaxHeaders: { 'Authorization': 'Bearer ' + token },
