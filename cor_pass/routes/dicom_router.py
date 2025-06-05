@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, UploadFile, File, status
-from fastapi.responses import StreamingResponse, HTMLResponse
+from fastapi.responses import StreamingResponse, HTMLResponse,Response
 import os
 import numpy as np
 import pydicom
 import openslide
+import xml.etree.ElementTree as ET
 from openslide import OpenSlide, OpenSlideUnsupportedFormatError
 from skimage.transform import resize
 from PIL import Image
@@ -471,26 +472,67 @@ def get_svs_tile(
     current_user: User = Depends(auth_service.get_current_user)
 ):
     try:
-        user_slide_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id), "slides")
-        svs_files = [f for f in os.listdir(user_slide_dir) if f.lower().endswith('.svs')]
-        
+        slide_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id), "slides")
+        svs_files = [f for f in os.listdir(slide_dir) if f.lower().endswith('.svs')]
         if not svs_files:
-            raise HTTPException(status_code=404, detail="No SVS found.")
+            raise HTTPException(status_code=404, detail="No SVS file found.")
 
-        svs_path = os.path.join(user_slide_dir, svs_files[0])
-        
+        svs_path = os.path.join(slide_dir, svs_files[0])
         with OpenSlide(svs_path) as slide:
-            level = min(level, slide.level_count - 1)
-            img = slide.read_region((x, y), level, (size, size))
-            
+            if level < 0 or level >= slide.level_count:
+                raise HTTPException(status_code=400, detail="Invalid level")
+
+            max_x, max_y = slide.level_dimensions[level]
+            if x < 0 or y < 0 or x >= max_x or y >= max_y:
+                raise HTTPException(status_code=404, detail="Tile out of bounds")
+
+            width = min(size, max_x - x)
+            height = min(size, max_y - y)
+            img = slide.read_region((x, y), level, (width, height))
+
             if img.mode == 'RGBA':
                 img = img.convert('RGB')
-            
+
             buf = BytesIO()
-            img.save(buf, format="JPEG", quality=90) 
+            img.save(buf, format="JPEG", quality=90)
             buf.seek(0)
             return StreamingResponse(buf, media_type="image/jpeg")
-            
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))   
 
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Tile rendering failed: {str(e)}")
+
+
+
+@router.get("/dzi_info")
+def get_dzi_info(current_user: User = Depends(auth_service.get_current_user)):
+    try:
+        slide_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id), "slides")
+        svs_files = [f for f in os.listdir(slide_dir) if f.lower().endswith('.svs')]
+
+        if not svs_files:
+            raise HTTPException(status_code=404, detail="No SVS file found.")
+
+        svs_path = os.path.join(slide_dir, svs_files[0])
+
+        with OpenSlide(svs_path) as slide:
+            width, height = slide.dimensions
+            tile_size = 256
+            format = "jpeg"
+            overlap = 0
+
+            # Используем количество уровней из OpenSlide
+            max_level = slide.level_count - 1
+
+            # Генерируем DZI XML вручную
+            image = ET.Element("Image", TileSize=str(tile_size), Overlap=str(overlap),
+                               Format=format, xmlns="http://schemas.microsoft.com/deepzoom/2008")
+            ET.SubElement(image, "Size", Width=str(width), Height=str(height))
+            xml_bytes = ET.tostring(image, encoding="utf-8", method="xml")
+
+            return Response(content=xml_bytes, media_type="application/xml")
+
+    except Exception as e:
+        print("Ошибка при генерации DZI:", str(e))  # для отладки
+        raise HTTPException(status_code=500, detail=f"DZI generation failed: {str(e)}")

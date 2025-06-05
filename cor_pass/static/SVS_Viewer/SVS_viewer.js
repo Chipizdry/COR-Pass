@@ -84,84 +84,76 @@ function setupSVSViewerControls() {
 
 
 async function openFullscreenSVS(blob = null, token = null) {
-    if (checkToken()) {
-        const fullscreenViewer = document.getElementById('svs-fullscreen-viewer');
-        const dcmViewerFrame = document.getElementById('DcmViewerFrame');
-        
-        if (dcmViewerFrame) dcmViewerFrame.classList.add('hidden');
-        fullscreenViewer.style.display = 'block';
-        
-        try {
-            token = token || getToken();
-            
-            // First load the metadata before initializing OpenSeadragon
-            const metadata = await loadSvsMetadata(token, true);
-            if (!metadata) throw new Error('Failed to load SVS metadata');
-            
-            // Initialize OpenSeadragon after metadata is loaded
-            if (viewer) {
-                viewer.destroy();
+    const fullscreenViewer = document.getElementById('svs-fullscreen-viewer');
+    const dcmViewerFrame = document.getElementById('DcmViewerFrame');
+
+    if (dcmViewerFrame) dcmViewerFrame.classList.add('hidden');
+    fullscreenViewer.style.display = 'block';
+
+    try {
+        token = token || localStorage.getItem('authToken');
+        if (!token) throw new Error("No token found. Please log in.");
+
+        if (viewer && typeof viewer.destroy === 'function') {
+            viewer.destroy();
+        }
+
+        // Загружаем DZI XML вручную
+        const dziResponse = await fetch('/api/dicom/dzi_info', {
+            headers: {
+                'Authorization': 'Bearer ' + token
             }
-            
-            // Современный формат конфигурации для OpenSeadragon
-            viewer = OpenSeadragon({
-                id: "svs-fullscreen-viewer",
-                prefixUrl: "/static/SVS_Viewer/images/",
-                tileSources: {
-                    type: 'image',
-                    url: '/api/dicom/svs_tiles',
-                    ajaxWithCredentials: true,
-                    ajaxHeaders: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    // УДАЛИТЬ: tileSize: 256, // Этот параметр больше не нужен
-                    width: metadata.dimensions.width,
-                    height: metadata.dimensions.height,
-                    tileWidth: 256,  // Явно указываем ширину тайла
-                    tileHeight: 256,  // Явно указываем высоту тайла
-                    minLevel: 0,
-                    maxLevel: metadata.dimensions.levels - 1,
-                    getTileUrl: function(level, x, y) {
-                        // Убедитесь, что размер соответствует tileWidth/tileHeight
-                        return `/api/dicom/svs_tiles?level=${level}&x=${x*256}&y=${y*256}&size=256`;
-                    }
-                },
-                showNavigationControl: false,
-                showZoomControl: false,
-                showHomeControl: false,
-                showFullPageControl: false,
-                showRotationControl: false,
-                showFlipControl: false,
-                showNavigator: false,
-                gestureSettingsMouse: {
-                    scrollToZoom: false,
-                    clickToZoom: false,
-                    dblClickToZoom: false,
-                    pinchToZoom: false
-                },
-                gestureSettingsTouch: {
-                    scrollToZoom: false,
-                    clickToZoom: false,
-                    dblClickToZoom: false,
-                    pinchToZoom: false
-                },
-                gestureSettingsPen: {
-                    scrollToZoom: false,
-                    clickToZoom: false,
-                    dblClickToZoom: false,
-                    pinchToZoom: false
+        });
+
+        if (!dziResponse.ok) {
+            throw new Error(`DZI info fetch failed: ${dziResponse.status}`);
+        }
+
+        const dziText = await dziResponse.text();
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(dziText, "application/xml");
+
+        const imageNode = xmlDoc.querySelector("Image");
+        const sizeNode = imageNode.querySelector("Size");
+
+        const tileSize = parseInt(imageNode.getAttribute("TileSize"), 10);
+        const overlap = parseInt(imageNode.getAttribute("Overlap"), 10);
+        const format = imageNode.getAttribute("Format");
+        const width = parseInt(sizeNode.getAttribute("Width"), 10);
+        const height = parseInt(sizeNode.getAttribute("Height"), 10);
+
+        // Теперь вручную передаём конфигурацию tileSources
+        viewer = OpenSeadragon({
+            id: "openseadragon1",
+            showNavigationControl: false,
+            loadTilesWithAjax: true,
+            ajaxHeaders: {
+                "Authorization": "Bearer " + token
+            },
+            tileSources: {
+                height: height,
+                width: width,
+                tileSize: tileSize,
+                tileOverlap: overlap,
+                minLevel: 0,
+                getTileUrl: function(level, x, y) {
+                    return `/api/dicom/svs_tiles?level=${level}&x=${x * tileSize}&y=${y * tileSize}&size=${tileSize}`;
                 }
-            });
-            
-        } catch (err) {
-            console.error("Error in openFullscreenSVS:", err);
-            if (err.message.includes('401')) {
-                window.location.href = '/';
             }
+        });
+
+        await loadSvsMetadata(token, true);
+
+    } catch (err) {
+        console.error("Error in openFullscreenSVS:", err);
+        alert("Ошибка при открытии SVS: " + err.message);
+        fullscreenViewer.style.display = 'none';
+
+        if (err.message.includes('401')) {
+            window.location.href = '/';
         }
     }
 }
-
 
 
 async function openFullscreenSVSFromThumbnail() {
@@ -230,7 +222,7 @@ async function loadSvsMetadata(token, isFullscreen = false) {
             document.getElementById('metadata-container').style.display = 'block';
         }
         
-        return svsMetadata; // <- Важно: возвращаем метаданные
+        return svsMetadata;
     } catch (err) {
         console.error("Error loading SVS metadata:", err);
         return null;
