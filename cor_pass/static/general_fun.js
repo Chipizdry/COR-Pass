@@ -446,33 +446,51 @@ function getTokenFromURL() {
 }
 
 
-// Функция для проверки истечения токена
+
+// Функция для проверки истечения токена + проверка ответа сервера
 function checkToken() {
     const token = getTokenFromURL(); // Получаем токен из URL
     if (!token) {
         console.warn("Authorization token is missing.");
         showTokenExpiredModal();
-        return false; // Токен отсутствует
+        return false;
     }
 
-    // Парсим токен и проверяем, истёк ли он
     const decodedToken = decodeToken(token);
     calculateTokenLifetime(decodedToken);
     if (!decodedToken) {
         console.error("Failed to decode token.");
         showTokenExpiredModal();
-        return false; // Токен не удалось декодировать
+        return false;
     }
 
     if (isTokenExpired(token)) {
         console.warn("Token has expired.");
         showTokenExpiredModal();
-        return false; // Токен истёк
+        return false;
     }
 
-    return true; // Токен актуален
-}
+    // Проверяем, авторизован ли пользователь на сервере
+    fetch("/api/auth/verify", {
+        method: "GET",
+        headers: {
+            "Authorization": `Bearer ${token}`
+        }
+    })
+    .then(response => {
+        if (response.status === 401) {
+            console.warn("Server responded with 401 Unauthorized.");
+            showTokenExpiredModal();
+        }
+    })
+    .catch(error => {
+        console.error("Auth check failed:", error);
+       
+         showTokenExpiredModal();
+    });
 
+    return true;
+}
 
 // Функция для прослушки всех событий с делегированием
 function setupTokenCheckOnActions() {

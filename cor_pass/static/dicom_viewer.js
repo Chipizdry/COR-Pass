@@ -52,8 +52,6 @@ function prepareUIBeforeUpload() {
   
     const dcmViewerFrame = document.getElementById('DcmViewerFrame');
     dcmViewerFrame.classList.remove('hidden');
-   // dcmViewerFrame.style.display = 'flex'; // или 'block' — в зависимости от твоего layout
-  
     const volumeInfo = await fetch('/api/dicom/volume_info', {
       headers: { 'Authorization': `Bearer ${token}` }
     }).then(res => res.json());
@@ -120,7 +118,7 @@ function prepareUIBeforeUpload() {
     } catch (err) {
       document.getElementById('upload-status').textContent = `Error: ${err.message}`;
       document.getElementById('progress-bar').style.background = '#f44336';
-      if (err.message.includes('401')) window.location.href = '/';
+      if (err.message.includes('401'))  showTokenExpiredModal();
     }
 }
 
@@ -173,8 +171,7 @@ async function update(plane, callback) {
         console.error('Error loading DICOM image:', error);
         // Обработка ошибок (например, показать сообщение)
         if (error.message.includes('401')) {
-            alert('Session expired. Please login again.');
-            window.location.href = '/';
+          showTokenExpiredModal();
         }
     }
 }

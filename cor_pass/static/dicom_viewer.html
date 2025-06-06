@@ -22,7 +22,7 @@
     </div>  
       
     <div class="dicom-upload-container">
-      <input type="file" id="dicom-upload" accept=".zip,.dcm" multiple>
+      <input type="file" id="dicom-upload" accept=".zip,.dcm,.svs" multiple>
       <button onclick="handleUpload()">Upload DICOM files</button>
       <div class="dicom-progress-container">
 
@@ -33,7 +33,7 @@
 
       <div class="svs-preview-container" id="svs-preview-container" style="display: none;">
         <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">SVS Preview</h3>
-        <img id="svs-thumbnail" src="" alt="SVS Thumbnail" style="max-width: 512px; border: 1px solid #ccc; cursor: pointer;" onclick="openScreenSVS()" />
+        <img id="svs-thumbnail" src="" alt="SVS Thumbnail" style="max-width: 512px; border: 1px solid #ccc; cursor: pointer;" onclick="openFullscreenSVS()" />
       </div>
     </div>
     
@@ -148,9 +148,6 @@
   });
 }
 
-function openScreenSVS() {
-  const viewerDiv = document.getElementById('svs-fullscreen-viewer');
-  viewerDiv.style.display = 'block';}
 
 
 function applyManualWindow() {
