@@ -1,10 +1,6 @@
 
 
-//Функция получения токена 
-function getToken() {
-    return localStorage.getItem('authToken') || 
-           new URLSearchParams(window.location.search).get('access_token');
-}
+
 
 
 function prepareUIBeforeUpload() {
@@ -78,7 +74,7 @@ function prepareUIBeforeUpload() {
       <p><strong>Current (mA):</strong> ${metadata.study_info.XRayTubeCurrent}</p>
       <p><strong>Exposure (mAs):</strong> ${metadata.study_info.Exposure}</p>
     `;
-  
+    isDicomLoaded = true;
     ['axial', 'sagittal', 'coronal'].forEach(update);
   }
 
@@ -123,6 +119,7 @@ function prepareUIBeforeUpload() {
 }
 
 async function update(plane, callback) {
+  if (!isDicomLoaded) { return;}
     const idx = parseInt(document.getElementById(plane).value);
     const canvas = document.getElementById('canvas-' + plane);
     const ctx = canvas.getContext('2d');
@@ -319,3 +316,248 @@ function updateSliders(volumeInfo) {
           });
         });
       }
+
+
+      async function handleSVS(token) {
+        try {
+            // Load preview image
+            const previewResponse = await fetch('/api/svs/preview_svs', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!previewResponse.ok) throw new Error('Failed to load SVS preview');
+            
+            const blob = await previewResponse.blob();
+            const thumbnail = document.getElementById('svs-thumbnail');
+            thumbnail.src = URL.createObjectURL(blob);
+            document.getElementById('svs-preview-container').style.display = 'block';
+            document.getElementById('viewer-controls').style.display = 'none';
+            
+            // Add click handler to open fullscreen
+            thumbnail.onclick = () => openFullscreenSVS();
+            
+            // Load metadata
+            await loadSvsMetadata(token);
+        } catch (err) {
+            console.error("Error handling SVS file:", err);
+            document.getElementById('upload-status').textContent = `Error: ${err.message}`;
+        }
+      }
+
+
+
+
+
+      async function loadSvsMetadata(token, isFullscreen = false) {
+
+        try {
+            const metadataRes = await fetch('/api/svs/svs_metadata', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!metadataRes.ok) return null;
+            const svsMetadata = await metadataRes.json();
+            
+            const metadataHTML = generateSvsMetadataHTML(svsMetadata);
+            
+            if (isFullscreen) {
+                document.getElementById('svs-metadata-content').innerHTML = metadataHTML;
+            } else {
+                document.getElementById('metadata-content').innerHTML = metadataHTML;
+                document.getElementById('metadata-container').style.display = 'block';
+            }
+            
+            return svsMetadata;
+        } catch (err) {
+            console.error("Error loading SVS metadata:", err);
+            return null;
+        }
+    }      
+
+
+
+
+
+    function generateSvsMetadataHTML(svsMetadata) {
+      return `
+          <div class="metadata-section">
+              <h4>Basic Information</h4>
+              <div class="metadata-grid">
+                  <div class="metadata-item"><span class="metadata-label">Filename:</span> ${svsMetadata.filename}</div>
+                  <div class="metadata-item"><span class="metadata-label">Dimensions:</span> ${svsMetadata.dimensions.width.toLocaleString()} × ${svsMetadata.dimensions.height.toLocaleString()} px</div>
+                  <div class="metadata-item"><span class="metadata-label">Levels:</span> ${svsMetadata.dimensions.levels}</div>
+                  <div class="metadata-item"><span class="metadata-label">MPP:</span> ${svsMetadata.basic_info.mpp}</div>
+                  <div class="metadata-item"><span class="metadata-label">Magnification:</span> ${svsMetadata.basic_info.magnification}x</div>
+                  <div class="metadata-item"><span class="metadata-label">Scan Date:</span> ${svsMetadata.basic_info.scan_date}</div>
+                  <div class="metadata-item"><span class="metadata-label">Scanner:</span> ${svsMetadata.basic_info.scanner}</div>
+              </div>
+          </div>
+  
+          <div class="metadata-section">
+              <h4>Level Details</h4>
+              <table class="metadata-table">
+                  <thead><tr><th>Level</th><th>Downsample</th><th>Dimensions</th></tr></thead>
+                  <tbody>
+                      ${svsMetadata.levels.map((lvl, i) => `
+                          <tr><td>${i}</td><td>${lvl.downsample.toFixed(1)}</td><td>${lvl.width.toLocaleString()} × ${lvl.height.toLocaleString()}</td></tr>
+                      `).join('')}
+                  </tbody>
+              </table>
+          </div>
+  
+          <div class="metadata-section">
+              <details class="technical-metadata">
+                  <summary>Technical Metadata</summary>
+                  <pre>${svsMetadata.full_properties ? Object.entries(svsMetadata.full_properties).map(([k, v]) => `${k}: ${v}`).join('\n') : 'No technical metadata available.'}</pre>
+              </details>
+          </div>
+      `;
+  }
+  
+
+
+  async function openFullscreenSVS() {
+    const token = getToken();
+    console.log('[openFullscreenSVS] Token:', token);
+
+    const svsViewerDiv = document.getElementById('svs-fullscreen-viewer');
+    svsViewerDiv.style.display = 'block';
+
+    try {
+        const svsMetadata = await loadSvsMetadata(token, true);
+        if (!svsMetadata) {
+            alert("Не удалось загрузить метаданные SVS.");
+            return;
+        }
+
+        const width = svsMetadata.dimensions.width;
+        const height = svsMetadata.dimensions.height;
+        const levels = svsMetadata.dimensions.levels;
+        const tileSize = 256;
+        console.log('[openFullscreenSVS] SVS Metadata:', {width,height,levels,tileSize });
+        if (viewer) viewer.destroy();
+
+        viewer = OpenSeadragon({
+          id: "openseadragon1",
+          prefixUrl: "/static/SVS_Viewer/images/",
+          showNavigator: false,
+          showZoomControl: false,
+          showFullPageControl: false,
+          showHomeControl: false,
+          showRotationControl: false,
+          minZoomLevel: 0.5,
+          maxZoomLevel: 10,
+          loadTilesWithAjax: true, // ОБЯЗАТЕЛЬНО для заголовков авторизации
+          ajaxHeaders: {
+              'Authorization': `Bearer ${token}`
+          },
+          tileSources: {
+              height: height,
+              width: width,
+              tileSize: tileSize,
+              maxLevel: levels - 1,
+              getTileUrl: function (level, x, y) {
+                  const url = `/api/svs/tile?level=${level}&x=${x}&y=${y}&tile_size=${tileSize}`;
+                  console.log('[Tile URL]', url);
+                  return url;
+              }
+          }
+      });
+        viewer.addHandler('open', function () {
+            console.log('[openFullscreenSVS] Viewer opened');
+            viewer.viewport.zoomTo(1);
+            viewer.viewport.panTo(new OpenSeadragon.Point(0.5, 0.5));
+        });
+
+        viewer.addHandler('tile-loaded', function (event) {
+            console.log('[openFullscreenSVS] Tile loaded:', event.tile);
+        });
+
+        const closeBtn = document.querySelector('.close-btn');
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                viewer.destroy();
+                svsViewerDiv.style.display = 'none';
+            };
+        }
+
+    } catch (error) {
+        console.error('[openFullscreenSVS] Error:', error);
+        document.getElementById('upload-status').textContent = `Error: ${ error}`;
+    }
+}
+
+
+/*
+async function openFullscreenSVS() {
+  const token = getToken();
+  console.log('[openFullscreenSVS] Token:', token);
+
+  const svsViewerDiv = document.getElementById('svs-fullscreen-viewer');
+  svsViewerDiv.style.display = 'block';
+
+  try {
+      const svsMetadata = await loadSvsMetadata(token, true);
+      if (!svsMetadata) {
+          console.error('[openFullscreenSVS] Failed to load SVS metadata');
+          alert("Не удалось загрузить метаданные SVS.");
+          return;
+      }
+
+      const width = svsMetadata.dimensions.width;
+      const height = svsMetadata.dimensions.height;
+      const levels = svsMetadata.dimensions.levels;
+      const tileSize = 256;
+      console.log('[openFullscreenSVS] SVS Metadata:', {width,height,levels,tileSize });
+      if (viewer) viewer.destroy();
+
+      const tileSource = {
+          '@type': 'legacy-image-pyramid',
+          height: height,
+          width: width,
+          tileSize: tileSize,
+          maxLevel: levels - 1
+      };
+
+      viewer = OpenSeadragon({
+          id: "openseadragon1",
+          prefixUrl: "/static/SVS_Viewer/images/",
+          showNavigator: false,
+          showZoomControl: false,
+          showFullPageControl: false,
+          showHomeControl: false,
+          showRotationControl: false,
+          minZoomLevel: 0.5,
+          maxZoomLevel: 10,
+          tileSources: tileSource,
+          ajaxHeaders: {
+              'Authorization': `Bearer ${token}`
+          }
+      });
+
+      viewer.addHandler('open', function () {
+          console.log('[openFullscreenSVS] Viewer opened');
+          viewer.viewport.zoomTo(1);
+          viewer.viewport.panTo(new OpenSeadragon.Point(0.5, 0.5));
+      });
+
+      viewer.addHandler('tile-loaded', function (event) {
+          console.log('[openFullscreenSVS] Tile loaded:', event.tile);
+      });
+
+      const closeBtn = document.querySelector('.close-btn');
+      if (closeBtn) {
+          closeBtn.onclick = () => {
+              viewer.destroy();
+              svsViewerDiv.style.display = 'none';
+          };
+      }
+  } catch (error) {
+      console.error('[openFullscreenSVS] Error:', error);
+      document.getElementById('upload-status').textContent = `Error: ${ error}`;
+  }
+}
+
+
+
+
+*/

@@ -30,8 +30,8 @@ logging.basicConfig(level=logging.INFO)
 
 router = APIRouter(prefix="/svs", tags=["SVS"])
 
-SVS_ROOT_DIR = "svs_users_data"
-os.makedirs(SVS_ROOT_DIR, exist_ok=True)
+#SVS_ROOT_DIR = "svs_users_data"
+#os.makedirs(SVS_ROOT_DIR, exist_ok=True)
 DICOM_ROOT_DIR = "dicom_users_data"
 
 
@@ -124,34 +124,47 @@ def preview_svs(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-
-
-
-
-@router.get("/svs/{filename}")
-def get_svs_slide(
-    filename: str,
+@router.get("/tile")
+def get_tile(
+    level: int = Query(...),
+    x: int = Query(...),
+    y: int = Query(...),
+    tile_size: int = Query(256),
     current_user: User = Depends(auth_service.get_current_user)
 ):
-    slide_path = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id), "slides", filename)
-    
-    if not os.path.isfile(slide_path):
-        raise HTTPException(status_code=404, detail="Файл не найден")
+    user_slide_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id), "slides")
+    svs_files = [f for f in os.listdir(user_slide_dir) if f.lower().endswith('.svs')]
+
+    if not svs_files:
+        raise HTTPException(status_code=404, detail="No SVS found.")
+
+    svs_path = os.path.join(user_slide_dir, svs_files[0])
 
     try:
-        slide = OpenSlide(slide_path)
+        slide = OpenSlide(svs_path)
 
-       
-        img = slide.read_region((0, 0), 0, slide.dimensions)
-        img = img.convert("RGB")
+        if level >= slide.level_count:
+            raise HTTPException(status_code=400, detail="Invalid level")
 
-        buffer = BytesIO()
-        img.save(buffer, format="PNG")
-        buffer.seek(0)
+        # Размер изображения на этом уровне
+        level_width, level_height = slide.level_dimensions[level]
 
-        return StreamingResponse(buffer, media_type="image/png")
-    
+        # Проверка выхода за границы
+        if x * tile_size >= level_width or y * tile_size >= level_height:
+            raise HTTPException(status_code=404, detail="Tile out of bounds")
+
+        # Позиция в пикселях на этом уровне
+        location = (x * tile_size, y * tile_size)
+        size = (
+            min(tile_size, level_width - location[0]),
+            min(tile_size, level_height - location[1])
+        )
+
+        tile = slide.read_region(location, level, size).convert("RGB")
+        buf = BytesIO()
+        tile.save(buf, format="JPEG")
+        buf.seek(0)
+        return StreamingResponse(buf, media_type="image/jpeg")
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка при чтении SVS: {e}")
-
+        raise HTTPException(status_code=500, detail=str(e))

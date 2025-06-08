@@ -118,12 +118,13 @@
 </div>
 </div>
 
+  <script src="/static/SVS_Viewer/SVS_viewer.js"></script>
+  <script src="/static/SVS_Viewer/openseadragon.min.js"></script>
   <script src="/static/translation.js"></script>  
   <script src="/static/general_fun.js"></script> 
   <script src="/static/dicom_viewer.js"></script>  
-  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-  <script src="/static/SVS_Viewer/openseadragon.min.js"></script>
-  <script src="/static/SVS_Viewer/SVS_viewer.js"></script>
+ <!-- <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script> -->
+ 
   
   <script>
 
@@ -134,6 +135,7 @@
     let currentMode = 'auto';
     let manualWindowCenter = 50;
     let manualWindowWidth = 400;
+    let isDicomLoaded = false;
 
     function updateViewMode() {
   currentMode = document.getElementById('view-mode').value;

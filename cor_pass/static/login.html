@@ -215,7 +215,6 @@ document.getElementById('send-recovery-btn').addEventListener('click', async fun
                             urlParams.set('refresh_token', refreshToken);
 
                             const queryString = urlParams.toString();
-                            // const url = `${redirectUrl}/?access_token=${accessToken}&refresh_token=${refreshToken}`;
                             const url = `/static/mainscreen.html/?access_token=${accessToken}`;
 
                             window.location.href = url;
