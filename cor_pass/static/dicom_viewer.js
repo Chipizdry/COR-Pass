@@ -463,6 +463,7 @@ function updateSliders(volumeInfo) {
       });
         viewer.addHandler('open', function () {
             console.log('[openFullscreenSVS] Viewer opened');
+            viewer.viewport.goHome();
             viewer.viewport.zoomTo(1);
             viewer.viewport.panTo(new OpenSeadragon.Point(0.5, 0.5));
         });

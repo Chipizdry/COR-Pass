@@ -118,9 +118,6 @@
   </div>
 </div>
 
-
-
-
   <script src="/static/SVS_Viewer/SVS_viewer.js"></script>
   <script src="/static/SVS_Viewer/openseadragon.min.js"></script>
   <script src="/static/translation.js"></script>  
@@ -201,7 +198,7 @@ document.querySelector('.zoom-out').addEventListener('click', () => viewer.viewp
 document.querySelector('.home').addEventListener('click', () => viewer.viewport.goHome());
 document.querySelector('.close-btn').addEventListener('click', () => {
     viewer.destroy();
-   // document.getElementById('svs-fullscreen-viewer').style.display = 'none';
+ 
     svsViewerDiv.classList.remove('visible');
     svsViewerDiv.classList.add('hidden');
 });
