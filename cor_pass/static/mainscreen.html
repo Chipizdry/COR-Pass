@@ -716,6 +716,18 @@
                 } else {
                     corErpButton.classList.add('hidden');   
                 }
+
+
+
+             
+            // Проверяем наличие роли doctor для кнопки Мой кабинет
+            const isDoctor = decodedToken && Array.isArray(decodedToken.roles) && decodedToken.roles.includes('doctor');
+            const DoctorButton = document.getElementById('Doctor');
+            if (isDoctor) {
+                    DoctorButton.classList.remove('hidden'); 
+                } else {
+                    DoctorButton.classList.add('hidden');   
+                }   
         } catch (error) {
             console.error("Ошибка при расшифровке токена:", error);
         }
