@@ -94,9 +94,10 @@
         </div>
       </div>
   </div>
+</div>
 
- <!-- SVS Fullscreen Viewer -->
-<div id="svs-fullscreen-viewer" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: black; z-index: 9999;">
+<!-- SVS Fullscreen Viewer -->
+<div id="svs-fullscreen-viewer" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: black; z-index: 9999;">
   <div id="openseadragon1" style="width: 100%; height: 100%;"></div>
   
   <!-- Toolbar -->
@@ -116,16 +117,17 @@
     <div id="svs-metadata-content"></div>
   </div>
 </div>
-</div>
+
+
+
 
   <script src="/static/SVS_Viewer/SVS_viewer.js"></script>
   <script src="/static/SVS_Viewer/openseadragon.min.js"></script>
   <script src="/static/translation.js"></script>  
   <script src="/static/general_fun.js"></script> 
   <script src="/static/dicom_viewer.js"></script>  
- <!-- <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script> -->
  
-  
+ 
   <script>
 
     let viewer = null;
@@ -199,7 +201,9 @@ document.querySelector('.zoom-out').addEventListener('click', () => viewer.viewp
 document.querySelector('.home').addEventListener('click', () => viewer.viewport.goHome());
 document.querySelector('.close-btn').addEventListener('click', () => {
     viewer.destroy();
-    document.getElementById('svs-fullscreen-viewer').style.display = 'none';
+   // document.getElementById('svs-fullscreen-viewer').style.display = 'none';
+    svsViewerDiv.classList.remove('visible');
+    svsViewerDiv.classList.add('hidden');
 });
 </script>
 

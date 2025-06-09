@@ -331,8 +331,6 @@ function updateSliders(volumeInfo) {
             thumbnail.src = URL.createObjectURL(blob);
             document.getElementById('svs-preview-container').style.display = 'block';
             document.getElementById('viewer-controls').style.display = 'none';
-            
-            // Add click handler to open fullscreen
             thumbnail.onclick = () => openFullscreenSVS();
             
             // Load metadata
@@ -417,10 +415,11 @@ function updateSliders(volumeInfo) {
 
   async function openFullscreenSVS() {
     const token = getToken();
-    console.log('[openFullscreenSVS] Token:', token);
-
     const svsViewerDiv = document.getElementById('svs-fullscreen-viewer');
-    svsViewerDiv.style.display = 'block';
+    //svsViewerDiv.style.display = 'block';
+    svsViewerDiv.classList.remove('hidden');
+    svsViewerDiv.classList.add('visible');
+
 
     try {
         const svsMetadata = await loadSvsMetadata(token, true);
@@ -476,7 +475,8 @@ function updateSliders(volumeInfo) {
         if (closeBtn) {
             closeBtn.onclick = () => {
                 viewer.destroy();
-                svsViewerDiv.style.display = 'none';
+                svsViewerDiv.classList.remove('visible');
+                svsViewerDiv.classList.add('hidden');
             };
         }
 
@@ -487,77 +487,3 @@ function updateSliders(volumeInfo) {
 }
 
 
-/*
-async function openFullscreenSVS() {
-  const token = getToken();
-  console.log('[openFullscreenSVS] Token:', token);
-
-  const svsViewerDiv = document.getElementById('svs-fullscreen-viewer');
-  svsViewerDiv.style.display = 'block';
-
-  try {
-      const svsMetadata = await loadSvsMetadata(token, true);
-      if (!svsMetadata) {
-          console.error('[openFullscreenSVS] Failed to load SVS metadata');
-          alert("Не удалось загрузить метаданные SVS.");
-          return;
-      }
-
-      const width = svsMetadata.dimensions.width;
-      const height = svsMetadata.dimensions.height;
-      const levels = svsMetadata.dimensions.levels;
-      const tileSize = 256;
-      console.log('[openFullscreenSVS] SVS Metadata:', {width,height,levels,tileSize });
-      if (viewer) viewer.destroy();
-
-      const tileSource = {
-          '@type': 'legacy-image-pyramid',
-          height: height,
-          width: width,
-          tileSize: tileSize,
-          maxLevel: levels - 1
-      };
-
-      viewer = OpenSeadragon({
-          id: "openseadragon1",
-          prefixUrl: "/static/SVS_Viewer/images/",
-          showNavigator: false,
-          showZoomControl: false,
-          showFullPageControl: false,
-          showHomeControl: false,
-          showRotationControl: false,
-          minZoomLevel: 0.5,
-          maxZoomLevel: 10,
-          tileSources: tileSource,
-          ajaxHeaders: {
-              'Authorization': `Bearer ${token}`
-          }
-      });
-
-      viewer.addHandler('open', function () {
-          console.log('[openFullscreenSVS] Viewer opened');
-          viewer.viewport.zoomTo(1);
-          viewer.viewport.panTo(new OpenSeadragon.Point(0.5, 0.5));
-      });
-
-      viewer.addHandler('tile-loaded', function (event) {
-          console.log('[openFullscreenSVS] Tile loaded:', event.tile);
-      });
-
-      const closeBtn = document.querySelector('.close-btn');
-      if (closeBtn) {
-          closeBtn.onclick = () => {
-              viewer.destroy();
-              svsViewerDiv.style.display = 'none';
-          };
-      }
-  } catch (error) {
-      console.error('[openFullscreenSVS] Error:', error);
-      document.getElementById('upload-status').textContent = `Error: ${ error}`;
-  }
-}
-
-
-
-
-*/

@@ -315,3 +315,17 @@ details pre {
   max-height: none;
   transition: transform 0.2s ease;
 }
+
+
+#svs-fullscreen-viewer.hidden {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+#svs-fullscreen-viewer.visible {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
