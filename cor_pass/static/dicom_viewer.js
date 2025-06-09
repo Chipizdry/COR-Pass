@@ -1,17 +1,47 @@
 
+function uploadFilesWithProgress(formData, token) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/dicom/upload");
+
+    xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+
+    const progressBar = document.getElementById('progress-bar');
+    const statusText = document.getElementById('upload-status');
+
+    xhr.upload.addEventListener("progress", (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        progressBar.style.width = percent + "%";
+        progressBar.textContent = percent + "%";
+        statusText.textContent = `Uploading... (${percent}%)`;
+      }
+    });
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(JSON.parse(xhr.responseText));
+      } else {
+        reject(new Error(`Upload failed: ${xhr.statusText}`));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("Network error during upload"));
+    xhr.send(formData);
+  });
+}
 
 
 
 
 function prepareUIBeforeUpload() {
-    document.getElementById('upload-status').textContent = 'Preparing upload...';
-    const progressBar = document.getElementById('progress-bar');
-    progressBar.style.width = '0%';
-    progressBar.textContent = '0%';
-    document.getElementById('metadata-container').style.display = 'none';
-    document.getElementById('svs-preview-container').style.display = 'none';
-  }
-
+  const progressBar = document.getElementById('progress-bar');
+  document.getElementById('upload-status').textContent = 'Preparing upload...';
+  progressBar.style.width = '0%';
+  progressBar.textContent = '0%';
+  document.getElementById('metadata-container').style.display = 'none';
+  document.getElementById('svs-preview-container').style.display = 'none';
+}
 
   function collectFiles(fileInput) {
     const formData = new FormData();
@@ -78,13 +108,13 @@ function prepareUIBeforeUpload() {
     ['axial', 'sagittal', 'coronal'].forEach(update);
   }
 
-
   async function handleUpload() {
-   
-  
     const fileInput = document.getElementById('dicom-upload');
+    const statusText = document.getElementById('upload-status');
+    const progressBar = document.getElementById('progress-bar');
+  
     if (!fileInput.files.length) {
-      document.getElementById('upload-status').textContent = 'Please select files';
+      statusText.textContent = 'Please select files';
       return;
     }
   
@@ -93,18 +123,31 @@ function prepareUIBeforeUpload() {
     const { formData, totalSize, fileCount } = collectFiles(fileInput);
   
     if (fileCount === 0) {
-      document.getElementById('upload-status').textContent = 'No valid files selected';
+      statusText.textContent = 'No valid files selected';
       return;
     }
   
-    document.getElementById('file-info').textContent = `Selected ${fileCount} files (${formatFileSize(totalSize)})`;
-    document.getElementById('upload-status').textContent = 'Uploading...';
+    document.getElementById('file-info').textContent =
+      `Selected ${fileCount} files (${formatFileSize(totalSize)})`;
+  
+    statusText.textContent = 'Uploading...';
+    progressBar.style.width = '0%';
+    progressBar.textContent = '0%';
+    document.getElementById('loading-spinner')?.style?.setProperty("display", "block");
   
     try {
-      const result = await uploadFiles(formData, token);
-      document.getElementById('upload-status').textContent = result.message;
-      document.getElementById('progress-bar').style.width = '100%';
-      document.getElementById('progress-bar').textContent = '100%';
+      const result = await uploadFilesWithProgress(formData, token);
+  
+      progressBar.style.width = '100%';
+      progressBar.textContent = '100%';
+  
+      if (result.steps) {
+        statusText.innerHTML =
+          result.steps.map(step => `<div>${step}</div>`).join('') +
+          `<div style="margin-top: 8px;"><strong>${result.message}</strong></div>`;
+      } else {
+        statusText.textContent = result.message;
+      }
   
       if (result.message.includes('SVS')) {
         await handleSVS(token);
@@ -112,11 +155,17 @@ function prepareUIBeforeUpload() {
         await handleDICOM(token);
       }
     } catch (err) {
-      document.getElementById('upload-status').textContent = `Error: ${err.message}`;
-      document.getElementById('progress-bar').style.background = '#f44336';
-      if (err.message.includes('401'))  showTokenExpiredModal();
+      console.error('Upload failed:', err);
+      statusText.textContent = `Error: ${err.message}`;
+      progressBar.style.background = '#f44336';
+      if (err.message.includes('401')) {
+        showTokenExpiredModal();
+      }
+    } finally {
+      document.getElementById('loading-spinner')?.style?.setProperty("display", "none");
     }
-}
+  }
+
 
 async function update(plane, callback) {
   if (!isDicomLoaded) { return;}
@@ -461,6 +510,7 @@ function updateSliders(volumeInfo) {
               }
           }
       });
+      
         viewer.addHandler('open', function () {
             console.log('[openFullscreenSVS] Viewer opened');
             viewer.viewport.goHome();

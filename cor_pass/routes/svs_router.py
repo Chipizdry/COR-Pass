@@ -124,6 +124,54 @@ def preview_svs(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# @router.get("/tile")
+# def get_tile(
+#     level: int = Query(...),
+#     x: int = Query(...),
+#     y: int = Query(...),
+#     tile_size: int = Query(256),
+#     current_user: User = Depends(auth_service.get_current_user)
+# ):
+#     user_slide_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id), "slides")
+#     svs_files = [f for f in os.listdir(user_slide_dir) if f.lower().endswith('.svs')]
+
+#     if not svs_files:
+#         raise HTTPException(status_code=404, detail="No SVS found.")
+
+#     svs_path = os.path.join(user_slide_dir, svs_files[0])
+
+#     try:
+#         slide = OpenSlide(svs_path)
+
+#         if level >= slide.level_count:
+#             raise HTTPException(status_code=400, detail="Invalid level")
+
+#         # Размер изображения на этом уровне
+#         level_width, level_height = slide.level_dimensions[level]
+
+#         # Проверка выхода за границы
+#         if x * tile_size >= level_width or y * tile_size >= level_height:
+#             raise HTTPException(status_code=404, detail="Tile out of bounds")
+
+#         # Позиция в пикселях на этом уровне
+#         location = (x * tile_size, y * tile_size)
+#         size = (
+#             min(tile_size, level_width - location[0]),
+#             min(tile_size, level_height - location[1])
+#         )
+
+#         tile = slide.read_region(location, level, size).convert("RGB")
+#         buf = BytesIO()
+#         tile.save(buf, format="JPEG")
+#         buf.seek(0)
+#         return StreamingResponse(buf, media_type="image/jpeg")
+
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
 @router.get("/tile")
 def get_tile(
     level: int = Query(...),
@@ -132,39 +180,75 @@ def get_tile(
     tile_size: int = Query(256),
     current_user: User = Depends(auth_service.get_current_user)
 ):
+    # Логирование начала запроса
+    logger.info(f"Starting tile request - level: {level}, x: {x}, y: {y}, tile_size: {tile_size}")
+    
     user_slide_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id), "slides")
+    logger.info(f"User slide directory: {user_slide_dir}")
+    
     svs_files = [f for f in os.listdir(user_slide_dir) if f.lower().endswith('.svs')]
+    logger.info(f"Found SVS files: {svs_files}")
 
     if not svs_files:
+        logger.error("No SVS files found in directory")
         raise HTTPException(status_code=404, detail="No SVS found.")
 
     svs_path = os.path.join(user_slide_dir, svs_files[0])
+    logger.info(f"Processing SVS file: {svs_path}")
 
     try:
+        # Логирование перед открытием слайда
+        logger.info("Attempting to open SVS file with OpenSlide")
         slide = OpenSlide(svs_path)
+        logger.info(f"Successfully opened slide. Total levels: {slide.level_count}, Dimensions: {slide.dimensions}")
 
+        # Проверка уровня
+        logger.info(f"Checking if requested level {level} is valid")
         if level >= slide.level_count:
+            logger.error(f"Invalid level requested: {level}. Max available: {slide.level_count - 1}")
             raise HTTPException(status_code=400, detail="Invalid level")
 
-        # Размер изображения на этом уровне
+        # Получение размеров уровня
         level_width, level_height = slide.level_dimensions[level]
+        logger.info(f"Level {level} dimensions: width={level_width}, height={level_height}")
 
-        # Проверка выхода за границы
+        # Проверка границ
+        logger.info(f"Checking tile boundaries - x: {x}, y: {y}, tile_size: {tile_size}")
         if x * tile_size >= level_width or y * tile_size >= level_height:
+            logger.error(f"Tile out of bounds - x: {x}, y: {y} at level {level}")
             raise HTTPException(status_code=404, detail="Tile out of bounds")
 
-        # Позиция в пикселях на этом уровне
+        # Расчет позиции и размера
         location = (x * tile_size, y * tile_size)
         size = (
             min(tile_size, level_width - location[0]),
             min(tile_size, level_height - location[1])
         )
+        logger.info(f"Tile location: {location}, size: {size}")
 
+        # Чтение региона
+        logger.info("Reading region from slide")
         tile = slide.read_region(location, level, size).convert("RGB")
+        logger.info("Successfully read and converted region")
+
+        # Подготовка ответа
+        logger.info("Preparing response buffer")
         buf = BytesIO()
         tile.save(buf, format="JPEG")
         buf.seek(0)
+        logger.info("Tile successfully prepared for streaming")
+
         return StreamingResponse(buf, media_type="image/jpeg")
 
+    except HTTPException as he:
+        logger.error(f"HTTPException during tile processing: {he.detail}")
+        raise
     except Exception as e:
+        logger.error(f"Unexpected error during tile processing: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Закрытие слайда, если он был открыт
+        if 'slide' in locals():
+            logger.info("Closing slide")
+            slide.close()
+            logger.info("Slide closed")
