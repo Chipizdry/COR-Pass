@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let widthsArray= [20, 70, 60, 10, 30,70,50,50,50,50,30];
         let currentPage = 1;
-        let rowsPerPage = 5;
+        let rowsPerPage = 10;
         let totalRows = 0;
 
         
@@ -550,6 +550,7 @@ function initAdminPanel() {
   makeModalDraggable('columnSelectModal');
   makeModalDraggable('corIdModal');
   makeModalDraggable('rolesModal');
+  makeModalDraggable('roleInfoModal');
   setupEventListeners();
   getAllUsers();
 }
