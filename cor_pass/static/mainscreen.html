@@ -14,7 +14,6 @@
     </head>
     <body>
      <div class="container">
-      <!--  <button class="link-button" onclick="goBack()" data-translate="back-link-text"><<<назад<<<</button>-->
      
         <div class="logo">  
             <svg width="100" height="30" viewBox="0 0 142 46" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -560,8 +559,8 @@
     <script src="/static/general_fun.js"></script>   
     
         <script>
-           const accessToken = new URLSearchParams(window.location.search).get('access_token');
-            console.log("accessToken from localStorage:", accessToken);
+             const accessToken =getToken();
+            console.log("accessToken:", accessToken);
             document.getElementById('passwordManagerButton').addEventListener('click', function() {
                 if (checkToken()) {
                 window.location.href = '/static/password_manager.html' + '?access_token=' + accessToken;   }
@@ -594,7 +593,7 @@
 
         document.getElementById('LogOut-btn').addEventListener('click', function () {
                 // Удаление токенов из localStorage
-                localStorage.removeItem('accessToken');
+                localStorage.removeItem('access_token');    
                 localStorage.removeItem('refreshToken');
                 localStorage.removeItem('isAdmin');
                 localStorage.removeItem('redirectUrl');
@@ -635,7 +634,8 @@
                 }}
             }
             async function fetchCorId() {
-                const accessToken = new URLSearchParams(window.location.search).get('access_token');
+                const accessToken =getToken();
+            //    const accessToken = new URLSearchParams(window.location.search).get('access_token');
                 if (!accessToken) {
                     console.error("Токен доступа не найден.");
                     document.getElementById('userCorId').textContent = "Ошибка: токен не найден.";
@@ -686,9 +686,9 @@
               enableFetchInterceptor();
               setupTokenCheckOnActions();
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const accessToken = urlParams.get('access_token'); // Получаем токен из URL
-
+          //  const urlParams = new URLSearchParams(window.location.search);
+          //  const accessToken = urlParams.get('access_token'); // Получаем токен из URL
+            const accessToken =getToken();
             if (accessToken) {
         try {
             // Расшифровываем токен
@@ -717,9 +717,6 @@
                     corErpButton.classList.add('hidden');   
                 }
 
-
-
-             
             // Проверяем наличие роли doctor для кнопки Мой кабинет
             const isDoctor = decodedToken && Array.isArray(decodedToken.roles) && decodedToken.roles.includes('doctor');
             const DoctorButton = document.getElementById('Doctor');
@@ -732,7 +729,7 @@
             console.error("Ошибка при расшифровке токена:", error);
         }
     } else {
-        console.error("Токен не найден в localStorage.");
+        console.error("Токен не найден.");
     }
 });
             const sessionsButton = document.getElementById("Sessions"); // Кнопка "Сессии"
@@ -749,11 +746,12 @@
 // Функция для получения данных о сессиях
 async function getSessions() {
     try {
-        const token = getTokenFromURL();
+        const accessToken =getToken();
+    //    const token = getTokenFromURL();
         const response = await fetch("/api/user/sessions/all?skip=0&limit=150", {
             method: "GET",
             headers: {
-                "Authorization": `Bearer ${token}`,
+                "Authorization": `Bearer ${accessToken}`,
                 "Content-Type": "application/json;charset=utf-8"
             }
         });
@@ -807,11 +805,12 @@ async function getSessions() {
 
 async function deleteSession(sessionId) {
     try {
-        const token = getTokenFromURL();
+        const accessToken =getToken();
+      //  const token = getTokenFromURL();
         const response = await fetch(`/api/user/sessions/${sessionId}`, {
             method: "DELETE",
             headers: {
-                "Authorization": `Bearer ${token}`,
+                "Authorization": `Bearer ${accessToken}`,
                 "Content-Type": "application/json;charset=utf-8"
             }
         });

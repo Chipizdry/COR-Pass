@@ -20,14 +20,9 @@ const modalConfigs = {
 
 //Функция получения токена 
 function getToken() {
-    return localStorage.getItem('authToken') || getTokenFromURL();
+    return localStorage.getItem('access_token') || getTokenFromURL();
 }
   
-/*
-function getToken() {
-    return localStorage.getItem('authToken') || 
-           new URLSearchParams(window.location.search).get('access_token');
-} */
 
 function makeModalDraggable(modalId) {
     const modal = document.getElementById(modalId);
@@ -427,7 +422,7 @@ function showTokenExpiredModal() {
 
 
       // Удаление токенов из localStorage
-      localStorage.removeItem('accessToken');
+      localStorage.removeItem('access_token');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('isAdmin');
       localStorage.removeItem('redirectUrl');
@@ -566,11 +561,7 @@ function goBack(url) {
     // Проверяем токен
     if (checkToken()) {
         // Получаем токен из localStorage или из URL
-        const accessToken = localStorage.getItem('accessToken');
-        const urlParams = new URLSearchParams(window.location.search);
-        const tokenFromUrl = urlParams.get('access_token');
-        // Используем токен из URL, если он есть, иначе из localStorage
-        const token = tokenFromUrl || accessToken;
+        const token = getToken();
         window.location.href = `${url}?access_token=${token}`;
     } 
 }
@@ -964,12 +955,12 @@ async function deleteAccount() {
         if (!confirmDelete) return;
 
         try {
-            const token = localStorage.getItem('accessToken'); // или другое имя, если храните токен иначе
+            const token =getToken(); 
 
             const response = await fetch('/api/user/delete_my_account', {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    'Authorization': 'Bearer ' + token
                 }
             });
 

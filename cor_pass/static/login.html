@@ -18,8 +18,8 @@
         <title>Авторизация и регистрация</title>
         <link rel="stylesheet" type="text/css" href="static/styles.css">
         <link rel="stylesheet" type="text/css" href="static/modal.css">
-        <meta name="google-signin-client_id" content="161352424929-s3ris9429m994vcm2m35epe6eu4538el.apps.googleusercontent.com">
-        <meta name="facebook-sdk-version" content="v15.0" />
+    <!--   <meta name="google-signin-client_id" content="161352424929-s3ris9429m994vcm2m35epe6eu4538el.apps.googleusercontent.com">
+        <meta name="facebook-sdk-version" content="v15.0" />--> 
         <script src="https://connect.facebook.net/en_US/sdk.js"></script>
         <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-beta.1/css/select2.min.css" rel="stylesheet" />
  
@@ -261,7 +261,6 @@ document.getElementById('send-recovery-btn').addEventListener('click', async fun
                             urlParams.set('refresh_token', refreshToken);
 
                             const queryString = urlParams.toString();
-                            // const url = `${redirectUrl}/?access_token=${accessToken}&refresh_token=${refreshToken}`;
                             const url = `/static/mainscreen.html/?access_token=${accessToken}`;
 
                             window.location.href = url;
@@ -332,8 +331,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.addEventListener('DOMContentLoaded', function() {
-        const GoogleBtn = document.getElementById('google-btn');
-        const FaceBookBtn = document.getElementById('facebook-btn');
+       // const GoogleBtn = document.getElementById('google-btn');
+      //  const FaceBookBtn = document.getElementById('facebook-btn');
 
         const emailField = document.getElementById('email');
         const passwordField = document.getElementById('password');
@@ -429,30 +428,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log("Successful login.");
                         console.log("Response from server:", response); // Логируем ответ от сервера
                         const userLang = localStorage.getItem('selectedLanguage');
-                        console.log("isAdmin from server:", response.is_admin);
-                        // Сохраняем информацию о том, является ли пользователь администратором
-                        localStorage.setItem('isAdmin', response.is_admin); // Сохраняем статус администратора
-                        // Проверяем, что мы сохранили значение правильно
-                        console.log("isAdmin stored in localStorage:", localStorage.getItem('isAdmin'));
-                        // console.log("__________translation___________");
-                        // console.log(translations); // Проверить объект translations в консоли
-                        // console.log("_____________userLang____________");
-                        // console.log(userLang); // Проверить значение userLang в консоли
-                        // console.log("_____________translations[userLang]____________");
-                        // console.log(translations[userLang]); // Проверить значение translations[userLang] в консоли
-                        // console.log("_____________messageDiv.innerText____________");
-                        // console.log(translations[userLang]["message-ok"]);
-                        // console.log(errorMessage); // Проверить значение errorMessage в консоли
-                        messageDiv.innerText = "Successful login"
-                        // messageDiv.innerText = translations[userLang]["message-ok"];
+                        localStorage.setItem('access_token', response.access_token);
+                    
+                        messageDiv.innerText = translations[userLang]["message-ok"];
                         messageDiv.style.color = 'green';
 
                         setTimeout(() => {
                             const refreshToken = response.refresh_token;
                             const accessToken = response.access_token;
                             const savedRedirectUrl = localStorage.getItem('redirectUrl');
-
-
 
                             const accessToken_rcv = new URLSearchParams(window.location.search).get('access_token');
                             const refreshToken_rcv = new URLSearchParams(window.location.search).get('refresh_token');
@@ -467,7 +451,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             urlParams.set('access_token', accessToken);
                             urlParams.set('refresh_token', refreshToken);
                             const queryString = urlParams.toString();
-                            const url = `/static/mainscreen.html/?access_token=${accessToken}&refresh_token=${refreshToken}`;
+                             const url = `/static/mainscreen.html/?access_token=${accessToken}&refresh_token=${refreshToken}`;
+                          //  const url = `/static/mainscreen.html/`;
                             window.location.href = url;
                               }
 
@@ -475,7 +460,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     } else {
                         const errorMessage = getErrorMessage(xhr.status, messageDiv);
-                        // console.error("Error during login.");
                         messageDiv.innerText = errorMessage;
                         messageDiv.style.color = 'red';
                     }
@@ -503,12 +487,6 @@ document.addEventListener('DOMContentLoaded', function() {
             case 403:
                 return "Access denied.";
             default:
-                // console.error("Error during login.");
-                // console.log(translations); // Проверить объект translations в консоли
-                // console.log(userLang); // Проверить значение userLang в консоли
-                // console.log(translations[userLang]); // Проверить значение translations[userLang] в консоли
-                // console.log(errorMessage); // Проверить значение errorMessage в консоли
-                // messageDiv.innerText = translations[userLang]["message-error"];
                 messageDiv.style.color = 'red';
                 return "Error during login.";
         }
