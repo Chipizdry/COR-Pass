@@ -513,7 +513,7 @@
             console.log("accessToken:", accessToken);
             document.getElementById('passwordManagerButton').addEventListener('click', function() {
                 if (checkToken()) {
-                window.location.href = '/static/password_manager.html';   }
+                window.location.href = '/static/COR_ID/password_manager.html';   }
             });
    
             // Обработчик для кнопки "COR-Platform"
@@ -537,11 +537,7 @@
           });
 
         document.getElementById('LogOut-btn').addEventListener('click', function () {
-                // Удаление токенов из localStorage
-                localStorage.removeItem('access_token');    
-                localStorage.removeItem('refreshToken');
-                localStorage.removeItem('isAdmin');
-                localStorage.removeItem('redirectUrl');
+              
 
 
                 // Очистка кэша страницы
@@ -551,8 +547,14 @@
                     });
                 }
 
+                  // Удаление токенов из localStorage
+                localStorage.removeItem('access_token');    
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('isAdmin');
+                localStorage.removeItem('redirectUrl');
+
                     // Переадресация на страницу login.html
-                    window.location.href = '/';
+                  //  window.location.href = '/';
                 });
 
 
@@ -645,7 +647,7 @@
                 const adminButton = document.createElement('button');
                 adminButton.innerText = 'Администрирование';
                 adminButton.onclick = function() {
-                    window.location.href = `/static/admin.html`;
+                    window.location.href = `/static/COR_ID/admin.html`;
                 };
                 adminButtonContainer.appendChild(adminButton);
             }
