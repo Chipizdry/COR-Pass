@@ -251,15 +251,10 @@ document.getElementById('send-recovery-btn').addEventListener('click', async fun
                 alert('Успешное восстановление доступа по супер-паролю');
                 localStorage.setItem('access_token', result.access_token);
                 setTimeout(() => {
-                            const refreshToken = result.refresh_token;
-                            const accessToken = result.access_token;
-
-                            urlParams.set('access_token', accessToken);
-                            urlParams.set('refresh_token', refreshToken);
-
-                            const queryString = urlParams.toString();
-                            const url = `/static/COR_ID/mainscreen.html/?access_token=${accessToken}`;
-
+                           
+                            localStorage.setItem('access_token', response.access_token);
+                            localStorage.setItem('refresh_token', response.refresh_token);
+                            const url = `/static/COR_ID/mainscreen.html`;
                             window.location.href = url;
                         }, 500);
               
@@ -436,11 +431,11 @@ document.addEventListener('DOMContentLoaded', function() {
                          } else {
                            console.log(" Не найдены параметры redirect_url или cor_id.");
 
-                            urlParams.set('access_token', accessToken);
-                            urlParams.set('refresh_token', refreshToken);
-                            const queryString = urlParams.toString();
-                            const url = `/static/COR_ID/mainscreen.html`;
-                            window.location.href = url;
+
+                           localStorage.setItem('access_token', response.access_token);
+                           localStorage.setItem('refresh_token', response.refresh_token);
+                           const url = `/static/COR_ID/mainscreen.html`;
+                           window.location.href = url;
                               }
 
                         }, 1500);
@@ -506,9 +501,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Функция для установки языка
     function setLanguage(language) {
         document.querySelectorAll("[data-translate]").forEach(function(element) {
-            const key = element.getAttribute("data-translate");
-            element.innerText = translations[language][key];
-           
+        const key = element.getAttribute("data-translate");
+        element.innerText = translations[language][key];     
         });
     }
 </script>
