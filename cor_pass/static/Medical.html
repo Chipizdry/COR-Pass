@@ -13,7 +13,7 @@
 </head>
 <body>
     <div class="container">
-        <button class="link-button" onclick="goBack('/static/mainscreen.html')" data-translate="back-link-text"><<<назад<<<</button>
+        <button class="link-button" onclick="goBack('/static/COR_ID/mainscreen.html')" data-translate="back-link-text"><<<назад<<<</button>
         <button class="delete-button" id="deleteRecordButton" >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path fill-rule="evenodd" clip-rule="evenodd" d="M1.70976 4.02322C2.16421 3.56878 
@@ -179,11 +179,6 @@
             </svg>
         </button>
 
-
-
-
-
-
         <button id="I_am_a_doctor" class="link-button" type="button" 
         style="  text-align: left; font-size: 12px;float: left;
         white-space: nowrap;max-width:60px;width:60px;
@@ -195,8 +190,10 @@
 
 
 <script>
-const accessToken = new URLSearchParams(window.location.search).get('access_token');
-console.log("accessToken from localStorage:", accessToken);
+
+document.addEventListener('DOMContentLoaded', () => { 
+const accessToken =  getToken();
+console.log("accessToken from localStorage:", getToken());
 document.getElementById('I_am_a_doctor').addEventListener('click', function() {
     if (checkToken()) {
     window.location.href = '/static/doctor_registration.html' + '?access_token=' + accessToken;   }
@@ -204,19 +201,19 @@ document.getElementById('I_am_a_doctor').addEventListener('click', function() {
 
 document.getElementById('Dicom_viewer').addEventListener('click', function() {
     if (checkToken()) {
-    window.location.href = '/static/dicom_viewer.html' + '?access_token=' + accessToken;
+    window.location.href = '/static/dicom_viewer.html';
 
 }
 });
 
 document.getElementById('Medical_Card').addEventListener('click', function() {
     if (checkToken()) {
-    window.location.href = '/static/My_Medical_Card.html' + '?access_token=' + accessToken;
+    window.location.href = '/static/My_Medical_Card.html';
 
 }
 });
 
-
+});
 
 </script>
     

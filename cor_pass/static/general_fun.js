@@ -452,7 +452,7 @@ function getTokenFromURL() {
 
 // Функция для проверки истечения токена + проверка ответа сервера
 function checkToken() {
-    const token = getTokenFromURL(); // Получаем токен из URL
+    const token = getToken(); // Получаем токен из URL
     if (!token) {
         console.warn("Authorization token is missing.");
         showTokenExpiredModal();
@@ -474,6 +474,7 @@ function checkToken() {
     }
 
     // Проверяем, авторизован ли пользователь на сервере
+    /*
     fetch("/api/auth/verify", {
         method: "GET",
         headers: {
@@ -491,7 +492,7 @@ function checkToken() {
        
          showTokenExpiredModal();
     });
-
+*/
     return true;
 }
 
@@ -560,9 +561,8 @@ function enableFetchInterceptor() {
 function goBack(url) {
     // Проверяем токен
     if (checkToken()) {
-        // Получаем токен из localStorage или из URL
         const token = getToken();
-        window.location.href = `${url}?access_token=${token}`;
+        window.location.href = `${url}`;
     } 
 }
 

@@ -24,7 +24,7 @@ function generateQrCodeFromText(corId) {
 
 function showCorIdInfo(corId) {
     if( checkToken()){
-    const accessToken = new URLSearchParams(window.location.search).get('access_token');
+    const accessToken = getToken();
            if (!accessToken) {
                console.error('Токен не найден!');
                return;
@@ -169,7 +169,6 @@ function populateTable(users) {
 
       // Функция для удаления пользователя
       async function deleteUser(email) {
-        const accessToken = new URLSearchParams(window.location.search).get('access_token');
         const url = `/api/admin/${email}`;
 
         if (confirm(`Вы уверены, что хотите удалить пользователя с email: ${email}?`)) {
@@ -178,7 +177,7 @@ function populateTable(users) {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + accessToken
+                        'Authorization': 'Bearer ' + getToken()
                     }
                 });
 

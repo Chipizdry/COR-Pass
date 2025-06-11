@@ -12,16 +12,14 @@
     <link rel="stylesheet" type="text/css" href="/static/modal.css">
     <link rel="stylesheet" type="text/css" href="/static/admin.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- Подключаем стили flatpickr -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <!-- Подключаем скрипт flatpickr -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>      
     <title>Admin Page</title>
   
 </head>
 <body>
   <div class="admin-container">
-        <button class="link-button" onclick="goBack('/static/mainscreen.html')" data-translate="back-link-text"><<<назад<<<</button>
+        <button class="link-button" onclick="goBack('/static/COR_ID/mainscreen.html')" data-translate="back-link-text"><<<назад<<<</button>
         <h1>Пользователи</h1>
 
      <button id="openModalBtn">Выбрать вывод</button>
@@ -115,7 +113,7 @@
                     </div>
                 </div>
                 <div style="text-align: center; margin-top: 30px;">
-                    <span id="rolesEmail" style="color: #291161; font-size: 17px;"></span>
+                    <span id="rolesEmail" style="color: #291161; font-size: 15px;"></span>
                 </div> 
                 <div style="text-align: center; margin-top: 10px;">
                     <span id="rolesСorId" style="color: #291161; font-size: 17px;"></span>
@@ -184,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });                
 
-        let widthsArray= [20, 70, 60, 10, 30,70,50,50,50,50,30];
+        let widthsArray= [20, 70, 70, 10, 30,70,50,50,50,50,30];
         let currentPage = 1;
         let rowsPerPage = 10;
         let totalRows = 0;
@@ -195,22 +193,21 @@ document.addEventListener('DOMContentLoaded', () => {
           
 
 async function getAllUsers(skip = 0, limit = rowsPerPage) {
-    const accessToken = new URLSearchParams(window.location.search).get('access_token');
     const url = `/api/admin/get_all?skip=${skip}&limit=${limit}`;
-    
-    console.log('Запрос URL:', url); // Логируем URL запроса
-    console.log('Токен доступа:', accessToken); // Логируем токен доступа (убедитесь, что это безопасно для отладки!)
-
+    console.log('Запрос URL:', url);
     try {
         const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + accessToken
+                'Authorization': 'Bearer ' + getToken()
             }
         });
 
         console.log('HTTP код ответа:', response.status); // Логируем HTTP статус ответа
+        if (response.status==='401') {
+        showTokenExpiredModal();
+        } 
 
         if (!response.ok) {
             throw new Error(`Ошибка: ${response.status} ${response.statusText}`);
@@ -225,16 +222,16 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
        
 
         if (users.length > 0) {
-            console.log('Полученные пользователи:', users); // Логируем массив пользователей
-            populateTable(users); // Передаём массив пользователей
+            console.log('Полученные пользователи:', users);
+            populateTable(users); 
             adjustTableLayout();
-            return users; // Данные успешно получены
+            return users;
         } else {
             console.log('Пользователи отсутствуют.');
-            return false; // Пустая страница
+            return false; 
         }
     } catch (error) {
-        console.error('Ошибка при загрузке пользователей:', error); // Логируем ошибку
+        console.error('Ошибка при загрузке пользователей:', error);      
         return false;
     }
 }
@@ -245,8 +242,6 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
             const confirmChange = confirm(`Вы уверены, что хотите изменить статус пользователя с email: ${email} на ${newStatus}?`);
 
             if (!confirmChange) return;
-
-            const accessToken = new URLSearchParams(window.location.search).get('access_token');
             const url = `/api/admin/asign_status/${newStatus}?email=${encodeURIComponent(email)}`;
 
             try {
@@ -254,7 +249,7 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + accessToken
+                        'Authorization': 'Bearer ' + getToken()
                     }
                 });
 
@@ -274,14 +269,7 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
 
  // Функция для отправки запроса на активацию/деактивацию пользователя
  async function toggleUserStatus(email, isActive) {
-    // Получение accessToken из параметров URL
-    const accessToken = new URLSearchParams(window.location.search).get('access_token');
-    
-    // Проверка на наличие accessToken
-    if (!accessToken) {
-        alert("Токен доступа не найден в URL.");
-        return;
-    }
+ 
 
     // Установка URL в зависимости от статуса isActive
     const url = isActive 
@@ -293,7 +281,7 @@ async function getAllUsers(skip = 0, limit = rowsPerPage) {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + accessToken
+                'Authorization': 'Bearer ' + getToken()
             }
         });
         
@@ -601,19 +589,12 @@ function adjustTableLayout() {
 
 async function showUserRoles(corId) {
     if (!checkToken()) return;
-
-    const accessToken = new URLSearchParams(window.location.search).get('access_token');
-    if (!accessToken) {
-        console.error('Токен не найден!');
-        return;
-    }
-
     try {
         const response = await fetch(`/api/admin/get_user_info/${corId}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
+                'Authorization': 'Bearer ' + getToken()
             }
         });
 
@@ -690,34 +671,42 @@ function showRoleInfo(role, userData) {
         case 'admin':
             roleDescription = `
                 <h3>Администратор</h3>
-               
+                <div class="role-form">
+                   
+                </div>
             `;
             break;
             
         case 'lawyer':
             roleDescription = `
                 <h3>Юрист</h3>
-                
+                <div class="role-form">
+                 
+                </div>
             `;
             break;
             
         case 'cor-int':
             roleDescription = `
                 <h3>Корпоративный пользователь</h3>
-                
+                <div class="role-form">
+                   
+                </div>
             `;
             break;
             
         case 'active_user':
             roleDescription = `
                 <h3>Активный пользователь</h3>
-                <div class="role-details">
-                   
+                <div class="role-form">
                     ${userData.profile ? `
-                        <div class="profile-section">
-                            <h4>Профиль:</h4>
-                            <p><strong>Имя:</strong> ${userData.profile.first_name}</p>
-                            <p><strong>Город:</strong> ${userData.profile.city}</p>
+                        <div class="form-group">
+                            <label>Имя:</label>
+                            <input type="text" id="firstName" value="${userData.profile.first_name || ''}" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Город:</label>
+                            <input type="text" id="city" value="${userData.profile.city || ''}" class="form-control">
                         </div>
                     ` : ''}
                 </div>
@@ -725,36 +714,262 @@ function showRoleInfo(role, userData) {
             break;
             
         case 'doctor':
-            roleDescription = `
-                <h3>Врач</h3>
-                <div class="role-details">
-                   
-                    ${userData.doctor_info ? `
-                        <div class="doctor-section">
-                            <h4>Профессиональная информация:</h4>
-                            <p><strong>ФИО:</strong> ${userData.doctor_info.surname} ${userData.doctor_info.first_name} ${userData.doctor_info.last_name || ''}</p>
-                            <p><strong>Рабочий email:</strong> ${userData.doctor_info.work_email}</p>
-                            <p><strong>Телефон:</strong> ${userData.doctor_info.phone_number}</p>
-                            <p><strong>Научная степень:</strong> ${userData.doctor_info.scientific_degree || 'нет'}</p>
-                            <p><strong>Статус:</strong> ${userData.doctor_info.status}</p>
-                            
-                            ${userData.doctor_info.diplomas && userData.doctor_info.diplomas.length > 0 ? `
-                                <h4>Дипломы:</h4>
-                                <ul class="documents-list">
-                                    ${userData.doctor_info.diplomas.map(diploma => `<li>${diploma}</li>`).join('')}
-                                </ul>
-                            ` : ''}
-                            
-                            ${userData.doctor_info.certificates && userData.doctor_info.certificates.length > 0 ? `
-                                <h4>Сертификаты:</h4>
-                                <ul class="documents-list">
-                                    ${userData.doctor_info.certificates.map(cert => `<li>${cert}</li>`).join('')}
-                                </ul>
-                            ` : ''}
+           // Формируем данные врача или пустые значения, если их нет
+        const doctorInfo = userData.doctor_info || {};
+        const diplomas = doctorInfo.diplomas || [{}];
+        const certificates = doctorInfo.certificates || [{}];
+        const clinicAffiliations = doctorInfo.clinic_affiliations || [{}];
+        
+        roleDescription = `
+            <h3>Врач</h3>
+            
+            <!-- Навигация по вкладкам -->
+            <ul class="nav nav-tabs" id="doctorTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="personal-tab" data-toggle="tab" href="#personal" role="tab">Личные данные</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="diplomas-tab" data-toggle="tab" href="#diplomas" role="tab">Дипломы</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="certificates-tab" data-toggle="tab" href="#certificates" role="tab">Сертификаты</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="clinics-tab" data-toggle="tab" href="#clinics" role="tab">Клиники</a>
+                </li>
+            </ul>
+            
+            <!-- Содержимое вкладок -->
+            <div class="tab-content" id="doctorTabsContent">
+                <!-- Вкладка личных данных -->
+                <div class="tab-pane fade show active" id="personal" role="tabpanel">
+                    <div class="role-form mt-3">
+                        <div class="form-group">
+                            <label>Фамилия:</label>
+                            <input type="text" id="surname" value="${doctorInfo.surname || ''}" class="form-control">
                         </div>
-                    ` : ''}
+                        <div class="form-group">
+                            <label>Имя:</label>
+                            <input type="text" id="firstName" value="${doctorInfo.first_name || ''}" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Отчество:</label>
+                            <input type="text" id="lastName" value="${doctorInfo.last_name || ''}" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Рабочий email:</label>
+                            <input type="email" id="workEmail" value="${doctorInfo.work_email || ''}" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Телефон:</label>
+                            <input type="tel" id="phoneNumber" value="${doctorInfo.phone_number || ''}" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Научная степень:</label>
+                            <input type="text" id="scientificDegree" value="${doctorInfo.scientific_degree || ''}" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Дата последней аттестации:</label>
+                            <input type="date" id="lastAttestationDate" value="${doctorInfo.date_of_last_attestation || ''}" class="form-control">
+                        </div>
+                    </div>
                 </div>
-            `;
+                
+                <!-- Вкладка дипломов -->
+                <div class="tab-pane fade" id="diplomas" role="tabpanel">
+                    <div class="role-form mt-3">
+                        <button id="addDiplomaBtn" class="btn btn-sm btn-secondary mb-3">+ Добавить диплом</button>
+                        <div id="diplomasContainer">
+                            ${diplomas.map((diploma, index) => `
+                                <div class="document-form card mb-3" data-index="${index}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Диплом ${index + 1}</h5>
+                                        <button class="btn btn-sm btn-danger float-right remove-diploma">×</button>
+                                        <div class="form-group">
+                                            <label>Университет:</label>
+                                            <input type="text" id="diplomaUniversity${index}" value="${diploma.university || ''}" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Серия:</label>
+                                            <input type="text" id="diplomaSeries${index}" value="${diploma.series || ''}" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Номер:</label>
+                                            <input type="text" id="diplomaNumber${index}" value="${diploma.number || ''}" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Дата:</label>
+                                            <input type="date" id="diplomaDate${index}" value="${diploma.date || ''}" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Вкладка сертификатов -->
+                <div class="tab-pane fade" id="certificates" role="tabpanel">
+                    <div class="role-form mt-3">
+                        <button id="addCertificateBtn" class="btn btn-sm btn-secondary mb-3">+ Добавить сертификат</button>
+                        <div id="certificatesContainer">
+                            ${certificates.map((cert, index) => `
+                                <div class="document-form card mb-3" data-index="${index}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Сертификат ${index + 1}</h5>
+                                        <button class="btn btn-sm btn-danger float-right remove-certificate">×</button>
+                                        <div class="form-group">
+                                            <label>Университет:</label>
+                                            <input type="text" id="certUniversity${index}" value="${cert.university || ''}" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Серия:</label>
+                                            <input type="text" id="certSeries${index}" value="${cert.series || ''}" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Номер:</label>
+                                            <input type="text" id="certNumber${index}" value="${cert.number || ''}" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Дата:</label>
+                                            <input type="date" id="certDate${index}" value="${cert.date || ''}" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Вкладка клиник -->
+                <div class="tab-pane fade" id="clinics" role="tabpanel">
+                    <div class="role-form mt-3">
+                        <button id="addClinicBtn" class="btn btn-sm btn-secondary mb-3">+ Добавить клинику</button>
+                        <div id="clinicsContainer">
+                            ${clinicAffiliations.map((clinic, index) => `
+                                <div class="clinic-form card mb-3" data-index="${index}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Клиника ${index + 1}</h5>
+                                        <button class="btn btn-sm btn-danger float-right remove-clinic">×</button>
+                                        <div class="form-group">
+                                            <label>Название клиники:</label>
+                                            <input type="text" id="clinicName${index}" value="${clinic.clinic_name || ''}" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Отделение:</label>
+                                            <input type="text" id="clinicDepartment${index}" value="${clinic.department || ''}" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Должность:</label>
+                                            <input type="text" id="clinicPosition${index}" value="${clinic.position || ''}" class="form-control">
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Специальность:</label>
+                                            <input type="text" id="clinicSpecialty${index}" value="${clinic.specialty || ''}" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer mt-3">
+                <button id="saveRoleBtn" class="btn btn-primary">Сохранить все данные</button>
+            </div>
+            
+            <!-- Шаблоны для динамического добавления элементов -->
+            <template id="diplomaTemplate">
+                <div class="document-form card mb-3" data-index="0">
+                    <div class="card-body">
+                        <h5 class="card-title">Новый диплом</h5>
+                        <button class="btn btn-sm btn-danger float-right remove-diploma">×</button>
+                        <div class="form-group">
+                            <label>Университет:</label>
+                            <input type="text" class="form-control diploma-university">
+                        </div>
+                        <div class="form-group">
+                            <label>Серия:</label>
+                            <input type="text" class="form-control diploma-series">
+                        </div>
+                        <div class="form-group">
+                            <label>Номер:</label>
+                            <input type="text" class="form-control diploma-number">
+                        </div>
+                        <div class="form-group">
+                            <label>Дата:</label>
+                            <input type="date" class="form-control diploma-date">
+                        </div>
+                    </div>
+                </div>
+            </template>
+            
+            <template id="certificateTemplate">
+                <div class="document-form card mb-3" data-index="0">
+                    <div class="card-body">
+                        <h5 class="card-title">Новый сертификат</h5>
+                        <button class="btn btn-sm btn-danger float-right remove-certificate">×</button>
+                        <div class="form-group">
+                            <label>Университет:</label>
+                            <input type="text" class="form-control certificate-university">
+                        </div>
+                        <div class="form-group">
+                            <label>Серия:</label>
+                            <input type="text" class="form-control certificate-series">
+                        </div>
+                        <div class="form-group">
+                            <label>Номер:</label>
+                            <input type="text" class="form-control certificate-number">
+                        </div>
+                        <div class="form-group">
+                            <label>Дата:</label>
+                            <input type="date" class="form-control certificate-date">
+                        </div>
+                    </div>
+                </div>
+            </template>
+            
+            <template id="clinicTemplate">
+                <div class="clinic-form card mb-3" data-index="0">
+                    <div class="card-body">
+                        <h5 class="card-title">Новая клиника</h5>
+                        <button class="btn btn-sm btn-danger float-right remove-clinic">×</button>
+                        <div class="form-group">
+                            <label>Название клиники:</label>
+                            <input type="text" class="form-control clinic-name">
+                        </div>
+                        <div class="form-group">
+                            <label>Отделение:</label>
+                            <input type="text" class="form-control clinic-department">
+                        </div>
+                        <div class="form-group">
+                            <label>Должность:</label>
+                            <input type="text" class="form-control clinic-position">
+                        </div>
+                        <div class="form-group">
+                            <label>Специальность:</label>
+                            <input type="text" class="form-control clinic-specialty">
+                        </div>
+                    </div>
+                </div>
+            </template>
+        `;
+        
+        roleInfoContent.innerHTML = roleDescription;
+        
+        // Инициализация функционала вкладок
+        initDoctorTabs();
+        
+        // Добавляем обработчики для кнопок добавления/удаления
+        document.getElementById('addDiplomaBtn')?.addEventListener('click', addNewDiploma);
+        document.getElementById('addCertificateBtn')?.addEventListener('click', addNewCertificate);
+        document.getElementById('addClinicBtn')?.addEventListener('click', addNewClinic);
+        
+        // Добавляем обработчик сохранения
+        document.getElementById('saveRoleBtn').addEventListener('click', () => {
+            saveDoctorData(userData.user_info.cor_id);
+        });
             break;
             
         default:
@@ -762,8 +977,91 @@ function showRoleInfo(role, userData) {
     }
     
     roleInfoContent.innerHTML = roleDescription;
+    
+    // Добавляем обработчик сохранения для роли врача
+    if (role === 'doctor') {
+        document.getElementById('saveRoleBtn').addEventListener('click', () => {
+            saveDoctorData(userData.user_info.cor_id);
+        });
+    }
+    
     document.getElementById("roleInfoModal").style.display = "block";
 }
+
+
+function initDoctorTabs() {
+    // Простая реализация переключения вкладок без jQuery
+    const tabs = document.querySelectorAll('#doctorTabs .nav-link');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            // Скрыть все вкладки
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.remove('show', 'active');
+            });
+            
+            // Убрать активность у всех табов
+            tabs.forEach(t => {
+                t.classList.remove('active');
+            });
+            
+            // Показать выбранную вкладку
+            const target = document.querySelector(tab.getAttribute('href'));
+            target.classList.add('show', 'active');
+            tab.classList.add('active');
+        });
+    });
+}
+
+function addNewDiploma() {
+    const container = document.getElementById('diplomasContainer');
+    const template = document.getElementById('diplomaTemplate');
+    const clone = template.content.cloneNode(true);
+    const newIndex = container.children.length;
+    
+    clone.querySelector('.document-form').dataset.index = newIndex;
+    container.appendChild(clone);
+    
+    // Добавляем обработчик удаления
+    const removeBtn = container.lastElementChild.querySelector('.remove-diploma');
+    removeBtn.addEventListener('click', () => {
+        container.removeChild(container.lastElementChild);
+    });
+}
+
+function addNewCertificate() {
+    const container = document.getElementById('certificatesContainer');
+    const template = document.getElementById('certificateTemplate');
+    const clone = template.content.cloneNode(true);
+    const newIndex = container.children.length;
+    
+    clone.querySelector('.document-form').dataset.index = newIndex;
+    container.appendChild(clone);
+    
+    // Добавляем обработчик удаления
+    const removeBtn = container.lastElementChild.querySelector('.remove-certificate');
+    removeBtn.addEventListener('click', () => {
+        container.removeChild(container.lastElementChild);
+    });
+}
+
+function addNewClinic() {
+    const container = document.getElementById('clinicsContainer');
+    const template = document.getElementById('clinicTemplate');
+    const clone = template.content.cloneNode(true);
+    const newIndex = container.children.length;
+    
+    clone.querySelector('.clinic-form').dataset.index = newIndex;
+    container.appendChild(clone);
+    
+    // Добавляем обработчик удаления
+    const removeBtn = container.lastElementChild.querySelector('.remove-clinic');
+    removeBtn.addEventListener('click', () => {
+        container.removeChild(container.lastElementChild);
+    });
+}
+
 
     </script>
 </body>

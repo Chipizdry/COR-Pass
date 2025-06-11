@@ -115,56 +115,6 @@
             </button>
 
 
-    <!--        <button class="custom-button"id="COR-AUTH">
-                      
-                <svg width="24" height="24" viewBox="0 0 51 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="0.5" width="50" height="50" rx="25" fill="#7B43F2"/>
-                    <path d="M24.8362 15.0372C22.5504 15.2911 20.5889 16.9205 
-                    19.8934 19.136C19.6746 19.8354 19.6394 20.2144 19.6394 
-                    21.7891V23.227L19.1549 23.2504C18.4086 23.2856 17.9984 
-                    23.4419 17.5998 23.8443C17.3458 24.0983 17.2013 24.3523 
-                    17.0958 24.7157C17.0254 24.9657 17.0215 25.1533 17.0215 
-                    29.1192C17.0215 33.6479 17.0137 33.4681 17.2481 33.9448C17.3849 
-                    34.2183 17.803 34.6364 18.0765 34.7732C18.5649 35.0154 18.1156 
-                    34.9998 25.5005 34.9998C32.8853 34.9998 32.436 35.0154 32.9244 
-                    34.7732C33.1979 34.6364 33.616 34.2183 33.7528 33.9448C33.9872 
-                    33.4681 33.9794 33.6479 33.9794 29.1192C33.9794 25.1533 33.9755 
-                    24.9657 33.9052 24.7157C33.7997 24.3523 33.6551 24.0983 33.4011 
-                    23.8443C33.0026 23.4419 32.5923 23.2856 31.846 23.2504L31.3615 
-                    23.227V21.7891C31.3615 20.5465 31.3498 20.2964 31.2872 
-                    19.9096C30.7558 16.8189 27.9426 14.6894 24.8362 15.0372ZM26.0436 
-                    17.6551C27.2353 17.8465 28.2317 18.7257 28.6302 19.937C28.7162 
-                    20.1988 28.7201 20.273 28.7318 21.7226L28.7475 
-                    23.2387H25.5005H22.2535L22.2691 21.7226C22.2808 
-                    20.273 22.2847 20.1988 22.3707 19.937C22.7106 
-                    18.9093 23.4569 18.1318 24.4377 17.7879C24.594 17.7332 
-                    24.8128 17.6746 24.9261 17.6551C25.2152 17.6082 25.7505 
-                    17.6043 26.0436 17.6551ZM26.1139 25.9777C27.0517 26.2981 
-                    27.6104 27.2554 27.4112 28.2088C27.2978 28.7441 26.9032 
-                    29.2716 26.4226 29.5295L26.1686 29.6663L26.1569 30.8033L26.1452 
-                    31.9403L26.0475 32.081C25.774 32.4796 25.2269 32.4796 24.9534 
-                    32.081L24.8557 31.9403L24.844 30.8033L24.8323 29.6663L24.5783 
-                    29.5295C23.8125 29.1192 23.3905 28.1854 23.6054 27.3687C23.8047 
-                    26.599 24.4064 26.0402 25.1879 25.8957C25.434 25.8488 25.8521 
-                    25.8879 26.1139 25.9777Z" fill="white"/>
-                    </svg>
-                                    
-                
-                <span class="button-text">Аутентификатор</span> 
-               
-                <svg class="icon-right" width="24" height="24" viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="1.125" y="0.625" width="28.75" height="28.75" rx="14.375" stroke="#7527B2" stroke-width="1.25"/>
-                    <path d="M20.1161 14.3274L20.1132 14.3248L14.1478 8.73647L14.1432 8.73226L14.1418 8.7311C13.7749 8.40419 
-                    13.2289 8.43324 12.8907 8.76051L12.8866 8.76302L12.8857 8.76387L12.8823 8.76723L12.883 8.76796C12.5174 
-                    9.10176 12.5154 9.67494 12.8829 10.0382L12.885 10.0403L12.8862 10.0415L12.8884 10.0435L18.1453 
-                    14.996L12.8804 19.956L12.8817 19.9574C12.7001 20.1105 12.6074 20.3496 12.6074 20.5897C12.6074 21.0796 
-                    13.0121 21.4995 13.5307 21.4995C13.7755 21.4995 13.9909 21.4093 14.1458 21.2575L14.1494 21.254L20.1144 
-                    15.637L20.1176 15.634L20.1415 15.6107L20.151 15.6008L20.1535 15.5982C20.4888 15.233 20.4849 14.6591 
-                    20.1161 14.3274Z" fill="#7527B2"/>
-                </svg>
-            </button> -->
-
-       
             <button class="custom-button"id="COR-ERP">
                 <!-- Первая SVG-иконка -->       
                 <svg width="24" height="24" viewBox="0 0 51 50" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -563,18 +513,13 @@
             console.log("accessToken:", accessToken);
             document.getElementById('passwordManagerButton').addEventListener('click', function() {
                 if (checkToken()) {
-                window.location.href = '/static/password_manager.html' + '?access_token=' + accessToken;   }
+                window.location.href = '/static/password_manager.html';   }
             });
-    
-       /*     document.getElementById('COR-AUTH').addEventListener('click', function() {
-                if (checkToken()) {
-                window.location.href = '/static/medical.html' + '?access_token=' + accessToken;}
-            }); */
-    
+   
             // Обработчик для кнопки "COR-Platform"
         document.getElementById('COR-MED').addEventListener('click', function() {
             if (checkToken()) {          
-                window.location.href = '/static/medical.html' + '?access_token=' + accessToken;
+                window.location.href = '/static/medical.html';
             } 
         });
         // Обработчик для кнопки "Мой кабинет"
@@ -635,7 +580,6 @@
             }
             async function fetchCorId() {
                 const accessToken =getToken();
-            //    const accessToken = new URLSearchParams(window.location.search).get('access_token');
                 if (!accessToken) {
                     console.error("Токен доступа не найден.");
                     document.getElementById('userCorId').textContent = "Ошибка: токен не найден.";
@@ -666,8 +610,8 @@
                      // Jбработчик клика на сам QR-код для его скрытия
                     const qrCodeContainer = document.getElementById('qrCodeContainer');
                     qrCodeContainer.addEventListener('click', () => {
-                        qrCodeContainer.style.display = 'none'; // Скрываем QR-код
-                        qrCodeContainer.innerHTML = ''; // Очищаем контейнер
+                        qrCodeContainer.style.display = 'none'; 
+                        qrCodeContainer.innerHTML = ''; 
                     });
                 } catch (error) {
                     console.error("Ошибка при запросе COR-ID:", error);
@@ -678,6 +622,7 @@
   
             
             document.addEventListener('DOMContentLoaded', function() {
+                const accessToken =getToken();
               checkToken();
               fetchCorId();
               initModalControls('sessionsModal');
@@ -686,9 +631,6 @@
               enableFetchInterceptor();
               setupTokenCheckOnActions();
 
-          //  const urlParams = new URLSearchParams(window.location.search);
-          //  const accessToken = urlParams.get('access_token'); // Получаем токен из URL
-            const accessToken =getToken();
             if (accessToken) {
         try {
             // Расшифровываем токен
@@ -703,7 +645,7 @@
                 const adminButton = document.createElement('button');
                 adminButton.innerText = 'Администрирование';
                 adminButton.onclick = function() {
-                    window.location.href = `/static/admin.html/?access_token=${accessToken}`;
+                    window.location.href = `/static/admin.html`;
                 };
                 adminButtonContainer.appendChild(adminButton);
             }

@@ -199,7 +199,7 @@ def read_config():
 def read_root(request: Request):
     REQUEST_COUNT.inc()
     with REQUEST_LATENCY.time():
-        return FileResponse("cor_pass/static/login.html")
+        return FileResponse("cor_pass/static/COR_ID/login.html")
 
 
 @app.get("/api/healthchecker")

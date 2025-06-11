@@ -15,7 +15,7 @@ async function deleteCurrentRecord() {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                'Authorization': 'Bearer ' + getToken()
             }
         });
 
@@ -56,7 +56,7 @@ async function saveEdit() {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                'Authorization': 'Bearer ' +getToken()
             },
             body: JSON.stringify(data)
         });
@@ -97,7 +97,7 @@ async function savePasswordStorageSettings() {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                'Authorization': 'Bearer ' +getToken()
             },
             body: JSON.stringify(settingsData)
         });
@@ -128,7 +128,7 @@ async function fetchRecords(skip = 0, limit = 5) {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+                'Authorization': 'Bearer ' +getToken(),
             },
         });
 
@@ -157,7 +157,7 @@ async function fetchSettings() {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + getTokenFromURL(),
+                    'Authorization': 'Bearer ' + getToken(),
                 }
             });
 

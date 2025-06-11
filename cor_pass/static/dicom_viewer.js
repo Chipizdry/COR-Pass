@@ -175,8 +175,7 @@ async function update(plane, callback) {
     const img = new Image();
     
     // Получаем токен из localStorage или URL
-    const token = localStorage.getItem('authToken') || 
-                  new URLSearchParams(window.location.search).get('access_token');
+    const token =  getToken();
 
     img.onload = function() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);

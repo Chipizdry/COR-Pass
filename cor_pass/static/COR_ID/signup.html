@@ -20,13 +20,13 @@
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
-    <link rel="stylesheet" type="text/css" href="styles.css">
+    <link rel="stylesheet" type="text/css" href="/static/styles.css">
     <title data-translate="signup-title">Регистрация</title>
    
 </head>
 <body>
     <div class="container">
-        <button class="link-button" onclick="goBack('/static/login.html')" data-translate="back-link-text"><<<назад<<<</button>
+        <button class="link-button" onclick="window.location.href='/'" data-translate="back-link-text"><<<назад<<<</button>
         <h1 data-translate="signup-title">Регистрация</h1>
         <form id="registrationForm">
 
@@ -101,8 +101,8 @@
         <div id="messageOk" class="messageOk"></div>
     </div>
   
-    <script src="translation.js"></script>   
-    <script src="general_fun.js"></script>
+    <script src="/static/translation.js"></script>   
+    <script src="/static/general_fun.js"></script>
     <script>
     
 const urlParams = new URLSearchParams(window.location.search);
@@ -200,23 +200,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const isConfirmPasswordEmpty = confirmPasswordInput.value === '';
     const isPasswordValidLength = passwordInput.value.length >= 6 && passwordInput.value.length <= 20;
     const userLang = localStorage.getItem('selectedLanguage');
-if (isPasswordEmpty || isConfirmPasswordEmpty || !isPasswordValidLength) {
-    registrationButton.classList.add('inactive-button');
-    registrationButton.disabled = true;
-    loginButton.classList.add('inactive-button');
-    loginButton.disabled = true;
+        if (isPasswordEmpty || isConfirmPasswordEmpty || !isPasswordValidLength) {
+            registrationButton.classList.add('inactive-button');
+            registrationButton.disabled = true;
+            loginButton.classList.add('inactive-button');
+            loginButton.disabled = true;
+        
+            if (!isPasswordValidLength) {
+                passwordMessageDiv.innerText = translations[userLang]['password-message'];
+                passwordMessageDiv.style.color = 'red';
+            } else {
+                passwordMessageDiv.innerText = '';
+            }
 
-
-   
-    if (!isPasswordValidLength) {
-        passwordMessageDiv.innerText = translations[userLang]['password-message'];
-        passwordMessageDiv.style.color = 'red';
-    } else {
-        passwordMessageDiv.innerText = '';
-    }
-
-    messageDiv.innerText = ''; // Очищаем сообщение о совпадении паролей
-}
+            messageDiv.innerText = ''; // Очищаем сообщение о совпадении паролей
+        }
 
 else {
     registrationButton.classList.remove('inactive-button');
@@ -226,7 +224,6 @@ else {
     passwordMessageDiv.innerText = '';
 
     if (passwordInput.value !== confirmPasswordInput.value) {
-        console.log("Пароли не совпадают!(((");
         messageDiv.innerText =  translations[userLang]['passwordsDoNotMatch'];
         messageDiv.style.color = 'red';
     } else {
@@ -286,11 +283,6 @@ if (passwordInput.value.length > 0 || confirmPasswordInput.value.length > 0) {
     formDataJson['user_sex'] = gender;
     formDataJson['birth'] = parseInt(birthYear);
 
-    // // Распарсить redirectUrl
-    // const urlParams = new URLSearchParams(window.location.search);
-    // const corId = urlParams.get('cor_id'); // Получаем corId
-
-    // if (corId) {
 
     const corId = localStorage.getItem('cor_id');
     console.log('COR-ID:', corId); 
@@ -323,9 +315,6 @@ if (passwordInput.value.length > 0 || confirmPasswordInput.value.length > 0) {
     xhr.send(JSON.stringify(formDataJson));
 });
 
-
-
-
     loginButton.addEventListener('click', () => {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
@@ -344,26 +333,19 @@ if (passwordInput.value.length > 0 || confirmPasswordInput.value.length > 0) {
                     const response = JSON.parse(xhr.responseText);
                     console.log("Successful login");
                     messageDiv.innerText = "Successful login"
-                //    messageDiv.innerText = "Вход выполнен успешно!";
-                    // messageDiv.innerText =translations[userLang]['loginSuccess'];
+                    messageDiv.innerText =translations[userLang]['loginSuccess'];
                     messageDiv.style.color = 'green';
 
                     setTimeout(() => {
-             
-                    const refreshToken = response.refresh_token;
-                    const accessToken = response.access_token;
 
-                    urlParams.set('access_token', accessToken);
-                    urlParams.set('refresh_token', refreshToken);
-
-                    const queryString = urlParams.toString();
-                    const url = `/static/mainscreen.html/?access_token=${accessToken}&refresh_token=${refreshToken}`;
+                    localStorage.setItem('access_token', response.access_token);
+                    localStorage.setItem('refresh_token', response.refresh_token);
+                    const url = `/static/COR_ID/mainscreen.html`;
 
                     window.location.href = url;
                         }, 500);
                 } else {
                     console.error("Произошла ошибка при входе.");
-                   // messageDiv.innerText = "Ошибка входа.";
                     messageDiv.innerText = translations[userLang]['login-error'];
                     messageDiv.style.color = 'red';
                 }
@@ -522,7 +504,6 @@ function verifyVerificationCode() {
                 setTimeout(function() {
                     verificationCodeInput.value = "";
                     confirmationMessageDiv.innerText = " ";
-                    //confirmationMessageDiv.style.display = 'none';
                                                     }, 3000);
             }
         }
