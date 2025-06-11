@@ -25,8 +25,8 @@
 <body>
 <div class="container">
     
-    <script src="static/translation.js"></script>
-    <script src="static/general_fun.js"></script>
+    <script src="static/COR_ID_Js/translation.js"></script>
+    <script src="static/COR_ID_Js/general_fun.js"></script>
 
     <div class="logo">
    
@@ -208,10 +208,8 @@ document.getElementById('send-recovery-btn').addEventListener('click', async fun
                             const refreshToken = result.refresh_token;
                             const accessToken = result.access_token;
 
-                            urlParams.set('access_token', accessToken);
-                            urlParams.set('refresh_token', refreshToken);
-
-                            const queryString = urlParams.toString();
+                            localStorage.setItem('access_token', result.access_token);
+                            localStorage.setItem('refresh_token', result.refresh_token);
                             const url = `/static/COR_ID/mainscreen.html`;
 
                             window.location.href = url;
@@ -359,17 +357,13 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('login-form');
         const messageDiv = document.getElementById('message');
-
-
-        const loginInput = document.getElementById("email");  // ID поля логина
-        const passwordInput = document.getElementById("password"); // ID поля пароля
-        const loginButton = document.getElementById("login-button"); // ID кнопки LOGIN
-
-
+        const loginInput = document.getElementById("email"); 
+        const passwordInput = document.getElementById("password"); 
+        const loginButton = document.getElementById("login-button"); 
         function handleEnterKey(event) {
         if (event.key === "Enter") {
-            event.preventDefault(); // Предотвращает стандартное поведение
-            loginButton.click(); // Симулируем нажатие кнопки LOGIN
+            event.preventDefault(); 
+            loginButton.click(); 
         }
         }
 
@@ -411,11 +405,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         console.log("Successful login.");
                         console.log("Response from server:", response); // Логируем ответ от сервера
                         const userLang = localStorage.getItem('selectedLanguage');
-                        localStorage.setItem('access_token', response.access_token);
-                    
+                        localStorage.setItem('access_token', response.access_token);         
                         messageDiv.innerText = translations[userLang]["message-ok"];
                         messageDiv.style.color = 'green';
-
                         setTimeout(() => {
                             const refreshToken = response.refresh_token;
                             const accessToken = response.access_token;
