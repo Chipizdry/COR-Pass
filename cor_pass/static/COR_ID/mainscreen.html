@@ -7,8 +7,8 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>User Records</title>
-        <link rel="stylesheet" type="text/css" href="/static/styles.css">
-        <link rel="stylesheet" type="text/css" href="/static/modal.css">
+        <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/styles.css">
+        <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/modal.css">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
       
     </head>
@@ -538,7 +538,11 @@
 
         document.getElementById('LogOut-btn').addEventListener('click', function () {
               
-
+                // Удаление токенов из localStorage
+                localStorage.removeItem('access_token');    
+                localStorage.removeItem('refreshToken');
+                localStorage.removeItem('isAdmin');
+                localStorage.removeItem('redirectUrl');
 
                 // Очистка кэша страницы
                 if ('caches' in window) {
@@ -546,13 +550,6 @@
                         for (let name of names) caches.delete(name);
                     });
                 }
-
-                  // Удаление токенов из localStorage
-                localStorage.removeItem('access_token');    
-                localStorage.removeItem('refreshToken');
-                localStorage.removeItem('isAdmin');
-                localStorage.removeItem('redirectUrl');
-
                     // Переадресация на страницу login.html
                     window.location.href = '/';
                 });

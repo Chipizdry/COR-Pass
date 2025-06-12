@@ -633,7 +633,6 @@
   }
 
   .setting input[type="range"] {
-    -webkit-appearance: none;
     width: 390px;
     height: 6px;
     background: #D2CAE8;
