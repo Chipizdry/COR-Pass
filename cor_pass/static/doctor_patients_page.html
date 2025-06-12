@@ -6,8 +6,8 @@
   <title>Кор Lab — Пациенты</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" type="text/css" href="styles_lab.css">
-  <link rel="stylesheet" type="text/css" href="styles.css">
-  <link rel="stylesheet" type="text/css" href="modal.css">
+  <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/styles.css">
+  <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/modal.css">
 
 
 </head>
@@ -105,7 +105,7 @@
       </div>
 
       <div class="nav-item">
-        <button class="nav-btn" id="sendSettings" title="Настройки">
+        <button class="nav-btn" id="DeviceSettings" title="Настройки">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <g clip-path="url(#clip0_164_5548)">
             <path d="M14.41 2.29298C15.3784 2.53364 16.3053 2.9179 17.16 3.43298C17.3313 3.53633 17.4676
@@ -385,6 +385,41 @@
 
   </div>
 </div>
+
+
+<div id="devicesModal" class="modal"style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-buttons">
+        <button class="modal-button close" data-action="close" id="closeDevicesModal">✖</button>
+      </div>
+      <h3 style="margin-top:30; color:#291161;font-size: 17px;">Список устройств печати</h3>
+
+    </div>
+      
+      <div class="table-container">
+          <table id="devicesTable">
+              <thead>
+                  <tr>
+                      <th>ID</th>
+                      <th>Тип устройства</th>
+                      <th>Идентификатор</th>
+                      <th>IP-адрес</th>
+                      <th>Маска подсети</th>
+                      <th>Шлюз</th>
+                      <th>Порт</th>
+                      <th>Комментарий</th>
+                      <th>Расположение</th>
+                  </tr>
+              </thead>
+              <tbody id="devicesTableBody">
+                  <!-- Данные будут загружены здесь -->
+              </tbody>
+          </table>
+      </div>
+  </div>
+</div>
+
 
   <!-- ─── ЛОГИКА (сортировка, поиск, обработчики) ─── -->
   <script src="/static/COR_ID_Js/translation.js"></script>
@@ -733,6 +768,12 @@ function formatCorIdInput() {
   document.getElementById("AddDevice").addEventListener("click", function () {
   document.getElementById("addDeviceModal").style.display = "block";
   makeModalDraggable('addDeviceModal');
+});
+
+document.getElementById("DeviceSettings").addEventListener("click", function () {
+  document.getElementById("devicesModal").style.display = "block";
+  fetchDevices();
+  makeModalDraggable('devicesModal');
 });
 
 // Функция закрытия модалки
