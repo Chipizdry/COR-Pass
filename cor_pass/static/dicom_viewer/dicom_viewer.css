@@ -1,0 +1,348 @@
+
+
+.viewer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;      /* Две колонки */
+    grid-template-rows: auto auto;      /* Автоматические строки */
+    gap: 20px;
+    padding: 20px;
+    box-sizing: border-box;
+    height: 100vh;                      /* Занимает весь экран */
+  }
+  
+  .view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  canvas {
+    border: 1px solid #444;
+    width: 100%;                       /* Заполняет родителя */
+    aspect-ratio: 1 / 1;               /* Квадратный вид */
+    max-width: 512px;                  /* Ограничение сверху */
+    height: auto;
+  }
+  
+  
+  .dicom-upload-container {
+    margin-top: 25px;
+    margin-bottom: 30px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 15px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    border-radius: 3px;
+    width: 100%;
+    max-width: 400px;
+    max-height: 512px;
+    box-sizing: border-box;
+}
+  
+  
+  input[type="range"] {
+    width: 100%;
+    max-width: 480px;
+  }
+      
+  
+  /* Контейнер для слайдера и значения */
+  .dcm-range-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background-color: white;
+      border-radius: 12px;
+      width: 512px;
+      padding: 5px;
+      box-sizing: border-box;
+      margin-bottom: 5px;
+  }
+  
+  /* Слайдер растягивается */
+  .dcm-range-container input[type="range"] {
+      flex-grow: 1;
+      height: 6px;
+      accent-color: #7B43F2;
+  }
+  
+  /* Отображение значения */
+  .dcm-range-value {
+      color: #5B4296;
+      font-size: 13px;
+      min-width: 25px;
+      text-align: center;
+  }
+  
+  
+  
+  
+      .dicom-progress-container {
+          margin-top: 10px;
+          width: 100%;
+          background: #e0e0e0;
+          border-radius: 5px;
+          overflow: hidden;
+      }
+      .dicom-progress-bar {
+          height: 20px;
+          background: #7B43F2;
+          width: 0%;
+          transition: width 0.3s;
+          text-align: center;
+          color: white;
+          line-height: 20px;
+      }
+  
+      .metadata-container {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      margin-top: 10px;
+  }
+  
+  .metadata-container h3 {
+      margin-top: 0;
+      color: #7527B2;
+      font-size: 14px;
+  }
+  
+  #metadata-content p {
+      margin: 5px 0;
+      font-size: 12px;
+      color: #7527B2;
+  }
+  
+  
+  .viewer-controls {
+    grid-column: 1 / -1;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 5px;
+    margin-bottom: 10px;
+  }
+  
+  .viewer-controls label {
+    margin-right: 15px;
+  }
+  
+  .viewer-controls select, .viewer-controls button {
+    padding: 5px 10px;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+  }
+  
+  
+  .file-info, #upload-status {
+      font-size: 12px;
+      color: #7527B2;
+      margin-top: 5px;
+    
+  }
+
+  .svs-preview-container {
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  .metadata-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+}
+
+.metadata-table th, .metadata-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.metadata-table th {
+    background-color: #f2f2f2;
+}
+
+.level-details {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+}
+
+details {
+    margin-top: 10px;
+}
+
+details pre {
+    background-color: #f5f5f5;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+    max-height: 200px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+
+.svs-fullscreen-viewer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  z-index: 2000;
+  display: none;
+}
+
+#svs-fullscreen-viewer {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgb(255, 255, 255);
+  z-index: 9999;
+  display: flex;
+  flex-direction: row;
+}
+.svs-viewer-container {
+  display: flex;
+  height: 100%;
+}
+
+
+.svs-image-container {
+  flex: 1;
+  position: relative;
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  background: #f0f0f0;
+}
+
+
+.svs-main-image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  transition: transform 0.2s ease;
+}
+
+.svs-toolbar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 5px;
+  z-index: 10;
+}
+
+
+
+#openseadragon1 {
+  flex: 1;
+  position: relative;
+}
+
+.svs-metadata-panel {
+  width: 300px;
+  height: 100%;
+  background-color: rgb(255, 255, 255);
+  color: white;
+  overflow-y: auto;
+}
+
+.svs-metadata-panel.collapsed {
+  width: 0;
+  padding: 0;
+  border: none;
+}
+
+.metadata-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+}
+
+.metadata-content {
+  padding: 15px;
+  overflow-y: auto;
+  height: calc(100% - 41px);
+}
+
+.tool-btn {
+  width: 30px;
+  height: 30px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.tool-btn:hover {
+  background: rgba(0,0,0,0.9);
+}
+
+.collapse-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+
+#svs-thumbnail:hover {
+  box-shadow: 0 0 10px #888;
+  transform: scale(1.02);
+}
+
+#svs-thumbnail:active {
+  box-shadow: 0 0 5px #555;
+  transform: scale(0.99);
+}
+
+.svs-main-image.loading {
+  background: url('/static/loading.gif') center center no-repeat;
+  background-size: 50px 50px;
+  min-width: 100px;
+  min-height: 100px;
+}
+
+.svs-image-container {
+  overflow: auto;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.svs-main-image {
+  display: block;
+  max-width: none;
+  max-height: none;
+  transition: transform 0.2s ease;
+}
+
+
+#svs-fullscreen-viewer.hidden {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+#svs-fullscreen-viewer.visible {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}

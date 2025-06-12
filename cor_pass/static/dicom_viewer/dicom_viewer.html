@@ -1,0 +1,208 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/png" href="/static/favicon.png">
+  <meta charset="UTF-8">
+  <title>DICOM Viewer</title>
+ 
+<link rel="stylesheet" type="text/css" href="/static/dicom_viewer.css">
+<link rel="stylesheet" type="text/css" href="/static/COR_ID_css/styles.css">
+<link rel="stylesheet" type="text/css" href="/static/COR_ID_css/modal.css">
+</head>
+<body>
+
+  <div id="Dicom_upload_modal" class="modal" style="display: block;">
+
+    <div class="modal-header">     
+      <div class="modal-buttons">
+          <button class="modal-button close" data-action="close" id="closeDicom_upload_modal">✖</button>
+      </div>       
+      <h3 style="margin-top:30; color:#291161;font-size: 17px;">Upload Medical Files</h3>
+    </div>  
+      
+    <div class="dicom-upload-container">
+      <input type="file" id="dicom-upload" accept=".zip,.dcm,.svs" multiple>
+      <button onclick="handleUpload()">Upload DICOM files</button>
+      <div class="dicom-progress-container">
+
+          <div class="dicom-progress-bar" id="progress-bar">0%</div>
+      </div>
+      <div class="file-info" id="file-info"></div>
+      <div id="upload-status"></div>
+
+      <div class="svs-preview-container" id="svs-preview-container" style="display: none;">
+        <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">SVS Preview</h3>
+        <img id="svs-thumbnail" src="" alt="SVS Thumbnail" style="max-width: 512px; border: 1px solid #ccc; cursor: pointer;" onclick="openFullscreenSVS()" />
+      </div>
+    </div>
+    
+  </div>
+
+
+  <div class="viewer hidden" id="DcmViewerFrame">
+    <div class="view">
+      <label class="label-padded">Coronal</label> 
+      <canvas id="canvas-coronal" width="512" height="512"></canvas>   
+      <div class="dcm-range-container">
+        <input type="range" id="coronal" min="0" max="100" value="50" 
+               oninput="update('coronal'); updateSliderValue('coronal')">
+        <span class="dcm-range-value">50</span>
+      </div>
+    </div>
+    
+    <div class="view">
+      <label class="label-padded">Sagittal</label>
+      <canvas id="canvas-sagittal" width="512" height="512"></canvas>     
+      <div class="dcm-range-container">
+        <input type="range" id="sagittal" min="0" max="100" value="50" 
+               oninput="update('sagittal'); updateSliderValue('sagittal')">
+        <span class="dcm-range-value">50</span>
+      </div>
+    </div>
+   
+    <div class="view">
+      <label class="label-padded">Axial</label>
+      <canvas id="canvas-axial" width="512" height="512"></canvas>
+      <div class="dcm-range-container">
+        <input type="range" id="axial" min="0" max="100" value="50" 
+               oninput="update('axial'); updateSliderValue('axial')">
+        <span class="dcm-range-value">50</span>
+      </div>
+    </div>
+
+    <div class="dicom-upload-container">
+  
+      <div class="metadata-container" id="metadata-container" style="display: none;">
+        <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">DICOM Metadata</h3>
+        <div id="metadata-content"></div>
+      </div>
+
+      <div class="viewer-controls" id="viewer-controls">
+        <label>View Mode:
+          <select id="view-mode" onchange="updateViewMode()">
+            <option value="auto">Auto (Window Level)</option>
+            <option value="window">Manual Window Level</option>
+            <option value="raw">Raw Data</option>
+          </select>
+        </label>
+        
+        <div id="window-controls" style="display: none; margin-top: 10px;">
+          <label>Window Center: <input type="range" id="window-center" min="0" max="3000" value="50" step="1"></label>
+          <label>Window Width: <input type="range" id="window-width" min="0" max="3000" value="400" step="1"></label>
+          <button onclick="applyManualWindow()">Apply</button>
+        </div>
+      </div>
+  </div>
+</div>
+
+<!-- SVS Fullscreen Viewer -->
+<div id="svs-fullscreen-viewer" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: black; z-index: 9999;">
+  <div id="openseadragon1" style="width: 100%; height: 100%;"></div>
+  
+  <!-- Toolbar -->
+  <div class="svs-toolbar" style="position: absolute; top: 10px; left: 10px; z-index: 10000; display: flex; gap: 5px;">
+    <button class="tool-btn zoom-in">+</button>
+    <button class="tool-btn zoom-out">-</button>
+    <button class="tool-btn home">⌂</button>
+    <button class="tool-btn close-btn">×</button>
+  </div>
+  
+  <!-- Metadata Panel -->
+  <div class="svs-metadata-panel" style="position: absolute; right: 0; top: 0; width: 300px; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); color: white; padding: 15px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h3>Slide Metadata</h3>
+      <button class="metadata-toggle" style="background: none; border: none; color: white; font-size: 1.5em;">≡</button>
+    </div>
+    <div id="svs-metadata-content"></div>
+  </div>
+</div>
+
+  <script src="/static/SVS_Viewer/SVS_viewer.js"></script>
+  <script src="/static/SVS_Viewer/openseadragon.min.js"></script>
+  <script src="/static/COR_ID_Js/translation.js"></script>  
+  <script src="/static/COR_ID_Js/general_fun.js"></script> 
+  <script src="/static/dicom_viewer.js"></script>  
+ 
+ 
+  <script>
+
+    let viewer = null;
+
+    let markers3D = [];
+
+    let currentMode = 'auto';
+    let manualWindowCenter = 50;
+    let manualWindowWidth = 400;
+    let isDicomLoaded = false;
+
+    function updateViewMode() {
+  currentMode = document.getElementById('view-mode').value;
+  
+  // Показываем/скрываем ручные контролы window level
+  const windowControls = document.getElementById('window-controls');
+  windowControls.style.display = currentMode === 'window' ? 'block' : 'none';
+  
+  // Обновляем все изображения
+  ['axial', 'sagittal', 'coronal'].forEach(plane => {
+    update(plane);
+  });
+}
+
+
+
+function applyManualWindow() {
+  manualWindowCenter = parseInt(document.getElementById('window-center').value);
+  manualWindowWidth = parseInt(document.getElementById('window-width').value);
+  
+  // Обновляем все изображения
+  ['axial', 'sagittal', 'coronal'].forEach(plane => {
+    update(plane);
+  });
+}
+ 
+    // Назначаем события кликов и инициализация
+    ['axial', 'sagittal', 'coronal'].forEach(plane => {
+      document.getElementById('canvas-' + plane).addEventListener('click', e => addMarker(e, plane));
+      update(plane);
+    });
+  </script>
+
+
+<script>
+ 
+ handleUpload();
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+  </script>
+ <script> 
+ document.addEventListener('DOMContentLoaded', () => { 
+  makeModalDraggable('Dicom_upload_modal');
+  document.getElementById('DcmViewerFrame').classList.add('hidden');
+
+});
+
+function showMainContent() {
+  document.getElementById('main-content').style.display = 'block';
+}
+
+
+document.querySelector('.zoom-in').addEventListener('click', () => viewer.viewport.zoomBy(1.5));
+document.querySelector('.zoom-out').addEventListener('click', () => viewer.viewport.zoomBy(0.5));
+document.querySelector('.home').addEventListener('click', () => viewer.viewport.goHome());
+document.querySelector('.close-btn').addEventListener('click', () => {
+    viewer.destroy();
+ 
+    svsViewerDiv.classList.remove('visible');
+    svsViewerDiv.classList.add('hidden');
+});
+</script>
+
+</body>
+</html>
