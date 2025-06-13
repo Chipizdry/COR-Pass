@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -14,23 +11,41 @@
   <p id="volt">Напряжение: ...</p>
   <p id="curr">Ток: ...</p>
   <p id="power">Мощность: ...</p>
+  <p id="inverter_power">Мощность 2: ...</p>
   <p id="soh">SOH: ...</p>
+
   <script>
-   
-
     async function fetchStatus() {
-  const res = await fetch('/api/modbus/battery_status');
-  const data = await res.json();
-  document.getElementById('soc').innerText = `🔋 SoC: ${data.soc}%`;
-  document.getElementById('volt').innerText = `🔌 Напряжение: ${data.voltage} В`;
-  document.getElementById('curr').innerText = `⚡ Ток: ${data.current} А`;
-  document.getElementById('power').innerText = `💡 Мощность: ${data.power} Вт`;
-  document.getElementById('soh').innerText = `❤️ SOH: ${data.soh}%`;
-}
+      try {
+        const res = await fetch('/api/modbus/battery_status');
+        const data = await res.json();
+        document.getElementById('soc').innerText = `🔋 SoC: ${data.soc}%`;
+        document.getElementById('volt').innerText = `🔌 Напряжение: ${data.voltage} В`;
+        document.getElementById('curr').innerText = `⚡ Ток: ${data.current} А`;
+        document.getElementById('power').innerText = `💡 Мощность: ${data.power} Вт`;
+        document.getElementById('soh').innerText = `❤️ SOH: ${data.soh}%`;
+      } catch (err) {
+        console.error("Ошибка при получении данных батареи:", err);
+      }
+    }
 
+    async function fetchInverter() {
+      try {
+        const res = await fetch('/api/modbus/inverter_power');
+        const data = await res.json();
+        document.getElementById('inverter_power').innerText = `⚙️ Мощность инвертора: ${data.inverter_power} Вт`;
+      } catch (err) {
+        console.error("Ошибка при получении мощности инвертора:", err);
+      }
+    }
 
-fetchStatus();
-    setInterval(fetchStatus, 5000); // обновлять каждые 10 секунд
+    // Первая загрузка
+    fetchStatus();
+    fetchInverter();
+
+    // Обновление данных
+    setInterval(fetchStatus, 3000);      // обновлять каждые 10 секунд
+    setInterval(fetchInverter, 2100);     // инвертор — чаще (например, каждые 3 секунды)
   </script>
 </body>
 </html>
