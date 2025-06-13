@@ -386,7 +386,7 @@
   </div>
 </div>
 
-
+<!-- Модалка:Устройства -->
 <div id="devicesModal" class="modal"style="display:none;">
   <div class="modal-content">
     <div class="modal-header">
@@ -401,7 +401,6 @@
           <table id="devicesTable">
               <thead>
                   <tr>
-                      <th>ID</th>
                       <th>Тип устройства</th>
                       <th>Идентификатор</th>
                       <th>IP-адрес</th>
@@ -770,10 +769,26 @@ function formatCorIdInput() {
   makeModalDraggable('addDeviceModal');
 });
 
-document.getElementById("DeviceSettings").addEventListener("click", function () {
-  document.getElementById("devicesModal").style.display = "block";
-  fetchDevices();
-  makeModalDraggable('devicesModal');
+
+
+document.getElementById("DeviceSettings")?.addEventListener("click", function() {
+    console.log("Кнопка настроек нажата"); 
+    const modal = document.getElementById("devicesModal");
+    console.log("Найдено модальное окно:", modal); 
+    if (modal) {
+        modal.style.display = "block";
+       
+        makeModalDraggable('devicesModal');
+        fetchDevices();
+    }
+});
+
+// Обработчик закрытия модального окна с устройствами
+document.getElementById("closeDevicesModal")?.addEventListener("click", function() {
+    const modal = document.getElementById("devicesModal");
+    if (modal) {
+        modal.style.display = "none";
+    }
 });
 
 // Функция закрытия модалки

@@ -197,7 +197,6 @@ function displayDevices(devices) {
         const row = document.createElement("tr");
         
         row.innerHTML = `
-            <td>${shortenId(device.id)}</td>
             <td>${device.device_class || ''}</td>
             <td>${device.device_identifier || ''}</td>
             <td>${device.ip_address || ''}</td>

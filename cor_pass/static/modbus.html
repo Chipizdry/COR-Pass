@@ -1,0 +1,25 @@
+
+
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Мониторинг батареи Victron</title>
+</head>
+<body>
+  <h1>🔋 Уровень заряда батареи</h1>
+  <p id="soc">Загрузка...</p>
+
+  <script>
+    async function fetchSoC() {
+      const response = await fetch('/api/modbus/battery_soc');
+      const data = await response.json();
+      document.getElementById('soc').innerText = `🔋 ${data.soc}%`;
+    }
+
+    fetchSoC();
+    setInterval(fetchSoC, 10000); // обновлять каждые 10 секунд
+  </script>
+</body>
+</html>

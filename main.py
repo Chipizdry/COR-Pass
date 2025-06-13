@@ -44,6 +44,7 @@ from cor_pass.routes import (
     svs_router,
     printing_device,
     printer,
+    cerbo_GX,
 )
 from cor_pass.config.config import settings
 from cor_pass.services.ip2_location import initialize_ip2location
@@ -293,7 +294,7 @@ app.include_router(dicom_router.router, prefix="/api")
 app.include_router(svs_router.router, prefix="/api")
 app.include_router(printing_device.router, prefix="/api")
 app.include_router(printer.router, prefix="/api")
-
+app.include_router(cerbo_GX.router, prefix="/api")
 if __name__ == "__main__":
     uvicorn.run(
         app="main:app",
