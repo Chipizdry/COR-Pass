@@ -6,7 +6,7 @@ import uvicorn
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from fastapi import FastAPI, Request, Depends, HTTPException, status, Request
+from fastapi import FastAPI, Request, Depends, HTTPException, status, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -19,7 +19,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from fastapi_limiter import FastAPILimiter
 
-
+from cor_pass.routes.cerbo_gx import router as cerbo_router, create_modbus_client, close_modbus_client
 from cor_pass.routes import auth, person
 from cor_pass.database.db import get_db
 from cor_pass.database.redis_db import redis_client
@@ -44,7 +44,7 @@ from cor_pass.routes import (
     svs_router,
     printing_device,
     printer,
-    cerbo_GX,
+    cerbo_gx,
 )
 from cor_pass.config.config import settings
 from cor_pass.services.ip2_location import initialize_ip2location
@@ -266,10 +266,18 @@ async def custom_identifier(request: Request) -> str:
 async def startup():
     print("------------- STARTUP --------------")
     await FastAPILimiter.init(redis_client, identifier=custom_identifier)
+    await create_modbus_client(app)
+
     asyncio.create_task(check_session_timeouts())
     asyncio.create_task(cleanup_auth_sessions())
     initialize_ip2location()
 
+
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await close_modbus_client(app)
 
 auth_attempts = defaultdict(list)
 blocked_ips = {}
@@ -294,7 +302,8 @@ app.include_router(dicom_router.router, prefix="/api")
 app.include_router(svs_router.router, prefix="/api")
 app.include_router(printing_device.router, prefix="/api")
 app.include_router(printer.router, prefix="/api")
-app.include_router(cerbo_GX.router, prefix="/api")
+#app.include_router(cerbo_gx.router, prefix="/api")
+app.include_router(cerbo_router, prefix="/api")
 if __name__ == "__main__":
     uvicorn.run(
         app="main:app",

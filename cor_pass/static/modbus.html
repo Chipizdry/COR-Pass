@@ -7,36 +7,91 @@
     <p id="volt">Напряжение: ...</p>
     <p id="curr">Ток: ...</p>
     <p id="power">Мощность: ...</p>
-    <p id="inverter_power">Мощность 2: ...</p>
+    <p id="inverter_power">Мощность инвертора: ...</p>
     <p id="soh">SOH: ...</p>
 
-    <p id="ess_indicator">
-      ⚙️ Текущий режим работы: <span id="mode_display">...</span><br>
-      🔌 Запрет заряда: <span id="disable_charge_status">...</span><br>
-      🔁 Запрет отдачи: <span id="disable_feed_status">...</span>
-    </p>
+    <div id="ess_indicator">
+      <h3>⚙️ Статус ESS</h3>
+      <p>Текущий режим работы: <span id="mode_display">...</span></p>
+      <p>Запрет заряда: <span id="disable_charge_status">...</span></p>
+      <p>Запрет отдачи: <span id="disable_feed_status">...</span></p>
+      <p>Температурная тревога: <span id="temp_alarm">...</span></p>
+      <p>Тревога низкого заряда: <span id="low_batt_alarm">...</span></p>
+      <p>Тревога перегрузки: <span id="overload_alarm">...</span></p>
+      <p>Установка мощности L1: <span id="ess_power_l1">...</span> W</p>
+      <p>Установка мощности L2: <span id="ess_power_l2">...</span> W</p>
+      <p>Установка мощности L3: <span id="ess_power_l3">...</span> W</p>
+    </div>
   </div>
 
   <hr>
 
   <!-- Органы управления -->
   <div id="control-section">
-    <label>
-      🔌 Запрет заряда:
-      <input type="checkbox" id="disable_charge" onchange="toggleEss('disable_charge', this.checked)">
-    </label><br>
+    <h3>⚙️ Управление ESS</h3>
+    
+    <div class="control-group">
+      <label>
+        🔌 Запрет заряда:
+        <input type="checkbox" id="disable_charge" onchange="toggleEss('disable_charge', this.checked)">
+      </label>
+    </div>
 
-    <label>
-      🔁 Запрет отдачи:
-      <input type="checkbox" id="disable_feed_in" onchange="toggleEss('disable_feed_in', this.checked)">
-    </label><br>
+    <div class="control-group">
+      <label>
+        🔁 Запрет отдачи:
+        <input type="checkbox" id="disable_feed_in" onchange="toggleEss('disable_feed', this.checked)">
+      </label>
+    </div>
 
-    <p>⚙️ Установить режим работы:</p>
-    <label><input type="radio" name="mode" value="1" onchange="setMode(this)"> Charger Only</label><br>
-    <label><input type="radio" name="mode" value="2" onchange="setMode(this)"> Inverter Only</label><br>
-    <label><input type="radio" name="mode" value="3" onchange="setMode(this)"> On</label><br>
-    <label><input type="radio" name="mode" value="4" onchange="setMode(this)"> Off</label>
+    <div class="control-group">
+      <p>Режим работы:</p>
+      <label><input type="radio" name="mode" value="1" onchange="setMode(this)"> Charger Only</label><br>
+      <label><input type="radio" name="mode" value="2" onchange="setMode(this)"> Inverter Only</label><br>
+      <label><input type="radio" name="mode" value="3" onchange="setMode(this)"> On</label><br>
+      <label><input type="radio" name="mode" value="4" onchange="setMode(this)"> Off</label>
+    </div>
+
+    <div class="control-group">
+      <h4>Установка мощности ESS</h4>
+      <label>
+        Фаза L1 (Вт):
+        <input type="number" id="ess_power_l1_input" onchange="setEssPower('ess_power_setpoint_l1', this.value)">
+      </label><br>
+      <label>
+        Фаза L2 (Вт):
+        <input type="number" id="ess_power_l2_input" onchange="setEssPower('ess_power_setpoint_l2', this.value)">
+      </label><br>
+      <label>
+        Фаза L3 (Вт):
+        <input type="number" id="ess_power_l3_input" onchange="setEssPower('ess_power_setpoint_l3', this.value)">
+      </label>
+    </div>
   </div>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    #status-section, #control-section {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+    }
+    .control-group {
+      margin-bottom: 15px;
+      padding: 10px;
+      background: #e9e9e9;
+      border-radius: 5px;
+    }
+    h3, h4 {
+      margin-top: 0;
+    }
+  </style>
 
   <script>
     const modeNames = {
@@ -44,6 +99,12 @@
       2: "Inverter Only",
       3: "On",
       4: "Off"
+    };
+
+    const alarmStatus = {
+      0: "Норма",
+      1: "Предупреждение",
+      2: "Тревога"
     };
 
     let tick = 0;
@@ -78,18 +139,28 @@
 
         // Обновляем индикаторы
         document.getElementById('disable_charge_status').innerText = data.disable_charge ? "ВКЛ" : "ВЫКЛ";
-        document.getElementById('disable_feed_status').innerText = data.disable_feed_in ? "ВКЛ" : "ВЫКЛ";
+        document.getElementById('disable_feed_status').innerText = data.disable_feed ? "ВКЛ" : "ВЫКЛ";
         document.getElementById('mode_display').innerText = modeNames[data.switch_position] || "Неизвестно";
+        document.getElementById('temp_alarm').innerText = alarmStatus[data.temperature_alarm] || "Неизвестно";
+        document.getElementById('low_batt_alarm').innerText = alarmStatus[data.low_battery_alarm] || "Неизвестно";
+        document.getElementById('overload_alarm').innerText = alarmStatus[data.overload_alarm] || "Неизвестно";
+        document.getElementById('ess_power_l1').innerText = data.ess_power_setpoint_l1;
+        document.getElementById('ess_power_l2').innerText = data.ess_power_setpoint_l2;
+        document.getElementById('ess_power_l3').innerText = data.ess_power_setpoint_l3;
 
         // Обновляем контролы (только если пользователь не взаимодействует)
         if (!document.activeElement.closest('#control-section')) {
           document.getElementById('disable_charge').checked = data.disable_charge === 1;
-          document.getElementById('disable_feed_in').checked = data.disable_feed_in === 1;
+          document.getElementById('disable_feed_in').checked = data.disable_feed === 1;
 
           const radios = document.getElementsByName('mode');
           for (const radio of radios) {
             radio.checked = parseInt(radio.value) === data.switch_position;
           }
+
+          document.getElementById('ess_power_l1_input').value = data.ess_power_setpoint_l1;
+          document.getElementById('ess_power_l2_input').value = data.ess_power_setpoint_l2;
+          document.getElementById('ess_power_l3_input').value = data.ess_power_setpoint_l3;
         }
 
       } catch (err) {
@@ -123,32 +194,73 @@
       }
     }
 
+  async function setEssPower(name, value) {
+  console.log(`[setEssPower] Начало выполнения. Параметры: name=${name}, value=${value}`);
+  
+  // Проверка входных параметров
+  if (!name || !value) {
+    console.error('[setEssPower] Ошибка: не указаны name или value');
+    return;
+  }
+
+  const numericValue = parseInt(value);
+  if (isNaN(numericValue)) {
+    console.error('[setEssPower] Ошибка: value не является числом', value);
+    return;
+  }
+
+  const payload = { [name]: numericValue };
+  console.log('[setEssPower] Отправляемые данные:', payload);
+
+  try {
+    console.log('[setEssPower] Отправка запроса на сервер...');
+    const response = await fetch('/api/modbus/ess_status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    console.log('[setEssPower] Ответ сервера получен. Статус:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[setEssPower] Ошибка сервера:', response.status, errorText);
+      return;
+    }
+
+    const responseData = await response.json();
+    console.log('[setEssPower] Успешный ответ от сервера:', responseData);
+    
+  } catch (err) {
+    console.error('[setEssPower] Ошибка сети или выполнения:', err);
+  }
+}
+
     // Первая загрузка
-  //  fetchStatus();
-  //  fetchInverter();
-  //  fetchEss();
+    fetchStatus();
+    fetchInverter();
+    fetchEss();
 
     // Периодическое обновление
     setInterval(() => {
-    tick++;
+      tick++;
 
-    if (tick % 2 === 0) {
+      if (tick % 2 === 0) {
         fetchStatus();
-    }
+      }
 
-    if (tick % 3 === 0) {
+      if (tick % 3 === 0) {
         fetchInverter();
-    }
+      }
 
-    if (tick % 5 === 0) {
+      if (tick % 5 === 0) {
         fetchEss();
-    }
+      }
 
-    // Сбросить счетчик, чтобы не переполнялся
-    if (tick >= 60) {
+      // Сбросить счетчик, чтобы не переполнялся
+      if (tick >= 60) {
         tick = 0;
-    }
-
-}, 2000);
+      }
+    }, 500);
   </script>
 </body>
