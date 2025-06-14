@@ -1,20 +1,52 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <title>Мониторинг батареи Victron</title>
-</head>
 <body>
   <h1>🔋 Уровень заряда батареи</h1>
-  
-  <p id="soc">SoC: ...</p>
-  <p id="volt">Напряжение: ...</p>
-  <p id="curr">Ток: ...</p>
-  <p id="power">Мощность: ...</p>
-  <p id="inverter_power">Мощность 2: ...</p>
-  <p id="soh">SOH: ...</p>
+
+  <!-- Индикаторы -->
+  <div id="status-section">
+    <p id="soc">SoC: ...</p>
+    <p id="volt">Напряжение: ...</p>
+    <p id="curr">Ток: ...</p>
+    <p id="power">Мощность: ...</p>
+    <p id="inverter_power">Мощность 2: ...</p>
+    <p id="soh">SOH: ...</p>
+
+    <p id="ess_indicator">
+      ⚙️ Текущий режим работы: <span id="mode_display">...</span><br>
+      🔌 Запрет заряда: <span id="disable_charge_status">...</span><br>
+      🔁 Запрет отдачи: <span id="disable_feed_status">...</span>
+    </p>
+  </div>
+
+  <hr>
+
+  <!-- Органы управления -->
+  <div id="control-section">
+    <label>
+      🔌 Запрет заряда:
+      <input type="checkbox" id="disable_charge" onchange="toggleEss('disable_charge', this.checked)">
+    </label><br>
+
+    <label>
+      🔁 Запрет отдачи:
+      <input type="checkbox" id="disable_feed_in" onchange="toggleEss('disable_feed_in', this.checked)">
+    </label><br>
+
+    <p>⚙️ Установить режим работы:</p>
+    <label><input type="radio" name="mode" value="1" onchange="setMode(this)"> Charger Only</label><br>
+    <label><input type="radio" name="mode" value="2" onchange="setMode(this)"> Inverter Only</label><br>
+    <label><input type="radio" name="mode" value="3" onchange="setMode(this)"> On</label><br>
+    <label><input type="radio" name="mode" value="4" onchange="setMode(this)"> Off</label>
+  </div>
 
   <script>
+    const modeNames = {
+      1: "Charger Only",
+      2: "Inverter Only",
+      3: "On",
+      4: "Off"
+    };
+
+    let tick = 0;
     async function fetchStatus() {
       try {
         const res = await fetch('/api/modbus/battery_status');
@@ -39,13 +71,84 @@
       }
     }
 
-    // Первая загрузка
-    fetchStatus();
-    fetchInverter();
+    async function fetchEss() {
+      try {
+        const res = await fetch('/api/modbus/ess_status');
+        const data = await res.json();
 
-    // Обновление данных
-    setInterval(fetchStatus, 3000);      // обновлять каждые 10 секунд
-    setInterval(fetchInverter, 2100);     // инвертор — чаще (например, каждые 3 секунды)
+        // Обновляем индикаторы
+        document.getElementById('disable_charge_status').innerText = data.disable_charge ? "ВКЛ" : "ВЫКЛ";
+        document.getElementById('disable_feed_status').innerText = data.disable_feed_in ? "ВКЛ" : "ВЫКЛ";
+        document.getElementById('mode_display').innerText = modeNames[data.switch_position] || "Неизвестно";
+
+        // Обновляем контролы (только если пользователь не взаимодействует)
+        if (!document.activeElement.closest('#control-section')) {
+          document.getElementById('disable_charge').checked = data.disable_charge === 1;
+          document.getElementById('disable_feed_in').checked = data.disable_feed_in === 1;
+
+          const radios = document.getElementsByName('mode');
+          for (const radio of radios) {
+            radio.checked = parseInt(radio.value) === data.switch_position;
+          }
+        }
+
+      } catch (err) {
+        console.error("Ошибка при получении ESS статуса:", err);
+      }
+    }
+
+    async function toggleEss(name, value) {
+      const payload = {};
+      payload[name] = value;
+      try {
+        await fetch('/api/modbus/ess_status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {
+        console.error(`Ошибка отправки параметра ${name}:`, err);
+      }
+    }
+
+    async function setMode(radio) {
+      try {
+        await fetch('/api/modbus/ess_status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ switch_position: parseInt(radio.value) })
+        });
+      } catch (err) {
+        console.error("Ошибка установки режима:", err);
+      }
+    }
+
+    // Первая загрузка
+  //  fetchStatus();
+  //  fetchInverter();
+  //  fetchEss();
+
+    // Периодическое обновление
+    setInterval(() => {
+    tick++;
+
+    if (tick % 2 === 0) {
+        fetchStatus();
+    }
+
+    if (tick % 3 === 0) {
+        fetchInverter();
+    }
+
+    if (tick % 5 === 0) {
+        fetchEss();
+    }
+
+    // Сбросить счетчик, чтобы не переполнялся
+    if (tick >= 60) {
+        tick = 0;
+    }
+
+}, 2000);
   </script>
 </body>
-</html>
