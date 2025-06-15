@@ -169,70 +169,53 @@
     }
 
     async function toggleEss(name, value) {
-      const payload = {};
-      payload[name] = value;
-      try {
-        await fetch('/api/modbus/ess_status', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-      } catch (err) {
-        console.error(`Ошибка отправки параметра ${name}:`, err);
-      }
-    }
-
-    async function setMode(radio) {
-      try {
-        await fetch('/api/modbus/ess_status', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ switch_position: parseInt(radio.value) })
-        });
-      } catch (err) {
-        console.error("Ошибка установки режима:", err);
-      }
-    }
-
-  async function setEssPower(name, value) {
-  console.log(`[setEssPower] Начало выполнения. Параметры: name=${name}, value=${value}`);
-  
-  // Проверка входных параметров
-  if (!name || !value) {
-    console.error('[setEssPower] Ошибка: не указаны name или value');
-    return;
-  }
-
-  const numericValue = parseInt(value);
-  if (isNaN(numericValue)) {
-    console.error('[setEssPower] Ошибка: value не является числом', value);
-    return;
-  }
-
-  const payload = { [name]: numericValue };
-  console.log('[setEssPower] Отправляемые данные:', payload);
-
   try {
-    console.log('[setEssPower] Отправка запроса на сервер...');
-    const response = await fetch('/api/modbus/ess_status', {
+    const payload = {
+      disable_charge: name === 'disable_charge' ? value : document.getElementById('disable_charge').checked,
+      disable_feed: name === 'disable_feed' ? value : document.getElementById('disable_feed_in').checked
+    };
+    
+    await fetch('/api/modbus/ess_status/flags', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-
-    console.log('[setEssPower] Ответ сервера получен. Статус:', response.status);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[setEssPower] Ошибка сервера:', response.status, errorText);
-      return;
-    }
-
-    const responseData = await response.json();
-    console.log('[setEssPower] Успешный ответ от сервера:', responseData);
-    
   } catch (err) {
-    console.error('[setEssPower] Ошибка сети или выполнения:', err);
+    console.error(`Ошибка отправки флагов ESS:`, err);
+  }
+}
+
+async function setMode(radio) {
+  try {
+    await fetch('/api/modbus/ess_status/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ switch_position: parseInt(radio.value) })
+    });
+  } catch (err) {
+    console.error("Ошибка установки режима:", err);
+  }
+}
+
+async function setEssPower(name, value) {
+  const numericValue = parseInt(value);
+  if (isNaN(numericValue)) {
+    console.error('Ошибка: значение не является числом', value);
+    return;
+  }
+
+  try {
+    // Создаем объект только с изменяемым полем
+    const payload = {};
+    payload[name] = numericValue;
+    
+    await fetch('/api/modbus/ess_status/power', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  } catch (err) {
+    console.error('Ошибка установки мощности:', err);
   }
 }
 

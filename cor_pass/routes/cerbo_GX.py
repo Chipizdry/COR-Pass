@@ -2,14 +2,14 @@ from fastapi import APIRouter, HTTPException,Request
 import logging
 import json
 from pymodbus.client import AsyncModbusTcpClient
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 
 # Конфигурация Modbus
 MODBUS_IP = "91.203.25.12"
 MODBUS_PORT = 502
-UNIT_ID = 225         # Основная батарея
+BATTERY_ID = 225         # Основная батарея
 INVERTER_ID = 100     # Инвертор
 ESS_UNIT_ID = 227     # Система управления (ESS)
 
@@ -36,13 +36,17 @@ ESS_REGISTERS = {
 }
 
 # Модель данных для управления ESS
-class EssControl(BaseModel):
-    switch_position: Optional[int] = None
-    disable_charge: Optional[bool] = None
-    disable_feed: Optional[bool] = None
-    ess_power_setpoint_l1: Optional[int] = None
-    ess_power_setpoint_l2: Optional[int] = None
-    ess_power_setpoint_l3: Optional[int] = None
+class EssModeControl(BaseModel):
+    switch_position: int = Field(..., ge=1, le=4)
+
+class EssFlagsControl(BaseModel):
+    disable_charge: bool
+    disable_feed: bool
+
+class EssPowerControl(BaseModel):
+    ess_power_setpoint_l1: Optional[int] = Field(None, ge=-32768, le=32767)
+    ess_power_setpoint_l2: Optional[int] = Field(None, ge=-32768, le=32767)
+    ess_power_setpoint_l3: Optional[int] = Field(None, ge=-32768, le=32767)
 # Создание роутера FastAPI
 router = APIRouter(prefix="/modbus", tags=["Modbus"])
 
@@ -73,7 +77,7 @@ async def get_battery_status(request: Request):
         start = min(addresses)
         count = max(addresses) - start + 1
 
-        result = await client.read_input_registers(start, count=count, slave=UNIT_ID)
+        result = await client.read_input_registers(start, count=count, slave=BATTERY_ID)
         if result.isError():
             raise HTTPException(status_code=500, detail="Ошибка чтения регистров батареи")
 
@@ -154,59 +158,64 @@ async def get_ess_status(request: Request):
         raise HTTPException(status_code=500, detail="Ошибка Modbus")
 
 # Установка параметров ESS
-@router.post("/ess_status")
-async def set_ess_status(control: EssControl, request: Request):
+@router.post("/ess_status/mode")
+async def set_ess_mode(control: EssModeControl, request: Request):
     try:
-        logging.info("📥 Получен POST /ess_status: %s", json.dumps(control.dict(), indent=2, ensure_ascii=False))
-
+        logging.info(f"📥 Установка режима ESS: {control.switch_position}")
         client = request.app.state.modbus_client
-
-        # Устанавливаем флаги по необходимости
-        if control.disable_charge is not None:
-            await client.write_register(
-                address=ESS_REGISTERS["disable_charge"],
-                value=1 if control.disable_charge else 0,
-                slave=ESS_UNIT_ID
-            )
-
-        if control.disable_feed is not None:
-            await client.write_register(
-                address=ESS_REGISTERS["disable_feed"],
-                value=1 if control.disable_feed else 0,
-                slave=ESS_UNIT_ID
-            )
-
-        if control.switch_position is not None:
-            await client.write_register(
-                address=ESS_REGISTERS["switch_position"],
-                value=control.switch_position,
-                slave=ESS_UNIT_ID
-            )
-
-        # Установка значений мощности для ESS
-        if control.ess_power_setpoint_l1 is not None:
-            await client.write_register(
-                address=ESS_REGISTERS["ess_power_setpoint_l1"],
-                value=control.ess_power_setpoint_l1,
-                slave=ESS_UNIT_ID
-            )
-
-        if control.ess_power_setpoint_l2 is not None:
-            await client.write_register(
-                address=ESS_REGISTERS["ess_power_setpoint_l2"],
-                value=control.ess_power_setpoint_l2,
-                slave=ESS_UNIT_ID
-            )
-
-        if control.ess_power_setpoint_l3 is not None:
-            await client.write_register(
-                address=ESS_REGISTERS["ess_power_setpoint_l3"],
-                value=control.ess_power_setpoint_l3,
-                slave=ESS_UNIT_ID
-            )
-
+        
+        await client.write_register(
+            address=ESS_REGISTERS["switch_position"],
+            value=control.switch_position,
+            slave=ESS_UNIT_ID
+        )
         return {"status": "ok"}
-
     except Exception as e:
-        logging.error("❗ Ошибка установки параметров ESS", exc_info=e)
+        logging.error("❗ Ошибка установки режима ESS", exc_info=e)
+        raise HTTPException(status_code=500, detail="Modbus ошибка")
+
+@router.post("/ess_status/flags")
+async def set_ess_flags(control: EssFlagsControl, request: Request):
+    try:
+        logging.info(f"📥 Установка флагов ESS: charge={control.disable_charge}, feed={control.disable_feed}")
+        client = request.app.state.modbus_client
+        
+        await client.write_register(
+            address=ESS_REGISTERS["disable_charge"],
+            value=1 if control.disable_charge else 0,
+            slave=ESS_UNIT_ID
+        )
+        await client.write_register(
+            address=ESS_REGISTERS["disable_feed"],
+            value=1 if control.disable_feed else 0,
+            slave=ESS_UNIT_ID
+        )
+        return {"status": "ok"}
+    except Exception as e:
+        logging.error("❗ Ошибка установки флагов ESS", exc_info=e)
+        raise HTTPException(status_code=500, detail="Modbus ошибка")
+
+@router.post("/ess_status/power")
+async def set_ess_power(control: EssPowerControl, request: Request):
+    try:
+        logging.info(f"📥 Установка мощности ESS: L1={control.ess_power_setpoint_l1}, L2={control.ess_power_setpoint_l2}, L3={control.ess_power_setpoint_l3}")
+        client = request.app.state.modbus_client
+        
+        # Функция для безопасной записи значения
+        async def write_power_register(address, value):
+            if value is not None:
+                reg_value = value if value >= 0 else 65536 + value
+                await client.write_register(
+                    address=address,
+                    value=reg_value,
+                    slave=ESS_UNIT_ID
+                )
+        
+        await write_power_register(ESS_REGISTERS["ess_power_setpoint_l1"], control.ess_power_setpoint_l1)
+        await write_power_register(ESS_REGISTERS["ess_power_setpoint_l2"], control.ess_power_setpoint_l2)
+        await write_power_register(ESS_REGISTERS["ess_power_setpoint_l3"], control.ess_power_setpoint_l3)
+        
+        return {"status": "ok"}
+    except Exception as e:
+        logging.error("❗ Ошибка установки мощности ESS", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
