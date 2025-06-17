@@ -21,6 +21,14 @@
       <p>Установка мощности L1: <span id="ess_power_l1">...</span> W</p>
       <p>Установка мощности L2: <span id="ess_power_l2">...</span> W</p>
       <p>Установка мощности L3: <span id="ess_power_l3">...</span> W</p>
+      <p>Потеря сети: <span id="grid_lost">...</span></p>
+      <p>Запрет фид-ина при перенапряжении: <span id="do_not_feed">...</span></p>
+      <p>Макс. фид-ин мощность L1: <span id="max_feed_l1">...</span> Вт</p>
+      <p>Макс. фид-ин мощность L2: <span id="max_feed_l2">...</span> Вт</p>
+      <p>Макс. фид-ин мощность L3: <span id="max_feed_l3">...</span> Вт</p>
+      <p>Использовать setpoint как лимит: <span id="setpoints_as_limit">...</span></p>
+      <p>Режим оффсета перенапряжения: <span id="ov_offset_mode">...</span></p>
+      <p>Предпочитать возобновляемые источники: <span id="prefer_renewable">...</span></p>
     </div>
   </div>
 
@@ -29,18 +37,22 @@
   <!-- Органы управления -->
   <div id="control-section">
     <h3>⚙️ Управление ESS</h3>
-    
+    <div class="control-group">
+      <button onclick="forceDischargeToGrid()" style="padding:10px; background:#ffdddd; border:1px solid #aa0000; border-radius:5px; font-weight:bold; cursor:pointer;">
+        🔋 Принудительный разряд в сеть
+      </button>
+    </div>
     <div class="control-group">
       <label>
         🔌 Запрет заряда:
-        <input type="checkbox" id="disable_charge" onchange="toggleEss('disable_charge', this.checked)">
+        <input type="checkbox" id="disable_charge" onchange="toggleFlag('disable_charge', this.checked)">
       </label>
     </div>
 
     <div class="control-group">
       <label>
         🔁 Запрет отдачи:
-        <input type="checkbox" id="disable_feed_in" onchange="toggleEss('disable_feed', this.checked)">
+        <input type="checkbox" id="disable_feed_in" onchange="toggleFlag('disable_feed', this.checked)">
       </label>
     </div>
 
@@ -65,6 +77,18 @@
       <label>
         Фаза L3 (Вт):
         <input type="number" id="ess_power_l3_input" onchange="setEssPower('ess_power_setpoint_l3', this.value)">
+      </label><br><br>
+      <label>
+        Max Feed-in L1:
+        <input type="number" onchange="setFeedLimit('max_feed_in_l1', this.value)">
+      </label><br>
+      <label>
+        Max Feed-in L2:
+        <input type="number" onchange="setFeedLimit('max_feed_in_l2', this.value)">
+      </label><br>
+      <label>
+        Max Feed-in L3:
+        <input type="number" onchange="setFeedLimit('max_feed_in_l3', this.value)">
       </label>
     </div>
   </div>
@@ -107,6 +131,8 @@
       2: "Тревога"
     };
 
+
+
     let tick = 0;
     async function fetchStatus() {
       try {
@@ -133,117 +159,275 @@
     }
 
     async function fetchEss() {
-      try {
-        const res = await fetch('/api/modbus/ess_status');
-        const data = await res.json();
+  try {
+    const res = await fetch('/api/modbus/ess_status');
+    const data = await res.json();
 
-        // Обновляем индикаторы
-        document.getElementById('disable_charge_status').innerText = data.disable_charge ? "ВКЛ" : "ВЫКЛ";
-        document.getElementById('disable_feed_status').innerText = data.disable_feed ? "ВКЛ" : "ВЫКЛ";
-        document.getElementById('mode_display').innerText = modeNames[data.switch_position] || "Неизвестно";
-        document.getElementById('temp_alarm').innerText = alarmStatus[data.temperature_alarm] || "Неизвестно";
-        document.getElementById('low_batt_alarm').innerText = alarmStatus[data.low_battery_alarm] || "Неизвестно";
-        document.getElementById('overload_alarm').innerText = alarmStatus[data.overload_alarm] || "Неизвестно";
-        document.getElementById('ess_power_l1').innerText = data.ess_power_setpoint_l1;
-        document.getElementById('ess_power_l2').innerText = data.ess_power_setpoint_l2;
-        document.getElementById('ess_power_l3').innerText = data.ess_power_setpoint_l3;
+    const mode = data.mode || {};
+    const flags = data.flags || {};
+    const power = data.power || {};
+    const alarms = data.alarms || {};
 
-        // Обновляем контролы (только если пользователь не взаимодействует)
-        if (!document.activeElement.closest('#control-section')) {
-          document.getElementById('disable_charge').checked = data.disable_charge === 1;
-          document.getElementById('disable_feed_in').checked = data.disable_feed === 1;
+    // Обновляем индикаторы
+    document.getElementById('mode_display').innerText = modeNames[mode.switch_position] || "Неизвестно";
+    document.getElementById('disable_charge_status').innerText = flags.disable_charge ? "ВКЛ" : "ВЫКЛ";
+    document.getElementById('disable_feed_status').innerText = flags.disable_feed ? "ВКЛ" : "ВЫКЛ";
 
-          const radios = document.getElementsByName('mode');
-          for (const radio of radios) {
-            radio.checked = parseInt(radio.value) === data.switch_position;
+    document.getElementById('temp_alarm').innerText = alarmStatus[alarms.temperature_alarm] || "Неизвестно";
+    document.getElementById('low_batt_alarm').innerText = alarmStatus[alarms.low_battery_alarm] || "Неизвестно";
+    document.getElementById('overload_alarm').innerText = alarmStatus[alarms.overload_alarm] || "Неизвестно";
+
+    document.getElementById('ess_power_l1').innerText = power.ess_power_setpoint_l1 ?? "...";
+    document.getElementById('ess_power_l2').innerText = power.ess_power_setpoint_l2 ?? "...";
+    document.getElementById('ess_power_l3').innerText = power.ess_power_setpoint_l3 ?? "...";
+
+    // Обновляем контролы (только если пользователь не взаимодействует)
+    if (!document.activeElement.closest('#control-section')) {
+      document.getElementById('disable_charge').checked = flags.disable_charge === 1 || flags.disable_charge === true;
+      document.getElementById('disable_feed_in').checked = flags.disable_feed === 1 || flags.disable_feed === true;
+
+      const radios = document.getElementsByName('mode');
+      for (const radio of radios) {
+        radio.checked = parseInt(radio.value) === mode.switch_position;
+      }
+
+      document.getElementById('ess_power_l1_input').value = power.ess_power_setpoint_l1 ?? "";
+      document.getElementById('ess_power_l2_input').value = power.ess_power_setpoint_l2 ?? "";
+      document.getElementById('ess_power_l3_input').value = power.ess_power_setpoint_l3 ?? "";
+
+      document.getElementById('grid_lost').innerText =
+        alarmStatus[alarms.grid_lost] || "Неизвестно";
+
+      document.getElementById('do_not_feed').innerText =
+        flags.do_not_feed_in_ov ? "ДА" : "НЕТ";
+
+      document.getElementById('max_feed_l1').innerText = power.max_feed_in_l1 ?? "...";
+      document.getElementById('max_feed_l2').innerText = power.max_feed_in_l2 ?? "...";
+      document.getElementById('max_feed_l3').innerText = power.max_feed_in_l3 ?? "...";
+
+      document.getElementById('setpoints_as_limit').innerText =
+        flags.setpoints_as_limit ? "ДА" : "НЕТ";
+
+      document.getElementById('ov_offset_mode').innerText =
+        flags.ov_offset_mode === 1 ? "0.1 В" : "1 В";
+
+      document.getElementById('prefer_renewable').innerText =
+        flags.prefer_renewable ? "ДА" : "НЕТ";
           }
 
-          document.getElementById('ess_power_l1_input').value = data.ess_power_setpoint_l1;
-          document.getElementById('ess_power_l2_input').value = data.ess_power_setpoint_l2;
-          document.getElementById('ess_power_l3_input').value = data.ess_power_setpoint_l3;
-        }
-
+  } catch (err) {
+    console.error("Ошибка при получении ESS статуса:", err);
+  }
+}
+async function toggleFlag(flagName, value) {
+      try {
+        const payload = {};
+        payload[flagName] = value;
+        await fetch('/api/modbus/ess_status/flags', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
       } catch (err) {
-        console.error("Ошибка при получении ESS статуса:", err);
+        console.error(`Ошибка отправки флага ${flagName}:`, err);
       }
     }
 
-    async function toggleEss(name, value) {
-  try {
-    const payload = {
-      disable_charge: name === 'disable_charge' ? value : document.getElementById('disable_charge').checked,
-      disable_feed: name === 'disable_feed' ? value : document.getElementById('disable_feed_in').checked
-    };
-    
-    await fetch('/api/modbus/ess_status/flags', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-  } catch (err) {
-    console.error(`Ошибка отправки флагов ESS:`, err);
-  }
-}
+    async function setEssPower(name, value) {
+      const numericValue = parseInt(value);
+      if (isNaN(numericValue)) {
+        console.error('Ошибка: значение не является числом', value);
+        return;
+      }
+      try {
+        const payload = {};
+        payload[name] = numericValue;
+        await fetch('/api/modbus/ess_status/power', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {
+        console.error('Ошибка установки мощности:', err);
+      }
+    }
 
-async function setMode(radio) {
-  try {
-    await fetch('/api/modbus/ess_status/mode', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ switch_position: parseInt(radio.value) })
-    });
-  } catch (err) {
-    console.error("Ошибка установки режима:", err);
-  }
-}
+    async function setFeedLimit(name, value) {
+      const numericValue = parseInt(value);
+      if (isNaN(numericValue)) {
+        console.error('Ошибка: значение не является числом', value);
+        return;
+      }
+      try {
+        const payload = {};
+        payload[name] = numericValue;
+        await fetch('/api/modbus/ess_status/feedin_limits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) {
+        console.error('Ошибка установки лимита фид-ин:', err);
+      }
+    }
 
-async function setEssPower(name, value) {
-  const numericValue = parseInt(value);
-  if (isNaN(numericValue)) {
-    console.error('Ошибка: значение не является числом', value);
-    return;
-  }
+    async function setMode(radio) {
+      try {
+        await fetch('/api/modbus/ess_status/mode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ switch_position: parseInt(radio.value) })
+        });
+      } catch (err) {
+        console.error("Ошибка установки режима:", err);
+      }
+    }
+
+
+    async function forceDischarge() {
+  const power = {
+    ess_power_setpoint_l1: -100,
+    ess_power_setpoint_l2: -100,
+    ess_power_setpoint_l3: -100
+  };
 
   try {
-    // Создаем объект только с изменяемым полем
-    const payload = {};
-    payload[name] = numericValue;
-    
     await fetch('/api/modbus/ess_status/power', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(power)
     });
+    console.log("⚡ Принудительный разряд активирован");
   } catch (err) {
-    console.error('Ошибка установки мощности:', err);
+    console.error("❌ Ошибка при установке принудительного разряда:", err);
   }
 }
+async function forceDischargeToGrid() {
+  try {
+    // Установка флагов: разрешить фид-ин + использовать setpoints как лимиты
+    await fetch('/api/modbus/ess_status/flags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        disable_feed: false,
+        setpoints_as_limit: true
+      })
+    });
+
+    // Установка отрицательных мощностей на всех фазах
+    await fetch('/api/modbus/ess_status/power', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ess_power_setpoint_l1: -1000,
+        ess_power_setpoint_l2: -1000,
+        ess_power_setpoint_l3: -1000
+      })
+    });
+
+    // Режим работы: On
+    await fetch('/api/modbus/ess_status/mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        switch_position: 3
+      })
+    });
+
+    // Лимиты фид-ина: максимальные
+    await fetch('/api/modbus/ess_status/feedin_limits', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        max_feed_in_l1: 10000,
+        max_feed_in_l2: 10000,
+        max_feed_in_l3: 10000
+      })
+    });
+
+    console.log("✅ Принудительный разряд активирован");
+  } catch (err) {
+    console.error("❌ Ошибка при активации принудительного разряда:", err);
+  }
+}
+
+    function safeInt(id) {
+  const val = parseInt(document.getElementById(id).value);
+  return isNaN(val) ? undefined : val;
+}
+function safeIntByQuery(selector) {
+  const val = parseInt(document.querySelector(selector).value);
+  return isNaN(val) ? undefined : val;
+}
+
+    function collectEssControlState() {
+  return {
+    flags: {
+      disable_charge: document.getElementById('disable_charge').checked,
+      disable_feed: document.getElementById('disable_feed_in').checked,
+    },
+    power: {
+      ess_power_setpoint_l1: safeInt('ess_power_l1_input'),
+      ess_power_setpoint_l2: safeInt('ess_power_l2_input'),
+      ess_power_setpoint_l3: safeInt('ess_power_l3_input'),
+    },
+    feedin_limits: {
+      max_feed_in_l1: safeIntByQuery('[onchange*="max_feed_in_l1"]'),
+      max_feed_in_l2: safeIntByQuery('[onchange*="max_feed_in_l2"]'),
+      max_feed_in_l3: safeIntByQuery('[onchange*="max_feed_in_l3"]'),
+    },
+    mode: {
+      switch_position: parseInt(document.querySelector('input[name="mode"]:checked')?.value)
+    }
+  };
+}
+
+
+
+async function syncEssControlState() {
+  const state = collectEssControlState();
+
+  try {
+    await Promise.all([
+      fetch('/api/modbus/ess_status/flags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state.flags)
+      }),
+      fetch('/api/modbus/ess_status/feedin_limits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state.feedin_limits)
+      }),
+      fetch('/api/modbus/ess_status/mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(state.mode)
+      })
+    ]);
+    console.log("✅ ESS управление синхронизировано");
+  } catch (err) {
+    console.error("❌ Ошибка синхронизации ESS управления:", err);
+  }
+}
+
+  // Обновим интервал обновления
+  setInterval(() => {
+    tick++;
+    
+    if (tick % 2 === 0) fetchStatus();
+    if (tick % 3 === 0) fetchInverter();
+    if (tick % 4 === 0) fetchEss();
+    if (tick % 5 === 0) syncEssControlState();
+    if (tick % 6 === 0)fetchInverterPowerStatus();
+    if (tick >= 60) tick = 0;
+  }, 500);
 
     // Первая загрузка
     fetchStatus();
     fetchInverter();
     fetchEss();
-
-    // Периодическое обновление
-    setInterval(() => {
-      tick++;
-
-      if (tick % 2 === 0) {
-        fetchStatus();
-      }
-
-      if (tick % 3 === 0) {
-        fetchInverter();
-      }
-
-      if (tick % 5 === 0) {
-        fetchEss();
-      }
-
-      // Сбросить счетчик, чтобы не переполнялся
-      if (tick >= 60) {
-        tick = 0;
-      }
-    }, 500);
+    fetchInverterPowerStatus();
+   
   </script>
 </body>

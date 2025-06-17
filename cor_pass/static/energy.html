@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/energy.css">
+    <link rel="stylesheet" href="/static/COR_ID_css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/modal.css">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <title>FlyWheel Web Server</title>
+    <script src="/static/scripts.js"></script>
+    <script src="/static/power-settings.js"></script>
+    <script src="/static/COR_ID_Js/general_fun.js"></script>
+    <!-- Подключаем библиотеку Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="energy-container">
+    
+        <div class="connection-status">
+            <span id="connectionIndicator" class="status-indicator"></span>
+            Соединение с сервером  <p>Сигнал, dBm.: <span id="Signal">0</span></p>
+        </div>
+             
+    
+        <h2>Control Panel</h2>
+
+
+        <!-- Вкладки -->
+        <div class="tabs">
+            <div class="tab active" onclick="openTab(event, 'control')">Управление</div>
+            <div class="tab" onclick="openTab(event, 'monitor')">Мониторинг</div>
+            <div class="tab" onclick="openTab(event, 'settings')">Настройки</div>
+        </div>
+
+		 <!-- Вкладка Управление -->
+<div id="control" class="tabcontent active">
+   
+             <!-- Иконка батареи -->
+             <div class="icon battery-icon" id="batteryIcon">
+                <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+                     width="260" height="260" viewBox="0 0 3100 1560" style="border: 1px solid red" preserveAspectRatio="xMidYMid meet">
+                    
+                    <!-- Заливка, изменяющаяся по уровню заряда -->
+                    
+                    <rect id="batteryFill" x="330" y="110" width="2600" height="1400" fill="green" />
+                    <!-- Контур батарейки -->
+                    <g fill="none" stroke="black" stroke-width="100">
+                        <path d="M415 1500 c-63 -31 -116 -93 -132 -153 -7 -28 -13 -100 -13 -159 l0
+                            -108 -108 0 c-71 0 -112 -4 -120 -12 -17 -17 -17 -569 0 -586 8 -8 49 -12 120
+                            -12 l108 0 0 -104 c0 -154 11 -200 62 -253 24 -24 61 -52 84 -63 39 -20 66
+                            -20 1255 -20 1377 0 1275 -6 1353 81 24 26 46 62 50 80 11 56 7 1131 -5 1173
+                            -6 21 -28 58 -50 81 -74 80 18 75 -1348 75 -1197 0 -1217 0 -1256 -20z m2511
+                            -93 c23 -15 46 -39 53 -53 17 -38 15 -1141 -2 -1172 -7 -12 -31 -32 -52 -45
+                            l-40 -22 -1205 0 -1205 0 -39 24 c-67 42 -66 29 -66 631 0 580 0 581 51 629
+                            13 12 37 26 54 30 17 5 549 9 1220 8 l1190 -2 41 -28z"/>
+                    </g>
+                </svg>     
+            </div>
+
+
+
+               <!-- Иконка солнечной батареи -->
+               <div class="icon solar-battery-icon" id="SolarBatteryIcon">
+                <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+                width="240.000000pt" height="240.000000pt" viewBox="0 0 512.000000 512.000000" style="border: 1px solid red"
+                preserveAspectRatio="xMidYMid meet">
+
+                <g transform="translate(0.000000,512.000000) scale(0.100000,-0.100000)"
+                fill="#000000" stroke="none">
+                <path d="M2465 4098 c-11 -6 -23 -16 -27 -22 -4 -6 -8 -75 -8 -153 0 -130 2
+                -145 20 -163 25 -25 61 -26 91 -1 22 18 24 27 27 137 4 138 -7 190 -44 204
+                -31 12 -34 12 -59 -2z"/>
+                <path d="M1550 3740 c-25 -25 -26 -61 -2 -88 23 -26 225 -152 244 -152 28 0
+                68 40 68 69 0 39 -13 51 -128 125 -111 71 -147 81 -182 46z"/>
+                <path d="M3252 3689 c-83 -53 -114 -78 -119 -97 -8 -33 15 -74 49 -86 23 -8
+                41 0 143 64 63 40 120 81 125 91 25 46 -6 99 -58 99 -18 0 -70 -27 -140 -71z"/>
+                <path d="M2430 3544 c-258 -50 -459 -280 -460 -526 0 -38 5 -50 26 -67 35 -27
+                59 -26 89 4 18 17 25 35 25 64 0 58 34 157 74 215 146 212 461 233 633 42 59
+                -65 89 -131 105 -230 11 -65 18 -82 39 -98 34 -25 75 -15 94 23 12 23 13 42 5
+                98 -38 272 -248 465 -519 476 -48 2 -97 1 -111 -1z"/>
+                <path d="M1436 3054 c-43 -43 -22 -108 38 -119 18 -4 86 -5 151 -3 109 3 118
+                5 136 27 25 30 24 66 -1 91 -18 18 -33 20 -164 20 -118 0 -147 -3 -160 -16z"/>
+                <path d="M3336 3054 c-43 -43 -22 -108 38 -119 18 -4 86 -5 151 -3 109 3 118
+                5 136 27 25 30 24 66 -1 91 -18 18 -33 20 -164 20 -118 0 -147 -3 -160 -16z"/>
+                <path d="M1216 2628 c-23 -20 -51 -116 -231 -785 -217 -805 -215 -796 -166
+                -822 14 -8 547 -11 1743 -11 1872 0 1757 -3 1772 53 7 29 -484 1541 -509 1566
+                -14 15 -135 16 -1300 19 l-1284 2 -25 -22z m591 -155 c-3 -21 -11 -77 -18
+                -125 l-12 -88 -268 0 -267 0 24 88 c13 48 29 104 35 125 l10 37 251 0 251 0
+                -6 -37z m683 -88 l0 -125 -286 0 -287 0 6 38 c3 20 11 76 18 125 l12 87 269 0
+                268 0 0 -125z m647 30 c6 -49 14 -105 17 -122 l5 -33 -265 0 -264 0 0 125 0
+                125 248 -2 247 -3 12 -90z m631 -27 l39 -123 -250 -3 c-138 -1 -252 0 -254 2
+                -6 5 -33 191 -33 224 l0 22 230 0 229 0 39 -122z m-2019 -300 c0 -18 -12 -114
+                -27 -213 l-27 -180 -303 -3 c-286 -2 -303 -1 -298 15 3 10 26 97 52 193 25 96
+                50 184 55 197 l9 23 270 0 270 0 -1 -32z m741 -183 l0 -215 -325 0 c-271 0
+                -325 2 -325 14 0 17 49 363 55 394 l5 22 295 0 295 0 0 -215z m685 203 c6 -16
+                55 -373 55 -399 0 -18 -11 -19 -300 -19 l-300 0 0 215 0 215 270 0 c207 0 272
+                -3 275 -12z m747 -193 c36 -110 67 -206 67 -213 1 -10 -64 -12 -306 -10 l-308
+                3 -27 195 c-15 107 -27 203 -27 213 -1 16 16 17 267 15 l267 -3 67 -200z
+                m-2252 -383 c0 -9 -11 -96 -25 -192 -14 -96 -25 -178 -25 -182 0 -5 -151 -8
+                -335 -8 -261 0 -335 3 -335 13 0 6 18 80 40 162 23 83 45 167 51 188 l10 37
+                309 0 c289 0 310 -1 310 -18z m820 -182 l0 -200 -365 0 -366 0 5 33 c3 17 15
+                102 27 187 11 85 22 161 24 168 3 9 80 12 340 12 l335 0 0 -200z m790 2 c14
+                -106 24 -195 21 -197 -2 -3 -154 -5 -338 -5 l-333 0 0 200 0 200 312 -2 312
+                -3 26 -193z m827 -2 c34 -107 63 -196 63 -197 0 -2 -162 -3 -360 -3 l-359 0
+                -6 33 c-12 70 -45 323 -45 344 l0 23 322 -2 322 -3 63 -195z"/>
+                </g>
+           </svg>
+
+            </div>
+                   <!-- Иконка инвертора напряжения -->
+        
+                        <div class="icon inverter-icon" id="inverterIcon">
+                    <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+                        width="160.000000pt" height="80.000000pt" viewBox="0 0 172.000000 85.000000" style="border: 1px solid red"
+                        preserveAspectRatio="xMidYMid meet">
+
+                        <g transform="translate(0.000000,85.000000) scale(0.100000,-0.100000)"
+                        fill="#000000" stroke="none">
+                        <path d="M921 826 c-49 -27 -50 -37 -51 -404 0 -372 2 -386 55 -410 41 -19
+                        697 -17 734 2 49 26 51 41 51 406 0 365 -2 380 -51 406 -39 20 -702 20 -738 0z
+                        m709 -33 c0 -10 -703 -713 -712 -713 -5 0 -8 153 -8 340 0 327 1 341 20 360
+                        19 19 33 20 360 20 187 0 340 -3 340 -7z m40 -373 c0 -327 -1 -341 -20 -360
+                        -19 -19 -33 -20 -360 -20 -187 0 -340 3 -340 7 0 10 703 713 712 713 5 0 8
+                        -153 8 -340z"/>
+                        <path d="M1025 690 c-12 -4 -27 -15 -35 -25 -20 -25 7 -39 37 -20 35 23 64 18
+                        111 -20 24 -19 53 -37 64 -41 50 -15 144 33 108 56 -10 6 -23 4 -37 -5 -33
+                        -22 -65 -18 -103 13 -63 52 -97 62 -145 42z"/>
+                        <path d="M1290 260 c0 -19 7 -20 140 -20 133 0 140 1 140 20 0 19 -7 20 -140
+                        20 -133 0 -140 -1 -140 -20z"/>
+                        <path d="M1290 180 c0 -18 7 -20 60 -20 53 0 60 2 60 20 0 18 -7 20 -60 20
+                        -53 0 -60 -2 -60 -20z"/>
+                        <path d="M1450 180 c0 -18 7 -20 60 -20 53 0 60 2 60 20 0 18 -7 20 -60 20
+                        -53 0 -60 -2 -60 -20z"/>
+                        <path  id="leftLine" d="M0 425 l0 -25 430 0 430 0 0 25 0 25 -430 0 -430 0 0 -25z"/>
+                        </g>
+                    </svg>
+           
+        </div>
+        <!-- Иконка сети электропитания -->
+          <div class="icon power-grid-icon">
+            <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+            width="200.000000pt" height="200.000000pt" viewBox="0 0 175.000000 175.000000"style="border: 1px solid red"
+            preserveAspectRatio="xMidYMid meet">
+           
+           <g transform="translate(25.000000,170.000000) scale(0.100000,-0.100000)"
+           fill="#000000" stroke="none">
+           <path d="M656 1588 c-8 -29 -25 -93 -38 -142 l-24 -90 -204 -68 c-113 -37
+           -215 -68 -227 -68 -27 0 -31 -24 -8 -47 18 -18 11 -33 -16 -33 -30 0 -22 -20
+           9 -21 25 -1 26 -1 4 -7 -23 -7 -28 -29 -5 -24 6 1 14 -2 18 -8 4 -6 -5 -10
+           -20 -10 -16 0 -24 -4 -20 -10 4 -6 15 -8 26 -5 11 4 19 2 19 -4 0 -6 -11 -11
+           -25 -11 -34 0 -32 -18 3 -23 l27 -4 -27 -2 c-16 0 -28 -5 -28 -10 0 -11 51
+           -19 89 -13 22 3 28 9 28 28 1 19 -5 24 -24 24 -13 0 -22 4 -18 10 3 5 12 7 19
+           4 8 -3 17 -1 21 5 6 11 -7 15 -32 12 -7 -1 -13 3 -13 9 0 5 12 10 26 10 22 0
+           24 3 15 14 -8 10 -9 16 -1 21 15 10 2 25 -22 25 -12 0 -19 3 -15 6 5 5 368 6
+           373 1 5 -6 -18 -215 -25 -233 -11 -25 -304 -162 -367 -171 -33 -4 -44 -10 -44
+           -23 0 -10 7 -20 15 -24 22 -8 18 -26 -5 -26 -31 0 -24 -20 8 -21 20 -1 22 -2
+           7 -6 -35 -9 -41 -23 -9 -24 l29 -1 -27 -11 c-36 -14 -36 -25 -1 -30 l28 -4
+           -27 -2 c-36 -1 -37 -21 -1 -21 14 0 23 -3 19 -7 -4 -4 -13 -8 -19 -8 -7 0 -14
+           -4 -17 -10 -6 -11 73 -20 97 -11 11 5 12 10 4 19 -8 10 -7 17 1 25 9 9 5 12
+           -18 13 -26 1 -27 2 -6 7 30 9 30 25 0 34 l-23 6 23 1 c12 1 22 6 22 11 0 6
+           -10 10 -22 11 -22 1 -22 1 2 8 16 5 24 13 22 24 -3 15 12 17 148 17 88 0 150
+           -4 150 -10 0 -11 -88 -574 -96 -612 -3 -18 -13 -28 -27 -30 -12 -2 -23 -11
+           -25 -20 -3 -17 16 -18 288 -18 272 0 291 1 288 18 -2 9 -13 18 -25 20 -18 3
+           -23 14 -33 75 -7 40 -31 183 -55 319 -23 136 -40 250 -37 253 7 7 277 6 296
+           -1 9 -3 16 -12 16 -20 0 -8 10 -14 22 -14 12 0 18 -3 14 -7 -4 -4 -14 -8 -22
+           -8 -23 0 -17 -19 8 -27 22 -6 21 -6 -4 -7 -16 -1 -28 -5 -28 -11 0 -5 12 -11
+           28 -11 20 -1 22 -2 7 -6 -35 -8 -41 -23 -10 -23 15 0 25 -3 21 -7 -4 -4 -13
+           -8 -19 -8 -7 0 -14 -4 -17 -10 -6 -12 74 -20 99 -10 14 6 14 7 -2 16 -9 6 -22
+           7 -27 4 -6 -3 -10 -1 -10 4 0 6 9 11 19 11 32 0 35 20 4 21 -23 2 -24 2 -5 6
+           28 5 29 23 1 23 -11 0 -17 5 -14 10 3 6 16 10 28 10 24 0 13 16 -18 23 -18 4
+           -18 5 2 6 31 2 39 21 9 21 -32 0 -33 10 -5 34 26 22 16 34 -39 47 -37 8 -295
+           112 -352 142 -24 12 -25 16 -28 134 l-3 121 56 7 c54 6 352 -6 308 -13 -17 -2
+           -23 -10 -23 -28 0 -38 1 -39 15 -36 7 1 16 -2 20 -8 4 -6 -5 -10 -21 -10 -30
+           0 -23 -15 11 -23 15 -4 13 -5 -7 -6 -16 0 -28 -5 -28 -10 0 -5 12 -12 28 -14
+           l27 -4 -27 -2 c-38 -2 -35 -18 3 -23 42 -6 98 5 81 16 -10 6 -10 11 -1 22 9
+           11 6 14 -17 15 -21 1 -24 3 -9 6 34 8 41 23 11 23 -15 0 -25 4 -21 10 3 5 15
+           10 26 10 30 0 22 20 -8 21 -21 1 -23 2 -8 6 34 8 41 23 12 23 -30 0 -36 20
+           -12 40 22 18 18 40 -7 40 -13 0 -112 30 -220 66 l-198 66 -9 36 c-6 20 -19 75
+           -31 122 -36 148 -50 163 -74 78z m47 -140 c-6 -11 -31 -10 -38 2 -3 5 0 29 6
+           52 l12 43 12 -45 c7 -25 10 -48 8 -52z m-3 -73 c17 -21 8 -27 -24 -19 -21 5
+           -24 9 -15 20 15 18 24 18 39 -1z m10 -64 c0 -17 -34 -22 -49 -6 -14 13 -12 15
+           17 15 18 0 32 -4 32 -9z m-127 -48 c-3 -21 -9 -42 -13 -46 -3 -4 -65 -6 -136
+           -5 l-129 3 125 42 c158 54 160 54 153 6z m327 0 c66 -21 120 -41 120 -45 0 -4
+           -56 -8 -124 -8 l-124 0 -4 45 c-2 25 0 45 5 45 4 0 62 -17 127 -37z m-268 -5
+           c-9 -9 -12 -7 -12 12 0 19 3 21 12 12 9 -9 9 -15 0 -24z m98 7 c0 -28 -17 -34
+           -27 -9 -3 9 0 20 8 25 19 12 19 12 19 -16z m-40 -40 c11 -13 7 -15 -25 -15
+           -32 0 -36 2 -25 15 7 8 18 15 25 15 7 0 18 -7 25 -15z m20 -75 c0 -3 -9 -11
+           -20 -18 -15 -9 -26 -10 -40 -2 -32 17 -23 29 20 27 22 -1 40 -4 40 -7z m-72
+           -54 c-2 -1 -11 -8 -20 -15 -16 -12 -18 -10 -18 19 0 32 0 33 20 15 11 -10 19
+           -19 18 -19z m92 -3 c0 -26 -1 -26 -17 -10 -16 16 -16 19 -3 27 20 13 20 13 20
+           -17z m420 23 c0 -11 -19 -15 -25 -6 -3 5 1 10 9 10 9 0 16 -2 16 -4z m-451
+           -67 c23 -19 23 -20 5 -34 -33 -25 -54 -28 -75 -9 -19 17 -19 18 8 40 34 28 32
+           28 62 3z m-492 -35 c-3 -3 -12 -4 -19 -1 -8 3 -5 6 6 6 11 1 17 -2 13 -5z
+           m423 -44 c0 -9 -42 -32 -47 -26 -3 3 -3 17 1 31 6 22 9 24 26 13 11 -7 20 -15
+           20 -18z m110 -5 l0 -35 -25 16 c-24 16 -25 18 -9 35 25 28 34 23 34 -16z m-45
+           -45 c4 -6 -10 -10 -34 -10 -45 0 -50 6 -24 25 18 13 45 6 58 -15z m3 -36 l23
+           -7 -22 -23 c-12 -13 -27 -24 -32 -24 -17 0 -67 41 -62 51 7 10 59 12 93 3z
+           m-160 -76 l-3 -63 -135 -3 c-82 -2 -131 1 -125 7 11 10 246 120 258 121 4 0 7
+           -28 5 -62z m378 1 c65 -28 121 -53 123 -55 2 -2 -57 -4 -132 -4 l-137 0 2 55
+           c1 32 7 55 13 55 6 0 65 -23 131 -51z m-308 18 l22 -23 -25 -24 -25 -23 0 46
+           c0 26 1 47 3 47 2 0 13 -10 25 -23z m128 -54 c-4 -4 -16 3 -28 15 -22 21 -22
+           22 -3 36 19 14 21 13 29 -15 5 -16 6 -32 2 -36z m-36 -17 c11 -14 6 -16 -41
+           -16 l-52 0 23 25 c24 25 43 23 70 -9z m-500 -66 c0 -5 -5 -10 -11 -10 -5 0 -7
+           5 -4 10 3 6 8 10 11 10 2 0 4 -4 4 -10z m945 0 c3 -5 -1 -10 -10 -10 -9 0 -13
+           5 -10 10 3 6 8 10 10 10 2 0 7 -4 10 -10z m-450 -30 c-16 -16 -32 -30 -36 -30
+           -4 0 -17 14 -29 30 l-21 30 57 0 58 0 -29 -30z m-102 -102 c-23 -23 -44 -40
+           -47 -37 -4 4 1 38 20 118 l5 24 32 -31 32 -32 -42 -42z m167 45 c6 -32 14 -67
+           16 -78 3 -12 -12 -1 -40 30 l-45 50 26 28 c15 15 28 27 29 27 1 0 8 -26 14
+           -57z m-10 -135 c0 -9 -102 -8 -145 1 l-30 6 44 48 44 48 43 -48 c24 -26 43
+           -51 44 -55z m-550 88 c0 -3 -4 -8 -10 -11 -5 -3 -10 -1 -10 4 0 6 5 11 10 11
+           6 0 10 -2 10 -4z m560 -144 c0 -4 -22 -30 -50 -57 l-50 -49 -50 49 c-27 27
+           -50 53 -50 57 0 4 45 8 100 8 55 0 100 -4 100 -8z m-201 -210 c-41 -39 -75
+           -69 -77 -67 -4 4 10 96 29 194 l11 54 55 -55 55 -55 -73 -71z m241 174 c0 -3
+           9 -53 21 -111 11 -59 19 -111 17 -115 -2 -5 -36 23 -77 62 l-73 70 48 49 c43
+           44 64 58 64 45z m-40 -231 l95 -95 -193 0 -193 0 20 28 c23 33 158 162 169
+           162 4 0 50 -43 102 -95z"/>
+           </g>
+           </svg>
+           
+           
+        </div>
+
+
+            <!-- Иконка нагрузки -->
+            <div class="icon power-icon" id="loadIcon">
+                <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+                width="195.000000pt" height="195.000000pt" viewBox="0 0 2000.000000 2000.000000" style="border: 1px solid red"
+                preserveAspectRatio="xMidYMid meet">
+            
+            <g transform="translate(0.000000,2000.000000) scale(0.100000,-0.100000)"
+            fill="#000000" stroke="none">
+            <path d="M9720 19994 c-368 -25 -539 -44 -777 -85 -1570 -269 -2983 -1137
+            -3945 -2423 -600 -801 -993 -1717 -1162 -2711 -23 -132 -54 -389 -68 -560 -18
+            -222 -15 -743 6 -945 91 -895 347 -1721 904 -2910 60 -129 274 -568 475 -975
+            470 -954 617 -1272 769 -1670 210 -548 328 -1053 328 -1410 0 -409 145 -748
+            423 -994 159 -140 350 -239 551 -285 155 -36 234 -37 2856 -34 l2575 4 95 21
+            c382 85 693 320 863 650 102 199 133 336 147 654 15 346 63 616 174 985 149
+            495 349 954 859 1979 347 695 543 1098 659 1355 482 1064 714 1856 789 2695
+            16 178 16 664 0 860 -57 713 -211 1353 -473 1974 -322 762 -774 1428 -1365
+            2012 -202 200 -252 246 -413 380 -985 818 -2192 1311 -3480 1419 -128 11 -691
+            21 -790 14z m775 -1268 c986 -104 1871 -464 2629 -1070 763 -610 1328 -1423
+            1635 -2353 216 -656 296 -1418 215 -2053 -68 -537 -248 -1140 -546 -1835 -127
+            -295 -277 -609 -596 -1250 -522 -1047 -680 -1384 -862 -1840 -285 -714 -437
+            -1345 -458 -1905 l-7 -175 -937 -3 -938 -2 0 1907 c0 2126 5 1979 -71 2132
+            -73 147 -209 262 -372 313 -102 32 -273 32 -369 0 -195 -65 -343 -214 -416
+            -419 -15 -44 -17 -194 -19 -1991 l-3 -1942 -938 2 -937 3 -2 80 c-22 785 -276
+            1635 -852 2842 -59 125 -261 539 -449 918 -187 380 -381 780 -432 890 -661
+            1433 -858 2348 -730 3382 128 1036 569 1995 1267 2758 894 978 2100 1550 3433
+            1629 132 8 619 -4 755 -18z"/>
+            <path d="M8592 14350 c-111 -29 -187 -74 -277 -165 -135 -135 -192 -281 -182
+            -470 9 -161 67 -294 177 -405 75 -75 147 -120 252 -158 l73 -27 1330 -3 c1479
+            -3 1419 -5 1560 64 388 190 474 695 170 1000 -83 84 -173 137 -280 164 -76 20
+            -111 20 -1414 19 -1282 0 -1339 -1 -1409 -19z"/>
+            <path d="M8664 12490 c-109 -16 -197 -54 -290 -123 -241 -182 -314 -531 -167
+            -796 53 -97 170 -209 263 -254 146 -71 49 -67 1535 -67 1487 0 1391 -4 1535
+            67 100 50 222 170 268 265 56 115 67 161 66 293 0 104 -3 130 -26 193 -70 194
+            -207 331 -399 398 l-84 29 -1325 1 c-729 1 -1348 -2 -1376 -6z"/>
+            <path d="M7415 4363 c-124 -16 -255 -83 -350 -178 -246 -245 -248 -630 -5
+            -876 92 -93 177 -142 302 -174 56 -14 81 -24 63 -24 -52 -2 -137 -29 -215 -68
+            -196 -100 -330 -322 -330 -549 0 -173 62 -318 189 -444 91 -89 167 -132 294
+            -165 58 -15 80 -24 60 -25 -61 0 -191 -50 -268 -101 -170 -114 -275 -310 -275
+            -515 0 -103 29 -217 77 -303 52 -95 170 -209 264 -254 139 -68 121 -67 860
+            -67 l667 0 81 -92 c45 -51 87 -98 94 -103 6 -6 43 -37 81 -69 194 -164 433
+            -279 688 -331 108 -21 152 -25 313 -25 161 0 205 4 313 25 327 67 585 213 834
+            474 l115 121 664 0 c738 0 720 -1 859 67 105 52 222 170 273 274 142 290 47
+            634 -223 808 -66 43 -197 90 -253 92 -21 0 1 9 61 24 125 32 210 81 302 174
+            224 226 241 570 42 824 -46 59 -137 134 -202 167 -49 25 -166 60 -204 61 -21
+            1 -4 7 49 20 129 32 218 81 310 174 118 118 171 235 182 401 16 253 -120 487
+            -350 598 -145 71 51 66 -2779 65 -1404 -1 -2566 -4 -2583 -6z"/>
+            </g>
+            </svg>
+            
+        </div>
+</div>
+
+        <!-- Контент вкладки Мониторинг -->
+        <div id="monitor" class="tabcontent">
+           
+            <p>Температура: <span id="temperature">0</span>°C</p>
+            <p>Ток: <span id="current">0</span> A</p>
+
+            <!-- Контейнер для графика -->
+            <div id="chartContainer">
+                <canvas id="speedChart"></canvas>
+            </div>
+        </div>
+
+       <!-- Контент вкладки Настройки -->
+        <div id="settings" class="tabcontent">
+            <div class="control-group">
+                <p>Режим работы:</p>
+                <p>Текущий режим работы: <span id="mode_display">...</span></p>
+                <div class="control-group">
+                    <p>Режим работы:</p>
+                    <label><input type="radio" name="mode" value="1" onchange="setMode(this)"> Charger Only</label><br>
+                    <label><input type="radio" name="mode" value="2" onchange="setMode(this)"> Inverter Only</label><br>
+                    <label><input type="radio" name="mode" value="3" onchange="setMode(this)"> On</label><br>
+                    <label><input type="radio" name="mode" value="4" onchange="setMode(this)"> Off</label>
+                </div>
+              
+              </div>
+           
+
+                        <!-- Страница обновления прошивки -->
+            <form id="uploadForm" enctype="multipart/form-data">
+                <h3>Upload Firmware</h3>
+                <input type="file" id="firmwareFile" name="firmware" accept=".bin">
+                <br><br>
+                <button type="button" onclick="uploadFirmware()">Upload Firmware</button>
+                <p id="status"></p>
+            </form>
+        </div>
+    </div>
+
+       <!-- Модальные окна -->
+
+                  <!-- Модальное окно настроек батареи -->
+
+                  <div id="batteryModal" class="modal" style="display:none;">
+                    <div class="modal-header">
+                      <div class="modal-buttons">
+                        <button class="modal-button close" data-action="close" id="closeBattery">✖</button>
+                      </div>
+                      <h3 style="margin-top:30; color:#291161;font-size: 17px;">Информация о батарее</h3>
+                    </div>   
+                        <p>Текущее напряжение, В: <span id="batt_voltage">0</span></p>
+                        <p>Ток заряда/разряда, A: <span id="batt_curr">0</span></p>
+                        <p>Уровень заряда, %: <span id="chargeLevel">0</span></p>
+                        <p>Мощность,Вт : <span id="PowerLevel">0</span></p>
+                        <p>Порог разряда: <span id="vebusSOC">--</span> %</p>
+                       
+                        <!-- Ползунок для установки нижнего предела разряда батареи -->
+                      <!-- <label for="maxCurrentRange">Порог разряда, %: <span id="Bus_State_Of_Сharge">1</span></label>--> 
+                        <input type="range" id="State_Of_Сharge" min="0" max="80" step="1" value="40"  style="width: 250px;">
+                        <!-- Кнопка Сохранить -->
+                        <button onclick="saveBatterySettings()">Сохранить</button>
+                        <div id="confirmationMessage" style="margin-top: 10px; color: rgb(11, 226, 11); display: none;"></div>
+                    
+                </div>
+
+            <!-- Модальное окно параметров нагрузки -->
+        <div id="loadSettingsModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" id="closeLoadSettings">&times;</span>
+                <h2>Параметры нагрузки</h2>
+                <div class="input-row">
+                    <label for="maxLoad">Максимальная нагрузка,(кВт):</label>
+                    <input type="number" id="maxLoad" min="1" max="30" step="0.1" value="10">
+                </div>
+                <div class="input-row">
+                    <label for="outputVoltage">Выходное напряжение,(В):</label>
+                    <input type="number" id="outputVoltage" min="219" max="240" step="1" value="230">
+                </div>  
+                <div class="input-row">
+                    <label for="maxCurrentDifference">Макс. разница тока нагрузки,(А):</label>
+                    <input type="number" id="maxCurrentDifference" min="3" max="15" step="1" value="5">
+                </div>
+                <!-- Таблица с фазами -->
+                <h3>Данные по фазам</h3>
+                <table class="phase-table">
+                    <thead>
+                        <tr>
+                            <th>Параметр</th>
+                            <th>Фаза A</th>
+                            <th>Фаза B</th>
+                            <th>Фаза C</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Напряжение (В)</td>
+                            <td id="outputVoltageL1">0</td>
+                            <td id="outputVoltageL2">0</td>
+                            <td id="outputVoltageL3">0</td>
+                        </tr>
+                        <tr>
+                            <td>Ток (А)</td>
+                            <td id="outputCurrentL1">0</td>
+                            <td id="outputCurrentL2">0</td>
+                            <td id="outputCurrentL3">0</td>
+                        </tr>
+                        <tr>
+                            <td>Мощность (кВт)</td>
+                            <td id="powerPhaseA">0</td>
+                            <td id="powerPhaseB">0</td>
+                            <td id="powerPhaseC">0</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <!-- Суммарная мощность -->
+                <p>Общая мощность нагрузки, КВт: <span id="total_load">0</span></p>
+                 <!-- Кнопка Сохранить -->
+                 <button id="saveLoadSettings" onclick="saveLoadSettings()">Сохранить</button>
+                 <div id="loadConfirmationMessage" style="margin-top: 10px; color: rgb(11, 226, 11); display: none;"></div>
+            </div>
+        </div>
+
+          <!--Модальное окно инвертора --> 
+        <div id="inverterModal" class="modal" style="display:none;">
+            <div class="modal-content">
+                <span class="close" id="closeInverter">&times;</span>
+                <p>Информация о инверторе</p>
+            </div>
+        </div>
+
+       
+        <script>
+
+        const modeNames = {
+            1: "Charger Only",
+            2: "Inverter Only",
+            3: "On",
+            4: "Off"
+            };
+
+        let batteryData = {
+            soc: 0,      // Уровень заряда (%)
+            voltage: 0,  // Напряжение (В)
+            current: 0,  // Ток (А)
+            power: 0,    // Мощность (Вт)
+            soh: 0       // Состояние здоровья батареи (%)
+        };
+        updateBatteryFill(batteryData.soc);
+            // Закрытие модального окна (если нужно)
+            document.getElementById("closeBattery").onclick = function() {
+            document.getElementById("batteryModal").style.display = "none";
+                }
+        </script>
+
+
+
+<script>
+  
+			// Функция для скрытия линии
+			function hideLeftLine() {
+			    const leftLine = document.getElementById('leftLine');
+			    if (leftLine) {
+			        leftLine.style.display = 'none';  // Скрыть линию
+			    }
+			}
+			
+			// Функция для отображения линии
+			function showLeftLine() {
+			    const leftLine = document.getElementById('leftLine');
+			    if (leftLine) {
+			        leftLine.style.display = '';  // Показать линию (по умолчанию)
+			    }
+			}
+
+ 
+    
+        // Функция для переключения вкладок
+        function openTab(event, tabName) {
+            var i, tabcontent, tabs;
+            
+            // Скрываем все вкладки
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active");
+            }
+            
+            // Убираем активный класс с вкладок
+            tabs = document.getElementsByClassName("tab");
+            for (i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove("active");
+            }
+            
+            // Показываем текущую вкладку
+            document.getElementById(tabName).classList.add("active");
+            event.currentTarget.classList.add("active");
+        }
+
+			
+
+			     // Инициализация данных для графика
+			var timeData = [];
+			var speedData = [];
+			var timeCounter = 0; // Счетчик времени в секундах
+			
+			var speedChart = new Chart(document.getElementById('speedChart'), {
+			    type: 'line',
+			    data: {
+			        labels: timeData,
+			        datasets: [{
+			            label: 'Скорость (об/мин)',
+			            data: speedData,
+			            borderColor: 'rgba(75, 192, 192, 1)',
+			            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+			            fill: true
+			        }]
+			    },
+    options: {
+        animation: {
+            duration: 300, // Уменьшаем время анимации для более плавного обновления
+            easing: 'easeOutQuad' // Используем более плавный эффект
+        },
+        scales: {
+            x: {
+                type: 'linear',
+                position: 'bottom',
+                title: {
+                    display: true,
+                    text: 'Время (сек)'
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Мощность (КВт)'
+                }
+            }
+        }
+    }
+});
+
+
+		
+	
+
+// Функция для получения текущего времени в формате HH:MM:SS
+function getCurrentTimeFormatted() {
+    var now = new Date(); // Получаем текущее время
+
+    var hours = now.getHours();   // Часы
+    var minutes = now.getMinutes(); // Минуты
+    var seconds = now.getSeconds(); // Секунды
+
+    // Форматируем часы, минуты и секунды так, чтобы всегда было 2 цифры
+    hours = hours < 10 ? '0' + hours : hours;
+    minutes = minutes < 10 ? '0' + minutes : minutes;
+    seconds = seconds < 10 ? '0' + seconds : seconds;
+
+    // Возвращаем строку в формате HH:MM:SS
+    return hours + ':' + minutes + ':' + seconds;
+}
+
+       // Функция для обновления данных графика
+function updateChart(newSpeed) {
+    timeCounter++; // Увеличиваем счетчик времени
+    var currentTime = getCurrentTimeFormatted();
+    
+    // Добавляем новые данные
+    timeData.push(timeCounter);
+    speedData.push(newSpeed);
+
+    // Если массивы превышают длину 90, удаляем только первое значение
+    if (timeData.length > 90) {
+        timeData.shift();  
+        speedData.shift();
+    }
+
+    // Обновляем график с плавной анимацией
+    speedChart.update();  
+}
+
+
+
+
+  
+        // Функция для открытия модального окна подтверждения переключения режима
+        function openModeConfirmation(mode) {
+            var modal = document.getElementById('modeConfirmationModal');
+            modal.style.display = 'flex';
+            modal.dataset.mode = mode; // Сохраняем режим переключения
+        }
+
+ 
+
+
+// Функция для переключения видимости
+function toggleVisibility() {
+    const leftLine = document.getElementById('leftLine');
+    if (leftLine) {
+        // Если элемент видим, скрыть его, иначе показать
+        if (leftLine.style.display === 'none') {
+            showLeftLine();
+        } else {
+            hideLeftLine();
+        }
+    }
+}
+
+  setInterval(toggleVisibility, 500);
+
+  
+  let tick = 0;
+     // Обновим интервал обновления
+     setInterval(() => {
+        tick++;
+        
+        if (tick % 2 === 0) fetchStatus();
+        if (tick % 3 === 0) fetchInverterPowerStatus();
+        if (tick % 4 === 0) fetchEssAcStatus();
+        if (tick % 5 === 0) fetchVebusStatus();
+        if (tick % 6 === 0) fetchEss();
+        if (tick >= 60) tick = 0;
+      }, 200);
+    
+        // Первая загрузка
+        fetchEss();
+        fetchStatus();
+        fetchInverterPowerStatus();
+        fetchEssAcStatus();
+        fetchVebusStatus(); 
+    
+    </script>
+    
+</body>
+</html>

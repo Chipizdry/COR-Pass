@@ -17,6 +17,8 @@ const modalConfigs = {
     recovery_modal: { width: '250px', height: 'auto', top: 'auto', left: 'auto' },
     rolesModal: { width: '250px', height: 'auto', top: '50px', left: '50px' },
     roleInfoModal: { width: '450px', height: 'auto', top: 'auto', left: 'auto' },
+
+    batteryModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
 };
 
 //Функция получения токена 
