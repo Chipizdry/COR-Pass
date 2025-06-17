@@ -148,6 +148,8 @@ function updateLoadModal(data) {
     document.getElementById('powerPhaseB').textContent = (data.ac_output.l2 / 1000).toFixed(2);
     document.getElementById('powerPhaseC').textContent = (data.ac_output.l3 / 1000).toFixed(2);
     document.getElementById('total_load').textContent = (data.ac_output.total / 1000).toFixed(2);
+    updateLoadIndicator(data.ac_output.total / 1000);
+ 
 }
 
 function updateEssAcDisplay(data) {
@@ -262,10 +264,9 @@ async function fetchEss() {
         radio.checked = parseInt(radio.value) === essMode;
         }
      // updateEssSettingsDisplay(data);
-     const socValue = data.minimum_soc_limit || 40;
-     
-     document.getElementById('State_Of_Сharge').value = socValue;
-        document.getElementById('vebusSOC').textContent = socValue.toFixed(1);
+        const socValue = data.minimum_soc_limit || 40;
+        document.getElementById('State_Of_Сharge').value = socValue;
+        document.getElementById('vebusSOC').textContent = socValue;
       return {
         success: true,
         data: data
@@ -278,3 +279,31 @@ async function fetchEss() {
       };
     }
   }
+
+
+
+
+
+
+  // Функция для обновления индикатора нагрузки
+  function updateLoadIndicator(powerKw) {
+    const maxHeight = 20000; // Максимальная высота индикатора (100 кВт)
+    const maxPower = 110;   // Максимальная мощность (кВт)
+    
+    // Ограничиваем значение мощности
+    powerKw = Math.min(Math.max(powerKw, 0), maxPower);
+    
+    // Рассчитываем высоту индикатора
+    const height = (powerKw / maxPower) * maxHeight;
+    
+    // Рассчитываем цвет
+    const hue = (1 - (powerKw / maxPower)) * 120; // 0 (красный) - 120 (зелёный)
+    const color = `hsl(${hue}, 100%, 50%)`;
+    
+    // Получаем элемент индикатора
+    const indicator = document.getElementById('loadIndicator');
+    if (indicator) {
+        indicator.setAttribute('height', height);
+        indicator.setAttribute('fill', color);
+    }
+}
