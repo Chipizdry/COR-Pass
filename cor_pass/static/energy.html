@@ -112,11 +112,10 @@
         
                         <div class="icon inverter-icon" id="inverterIcon">
                     <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
-                        width="160.000000pt" height="80.000000pt" viewBox="0 0 172.000000 85.000000" style="border: 1px solid red"
+                        width="160.000000pt" height="160.000000pt" viewBox="0 0 172.000000 85.000000" style="border: 1px solid red"
                         preserveAspectRatio="xMidYMid meet">
 
-                        <g transform="translate(0.000000,85.000000) scale(0.100000,-0.100000)"
-                        fill="#000000" stroke="none">
+                        <g transform="translate(-120.000000,110.000000) scale(0.1600000,-0.1600000)" fill="#000000" stroke="none">
                         <path d="M921 826 c-49 -27 -50 -37 -51 -404 0 -372 2 -386 55 -410 41 -19
                         697 -17 734 2 49 26 51 41 51 406 0 365 -2 380 -51 406 -39 20 -702 20 -738 0z
                         m709 -33 c0 -10 -703 -713 -712 -713 -5 0 -8 153 -8 340 0 327 1 341 20 360
@@ -132,7 +131,7 @@
                         -53 0 -60 -2 -60 -20z"/>
                         <path d="M1450 180 c0 -18 7 -20 60 -20 53 0 60 2 60 20 0 18 -7 20 -60 20
                         -53 0 -60 -2 -60 -20z"/>
-                        <path  id="leftLine" d="M0 425 l0 -25 430 0 430 0 0 25 0 25 -430 0 -430 0 0 -25z"/>
+                    <!--   <path  id="leftLine" d="M0 425 l0 -25 430 0 430 0 0 25 0 25 -430 0 -430 0 0 -25z"/>--> 
                         </g>
                     </svg>
            
@@ -309,19 +308,33 @@
                     <label><input type="radio" name="mode" value="3" onchange="setMode(this)"> On</label><br>
                     <label><input type="radio" name="mode" value="4" onchange="setMode(this)"> Off</label>
                 </div>
-              
               </div>
            
+              <div class="ess-settings-display">
+                <h4>ESS расширенные настройки</h4>
+                <table>
+                    <tr><td>Setpoint AC:</td><td id="ac_setpoint">--</td></tr>
+                    <tr><td>Setpoint (fine):</td><td id="fine_setpoint">--</td></tr>
+                    <tr><td>Макс. заряд %:</td><td id="charge_limit">--</td></tr>
+                    <tr><td>Макс. разряд %:</td><td id="discharge_limit">--</td></tr>
+                    <tr><td>Ограничение по разряду (Вт):</td><td id="discharge_power">--</td></tr>
+                    <tr><td>Макс. ток заряда (DC):</td><td id="dvcc_current">--</td></tr>
+                    <tr><td>Ограничение Feed-in:</td><td id="feedin_power">--</td></tr>
+                    <tr><td>Feed-in от DC-PV:</td><td id="feedin_dc">--</td></tr>
+                    <tr><td>Feed-in от AC-PV:</td><td id="feedin_ac">--</td></tr>
+                    <tr><td>Состояние Grid Limiting:</td><td id="grid_limit">--</td></tr>
+                    <tr><td>Ограничение напряжения заряда:</td><td id="charge_voltage">--</td></tr>
+                    <tr><td>Источник AC 1:</td><td id="input1_src">--</td></tr>
+                    <tr><td>Источник AC 2:</td><td id="input2_src">--</td></tr>
+                    <tr><td>Ограничение экспорта:</td><td id="export_limit">--</td></tr>
+                    <tr><td>Ограничение импорта:</td><td id="import_limit">--</td></tr>
+                    <tr><td>Режим Peak Shaving:</td><td id="peak_mode">--</td></tr>
+                    <tr><td>Setpoint Grid (volatile):</td><td id="grid_setpoint">--</td></tr>
+                </table>
+            </div>
 
-                        <!-- Страница обновления прошивки -->
-            <form id="uploadForm" enctype="multipart/form-data">
-                <h3>Upload Firmware</h3>
-                <input type="file" id="firmwareFile" name="firmware" accept=".bin">
-                <br><br>
-                <button type="button" onclick="uploadFirmware()">Upload Firmware</button>
-                <p id="status"></p>
-            </form>
         </div>
+        
     </div>
 
        <!-- Модальные окна -->
@@ -661,6 +674,7 @@ function toggleVisibility() {
         if (tick % 4 === 0) fetchEssAcStatus();
         if (tick % 5 === 0) fetchVebusStatus();
         if (tick % 6 === 0) fetchEss();
+        if (tick % 7 === 0) fetchEssAdvancedSettings();
         if (tick >= 60) tick = 0;
       }, 200);
     
@@ -670,6 +684,7 @@ function toggleVisibility() {
         fetchInverterPowerStatus();
         fetchEssAcStatus();
         fetchVebusStatus(); 
+        fetchEssAdvancedSettings();
     
     </script>
     

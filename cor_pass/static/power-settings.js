@@ -7,9 +7,9 @@ function updateBatteryFill(level) {
     const batteryFill = document.getElementById('batteryFill');
     
     // Рассчитываем сдвиг по оси X относительно уровня заряда
-    const maxFillWidth = 2600; // максимальная ширина батареи
+    const maxFillWidth = 2550; // максимальная ширина батареи
     const fillWidth = (level / 100) * maxFillWidth;
-    const xPosition = 330 + (maxFillWidth - fillWidth); // сдвиг вправо по мере разряда
+    const xPosition = 420 + (maxFillWidth - fillWidth); // сдвиг вправо по мере разряда
 
     // Меняем x-координату и ширину заливки
     batteryFill.setAttribute('x', xPosition);
@@ -307,4 +307,50 @@ async function fetchEss() {
         indicator.setAttribute('height', height);
         indicator.setAttribute('fill', color);
     }
+}
+
+
+async function fetchEssAdvancedSettings() {
+    try {
+        const res = await fetch('/api/modbus/ess_advanced_settings');
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.detail || 'Ошибка запроса ESS настроек');
+        }
+
+        const data = await res.json();
+        updateEssAdvancedDisplay(data);
+    } catch (err) {
+        console.error("❗ Ошибка получения ESS расширенных настроек:", err);
+    }
+}
+
+function updateEssAdvancedDisplay(data) {
+    document.getElementById("ac_setpoint").textContent = data.ac_power_setpoint + " W";
+    document.getElementById("charge_limit").textContent = data.max_charge_percent + " %";
+    document.getElementById("discharge_limit").textContent = data.max_discharge_percent + " %";
+    document.getElementById("fine_setpoint").textContent = data.ac_power_setpoint_fine + " W";
+    document.getElementById("discharge_power").textContent = data.max_discharge_power + " W";
+    document.getElementById("dvcc_current").textContent = data.dvcc_max_charge_current + " A";
+    document.getElementById("feedin_power").textContent = data.max_feed_in_power + " W";
+    document.getElementById("feedin_dc").textContent = data.overvoltage_feed_in ? "Вкл" : "Выкл";
+    document.getElementById("feedin_ac").textContent = data.prevent_feedback ? "Отключено" : "Разрешено";
+    document.getElementById("grid_limit").textContent = data.grid_limiting_status ? "Активно" : "Нет";
+    document.getElementById("charge_voltage").textContent = data.max_charge_voltage + " В";
+    document.getElementById("input1_src").textContent = formatInputSource(data.ac_input_1_source);
+    document.getElementById("input2_src").textContent = formatInputSource(data.ac_input_2_source);
+    document.getElementById("export_limit").textContent = data.ac_export_limit + " W";
+    document.getElementById("import_limit").textContent = data.ac_import_limit + " W";
+    document.getElementById("peak_mode").textContent = data.always_peak_shave ? "Всегда" : "Только при SOC > мин.";
+    document.getElementById("grid_setpoint").textContent = data.ac_grid_setpoint + " W";
+}
+
+function formatInputSource(code) {
+    const sources = {
+        0: "Не используется",
+        1: "Сеть",
+        2: "Генератор",
+        3: "Берег"
+    };
+    return sources[code] || `Код ${code}`;
 }

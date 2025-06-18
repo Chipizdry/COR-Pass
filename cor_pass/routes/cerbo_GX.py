@@ -21,7 +21,6 @@ REGISTERS = {
     "temperature": 262, 
     "power": 258,          # Мощность (signed int16)
     "soh": 304,            # Состояние здоровья (0.1%)
-   # "inverter_power": 870  # Мощность инвертора (signed int32)
 }
 
 INVERTER_REGISTERS = {
@@ -312,13 +311,13 @@ async def get_ess_ac_status(request: Request):
         }
 
         # Add logging for debugging
-        logging.info("ESS AC Status:")
-        logging.info(f"Input Voltages: L1={response['input']['voltages']['l1']}V, L2={response['input']['voltages']['l2']}V, L3={response['input']['voltages']['l3']}V")
-        logging.info(f"Input Currents: L1={response['input']['currents']['l1']}A, L2={response['input']['currents']['l2']}A, L3={response['input']['currents']['l3']}A")
-        logging.info(f"Input Frequencies: L1={response['input']['frequencies']['l1']}Hz, L2={response['input']['frequencies']['l2']}Hz, L3={response['input']['frequencies']['l3']}Hz")
-        logging.info(f"Input Power Total: {response['input']['powers']['total']}W")
-        logging.info(f"Output Voltages: L1={response['output']['voltages']['l1']}V, L2={response['output']['voltages']['l2']}V, L3={response['output']['voltages']['l3']}V")
-        logging.info(f"Output Currents: L1={response['output']['currents']['l1']}A, L2={response['output']['currents']['l2']}A, L3={response['output']['currents']['l3']}A")
+      #  logging.info("ESS AC Status:")
+      #  logging.info(f"Input Voltages: L1={response['input']['voltages']['l1']}V, L2={response['input']['voltages']['l2']}V, L3={response['input']['voltages']['l3']}V")
+      #  logging.info(f"Input Currents: L1={response['input']['currents']['l1']}A, L2={response['input']['currents']['l2']}A, L3={response['input']['currents']['l3']}A")
+      #  logging.info(f"Input Frequencies: L1={response['input']['frequencies']['l1']}Hz, L2={response['input']['frequencies']['l2']}Hz, L3={response['input']['frequencies']['l3']}Hz")
+      #  logging.info(f"Input Power Total: {response['input']['powers']['total']}W")
+      #  logging.info(f"Output Voltages: L1={response['output']['voltages']['l1']}V, L2={response['output']['voltages']['l2']}V, L3={response['output']['voltages']['l3']}V")
+      #  logging.info(f"Output Currents: L1={response['output']['currents']['l1']}A, L2={response['output']['currents']['l2']}A, L3={response['output']['currents']['l3']}A")
 
         return response
 
@@ -460,55 +459,57 @@ async def set_ess_mode(control: EssModeControl, request: Request):
         logging.error("❗ Ошибка установки режима ESS", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
-
-# Установка флагов ESS
-@router.post("/ess_status/flags")
-async def set_ess_flags(control: EssFlagsControl, request: Request):
+@router.get("/ess_advanced_settings")
+async def get_ess_advanced_settings(request: Request):
+    """
+    Чтение базовых ESS и системных настроек с адресов 2700–2712 (устройство 100).
+    """
     try:
         client = request.app.state.modbus_client
-        for field, address in ESS_REGISTERS_FLAGS.items():
-            value = getattr(control, field)
-            if value is not None:
-                val = 1 if value else 0
-                logging.info(f"\U0001f4e5 Запись {field} = {val}")
-                await client.write_register(address=address, value=val, slave=ESS_UNIT_ID)
-        return {"status": "ok"}
+        slave = INVERTER_ID  # Обычно 100
+        start = 2700
+        count = 13  # 2700–2712
+
+        try:
+            result = await client.read_input_registers(start, count=count, slave=slave)
+        except Exception as modbus_error:
+            logging.error(f"❌ Ошибка связи при чтении регистров {start}-{start+count-1}", exc_info=modbus_error)
+            raise HTTPException(status_code=500, detail="Modbus ошибка при чтении базовых ESS настроек")
+
+        if result.isError() or not hasattr(result, "registers"):
+            logging.error(f"❌ Ошибка чтения регистров {start}-{start+count-1} — результат: {result}")
+            raise HTTPException(status_code=500, detail="Ошибка чтения базовых ESS настроек")
+
+        r = result.registers
+        available = len(r)
+        if available < count:
+            logging.warning(f"⚠️ Прочитано только {available} из {count} регистров (адреса {start}-{start+available-1})")
+
+        def safe_val(idx, default=None):
+            offset = idx - start
+            return r[offset] if 0 <= offset < available else default
+
+        def s16(v): return decode_signed_16(v) if v is not None else None
+
+        result_data = {
+            "ac_power_setpoint": s16(safe_val(2700)),
+            "max_charge_percent": safe_val(2701),
+            "max_discharge_percent": safe_val(2702),
+            "ac_power_setpoint_fine": s16(safe_val(2703)) * 10 if safe_val(2703) is not None else None,
+            "max_discharge_power": s16(safe_val(2704)) * 10 if safe_val(2704) is not None else None,
+            "dvcc_max_charge_current": s16(safe_val(2705)),
+            "max_feed_in_power": s16(safe_val(2706)) * 10 if safe_val(2706) is not None else None,
+            "overvoltage_feed_in": safe_val(2707),
+            "prevent_feedback": safe_val(2708),
+            "grid_limiting_status": safe_val(2709),
+            "max_charge_voltage": safe_val(2710) / 10.0 if safe_val(2710) is not None else None,
+            "ac_input_1_source": safe_val(2711),
+            "ac_input_2_source": safe_val(2712),
+        }
+
+        logging.info("✅ ESS Basic Settings:\n%s", json.dumps(result_data, indent=2, ensure_ascii=False))
+        return result_data
+
     except Exception as e:
-        logging.error("❗ Ошибка записи флагов ESS", exc_info=e)
-        raise HTTPException(status_code=500, detail="Modbus ошибка")
-
-
-# Установка мощности ESS (L1–L3)
-@router.post("/ess_status/power")
-async def set_ess_power(control: EssPowerControl, request: Request):
-    try:
-        client = request.app.state.modbus_client
-        for phase, address in ESS_REGISTERS_POWER.items():
-            if "ess_power_setpoint" in phase:
-                value = getattr(control, phase)
-                if value is not None:
-                    reg_value = value if value >= 0 else 65536 + value
-                    logging.info(f"\U0001f4e5 Установка мощности {phase} = {value}")
-                    await client.write_register(address=address, value=reg_value, slave=ESS_UNIT_ID)
-        return {"status": "ok"}
-    except Exception as e:
-        logging.error("❗ Ошибка установки мощности ESS", exc_info=e)
-        raise HTTPException(status_code=500, detail="Modbus ошибка")
-
-
-# Установка лимитов фид-ина по фазам
-@router.post("/ess_status/feedin_limits")
-async def set_feedin_limits(control: EssFeedInControl, request: Request):
-    try:
-        client = request.app.state.modbus_client
-        for field in ["max_feed_in_l1", "max_feed_in_l2", "max_feed_in_l3"]:
-            value = getattr(control, field)
-            if value is not None:
-                address = ESS_REGISTERS_POWER[field]
-                logging.info(f"\U0001f4e5 Установка лимита фид-ин {field} = {value}")
-                await client.write_register(address=address, value=value, slave=ESS_UNIT_ID)
-        return {"status": "ok"}
-    except Exception as e:
-        logging.error("❗ Ошибка установки лимитов фид-ина", exc_info=e)
-        raise HTTPException(status_code=500, detail="Modbus ошибка")
-
+        logging.error("❗ Ошибка чтения базовых ESS настроек", exc_info=e)
+        raise HTTPException(status_code=500, detail="Modbus ошибка")        
