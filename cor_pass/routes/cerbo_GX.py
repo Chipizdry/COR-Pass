@@ -462,31 +462,26 @@ async def set_ess_mode(control: EssModeControl, request: Request):
 @router.get("/ess_advanced_settings")
 async def get_ess_advanced_settings(request: Request):
     """
-    Чтение базовых ESS и системных настроек с адресов 2700–2712 (устройство 100).
+    Чтение базовых ESS и системных настроек с адресов 2700–2712 + 2716 (устройство 100).
     """
     try:
         client = request.app.state.modbus_client
         slave = INVERTER_ID  # Обычно 100
-        start = 2700
-        count = 13  # 2700–2712
 
-        try:
-            result = await client.read_input_registers(start, count=count, slave=slave)
-        except Exception as modbus_error:
-            logging.error(f"❌ Ошибка связи при чтении регистров {start}-{start+count-1}", exc_info=modbus_error)
-            raise HTTPException(status_code=500, detail="Modbus ошибка при чтении базовых ESS настроек")
+        # Основной диапазон: 2700–2712
+        start_main = 2700
+        count_main = 13
 
+        result = await client.read_input_registers(start_main, count=count_main, slave=slave)
         if result.isError() or not hasattr(result, "registers"):
-            logging.error(f"❌ Ошибка чтения регистров {start}-{start+count-1} — результат: {result}")
+            logging.error(f"❌ Ошибка чтения регистров {start_main}-{start_main + count_main - 1}")
             raise HTTPException(status_code=500, detail="Ошибка чтения базовых ESS настроек")
 
         r = result.registers
         available = len(r)
-        if available < count:
-            logging.warning(f"⚠️ Прочитано только {available} из {count} регистров (адреса {start}-{start+available-1})")
 
         def safe_val(idx, default=None):
-            offset = idx - start
+            offset = idx - start_main
             return r[offset] if 0 <= offset < available else default
 
         def s16(v): return decode_signed_16(v) if v is not None else None
@@ -507,9 +502,6 @@ async def get_ess_advanced_settings(request: Request):
             "ac_input_2_source": safe_val(2712),
         }
 
-        logging.info("✅ ESS Basic Settings:\n%s", json.dumps(result_data, indent=2, ensure_ascii=False))
-        return result_data
-
     except Exception as e:
-        logging.error("❗ Ошибка чтения базовых ESS настроек", exc_info=e)
-        raise HTTPException(status_code=500, detail="Modbus ошибка")        
+        logging.error("❗ Общая ошибка при чтении ESS настроек", exc_info=e)
+        raise HTTPException(status_code=500, detail="Modbus ошибка")
