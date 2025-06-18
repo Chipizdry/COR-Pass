@@ -138,7 +138,7 @@
            
         </div>
         <!-- Иконка сети электропитания -->
-          <div class="icon power-grid-icon">
+          <div class="icon power-grid-icon" id="power-grid-icon">
             <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
             width="200.000000pt" height="200.000000pt" viewBox="0 0 175.000000 175.000000"style="border: 1px solid red"
             preserveAspectRatio="xMidYMid meet">
@@ -269,7 +269,8 @@
             1 -4 7 49 20 129 32 218 81 310 174 118 118 171 235 182 401 16 253 -120 487
             -350 598 -145 71 51 66 -2779 65 -1404 -1 -2566 -4 -2583 -6z"/>
             <!-- Индикатор нагрузки (прямоугольник с заливкой) -->
-            <rect id="loadIndicator" 
+            <rect x="1270" y="0" width="1950" height="20000" rx="15" ry="15" fill="none" stroke="#333333" stroke-width="20"></rect>
+                <rect id="loadIndicator" 
                 x="1300" 
                 y="0"
                 width="2000" 
@@ -338,6 +339,7 @@
                         <p>Ток заряда/разряда, A: <span id="batt_curr">0</span></p>
                         <p>Уровень заряда, %: <span id="chargeLevel">0</span></p>
                         <p>Мощность,Вт : <span id="PowerLevel">0</span></p>
+                        <p>Температура, : <span id="Bat_Temp">0</span></p>
                         <p>Порог разряда: <span id="vebusSOC">--</span> %</p>
                        
                         <!-- Ползунок для установки нижнего предела разряда батареи -->
@@ -351,21 +353,13 @@
 
             <!-- Модальное окно параметров нагрузки -->
         <div id="loadSettingsModal" class="modal" style="display:none;">
-            <div class="modal-content">
-                <span class="close" id="closeLoadSettings">&times;</span>
-                <h2>Параметры нагрузки</h2>
-                <div class="input-row">
-                    <label for="maxLoad">Максимальная нагрузка,(кВт):</label>
-                    <input type="number" id="maxLoad" min="1" max="30" step="0.1" value="10">
-                </div>
-                <div class="input-row">
-                    <label for="outputVoltage">Выходное напряжение,(В):</label>
-                    <input type="number" id="outputVoltage" min="219" max="240" step="1" value="230">
-                </div>  
-                <div class="input-row">
-                    <label for="maxCurrentDifference">Макс. разница тока нагрузки,(А):</label>
-                    <input type="number" id="maxCurrentDifference" min="3" max="15" step="1" value="5">
-                </div>
+            <div class="modal-header">
+              <div class="modal-buttons">
+                <button class="modal-button close" data-action="close" id="closeLoadSettings">✖</button>
+               </div>
+               <h3 style="margin-top:30; color:#291161;font-size: 17px;">Параметры нагрузки</h3>
+            </div> 
+                            
                 <!-- Таблица с фазами -->
                 <h3>Данные по фазам</h3>
                 <table class="phase-table">
@@ -383,6 +377,12 @@
                             <td id="outputVoltageL1">0</td>
                             <td id="outputVoltageL2">0</td>
                             <td id="outputVoltageL3">0</td>
+                        </tr>
+                        <tr>
+                            <td>Частота (Гц)</td>
+                            <td id="inputFrequencyL1">0</td>
+                            <td id="inputFrequencyL2">0</td>
+                            <td id="inputFrequencyL3">0</td>
                         </tr>
                         <tr>
                             <td>Ток (А)</td>
@@ -403,8 +403,65 @@
                  <!-- Кнопка Сохранить -->
                  <button id="saveLoadSettings" onclick="saveLoadSettings()">Сохранить</button>
                  <div id="loadConfirmationMessage" style="margin-top: 10px; color: rgb(11, 226, 11); display: none;"></div>
-            </div>
+            
         </div>
+
+
+        
+            <!-- Модальное окно параметров сети -->
+            <div id="GridSettingsModal" class="modal" style="display:none;">
+                <div class="modal-header">
+                  <div class="modal-buttons">
+                    <button class="modal-button close" data-action="close" id="closeGridSettings">✖</button>
+                   </div>
+                   <h3 style="margin-top:30; color:#291161;font-size: 17px;">Параметры сети</h3>
+                </div> 
+                                
+                    <!-- Таблица с фазами -->
+                    <h3>Данные по фазам</h3>
+                    <table class="phase-table">
+                        <thead>
+                            <tr>
+                                <th>Параметр</th>
+                                <th>Фаза A</th>
+                                <th>Фаза B</th>
+                                <th>Фаза C</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Напряжение (В)</td>
+                                <td id="inputVoltageL1">0</td>
+                                <td id="inputVoltageL2">0</td>
+                                <td id="inputVoltageL3">0</td>
+                            </tr>
+                            <tr>
+                                <td>Частота (Гц)</td>
+                                <td id="inputFrequencyL1">0</td>
+                                <td id="inputFrequencyL2">0</td>
+                                <td id="inputFrequencyL3">0</td>
+                            </tr>
+                            <tr>
+                                <td>Ток (А)</td>
+                                <td id="inputCurrentL1">0</td>
+                                <td id="inputCurrentL2">0</td>
+                                <td id="inputCurrentL3">0</td>
+                            </tr>
+                            <tr>
+                                <td>Мощность (кВт)</td>
+                                <td id="inputPowerL1">0</td>
+                                <td id="inputPowerL2">0</td>
+                                <td id="inputPowerL3">0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <!-- Суммарная мощность  -->
+                    <p>Общая мощность нагрузки, КВт: <span id="inputPowerTotal">0</span></p>
+                     <!-- Кнопка Сохранить 
+                     <button id="saveLoadSettings" onclick="saveLoadSettings()">Сохранить</button>
+                     <div id="loadConfirmationMessage" style="margin-top: 10px; color: rgb(11, 226, 11); display: none;"></div>-->
+                
+            </div>
 
           <!--Модальное окно инвертора --> 
         <div id="inverterModal" class="modal" style="display:none;">

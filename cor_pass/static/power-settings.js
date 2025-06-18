@@ -29,6 +29,7 @@ function updateBatteryFill(level) {
     document.getElementById('batt_voltage').textContent = data.voltage.toFixed(2);
     document.getElementById('batt_curr').textContent = data.current.toFixed(2);
     document.getElementById('chargeLevel').textContent = data.soc.toFixed(2);
+    document.getElementById('Bat_Temp').textContent = data.temperature.toFixed(2);
     document.getElementById('PowerLevel').textContent = (data.voltage*data.current).toFixed(2);
 }
 
@@ -40,7 +41,8 @@ async function fetchStatus() {
                     soc: data.soc,
                     voltage: data.voltage,
                     current: data.current,
-                    soh: data.soh
+                    soh: data.soh,
+                    temperature:data.temperature
                 };
                 updateBatteryFill(batteryData.soc);
                 updateBatteryModal(batteryData);
@@ -153,25 +155,24 @@ function updateLoadModal(data) {
 }
 
 function updateEssAcDisplay(data) {
-    // Обновляем входные параметры
- /*   document.getElementById('inputVoltageL1').textContent = data.input.voltages.l1.toFixed(1);
+    
+    document.getElementById('inputVoltageL1').textContent = data.input.voltages.l1.toFixed(1);
     document.getElementById('inputVoltageL2').textContent = data.input.voltages.l2.toFixed(1);
     document.getElementById('inputVoltageL3').textContent = data.input.voltages.l3.toFixed(1);
     
     document.getElementById('inputCurrentL1').textContent = data.input.currents.l1.toFixed(1);
     document.getElementById('inputCurrentL2').textContent = data.input.currents.l2.toFixed(1);
-    document.getElementById('inputCurrentL3').textContent = data.input.currents.l3.toFixed(1);
+    document.getElementById('inputCurrentL3').textContent = data.input.currents.l3.toFixed(1); 
     
     document.getElementById('inputFrequencyL1').textContent = data.input.frequencies.l1.toFixed(2);
     document.getElementById('inputFrequencyL2').textContent = data.input.frequencies.l2.toFixed(2);
     document.getElementById('inputFrequencyL3').textContent = data.input.frequencies.l3.toFixed(2);
-    
+   
     document.getElementById('inputPowerL1').textContent = (data.input.powers.l1 / 1000).toFixed(2);
     document.getElementById('inputPowerL2').textContent = (data.input.powers.l2 / 1000).toFixed(2);
     document.getElementById('inputPowerL3').textContent = (data.input.powers.l3 / 1000).toFixed(2);
-    document.getElementById('inputPowerTotal').textContent = (data.input.powers.total / 1000).toFixed(2); */
+    document.getElementById('inputPowerTotal').textContent = (data.input.powers.total / 1000).toFixed(2); 
 
-    // Обновляем выходные параметры
     document.getElementById('outputVoltageL1').textContent = data.output.voltages.l1.toFixed(1);
     document.getElementById('outputVoltageL2').textContent = data.output.voltages.l2.toFixed(1);
     document.getElementById('outputVoltageL3').textContent = data.output.voltages.l3.toFixed(1);
@@ -265,7 +266,7 @@ async function fetchEss() {
         }
      // updateEssSettingsDisplay(data);
         const socValue = data.minimum_soc_limit || 40;
-        document.getElementById('State_Of_Сharge').value = socValue;
+     //   document.getElementById('State_Of_Сharge').value = socValue;
         document.getElementById('vebusSOC').textContent = socValue;
       return {
         success: true,

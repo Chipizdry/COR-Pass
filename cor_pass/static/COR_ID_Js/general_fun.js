@@ -19,6 +19,7 @@ const modalConfigs = {
     roleInfoModal: { width: '450px', height: 'auto', top: 'auto', left: 'auto' },
 
     batteryModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
+    loadSettingsModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
 };
 
 //Функция получения токена 

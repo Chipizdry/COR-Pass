@@ -18,6 +18,7 @@ REGISTERS = {
     "soc": 266,            # % SoC (0.1%)
     "voltage": 259,        # Напряжение (x100)
     "current": 261,        # Ток (x10)
+    "temperature": 262, 
     "power": 258,          # Мощность (signed int16)
     "soh": 304,            # Состояние здоровья (0.1%)
    # "inverter_power": 870  # Мощность инвертора (signed int32)
@@ -155,6 +156,7 @@ async def get_battery_status(request: Request):
             "soc": get_value("soc") / 10,
             "voltage": get_value("voltage") / 100,
             "current": decode_signed_16(get_value("current")) / 10,
+            "temperature":get_value("temperature") / 10,
             "power": decode_signed_16(get_value("power")),
             "soh": get_value("soh") / 10
         }
