@@ -140,8 +140,8 @@ footer {
 } 
 
 .battery-icon {
-    top: 330px;  /* Вертикальная позиция */
-    left: 0px; /* Горизонтальная позиция */
+    top: 350px;  /* Вертикальная позиция */
+    left: 20px; /* Горизонтальная позиция */
 }
 .solar-battery-icon {
     top: 270px;
@@ -149,8 +149,8 @@ footer {
 }
 
 .inverter-icon {
-    top: 250px;
-    left: 360px;
+    top: 160px;
+    left: 300px;
 }
 
 .power-grid-icon {
@@ -177,6 +177,12 @@ footer {
     display: block;
     margin: 0 auto; /* Для центрирования SVG внутри блока */
 }
+
+
+.icon:hover svg {
+    cursor: pointer;
+}
+
 
 .icon p {
     margin-top: 5px;

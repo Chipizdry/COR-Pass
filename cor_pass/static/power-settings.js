@@ -1,3 +1,48 @@
+
+function updateBatteryFlow(power) {
+    const indicator = document.getElementById('batteryFlowIndicator');
+    const label = document.getElementById('batteryFlowLabel');
+
+    const maxPower = 100000;  // Вт
+    const maxWidth = 1300;   // Половина общей ширины (2600 / 2)
+    const centerX = 1525;    // Центр батареи
+
+    const clampedPower = Math.max(-maxPower, Math.min(maxPower, power));
+    const absPower = Math.abs(clampedPower);
+    const fillWidth = (absPower / maxPower) * maxWidth;
+
+    const xPosition = clampedPower >= 0
+        ? centerX
+        : centerX - fillWidth;
+
+    // Цвет: зелёный (заряд) → красный (разряд)
+    const level = absPower / maxPower;
+    let fillColor;
+    if (level <= 0.5) {
+        const r = Math.round(510 * level);
+        fillColor = `rgb(${r}, 255, 0)`;  // зелёный → жёлтый
+    } else {
+        const g = Math.round(255 - (level - 0.5) * 510);
+        fillColor = `rgb(255, ${g}, 0)`;  // жёлтый → красный
+    }
+
+    indicator.setAttribute('x', xPosition);
+    indicator.setAttribute('width', fillWidth);
+    indicator.setAttribute('fill', fillColor);
+
+    const kilowatts = (clampedPower / 1000).toFixed(1).replace('-0.0', '0.0');
+    if (clampedPower < 0) {
+        label.textContent = `Разряд: ${Math.abs(kilowatts)} кВт`;
+    } else if (clampedPower > 0) {
+        label.textContent = `Заряд: ${kilowatts} кВт`;
+    } else {
+        label.textContent = `Нет потока`;
+    }
+}
+
+
+
+
 function updateNetworkFlow(power) {
     const indicator = document.getElementById('networkFlowIndicator');
     const label = document.getElementById('networkFlowLabel'); 
@@ -89,6 +134,7 @@ async function fetchStatus() {
                     temperature:data.temperature
                 };
                 updateBatteryFill(batteryData.soc);
+                updateBatteryFlow((data.voltage*data.current));
                 updateBatteryModal(batteryData);
     } catch (err) {
       console.error("Ошибка при получении данных батареи:", err);
