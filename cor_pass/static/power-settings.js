@@ -1,5 +1,33 @@
 
 
+function updateNetworkFlow(power) {
+    const indicator = document.getElementById('networkFlowIndicator');
+    const maxPower = 80000; // 100 кВт
+    const maxWidth = 800; // ширина SVG-иконки (примерно)
+    const baseX = 100; // точка отсчета по центру
+
+    // Нормализуем мощность
+    const clampedPower = Math.min(Math.max(power, -maxPower), maxPower);
+    const absPower = Math.abs(clampedPower);
+    const width = (absPower / maxPower) * maxWidth;
+
+    // Цвет от зеленого к красному
+    const hue = (1 - absPower / maxPower) * 120; // 120 (green) → 0 (red)
+    const color = `hsl(${hue}, 100%, 50%)`;
+
+    // Настройка направления и координат
+    if (clampedPower >= 0) {
+        // Отдача: растет влево
+        indicator.setAttribute('x', baseX - width);
+    } else {
+        // Потребление: растет вправо
+        indicator.setAttribute('x', baseX);
+    }
+
+    indicator.setAttribute('width', width);
+    indicator.setAttribute('fill', color);
+  
+}
 
 
 // Обновляем ширину и цвет заливки в зависимости от уровня заряда
@@ -105,6 +133,8 @@ async function fetchEssAcStatus() {
 
         const data = await response.json();
         updateEssAcDisplay(data);
+        updateNetworkFlow((data.input.powers.total / 10));
+
         return {
             success: true,
             data: data
@@ -130,7 +160,7 @@ async function fetchVebusStatus() {
 
         const data = await res.json();
         updateVebusDisplay(data);
-
+       
         return {
             success: true,
             data: data
@@ -150,8 +180,7 @@ function updateLoadModal(data) {
     document.getElementById('powerPhaseB').textContent = (data.ac_output.l2 / 1000).toFixed(2);
     document.getElementById('powerPhaseC').textContent = (data.ac_output.l3 / 1000).toFixed(2);
     document.getElementById('total_load').textContent = (data.ac_output.total / 1000).toFixed(2);
-    updateLoadIndicator(data.ac_output.total / 1000);
- 
+    updateLoadIndicator(data.ac_output.total / 1000); 
 }
 
 function updateEssAcDisplay(data) {
@@ -389,3 +418,4 @@ async function saveAcSetpointFine() {
         confirmation.style.display = "block";
     }
 }
+
