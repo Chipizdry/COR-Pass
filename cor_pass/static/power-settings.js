@@ -339,10 +339,6 @@ function updateEssAdvancedDisplay(data) {
     document.getElementById("charge_voltage").textContent = data.max_charge_voltage + " В";
     document.getElementById("input1_src").textContent = formatInputSource(data.ac_input_1_source);
     document.getElementById("input2_src").textContent = formatInputSource(data.ac_input_2_source);
-    document.getElementById("export_limit").textContent = data.ac_export_limit + " W";
-    document.getElementById("import_limit").textContent = data.ac_import_limit + " W";
-    document.getElementById("peak_mode").textContent = data.always_peak_shave ? "Всегда" : "Только при SOC > мин.";
-    document.getElementById("grid_setpoint").textContent = data.ac_grid_setpoint + " W";
 }
 
 function formatInputSource(code) {
@@ -353,4 +349,43 @@ function formatInputSource(code) {
         3: "Берег"
     };
     return sources[code] || `Код ${code}`;
+}
+
+
+
+// Функция сохранения значения
+async function saveAcSetpointFine() {
+    const sliderValue = parseInt(document.getElementById("ac_setpoint_fine_slider").value, 10);
+    
+    try {
+        const res = await fetch('/api/modbus/ess_advanced_settings/setpoint_fine', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                ac_power_setpoint_fine: sliderValue 
+            })
+        });
+
+        if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.detail || "Ошибка записи Setpoint Fine");
+        }
+
+        const confirmation = document.getElementById('setpoint_confirmation');
+        confirmation.textContent = "✅ Настройки сохранены";
+        confirmation.style.color = "green";
+        confirmation.style.display = "block";
+        
+        // Обновляем данные на странице
+        fetchEssAdvancedSettings();
+        
+    } catch (err) {
+        console.error("❗ Ошибка установки Setpoint Fine:", err);
+        const confirmation = document.getElementById('setpoint_confirmation');
+        confirmation.textContent = "❌ Ошибка сохранения: " + err.message;
+        confirmation.style.color = "red";
+        confirmation.style.display = "block";
+    }
 }

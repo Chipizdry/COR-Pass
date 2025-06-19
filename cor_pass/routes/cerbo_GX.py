@@ -90,6 +90,10 @@ ESS_REGISTERS_ALARMS = {
 class VebusSOCControl(BaseModel):
     soc_threshold: int 
 
+class EssAdvancedControl(BaseModel):
+    ac_power_setpoint_fine: int = Field(..., ge=-100000, le=100000)
+
+
 class EssModeControl(BaseModel):
     switch_position: int = Field(..., ge=1, le=4)
 
@@ -409,6 +413,42 @@ async def set_vebus_soc(control: VebusSOCControl, request: Request):
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
 
+@router.post("/ess_advanced_settings/setpoint_fine")
+async def set_ess_advanced_setpoint_fine(control: EssAdvancedControl, request: Request):
+    """
+    Устанавливает точное значение AC Power Setpoint (регистр 2703)
+    Диапазон: от -100000 до 100000
+    """
+    try:
+        client = request.app.state.modbus_client
+        slave = INVERTER_ID
+        
+        # Преобразуем значение для записи в регистр
+        register_value = int(control.ac_power_setpoint_fine / 100)
+        
+        # Преобразование отрицательных чисел в формат Modbus (дополнительный код)
+        if register_value < 0:
+            register_value = (1 << 16) + register_value  # Преобразование в 16-битное представление
+            
+        # Проверяем, что значение вписывается в int16
+        if register_value < 0 or register_value > 65535:
+            raise HTTPException(status_code=400, detail="Значение выходит за допустимые пределы")
+        
+        # Записываем значение в регистр 2703
+        await client.write_register(
+            address=2703,
+            value=register_value,
+            slave=slave
+        )
+        
+        logging.info(f"✅ Установлено AC Power Setpoint Fine: {control.ac_power_setpoint_fine} W (регистр 2703 = {register_value})")
+        return {"status": "ok", "value": control.ac_power_setpoint_fine}
+        
+    except Exception as e:
+        logging.error("❗ Ошибка записи AC Power Setpoint Fine", exc_info=e)
+        raise HTTPException(status_code=500, detail="Modbus ошибка")
+
+
 @router.get("/ess_settings")
 async def get_ess_settings(request: Request):
     """
@@ -442,66 +482,48 @@ async def get_ess_settings(request: Request):
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
 
-# Установка параметров ESS
-@router.post("/ess_status/mode")
-async def set_ess_mode(control: EssModeControl, request: Request):
-    try:
-        logging.info(f"\U0001f4e5 Установка режима ESS: {control.switch_position}")
-        client = request.app.state.modbus_client
-
-        await client.write_register(
-            address=ESS_REGISTERS_MODE["switch_position"],
-            value=control.switch_position,
-            slave=ESS_UNIT_ID
-        )
-        return {"status": "ok"}
-    except Exception as e:
-        logging.error("❗ Ошибка установки режима ESS", exc_info=e)
-        raise HTTPException(status_code=500, detail="Modbus ошибка")
 
 @router.get("/ess_advanced_settings")
 async def get_ess_advanced_settings(request: Request):
     """
-    Чтение базовых ESS и системных настроек с адресов 2700–2712 + 2716 (устройство 100).
+    Чтение базовых ESS и системных настроек с адресов 2700–2712 + 2715 + 2716 (устройство 100).
+    Также определяет активный режим ESS: 1, 2 или 3.
     """
     try:
         client = request.app.state.modbus_client
         slave = INVERTER_ID  # Обычно 100
 
-        # Основной диапазон: 2700–2712
+        # 2700–2712 (13 регистров)
         start_main = 2700
         count_main = 13
+        result_main = await client.read_input_registers(start_main, count=count_main, slave=slave)
+        if result_main.isError() or not hasattr(result_main, "registers"):
+            raise HTTPException(status_code=500, detail="Ошибка чтения регистров 2700–2712")
 
-        result = await client.read_input_registers(start_main, count=count_main, slave=slave)
-        if result.isError() or not hasattr(result, "registers"):
-            logging.error(f"❌ Ошибка чтения регистров {start_main}-{start_main + count_main - 1}")
-            raise HTTPException(status_code=500, detail="Ошибка чтения базовых ESS настроек")
-
-        r = result.registers
-        available = len(r)
-
-        def safe_val(idx, default=None):
-            offset = idx - start_main
-            return r[offset] if 0 <= offset < available else default
-
+        r_main = result_main.registers
+        def safe_main(idx): return r_main[idx - start_main] if (idx - start_main) < len(r_main) else None
         def s16(v): return decode_signed_16(v) if v is not None else None
 
+        # Формируем результат
         result_data = {
-            "ac_power_setpoint": s16(safe_val(2700)),
-            "max_charge_percent": safe_val(2701),
-            "max_discharge_percent": safe_val(2702),
-            "ac_power_setpoint_fine": s16(safe_val(2703)) * 10 if safe_val(2703) is not None else None,
-            "max_discharge_power": s16(safe_val(2704)) * 10 if safe_val(2704) is not None else None,
-            "dvcc_max_charge_current": s16(safe_val(2705)),
-            "max_feed_in_power": s16(safe_val(2706)) * 10 if safe_val(2706) is not None else None,
-            "overvoltage_feed_in": safe_val(2707),
-            "prevent_feedback": safe_val(2708),
-            "grid_limiting_status": safe_val(2709),
-            "max_charge_voltage": safe_val(2710) / 10.0 if safe_val(2710) is not None else None,
-            "ac_input_1_source": safe_val(2711),
-            "ac_input_2_source": safe_val(2712),
+            "ac_power_setpoint": safe_main(2700),  # Просто читаем значение регистра 2700
+            "max_charge_percent": safe_main(2701),
+            "max_discharge_percent": safe_main(2702),
+            "ac_power_setpoint_fine": s16(safe_main(2703)) * 100 if safe_main(2703) is not None else None,
+            "max_discharge_power": s16(safe_main(2704)) * 10 if safe_main(2704) is not None else None,
+            "dvcc_max_charge_current": s16(safe_main(2705)),
+            "max_feed_in_power": s16(safe_main(2706)) * 10 if safe_main(2706) is not None else None,
+            "overvoltage_feed_in": safe_main(2707),
+            "prevent_feedback": safe_main(2708),
+            "grid_limiting_status": safe_main(2709),
+            "max_charge_voltage": safe_main(2710) / 10.0 if safe_main(2710) is not None else None,
+            "ac_input_1_source": safe_main(2711),
+            "ac_input_2_source": safe_main(2712),
         }
 
+        logging.info("✅ ESS Advanced Settings:\n%s", json.dumps(result_data, indent=2, ensure_ascii=False))
+        return result_data
+
     except Exception as e:
-        logging.error("❗ Общая ошибка при чтении ESS настроек", exc_info=e)
+        logging.error("❗ Ошибка при чтении ESS настроек", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")

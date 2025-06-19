@@ -302,7 +302,6 @@
                 <p>Режим работы:</p>
                 <p>Текущий режим работы: <span id="mode_display">...</span></p>
                 <div class="control-group">
-                    <p>Режим работы:</p>
                     <label><input type="radio" name="mode" value="1" onchange="setMode(this)"> Charger Only</label><br>
                     <label><input type="radio" name="mode" value="2" onchange="setMode(this)"> Inverter Only</label><br>
                     <label><input type="radio" name="mode" value="3" onchange="setMode(this)"> On</label><br>
@@ -326,10 +325,6 @@
                     <tr><td>Ограничение напряжения заряда:</td><td id="charge_voltage">--</td></tr>
                     <tr><td>Источник AC 1:</td><td id="input1_src">--</td></tr>
                     <tr><td>Источник AC 2:</td><td id="input2_src">--</td></tr>
-                    <tr><td>Ограничение экспорта:</td><td id="export_limit">--</td></tr>
-                    <tr><td>Ограничение импорта:</td><td id="import_limit">--</td></tr>
-                    <tr><td>Режим Peak Shaving:</td><td id="peak_mode">--</td></tr>
-                    <tr><td>Setpoint Grid (volatile):</td><td id="grid_setpoint">--</td></tr>
                 </table>
             </div>
 
@@ -357,7 +352,7 @@
                        
                         <!-- Ползунок для установки нижнего предела разряда батареи -->
                       <!-- <label for="maxCurrentRange">Порог разряда, %: <span id="Bus_State_Of_Сharge">1</span></label>--> 
-                        <input type="range" id="State_Of_Сharge" min="0" max="80" step="1" value="40"  style="width: 250px;">
+                        <input type="range" id="State_Of_Сharge" min="0" max="80" step="1" value="40"  style="width: 300px;">
                         <!-- Кнопка Сохранить -->
                         <button onclick="saveBatterySettings()">Сохранить</button>
                         <div id="confirmationMessage" style="margin-top: 10px; color: rgb(11, 226, 11); display: none;"></div>
@@ -470,7 +465,12 @@
                     </table>
                     <!-- Суммарная мощность  -->
                     <p>Общая мощность нагрузки, КВт: <span id="inputPowerTotal">0</span></p>
-                     <!-- Кнопка Сохранить 
+
+                    <input type="range" id="ac_setpoint_fine_slider" min="-100000" max="100000" step="100" value="0"   style="width: 300px;">
+                    <p>Текущее значение: <span id="ac_setpoint_fine_value">0</span> W</p>
+                    <button onclick="saveAcSetpointFine()">Сохранить</button>
+                    <div id="setpoint_confirmation" style="margin-top: 10px; display: none;"></div>
+                                    <!-- Кнопка Сохранить 
                      <button id="saveLoadSettings" onclick="saveLoadSettings()">Сохранить</button>
                      <div id="loadConfirmationMessage" style="margin-top: 10px; color: rgb(11, 226, 11); display: none;"></div>-->
                 
@@ -506,6 +506,11 @@
             document.getElementById("closeBattery").onclick = function() {
             document.getElementById("batteryModal").style.display = "none";
                 }
+
+
+                    document.getElementById("ac_setpoint_fine_slider").addEventListener("input", function() {
+                        document.getElementById("ac_setpoint_fine_value").textContent = this.value;
+                    });        
         </script>
 
 
@@ -685,7 +690,7 @@ function toggleVisibility() {
         fetchEssAcStatus();
         fetchVebusStatus(); 
         fetchEssAdvancedSettings();
-    
+     
     </script>
     
 </body>
