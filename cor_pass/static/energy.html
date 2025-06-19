@@ -138,16 +138,21 @@
         </div>
         <!-- Иконка сети электропитания -->
           <div class="icon power-grid-icon" id="power-grid-icon">
+            <div id="networkFlowLabel" style="text-align: center; margin-bottom: 4px; font-size: 14px; font-weight: bold;">
+                Состояние сети
+              </div>
             <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
-            width="200.000000pt" height="200.000000pt" viewBox="0 0 175.000000 175.000000"style="border: 1px solid red"
+            width="200.000000pt" height="200.000000pt" viewBox="0 0 175.000000 175.000000"style="border: 0px solid red"
             preserveAspectRatio="xMidYMid meet">
+            <line x1="83.5" y1="5" x2="83.5" y2="22" stroke="#555555" stroke-width="3" stroke-dasharray="2,2" />
+            <rect id="networkFlowFrame" x="0" y="5" width="175" height="17" rx="0" ry="0" fill="none" stroke="#333333" stroke-width="1"></rect>
             <rect id="networkFlowIndicator"
-            x="100" y="5"
+            x="80" y="6"
             width="1000"
-            height="20"
+            height="15"
             rx="0" ry="0"
             fill="green" />
-           <g transform="translate(25.000000,170.000000) scale(0.100000,-0.100000)"
+           <g transform="translate(25.000000,170.000000) scale(0.08500000,-0.08500000)"
            fill="#000000" stroke="none">
            <path d="M656 1588 c-8 -29 -25 -93 -38 -142 l-24 -90 -204 -68 c-113 -37
            -215 -68 -227 -68 -27 0 -31 -24 -8 -47 18 -18 11 -33 -16 -33 -30 0 -22 -20

@@ -1,32 +1,48 @@
-
-
 function updateNetworkFlow(power) {
     const indicator = document.getElementById('networkFlowIndicator');
-    const maxPower = 80000; // 100 кВт
-    const maxWidth = 800; // ширина SVG-иконки (примерно)
-    const baseX = 100; // точка отсчета по центру
+    const label = document.getElementById('networkFlowLabel'); 
+    const maxPower = 14000;   // Максимальная мощность, Вт
+    const maxWidth = 80;      // Максимальная ширина заливки, px
+    const baseX = 83;         // Центр индикатора
 
-    // Нормализуем мощность
-    const clampedPower = Math.min(Math.max(power, -maxPower), maxPower);
+    // Ограничим мощность
+    const clampedPower = Math.max(-maxPower, Math.min(maxPower, power));
     const absPower = Math.abs(clampedPower);
-    const width = (absPower / maxPower) * maxWidth;
 
-    // Цвет от зеленого к красному
-    const hue = (1 - absPower / maxPower) * 120; // 120 (green) → 0 (red)
-    const color = `hsl(${hue}, 100%, 50%)`;
+    // Ширина индикатора
+    const fillWidth = (absPower / maxPower) * maxWidth;
 
-    // Настройка направления и координат
-    if (clampedPower >= 0) {
-        // Отдача: растет влево
-        indicator.setAttribute('x', baseX - width);
+    // Положение по X
+    const xPosition = clampedPower >= 0 ? baseX - fillWidth : baseX;
+
+    // Цвет: зелёный → жёлтый → красный
+    const level = absPower / maxPower; // 0.0 – 1.0
+    let fillColor;
+
+    if (level <= 0.5) {
+        // от зелёного (0,255,0) к жёлтому (255,255,0)
+        const r = Math.round(510 * level); // 0 → 255
+        fillColor = `rgb(${r}, 255, 0)`;
     } else {
-        // Потребление: растет вправо
-        indicator.setAttribute('x', baseX);
+        // от жёлтого (255,255,0) к красному (255,0,0)
+        const g = Math.round(255 - (level - 0.5) * 510); // 255 → 0
+        fillColor = `rgb(255, ${g}, 0)`;
     }
 
-    indicator.setAttribute('width', width);
-    indicator.setAttribute('fill', color);
-  
+    // Применяем атрибуты
+    indicator.setAttribute('x', xPosition);
+    indicator.setAttribute('width', fillWidth);
+    indicator.setAttribute('fill', fillColor);
+
+    const kilowatts = (clampedPower / 100).toFixed(1).replace('-0.0', '0.0');
+    if (clampedPower < 0) {
+        label.textContent = `Отдача: ${Math.abs(kilowatts)} кВт`;
+    } else if (clampedPower > 0) {
+        label.textContent = `Потребление: ${kilowatts} кВт`;
+    } else {
+        label.textContent = `Нет потока`;
+    }
+
 }
 
 
