@@ -19,7 +19,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from fastapi_limiter import FastAPILimiter
 
-from cor_pass.routes.cerbo_gx import router as cerbo_router, create_modbus_client, close_modbus_client
+from cor_pass.routes.cerbo_routes import router as cerbo_router, create_modbus_client, close_modbus_client
 from cor_pass.routes import auth, person
 from cor_pass.database.db import get_db
 from cor_pass.database.redis_db import redis_client
@@ -44,7 +44,7 @@ from cor_pass.routes import (
     svs_router,
     printing_device,
     printer,
-    cerbo_gx,
+    cerbo_routes,
 )
 from cor_pass.config.config import settings
 from cor_pass.services.ip2_location import initialize_ip2location
