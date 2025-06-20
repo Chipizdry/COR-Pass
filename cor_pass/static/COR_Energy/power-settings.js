@@ -42,6 +42,36 @@ function updateBatteryFlow(power) {
 
 
 
+  // Функция для обновления индикатора нагрузки
+  function updateLoadIndicator(powerKw) {
+    const maxWidth = 2000;  // Максимальная ширина индикатора (в SVG)
+    const maxPower = 110;   // Максимальная мощность (кВт)
+
+    // Ограничиваем мощность
+    powerKw = Math.min(Math.max(powerKw, 0), maxPower);
+
+    // Вычисляем ширину в пикселях
+    const width = (powerKw / maxPower) * maxWidth;
+
+    // Цвет от зелёного к красному
+    const hue = (1 - (powerKw / maxPower)) * 120;
+    const color = `hsl(${hue}, 100%, 50%)`;
+
+    // Обновляем атрибуты SVG
+    const indicator = document.getElementById('loadIndicator');
+    if (indicator) {
+        indicator.setAttribute('width', width);
+        indicator.setAttribute('fill', color);
+    }
+
+
+    const label = document.getElementById('loadIndicatorLabel');
+    if (label) {
+        const text = `Нагрузка:${powerKw.toFixed(1)} кВт`;
+        label.textContent = text;
+    }
+}
+
 
 function updateNetworkFlow(power) {
     const indicator = document.getElementById('networkFlowIndicator');
@@ -376,29 +406,6 @@ async function fetchEss() {
 
 
 
-
-  // Функция для обновления индикатора нагрузки
-  function updateLoadIndicator(powerKw) {
-    const maxHeight = 20000; // Максимальная высота индикатора (100 кВт)
-    const maxPower = 110;   // Максимальная мощность (кВт)
-    
-    // Ограничиваем значение мощности
-    powerKw = Math.min(Math.max(powerKw, 0), maxPower);
-    
-    // Рассчитываем высоту индикатора
-    const height = (powerKw / maxPower) * maxHeight;
-    
-    // Рассчитываем цвет
-    const hue = (1 - (powerKw / maxPower)) * 120; // 0 (красный) - 120 (зелёный)
-    const color = `hsl(${hue}, 100%, 50%)`;
-    
-    // Получаем элемент индикатора
-    const indicator = document.getElementById('loadIndicator');
-    if (indicator) {
-        indicator.setAttribute('height', height);
-        indicator.setAttribute('fill', color);
-    }
-}
 
 
 async function fetchEssAdvancedSettings() {

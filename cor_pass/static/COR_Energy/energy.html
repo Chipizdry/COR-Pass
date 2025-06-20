@@ -239,11 +239,15 @@
 
             <!-- Иконка нагрузки -->
             <div class="icon power-icon" id="loadIcon">
+                <div id="loadIndicatorLabel" style="text-align: center; margin-bottom: -16px; font-size: 14px; font-weight: bold;">
+                    Состояние сети
+                  </div>
                 <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
-                width="195.000000pt" height="195.000000pt" viewBox="0 0 2000.000000 2000.000000" style="border:none"
+                width="220.000000pt" height="220.000000pt" viewBox="0 0 2000.000000 2000.000000" style="border: 1px solid red"
                 preserveAspectRatio="xMidYMid meet">
-            
-            <g transform="translate(0.000000,2000.000000) scale(0.100000,-0.100000)"
+                <rect x="0" y="180" width="1900" height="180" rx="0" ry="0" fill="none" stroke="#333333" stroke-width="10"></rect>
+                <rect id="loadIndicator" x="0" y="180" width="0" height="180" rx="0" ry="0" fill="green" />
+            <g transform="translate(300.000000,1900.000000) scale(0.0700000,-0.0700000)"
             fill="#000000" stroke="none">
 
             <path d="M9720 19994 c-368 -25 -539 -44 -777 -85 -1570 -269 -2983 -1137
@@ -285,16 +289,7 @@
             1 -4 7 49 20 129 32 218 81 310 174 118 118 171 235 182 401 16 253 -120 487
             -350 598 -145 71 51 66 -2779 65 -1404 -1 -2566 -4 -2583 -6z"/>
             <!-- Индикатор нагрузки (прямоугольник с заливкой) -->
-            <rect x="1270" y="0" width="1950" height="20000" rx="15" ry="15" fill="none" stroke="#333333" stroke-width="20"></rect>
-                <rect id="loadIndicator" 
-                x="1300" 
-                y="0"
-                width="2000" 
-                height="0"  
-                rx="10" 
-                ry="10"
-                fill="green"> 
-            </rect>
+           
             </g>
             </svg>
             
