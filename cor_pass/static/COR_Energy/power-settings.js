@@ -435,9 +435,61 @@ async function fetchSolarChargerStatus() {
             };
         }
 
-        // Вывод всех расчётных данных
         console.log('📊 Расчёт по каждому MPPT:', chargersSummary);
         console.log('🔆 Общая мощность всех MPPT:', totalAllPower.toFixed(2), 'Вт');
+
+        // Таблица в модальном окне
+        const container = document.getElementById('solarTableContainer');
+        container.innerHTML = '';
+
+        for (const [chargerId, charger] of Object.entries(chargersSummary)) {
+            const table = document.createElement('table');
+            table.className = 'phase-table'; // можешь переименовать под стиль
+
+            const header = `
+                <thead>
+                    <tr>
+                        <th colspan="4">${chargerId.toUpperCase()}</th>
+                    </tr>
+                    <tr>
+                        <th>Панель</th>
+                        <th>Напряжение (В)</th>        
+                        <th>Ток (А)</th>
+                        <th>Мощность (Вт)</th>
+                    </tr>
+                </thead>
+            `;
+
+            const rows = charger.panels.map(p => `
+                <tr>
+                    <td>Панель ${p.panel}</td>
+                    <td>${p.voltage ?? '—'}</td>
+                    <td>${p.current ?? '—'}</td>
+                    <td>${p.power ?? '—'}</td>
+                </tr>
+            `).join('');
+
+            const footer = `
+                <tfoot>
+                    <tr>
+                        <td colspan="3"><strong>Итого по устройству</strong></td>
+                        <td><strong>${charger.totalPower}</strong> Вт</td>
+                    </tr>
+                </tfoot>
+            `;
+
+            table.innerHTML = header + `<tbody>${rows}</tbody>` + footer;
+            container.appendChild(table);
+        }
+
+        // Общая мощность всех MPPT
+        const totalText = document.createElement('p');
+        totalText.style = "margin-top:10px; font-weight: bold;";
+        totalText.innerText = `🔆 Общая мощность всех MPPT: ${totalAllPower.toFixed(2)} Вт`;
+        container.appendChild(totalText);
+
+        // Открыть модальное окно
+       // document.getElementById('SolarModal').style.display = 'block';
 
     } catch (error) {
         console.error('❗ Ошибка при получении данных:', error);

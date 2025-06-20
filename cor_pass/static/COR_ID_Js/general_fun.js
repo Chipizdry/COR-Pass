@@ -21,7 +21,7 @@ const modalConfigs = {
     batteryModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
     loadSettingsModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
     GridSettingsModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
-    SolarPanelModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
+    SolarPanelModal: { width: '350px', height: '550px', top: '50px', left: 'auto' },
 };
 
 //Функция получения токена 
