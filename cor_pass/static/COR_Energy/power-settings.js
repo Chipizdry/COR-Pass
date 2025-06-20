@@ -1,148 +1,5 @@
 
-function updateBatteryFlow(power) {
-    const indicator = document.getElementById('batteryFlowIndicator');
-    const label = document.getElementById('batteryFlowLabel');
 
-    const maxPower = 100000;  // Вт
-    const maxWidth = 1300;   // Половина общей ширины (2600 / 2)
-    const centerX = 1525;    // Центр батареи
-
-    const clampedPower = Math.max(-maxPower, Math.min(maxPower, power));
-    const absPower = Math.abs(clampedPower);
-    const fillWidth = (absPower / maxPower) * maxWidth;
-
-    const xPosition = clampedPower >= 0
-        ? centerX
-        : centerX - fillWidth;
-
-    // Цвет: зелёный (заряд) → красный (разряд)
-    const level = absPower / maxPower;
-    let fillColor;
-    if (level <= 0.5) {
-        const r = Math.round(510 * level);
-        fillColor = `rgb(${r}, 255, 0)`;  // зелёный → жёлтый
-    } else {
-        const g = Math.round(255 - (level - 0.5) * 510);
-        fillColor = `rgb(255, ${g}, 0)`;  // жёлтый → красный
-    }
-
-    indicator.setAttribute('x', xPosition);
-    indicator.setAttribute('width', fillWidth);
-    indicator.setAttribute('fill', fillColor);
-
-    const kilowatts = (clampedPower / 1000).toFixed(1).replace('-0.0', '0.0');
-    if (clampedPower < 0) {
-        label.textContent = `Разряд: ${Math.abs(kilowatts)} кВт`;
-    } else if (clampedPower > 0) {
-        label.textContent = `Заряд: ${kilowatts} кВт`;
-    } else {
-        label.textContent = `Нет потока`;
-    }
-}
-
-
-
-  // Функция для обновления индикатора нагрузки
-  function updateLoadIndicator(powerKw) {
-    const maxWidth = 2000;  // Максимальная ширина индикатора (в SVG)
-    const maxPower = 110;   // Максимальная мощность (кВт)
-
-    // Ограничиваем мощность
-    powerKw = Math.min(Math.max(powerKw, 0), maxPower);
-
-    // Вычисляем ширину в пикселях
-    const width = (powerKw / maxPower) * maxWidth;
-
-    // Цвет от зелёного к красному
-    const hue = (1 - (powerKw / maxPower)) * 120;
-    const color = `hsl(${hue}, 100%, 50%)`;
-
-    // Обновляем атрибуты SVG
-    const indicator = document.getElementById('loadIndicator');
-    if (indicator) {
-        indicator.setAttribute('width', width);
-        indicator.setAttribute('fill', color);
-    }
-
-
-    const label = document.getElementById('loadIndicatorLabel');
-    if (label) {
-        const text = `Нагрузка:${powerKw.toFixed(1)} кВт`;
-        label.textContent = text;
-    }
-}
-
-
-function updateNetworkFlow(power) {
-    const indicator = document.getElementById('networkFlowIndicator');
-    const label = document.getElementById('networkFlowLabel'); 
-    const maxPower = 14000;   // Максимальная мощность, Вт
-    const maxWidth = 80;      // Максимальная ширина заливки, px
-    const baseX = 83;         // Центр индикатора
-
-    // Ограничим мощность
-    const clampedPower = Math.max(-maxPower, Math.min(maxPower, power));
-    const absPower = Math.abs(clampedPower);
-
-    // Ширина индикатора
-    const fillWidth = (absPower / maxPower) * maxWidth;
-
-    // Положение по X
-    const xPosition = clampedPower >= 0 ? baseX - fillWidth : baseX;
-
-    // Цвет: зелёный → жёлтый → красный
-    const level = absPower / maxPower; // 0.0 – 1.0
-    let fillColor;
-
-    if (level <= 0.5) {
-        // от зелёного (0,255,0) к жёлтому (255,255,0)
-        const r = Math.round(510 * level); // 0 → 255
-        fillColor = `rgb(${r}, 255, 0)`;
-    } else {
-        // от жёлтого (255,255,0) к красному (255,0,0)
-        const g = Math.round(255 - (level - 0.5) * 510); // 255 → 0
-        fillColor = `rgb(255, ${g}, 0)`;
-    }
-
-    // Применяем атрибуты
-    indicator.setAttribute('x', xPosition);
-    indicator.setAttribute('width', fillWidth);
-    indicator.setAttribute('fill', fillColor);
-
-    const kilowatts = (clampedPower / 100).toFixed(1).replace('-0.0', '0.0');
-    if (clampedPower < 0) {
-        label.textContent = `Отдача: ${Math.abs(kilowatts)} кВт`;
-    } else if (clampedPower > 0) {
-        label.textContent = `Потребление: ${kilowatts} кВт`;
-    } else {
-        label.textContent = `Нет потока`;
-    }
-
-}
-
-
-// Обновляем ширину и цвет заливки в зависимости от уровня заряда
-function updateBatteryFill(level) {
-    const batteryFill = document.getElementById('batteryFill');
-    
-    // Рассчитываем сдвиг по оси X относительно уровня заряда
-    const maxFillWidth = 2550; // максимальная ширина батареи
-    const fillWidth = (level / 100) * maxFillWidth;
-    const xPosition = 420 + (maxFillWidth - fillWidth); // сдвиг вправо по мере разряда
-
-    // Меняем x-координату и ширину заливки
-    batteryFill.setAttribute('x', xPosition);
-    batteryFill.setAttribute('width', fillWidth);
-
-    // Меняем цвет заливки в зависимости от уровня заряда
-    if (level > 50) {
-        // От зеленого к желтому
-        batteryFill.setAttribute('fill', `rgb(${255 - (level - 50) * 5.1}, 255, 0)`);
-    } else {
-        // От желтого к красному
-        batteryFill.setAttribute('fill', `rgb(255, ${level * 5.1}, 0)`);
-    }
- }
 
  function updateBatteryModal(data) {
     document.getElementById('batt_voltage').textContent = data.voltage.toFixed(2);
@@ -527,4 +384,62 @@ async function fetchGridLimitingStatus() {
 
 async function handleGridLimitingToggle(enabled) {
     await toggleGridLimitingStatus(enabled);
+}
+
+
+async function fetchSolarChargerStatus() {
+    try {
+        const response = await fetch('/api/modbus/solarchargers_status');
+        if (!response.ok) {
+            throw new Error('Ошибка запроса данных солнечных контроллеров');
+        }
+
+        const data = await response.json();
+        console.log('✅ Принятые данные (сырье):', data);
+
+        let totalAllPower = 0;
+        const chargersSummary = {};
+
+        for (const [chargerId, values] of Object.entries(data)) {
+            if (chargerId === "total_power_all_devices") continue;
+
+            let chargerTotalPower = 0;
+            const panels = [];
+
+            for (let i = 0; i < 4; i++) {
+                const voltage = values[`pv_voltage_${i}`];
+                const power = values[`pv_power_${i}`];
+
+                let current = null;
+                if (voltage !== null && voltage > 0 && power !== null) {
+                    current = parseFloat((power / voltage).toFixed(2));
+                }
+
+                if (power !== null) {
+                    chargerTotalPower += power;
+                }
+
+                panels.push({
+                    panel: i + 1,
+                    voltage,
+                    power,
+                    current
+                });
+            }
+
+            totalAllPower += chargerTotalPower;
+
+            chargersSummary[chargerId] = {
+                panels,
+                totalPower: parseFloat(chargerTotalPower.toFixed(2))
+            };
+        }
+
+        // Вывод всех расчётных данных
+        console.log('📊 Расчёт по каждому MPPT:', chargersSummary);
+        console.log('🔆 Общая мощность всех MPPT:', totalAllPower.toFixed(2), 'Вт');
+
+    } catch (error) {
+        console.error('❗ Ошибка при получении данных:', error);
+    }
 }

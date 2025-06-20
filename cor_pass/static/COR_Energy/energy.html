@@ -68,11 +68,10 @@
                <!-- Иконка солнечной батареи -->
                <div class="icon solar-battery-icon" id="SolarBatteryIcon">
                 <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
-                width="240.000000pt" height="240.000000pt" viewBox="0 0 512.000000 512.000000" style="border: 1px solid red"
+                width="160.000000pt" height="160.000000pt" viewBox="0 0 512.000000 512.000000" style="border: 1px solid red"
                 preserveAspectRatio="xMidYMid meet">
                 
-                <g transform="translate(0.000000,512.000000) scale(0.100000,-0.100000)"
-                fill="#000000" stroke="none">
+                <g transform="translate(-80.000000,512.000000) scale(0.1300000,-0.100000)" fill="#000000" stroke="none">
                 <path d="M2465 4098 c-11 -6 -23 -16 -27 -22 -4 -6 -8 -75 -8 -153 0 -130 2
                 -145 20 -163 25 -25 61 -26 91 -1 22 18 24 27 27 137 4 138 -7 190 -44 204
                 -31 12 -34 12 -59 -2z"/>
@@ -243,7 +242,7 @@
                     Состояние сети
                   </div>
                 <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
-                width="220.000000pt" height="220.000000pt" viewBox="0 0 2000.000000 2000.000000" style="border: 1px solid red"
+                width="220.000000pt" height="220.000000pt" viewBox="0 0 2000.000000 2000.000000" style="border: 0px solid red"
                 preserveAspectRatio="xMidYMid meet">
                 <rect x="0" y="180" width="1900" height="180" rx="0" ry="0" fill="none" stroke="#333333" stroke-width="10"></rect>
                 <rect id="loadIndicator" x="0" y="180" width="0" height="180" rx="0" ry="0" fill="green" />
@@ -502,7 +501,18 @@
             </div>
         </div>
 
-       
+         <!--Модальное окно Солнечных панелей --> 
+         <div id="SolarModal" class="modal" style="display:none;">
+            <div class="modal-header">
+                <div class="modal-buttons">
+                  <button class="modal-button close" data-action="close" id="closeSolarModal">✖</button>
+                 </div>
+                 <h3 style="margin-top:30; color:#291161;font-size: 17px;">Параметры панелей</h3>
+              </div> 
+
+              <div id="solarTableContainer" style="padding: 10px;"></div>
+
+        </div>
         <script>
 
         const modeNames = {
@@ -698,6 +708,8 @@ function toggleVisibility() {
         if (tick % 5 === 0) fetchVebusStatus();
         if (tick % 6 === 0) fetchEss();
         if (tick % 7 === 0) fetchEssAdvancedSettings();
+        if (tick % 8 === 0)  fetchSolarChargerStatus();
+
         if (tick >= 60) tick = 0;
       }, 200);
     
@@ -708,6 +720,7 @@ function toggleVisibility() {
         fetchEssAcStatus();
         fetchVebusStatus(); 
         fetchEssAdvancedSettings();
+        fetchSolarChargerStatus();
      
     </script>
     

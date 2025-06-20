@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException,Request
 import logging
 import json
+import asyncio
 from pymodbus.client import AsyncModbusTcpClient
 from pydantic import BaseModel, Field
 from typing import Optional
@@ -547,4 +548,57 @@ async def get_ess_advanced_settings(request: Request):
 
     except Exception as e:
         logging.error("❗ Ошибка при чтении ESS настроек", exc_info=e)
+        raise HTTPException(status_code=500, detail="Modbus ошибка")
+
+
+@router.get("/solarchargers_status")
+async def get_solarchargers_status(request: Request):
+    """
+    Читает PV-напряжение и ток с Victron MPPT Solar Chargers (UID 1–13 и 100)
+    """
+    try:
+        client = request.app.state.modbus_client
+        slave_ids = list(range(1, 14)) + [100]
+
+        reg_map = {
+            "pv_voltage_0": (3700, 100, False),
+            "pv_voltage_1": (3701, 100, False),
+            "pv_voltage_2": (3702, 100, False),
+            "pv_voltage_3": (3703, 100, False),
+            "pv_power_0": (3724, 1, False),
+            "pv_power_1": (3725, 1, False),
+            "pv_power_2": (3726, 1, False),
+            "pv_power_3": (3727, 1, False),
+        }
+
+        results = {}
+
+        for slave in slave_ids:
+            charger_data = {}
+
+            try:
+                for name, (reg, scale, is_signed) in reg_map.items():
+                    res = await client.read_input_registers(address=reg, count=1, slave=slave)
+                    if res.isError() or not hasattr(res, "registers"):
+                        charger_data[name] = None
+                        logging.warning(f"⚠️ Ошибка чтения {name} у slave {slave}")
+                    else:
+                        raw = res.registers[0]
+                        value = decode_signed_16(raw) if is_signed else raw
+                        charger_data[name] = round(value / scale, 2)
+
+             #   logging.info(f"🔆 MPPT {slave}: {charger_data}")
+
+            except Exception as e:
+                charger_data["error"] = str(e)
+                logging.warning(f"⚠️ Исключение при чтении slave {slave}: {e}")
+
+            results[f"charger_{slave}"] = charger_data
+
+            await asyncio.sleep(0.05)
+
+        return results
+
+    except Exception as e:
+        logging.error("❗ Общая ошибка при опросе MPPT", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
