@@ -501,18 +501,49 @@
             </div>
         </div>
 
-         <!--Модальное окно Солнечных панелей --> 
-         <div id="SolarModal" class="modal" style="display:none;">
-            <div class="modal-header">
+                    <!-- Модальное окно Солнечных панелей -->
+            <div id="SolarModal" class="modal" style="display:none; max-height: 80vh; overflow-y: auto;">
+                <div class="modal-header">
                 <div class="modal-buttons">
-                  <button class="modal-button close" data-action="close" id="closeSolarModal">✖</button>
-                 </div>
-                 <h3 style="margin-top:30; color:#291161;font-size: 17px;">Параметры панелей</h3>
-              </div> 
+                    <button class="modal-button close" data-action="close" id="closeSolarModal">✖</button>
+                </div>
+                <h3 style="margin-top:30px; color:#291161; font-size: 17px;">Параметры панелей</h3>
+                </div>
+            
+                <!-- Контейнер для всех таблиц -->
+                <div id="solarTableContainer" style="padding: 10px;"></div>
+            
+                <!-- Суммарная мощность -->
+                <p style="font-weight: bold; padding: 10px;">🔆 Общая мощность всех MPPT: <span id="totalAllPower">0</span> Вт</p>
+            
+                <!-- Шаблон таблицы (скрыт, будет клонироваться) -->
+                <template id="solarTableTemplate">
+                <table class="phase-table" style="margin-bottom: 20px;">
+                    <thead>
+                    <tr>
+                        <th colspan="4" class="charger-title">MPPT</th>
+                    </tr>
+                    <tr>
+                        <th>Панель</th>
+                        <th>Напряжение (В)</th>
+                        <th>Ток (А)</th>
+                        <th>Мощность (Вт)</th>
+                    </tr>
+                    </thead>
+                    <tbody class="table-body">
+                    <!-- Строки панелей будут добавлены JS -->
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td colspan="3"><strong>Итого по устройству</strong></td>
+                        <td><strong class="device-total">0</strong> Вт</td>
+                    </tr>
+                    </tfoot>
+                </table>
+                </template>
+            </div>
 
-              <div id="solarTableContainer" style="padding: 10px;"></div>
 
-        </div>
         <script>
 
         const modeNames = {
@@ -708,7 +739,7 @@ function toggleVisibility() {
         if (tick % 5 === 0) fetchVebusStatus();
         if (tick % 6 === 0) fetchEss();
         if (tick % 7 === 0) fetchEssAdvancedSettings();
-        if (tick % 8 === 0)  fetchSolarChargerStatus();
+        if (tick % 9 === 0)  fetchSolarChargerStatus();
 
         if (tick >= 60) tick = 0;
       }, 200);
