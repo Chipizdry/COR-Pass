@@ -595,7 +595,7 @@ async def get_solarchargers_status(request: Request):
 
             results[f"charger_{slave}"] = charger_data
 
-            await asyncio.sleep(0.05)
+           # await asyncio.sleep(0.05)
 
         return results
 

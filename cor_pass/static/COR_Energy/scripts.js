@@ -122,7 +122,7 @@
               // Функция для обновления индикатора нагрузки
               function updateLoadIndicator(powerKw) {
                 const maxWidth = 2000;  // Максимальная ширина индикатора (в SVG)
-                const maxPower = 110;   // Максимальная мощность (кВт)
+                const maxPower = 150;   // Максимальная мощность (кВт)
             
                 // Ограничиваем мощность
                 powerKw = Math.min(Math.max(powerKw, 0), maxPower);
@@ -148,7 +148,37 @@
                     label.textContent = text;
                 }
             }
+           
             
+            function updateSolarPowerIndicator(totalPower) {
+                const maxWidth = 550;    // ширина SVG индикатора в пикселях (как у loadIndicator)
+                const maxPower = 150000;   // максимальная мощность для 100%
+                
+                // Ограничиваем мощность между 0 и maxPower
+                totalPower = Math.min(Math.max(totalPower, 0), maxPower);
+                
+                // Вычисляем ширину индикатора
+                const width = (totalPower / maxPower) * maxWidth;
+                
+                // Вычисляем цвет в HSL — от зелёного (120) к красному (0)
+                const hue = (1 - totalPower / maxPower) * 120;
+                const color = `hsl(${hue}, 100%, 50%)`;
+                
+                const indicator = document.getElementById('solarPowerIndicator');
+                if (indicator) {
+                    indicator.setAttribute('width', width);
+                    indicator.setAttribute('fill', color);
+                }
+                
+                // Если хочешь — можно обновлять текст с текущей мощностью
+                const label = document.getElementById('solarPowerLabel');
+                if (label) {
+                    label.textContent = `Мощность: ${(totalPower/1000).toFixed(1)} кВт`;
+                }
+            }
+
+
+
             
             function updateNetworkFlow(power) {
                 const indicator = document.getElementById('networkFlowIndicator');

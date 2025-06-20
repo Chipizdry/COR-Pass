@@ -446,7 +446,7 @@ async function fetchSolarChargerStatus() {
 
         // Установка общей суммы
         document.getElementById('totalAllPower').innerText = totalAllPower.toFixed(2);
-
+        updateSolarPowerIndicator(totalAllPower);
 
     } catch (error) {
         console.error('❗ Ошибка при получении данных:', error);

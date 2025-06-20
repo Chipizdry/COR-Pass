@@ -67,10 +67,13 @@
 
                <!-- Иконка солнечной батареи -->
                <div class="icon solar-battery-icon" id="SolarBatteryIcon">
+                <div id="solarPowerLabel" style="text-align: center; margin-bottom: 4px; font-size: 14px; font-weight: bold;">Мощность: 0 Вт</div>
                 <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
-                width="160.000000pt" height="160.000000pt" viewBox="0 0 512.000000 512.000000" style="border: 1px solid red"
+                width="240.000000pt" height="190.000000pt" viewBox="0 0 512.000000 512.000000" style="border: 0px solid red"
                 preserveAspectRatio="xMidYMid meet">
-                
+                <rect x="0" y="20" width="550" height="50" rx="0" ry="0" stroke="#333333" stroke-width="2" fill="#fff"></rect>
+                <rect id="solarPowerIndicator" x="0" y="20" width="0" height="50" rx="0" ry="0" fill="green"></rect>
+           
                 <g transform="translate(-80.000000,512.000000) scale(0.1300000,-0.100000)" fill="#000000" stroke="none">
                 <path d="M2465 4098 c-11 -6 -23 -16 -27 -22 -4 -6 -8 -75 -8 -153 0 -130 2
                 -145 20 -163 25 -25 61 -26 91 -1 22 18 24 27 27 137 4 138 -7 190 -44 204
@@ -501,45 +504,51 @@
             </div>
         </div>
 
-                    <!-- Модальное окно Солнечных панелей -->
-            <div id="SolarModal" class="modal" style="display:none; max-height: 80vh; overflow-y: auto;">
-                <div class="modal-header">
-                <div class="modal-buttons">
-                    <button class="modal-button close" data-action="close" id="closeSolarModal">✖</button>
+        <!-- Модальное окно Солнечных панелей -->
+            <div id="SolarModal" class="modal" style="display:none; position: fixed; top: 10vh; left: 50%; transform: translateX(-50%); height: 40vh;  box-shadow: 0 0 15px rgba(0,0,0,0.2);  flex-direction: column;">
+
+                <!-- Фиксированный заголовок -->
+                <div class="modal-header" style=" padding: 1px;  position: sticky; top: 0; z-index: 10;">
+                    <div class="modal-buttons" style="float: right;">
+                        <button class="modal-button close" data-action="close" id="closeSolarModal">✖</button>
+                    </div>
+                    <h3 style="margin: 0; color:#291161; font-size: 17px;">Параметры панелей</h3>
                 </div>
-                <h3 style="margin-top:30px; color:#291161; font-size: 17px;">Параметры панелей</h3>
+                <div class="cards-scroll-area" style="max-height:240px ;">
+                <!-- Прокручиваемая часть -->
+                <div id="solarTableContainer" style="overflow-y: auto; flex: 1 1 auto; padding: 10px;">
+                    <!-- Таблицы добавляются динамически -->
                 </div>
-            
-                <!-- Контейнер для всех таблиц -->
-                <div id="solarTableContainer" style="padding: 10px;"></div>
-            
-                <!-- Суммарная мощность -->
-                <p style="font-weight: bold; padding: 10px;">🔆 Общая мощность всех MPPT: <span id="totalAllPower">0</span> Вт</p>
-            
-                <!-- Шаблон таблицы (скрыт, будет клонироваться) -->
+               </div>
+                <!-- Фиксированная нижняя часть -->
+                <div style="flex: 0 0 auto; padding: 30px;  position: sticky; bottom: 0;">
+                    <p style="font-weight: bold;font-size: 16px; margin: 0;">🔆 Общая мощность MPPT: <span id="totalAllPower">0</span> Вт</p>
+                </div>
+
+                <!-- Шаблон таблицы -->
                 <template id="solarTableTemplate">
-                <table class="phase-table" style="margin-bottom: 20px;">
-                    <thead>
-                    <tr>
-                        <th colspan="4" class="charger-title">MPPT</th>
-                    </tr>
-                    <tr>
-                        <th>Панель</th>
-                        <th>Напряжение (В)</th>
-                        <th>Ток (А)</th>
-                        <th>Мощность (Вт)</th>
-                    </tr>
-                    </thead>
-                    <tbody class="table-body">
-                    <!-- Строки панелей будут добавлены JS -->
-                    </tbody>
-                    <tfoot>
-                    <tr>
-                        <td colspan="3"><strong>Итого по устройству</strong></td>
-                        <td><strong class="device-total">0</strong> Вт</td>
-                    </tr>
-                    </tfoot>
-                </table>
+                    <table class="phase-table" style="margin-bottom: 20px; width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr>
+                                <th colspan="4" class="charger-title">MPPT</th>
+                            </tr>
+                            <tr>
+                                <th>Панель</th>
+                                <th>Напряжение (В)</th>
+                                <th>Ток (А)</th>
+                                <th>Мощность (Вт)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-body">
+                            <!-- Строки панелей будут добавлены JS -->
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3"><strong>Итого по устройству</strong></td>
+                                <td><strong class="device-total">0</strong> Вт</td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </template>
             </div>
 
@@ -733,13 +742,13 @@ function toggleVisibility() {
      setInterval(() => {
         tick++;
         
-        if (tick % 2 === 0) fetchStatus();
+        if (tick % 13 === 0) fetchSolarChargerStatus();
         if (tick % 3 === 0) fetchInverterPowerStatus();
         if (tick % 4 === 0) fetchEssAcStatus();
         if (tick % 5 === 0) fetchVebusStatus();
         if (tick % 6 === 0) fetchEss();
         if (tick % 7 === 0) fetchEssAdvancedSettings();
-        if (tick % 9 === 0)  fetchSolarChargerStatus();
+        if (tick % 9 === 0) fetchStatus();
 
         if (tick >= 60) tick = 0;
       }, 200);
