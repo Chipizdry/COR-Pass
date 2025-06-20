@@ -481,3 +481,43 @@ async function saveAcSetpointFine() {
     }
 }
 
+
+
+async function toggleGridLimitingStatus(enabled) {
+    try {
+        const res = await fetch('/api/ess/grid_limiting_status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ enabled: enabled })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data.detail || "Ошибка запроса");
+        }
+
+        console.log("✅ Успешно обновлено:", data);
+    } catch (err) {
+        console.error("❌ Ошибка при обновлении grid_limiting_status:", err);
+    }
+}
+
+
+async function fetchGridLimitingStatus() {
+    try {
+        const res = await fetch('/api/ess_advanced_settings');
+        const data = await res.json();
+
+        const switchElement = document.getElementById('gridLimitingSwitch');
+        switchElement.checked = (data.grid_limiting_status === 1);
+    } catch (e) {
+        console.error("Ошибка загрузки состояния ограничения отдачи:", e);
+    }
+}
+
+async function handleGridLimitingToggle(enabled) {
+    await toggleGridLimitingStatus(enabled);
+}

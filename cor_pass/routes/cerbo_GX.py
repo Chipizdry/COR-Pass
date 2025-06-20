@@ -93,18 +93,13 @@ class VebusSOCControl(BaseModel):
 class EssAdvancedControl(BaseModel):
     ac_power_setpoint_fine: int = Field(..., ge=-100000, le=100000)
 
+class GridLimitUpdate(BaseModel):
+    enabled: bool  # True → 1, False → 0
 
 class EssModeControl(BaseModel):
     switch_position: int = Field(..., ge=1, le=4)
 
-class EssFlagsControl(BaseModel):
-    disable_charge: Optional[bool] = None
-    disable_feed: Optional[bool] = None
-    disable_pv_inverter: Optional[bool] = None
-    do_not_feed_in_ov: Optional[bool] = None
-    setpoints_as_limit: Optional[bool] = None
-    ov_offset_mode: Optional[int] = Field(None, ge=0, le=1)
-    prefer_renewable: Optional[bool] = None
+
 
 class EssPowerControl(BaseModel):
     ess_power_setpoint_l1: Optional[int] = Field(None, ge=-32768, le=32767)
@@ -447,6 +442,32 @@ async def set_ess_advanced_setpoint_fine(control: EssAdvancedControl, request: R
     except Exception as e:
         logging.error("❗ Ошибка записи AC Power Setpoint Fine", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
+
+
+@router.post("/ess/grid_limiting_status")
+async def set_grid_limiting_status(data: GridLimitUpdate, request: Request):
+    """
+    Переключение grid_limiting_status (регистр 2709): включение / отключение.
+    """
+    try:
+        client = request.app.state.modbus_client
+        slave = INVERTER_ID
+        register = 2707
+        value = 1 if data.enabled else 0
+
+        # Запись значения
+        result = await client.write_register(register, value, slave=slave)
+
+        if result.isError():
+            raise HTTPException(status_code=500, detail="Ошибка записи регистра 2709")
+
+        return {"success": True, "grid_limiting_status": value}
+
+    except Exception as e:
+        import logging
+        logging.error("❗ Ошибка при записи grid_limiting_status", exc_info=e)
+        raise HTTPException(status_code=500, detail="Ошибка записи Modbus")
+
 
 
 @router.get("/ess_settings")
