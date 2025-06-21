@@ -230,47 +230,7 @@ async function saveBatterySettings() {
         return false;
     }
 }
-/*
-async function fetchEss() {
-    try {
-      const response = await fetch('/api/modbus/ess_settings', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-  
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Ошибка чтения ESS настроек');
-      }
-  
-      const data = await response.json();
-      const essMode = data.ess_mode;
-        document.getElementById('mode_display').innerText = modeNames[essMode] || "Неизвестно";
 
-        const radios = document.getElementsByName('mode');
-        for (const radio of radios) {
-        radio.checked = parseInt(radio.value) === essMode;
-        }
-     // updateEssSettingsDisplay(data);
-        const socValue = data.minimum_soc_limit || 40;
-     //   document.getElementById('State_Of_Сharge').value = socValue;
-        document.getElementById('vebusSOC').textContent = socValue;
-      return {
-        success: true,
-        data: data
-      };
-    } catch (err) {
-      console.error("❗ Ошибка получения ESS настроек:", err);
-      return {
-        success: false,
-        error: err.message || 'Modbus ошибка'
-      };
-    }
-  }
-
-*/
 
 async function fetchEss() {
     try {
@@ -288,7 +248,7 @@ async function fetchEss() {
 
         const data = await response.json();
         const socValue = data.minimum_soc_limit || 40;
-        
+        updateBatteryLimitLine(socValue);
         // Обновляем исходное значение только если ползунок не был изменен пользователем
         if (!isSliderChanged) {
             initialSocValue = socValue;

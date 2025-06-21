@@ -35,7 +35,7 @@
 
 		 <!-- Вкладка Управление -->
 <div id="control" class="tabcontent active">
-   
+
              <!-- Иконка батареи -->
              <div class="icon battery-icon" id="batteryIcon">
                 <div id="batteryFlowLabel" style="text-align: center; margin-bottom: -20px; font-size: 14px; font-weight: bold;">
@@ -49,6 +49,9 @@
                     <!-- Заливка, изменяющаяся по уровню заряда -->
                     
                     <rect id="batteryFill" x="330" y="110" width="2600" height="1400" fill="green" />
+                    <!-- Лимит разряда -->
+                    <line id="batteryLimitLine" x1="830" y1="110" x2="830" y2="1510" stroke="red" stroke-width="15" opacity="100"></line>
+                    <text id="batteryLimitText" x="330" y="790" fill="red" font-size="200" text-anchor="middle" opacity="0">min</text>
                     <!-- Контур батарейки -->
                     <g fill="none" stroke="black" stroke-width="100">
                         <path d="M415 1500 c-63 -31 -116 -93 -132 -153 -7 -28 -13 -100 -13 -159 l0
@@ -371,12 +374,12 @@
  
               <!-- Ползунок для установки нижнего предела разряда батареи -->
             <div style="display: flex; align-items: center; gap: 10px;">
-                <input type="range" id="State_Of_Сharge" min="0" max="99" step="1" value="40" style="width: 300px;">
+                <input type="range" id="State_Of_Сharge" min="0" max="99" step="1" value="40" style="width: 250px;">
                 <span id="socSliderValue">40</span>%
             </div>
             <!-- Кнопка Сохранить -->
-            <button onclick="saveBatterySettings()">Сохранить</button>
-            <div id="confirmationMessage" style="margin-top: 10px; color: rgb(11, 226, 11); display: none;"></div>             
+            <button id="saveBatteryButton" onclick="saveBatterySettings()" disabled>Сохранить</button>
+            <div id="confirmationMessage" style="margin-bottom: 10px; color: rgb(11, 226, 11); display: none;"></div>             
         </div>
 
             <!-- Модальное окно параметров нагрузки -->
@@ -580,21 +583,23 @@
 
                     document.addEventListener('DOMContentLoaded', fetchGridLimitingStatus);
                     document.getElementById("ac_setpoint_fine_slider").addEventListener("input", function() {
-                        document.getElementById("ac_setpoint_fine_value").textContent = this.value;
+                    document.getElementById("ac_setpoint_fine_value").textContent = this.value;
                     });       
                     
                     
 // Обработчик изменения ползунка батареи
 document.getElementById('State_Of_Сharge').addEventListener('input', function() {
     const newValue = this.value;
+    const saveButton = document.getElementById('saveBatteryButton');
     document.getElementById('socSliderValue').textContent = newValue;
+    
     isSliderChanged = true;
     
     // Сбрасываем предыдущий таймер, если он есть
     if (socChangeTimeout) {
         clearTimeout(socChangeTimeout);
     }
-    
+    saveButton.disabled = false; 
     // Устанавливаем новый таймер на 3 секунды
     socChangeTimeout = setTimeout(() => {
         resetSocSlider();

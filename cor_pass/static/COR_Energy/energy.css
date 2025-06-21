@@ -243,28 +243,6 @@ footer {
     text-align:left; /* Выравниваем текст */
 }
 
-/* Ползунок (input[type="range"]) оставляем как есть */
-.input-row input[type="range"] {
-    flex: 0; /* Ползунок растягивается по ширине */
-}
-
-/* Кнопка Сохранить */
-button {
-    margin-top: 20px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    padding: 8px 12px; /* Уменьшаем высоту и ширину кнопок */
-    margin-right: 5px; /* Разделяем кнопки отступом */
-}
- 
-button:hover {
-    background-color: #337e37;
-}
-
 .switches-container {
     display: flex;
     flex-wrap: wrap;

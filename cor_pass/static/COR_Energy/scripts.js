@@ -259,13 +259,39 @@
 
 
 
+        function updateBatteryLimitLine(minimumSocLimit) {
+        const batteryLimitLine = document.getElementById('batteryLimitLine');
+        const batteryLimitText = document.getElementById('batteryLimitText');
+        
+        if (minimumSocLimit === undefined || minimumSocLimit === null) {
+            // Скрываем элементы, если значение не задано
+            batteryLimitLine.setAttribute('opacity', '0');
+            batteryLimitText.setAttribute('opacity', '0');
+            return;
+        }         
+        // Рассчитываем позицию аналогично функции updateBatteryFill
+        const maxFillWidth = 2550;
+        const fillWidth = (minimumSocLimit / 100) * maxFillWidth;
+        const xPosition = 420 + (maxFillWidth - fillWidth);          
+        // Обновляем позицию линии и текста
+        batteryLimitLine.setAttribute('x1', xPosition);
+        batteryLimitLine.setAttribute('x2', xPosition);
+        batteryLimitLine.setAttribute('opacity', '1');              
+        batteryLimitText.setAttribute('x', xPosition+180);
+        batteryLimitText.setAttribute('opacity', '1');
+    }
+
+
+
+
     // Функция сброса ползунка
     function resetSocSlider() {
         const slider = document.getElementById('State_Of_Сharge');
         slider.value = initialSocValue;
         document.getElementById('socSliderValue').textContent = initialSocValue;
+        const saveButton = document.getElementById('saveBatteryButton');
         isSliderChanged = false;
-        
+        saveButton.disabled = true; 
         // Очищаем таймер
         if (socChangeTimeout) {
             clearTimeout(socChangeTimeout);
@@ -276,10 +302,11 @@
     // Функция показа сообщения
     function showConfirmationMessage(message, isSuccess) {
         const element = document.getElementById('confirmationMessage');
+        const saveButton = document.getElementById('saveBatteryButton');
         element.textContent = message;
         element.style.color = isSuccess ? "rgb(11, 226, 11)" : "red";
         element.style.display = "block";
-        
+        saveButton.disabled = true; 
         setTimeout(() => {
             element.style.display = "none";
         }, 4000);
