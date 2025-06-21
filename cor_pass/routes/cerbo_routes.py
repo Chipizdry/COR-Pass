@@ -310,7 +310,7 @@ async def get_ess_ac_status(request: Request):
             }
         }
 
-        # Add logging for debugging
+        # Логи отладки
       #  logging.info("ESS AC Status:")
       #  logging.info(f"Input Voltages: L1={response['input']['voltages']['l1']}V, L2={response['input']['voltages']['l2']}V, L3={response['input']['voltages']['l3']}V")
       #  logging.info(f"Input Currents: L1={response['input']['currents']['l1']}A, L2={response['input']['currents']['l2']}A, L3={response['input']['currents']['l3']}A")

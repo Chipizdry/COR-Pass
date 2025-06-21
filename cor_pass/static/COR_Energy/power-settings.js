@@ -294,6 +294,7 @@ function updateEssAdvancedDisplay(data) {
     document.getElementById("charge_voltage").textContent = data.max_charge_voltage + " В";
     document.getElementById("input1_src").textContent = formatInputSource(data.ac_input_1_source);
     document.getElementById("input2_src").textContent = formatInputSource(data.ac_input_2_source);
+
 }
 
 function formatInputSource(code) {
@@ -349,7 +350,7 @@ async function saveAcSetpointFine() {
 
 async function toggleGridLimitingStatus(enabled) {
     try {
-        const res = await fetch('/api/ess/grid_limiting_status', {
+        const res = await fetch('/api/modbus/ess/grid_limiting_status', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -372,7 +373,7 @@ async function toggleGridLimitingStatus(enabled) {
 
 async function fetchGridLimitingStatus() {
     try {
-        const res = await fetch('/api/ess_advanced_settings');
+        const res = await fetch('/api/modbus/ess_advanced_settings');
         const data = await res.json();
 
         const switchElement = document.getElementById('gridLimitingSwitch');
