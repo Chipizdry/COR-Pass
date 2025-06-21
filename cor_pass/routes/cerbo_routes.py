@@ -395,9 +395,6 @@ async def set_vebus_soc(control: VebusSOCControl, request: Request):
         scaled_value = int(control.soc_threshold * 10)
 
         await client.write_register(
-           # address=30,  # адрес регистра VE.Bus SoC
-           # value=scaled_value,
-           # slave=ESS_UNIT_ID
             address=2901,  # адрес регистра VE.Bus SoC
             value=scaled_value,
             slave=100

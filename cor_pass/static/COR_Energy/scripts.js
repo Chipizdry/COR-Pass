@@ -3,6 +3,11 @@
 
 
             document.addEventListener("DOMContentLoaded", function() {
+
+                fetchEss().then(() => {
+                    document.getElementById('State_Of_Сharge').value = initialSocValue;
+                    document.getElementById('socSliderValue').textContent = initialSocValue;
+                });
                 makeModalDraggable('batteryModal');
              //   makeModalDraggable('inverterModal');
                 makeModalDraggable('loadSettingsModal');
@@ -56,6 +61,7 @@
                 
                 // Закрытие модальных окон
                 closeBattery.onclick = function() {
+                    resetSocSlider();
                     batteryModal.style.display = 'none';
                 }
                 closeInverter.onclick = function() {
@@ -250,3 +256,31 @@
                     batteryFill.setAttribute('fill', `rgb(255, ${level * 5.1}, 0)`);
                 }
              }
+
+
+
+    // Функция сброса ползунка
+    function resetSocSlider() {
+        const slider = document.getElementById('State_Of_Сharge');
+        slider.value = initialSocValue;
+        document.getElementById('socSliderValue').textContent = initialSocValue;
+        isSliderChanged = false;
+        
+        // Очищаем таймер
+        if (socChangeTimeout) {
+            clearTimeout(socChangeTimeout);
+            socChangeTimeout = null;
+        }
+    }
+
+    // Функция показа сообщения
+    function showConfirmationMessage(message, isSuccess) {
+        const element = document.getElementById('confirmationMessage');
+        element.textContent = message;
+        element.style.color = isSuccess ? "rgb(11, 226, 11)" : "red";
+        element.style.display = "block";
+        
+        setTimeout(() => {
+            element.style.display = "none";
+        }, 4000);
+    }

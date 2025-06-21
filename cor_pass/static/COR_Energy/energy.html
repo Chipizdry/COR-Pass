@@ -354,30 +354,30 @@
 
        <!-- Модальные окна -->
 
-                  <!-- Модальное окно настроек батареи -->
-
-                  <div id="batteryModal" class="modal" style="display:none;">
-                    <div class="modal-header">
-                      <div class="modal-buttons">
-                        <button class="modal-button close" data-action="close" id="closeBattery">✖</button>
-                      </div>
-                      <h3 style="margin-top:30; color:#291161;font-size: 17px;">Информация о батарее</h3>
-                    </div>   
-                        <p>Текущее напряжение, В: <span id="batt_voltage">0</span></p>
-                        <p>Ток заряда/разряда, A: <span id="batt_curr">0</span></p>
-                        <p>Уровень заряда, %: <span id="chargeLevel">0</span></p>
-                        <p>Мощность,Вт : <span id="PowerLevel">0</span></p>
-                        <p>Температура,: <span id="Bat_Temp">0</span>°C</p>
-                        <p>Порог разряда: <span id="vebusSOC">--</span> %</p>
-                       
-                        <!-- Ползунок для установки нижнего предела разряда батареи -->
-                      <!-- <label for="maxCurrentRange">Порог разряда, %: <span id="Bus_State_Of_Сharge">1</span></label>--> 
-                        <input type="range" id="State_Of_Сharge" min="0" max="80" step="1" value="40"  style="width: 300px;">
-                        <!-- Кнопка Сохранить -->
-                        <button onclick="saveBatterySettings()">Сохранить</button>
-                        <div id="confirmationMessage" style="margin-top: 10px; color: rgb(11, 226, 11); display: none;"></div>
-                    
+        <!-- Модальное окно настроек батареи -->
+        <div id="batteryModal" class="modal" style="display:none;">
+            <div class="modal-header">
+                <div class="modal-buttons">
+                    <button class="modal-button close" data-action="close" id="closeBattery">✖</button>
                 </div>
+                <h3 style="margin-top:30; color:#291161;font-size: 17px;">Информация о батарее</h3>
+            </div>   
+            <p>Текущее напряжение, В: <span id="batt_voltage">0</span></p>
+            <p>Ток заряда/разряда, A: <span id="batt_curr">0</span></p>
+            <p>Уровень заряда, %: <span id="chargeLevel">0</span></p>
+            <p>Мощность,Вт : <span id="PowerLevel">0</span></p>
+            <p>Температура,: <span id="Bat_Temp">0</span>°C</p>
+            <p>Порог разряда: <span id="vebusSOC">--</span> %</p>
+ 
+              <!-- Ползунок для установки нижнего предела разряда батареи -->
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="range" id="State_Of_Сharge" min="0" max="99" step="1" value="40" style="width: 300px;">
+                <span id="socSliderValue">40</span>%
+            </div>
+            <!-- Кнопка Сохранить -->
+            <button onclick="saveBatterySettings()">Сохранить</button>
+            <div id="confirmationMessage" style="margin-top: 10px; color: rgb(11, 226, 11); display: none;"></div>             
+        </div>
 
             <!-- Модальное окно параметров нагрузки -->
         <div id="loadSettingsModal" class="modal" style="display:none;">
@@ -554,7 +554,10 @@
 
 
         <script>
-
+// Глобальные переменные
+            let initialSocValue = 40;
+            let socChangeTimeout = null;
+            let isSliderChanged = false; // Флаг изменения ползунка
         const modeNames = {
             1: "Charger Only",
             2: "Inverter Only",
@@ -578,7 +581,29 @@
                     document.addEventListener('DOMContentLoaded', fetchGridLimitingStatus);
                     document.getElementById("ac_setpoint_fine_slider").addEventListener("input", function() {
                         document.getElementById("ac_setpoint_fine_value").textContent = this.value;
-                    });        
+                    });       
+                    
+                    
+// Обработчик изменения ползунка батареи
+document.getElementById('State_Of_Сharge').addEventListener('input', function() {
+    const newValue = this.value;
+    document.getElementById('socSliderValue').textContent = newValue;
+    isSliderChanged = true;
+    
+    // Сбрасываем предыдущий таймер, если он есть
+    if (socChangeTimeout) {
+        clearTimeout(socChangeTimeout);
+    }
+    
+    // Устанавливаем новый таймер на 3 секунды
+    socChangeTimeout = setTimeout(() => {
+        resetSocSlider();
+        showConfirmationMessage("Изменения не сохранены!!!", false);
+    }, 4000);
+});
+
+                    
+
         </script>
 
 

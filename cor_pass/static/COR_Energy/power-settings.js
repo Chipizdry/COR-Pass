@@ -193,9 +193,10 @@ function updateVebusDisplay(data) {
 }
 
 
-
+// Модифицированная функция сохранения
 async function saveBatterySettings() {
-    const sliderValue = parseInt(document.getElementById("State_Of_Сharge").value, 10);
+    const slider = document.getElementById('State_Of_Сharge');
+    const sliderValue = parseInt(slider.value, 10);
 
     try {
         const res = await fetch('/api/modbus/vebus/soc', {
@@ -209,17 +210,27 @@ async function saveBatterySettings() {
             throw new Error(error.detail || "Ошибка записи SOC");
         }
 
-        document.getElementById('confirmationMessage').textContent = "✅ Настройки сохранены";
-        document.getElementById('confirmationMessage').style.display = "block";
+        // Обновляем исходное значение после успешного сохранения
+        initialSocValue = sliderValue;
+        document.getElementById('vebusSOC').textContent = sliderValue;
+        isSliderChanged = false;
+
+        // Очищаем таймер
+        if (socChangeTimeout) {
+            clearTimeout(socChangeTimeout);
+            socChangeTimeout = null;
+        }
+
+        showConfirmationMessage("✅ Настройки сохранены", true);
+        return true;
     } catch (err) {
         console.error("❗ Ошибка установки порога SOC:", err);
-        document.getElementById('confirmationMessage').textContent = "❌ Ошибка сохранения";
-        document.getElementById('confirmationMessage').style.color = "red";
-        document.getElementById('confirmationMessage').style.display = "block";
+        showConfirmationMessage("❌ Ошибка сохранения", false);
+        resetSocSlider();
+        return false;
     }
 }
-
-
+/*
 async function fetchEss() {
     try {
       const response = await fetch('/api/modbus/ess_settings', {
@@ -259,8 +270,46 @@ async function fetchEss() {
     }
   }
 
+*/
 
+async function fetchEss() {
+    try {
+        const response = await fetch('/api/modbus/ess_settings', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
 
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Ошибка чтения ESS настроек');
+        }
+
+        const data = await response.json();
+        const socValue = data.minimum_soc_limit || 40;
+        
+        // Обновляем исходное значение только если ползунок не был изменен пользователем
+        if (!isSliderChanged) {
+            initialSocValue = socValue;
+            document.getElementById('State_Of_Сharge').value = socValue;
+            document.getElementById('socSliderValue').textContent = socValue;
+        }
+        
+        document.getElementById('vebusSOC').textContent = socValue;
+
+        return {
+            success: true,
+            data: data
+        };
+    } catch (err) {
+        console.error("❗ Ошибка получения ESS настроек:", err);
+        return {
+            success: false,
+            error: err.message || 'Modbus ошибка'
+        };
+    }
+}
 
 
 
