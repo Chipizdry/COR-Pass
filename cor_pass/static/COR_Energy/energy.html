@@ -306,14 +306,14 @@
               <pattern id="flowGrid" patternUnits="userSpaceOnUse" width="20" height="20">
                 <rect id="gridFlowRect" width="10" height="20" fill="#00ff00"></rect>
                 <animateTransform id="gridFlowAnim" attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
-            </pattern>
+              </pattern>
               <pattern id="flowSolarV" patternUnits="userSpaceOnUse" width="20" height="20">
-                <rect width="20" height="10" fill="#00ff00"></rect>
-                <animateTransform attributeName="patternTransform" type="translate" from="0,40" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
+                    <rect id="solarFlowRectV" width="20" height="10" fill="#00ff00"></rect>
+                    <animateTransform id="solarFlowAnimV" attributeName="patternTransform" type="translate" from="0,40" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
               <pattern id="flowSolarH" patternUnits="userSpaceOnUse" width="20" height="20">
-                <rect width="10" height="20" fill="#00ff00"></rect>
-                <animateTransform attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
+                    <rect id="solarFlowRectH" width="10" height="20" fill="#00ff00"></rect>
+                    <animateTransform id="solarFlowAnimH" attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
               <pattern id="flowBatteryH" patternUnits="userSpaceOnUse" width="20" height="20">
                 <rect width="10" height="20" fill="#00ff00"></rect>
@@ -334,8 +334,8 @@
             <!--Линия солнечных панелей-->
             <polyline points="280,340 280,523" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
             <polyline points="280,518 460,518" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
-            <polyline points="280,340 280,521" fill="none" stroke="url(#flowSolarV)" stroke-width="6" stroke-linejoin="round"></polyline>
-            <polyline points="277,518 460,518" fill="none" stroke="url(#flowSolarH)" stroke-width="6" stroke-linejoin="round"></polyline>
+            <polyline id="solarLineV" points="280,340 280,521" fill="none" stroke="url(#flowSolarV)" stroke-width="6" stroke-linejoin="round"></polyline>
+            <polyline id="solarLineH" points="277,518 460,518" fill="none" stroke="url(#flowSolarH)" stroke-width="6" stroke-linejoin="round"></polyline>
             <!--Линия батарей-->
             <polyline points="200,340, 200,523" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
             <polyline points="200,518 50,518" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>

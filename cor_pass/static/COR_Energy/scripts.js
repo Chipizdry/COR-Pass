@@ -158,7 +158,7 @@
             
             function updateSolarPowerIndicator(totalPower) {
                 const maxWidth = 550;    // ширина SVG индикатора в пикселях (как у loadIndicator)
-                const maxPower = 150000;   // максимальная мощность для 100%
+                const maxPower = 150000; // максимальная мощность для 100%
                 
                 // Ограничиваем мощность между 0 и maxPower
                 totalPower = Math.min(Math.max(totalPower, 0), maxPower);
@@ -170,16 +170,52 @@
                 const hue = (1 - totalPower / maxPower) * 120;
                 const color = `hsl(${hue}, 100%, 50%)`;
                 
+                // Обновление индикатора (если есть)
                 const indicator = document.getElementById('solarPowerIndicator');
                 if (indicator) {
                     indicator.setAttribute('width', width);
                     indicator.setAttribute('fill', color);
                 }
                 
-                // Если хочешь — можно обновлять текст с текущей мощностью
+                // Обновление текста (если есть)
                 const label = document.getElementById('solarPowerLabel');
                 if (label) {
                     label.textContent = `Мощность: ${(totalPower/1000).toFixed(1)} кВт`;
+                }
+                
+                // Обновление линии солнечных панелей
+                const solarRectV = document.getElementById('solarFlowRectV');
+                const solarRectH = document.getElementById('solarFlowRectH');
+                const solarAnimV = document.getElementById('solarFlowAnimV');
+                const solarAnimH = document.getElementById('solarFlowAnimH');
+                
+                if (solarRectV && solarRectH && solarAnimV && solarAnimH) {
+                    // Изменяем цвет
+                    solarRectV.setAttribute('fill', color);
+                    solarRectH.setAttribute('fill', color);
+                    
+                    // Управляем анимацией
+                    if (totalPower > 0) {
+                        // Активная генерация - поток вверх по вертикали и вправо по горизонтали
+                        solarAnimV.setAttribute('from', '0,40');
+                        solarAnimV.setAttribute('to', '0,0');
+                        solarAnimH.setAttribute('from', '40,0');
+                        solarAnimH.setAttribute('to', '0,0');
+                        
+                        // Показываем линии
+                        document.getElementById('solarLineV').style.display = '';
+                        document.getElementById('solarLineH').style.display = '';
+                    } else {
+                        // Нет генерации - останавливаем анимацию и скрываем линии
+                        solarAnimV.setAttribute('from', '0,0');
+                        solarAnimV.setAttribute('to', '0,0');
+                        solarAnimH.setAttribute('from', '0,0');
+                        solarAnimH.setAttribute('to', '0,0');
+                        
+                        // Можно раскомментировать, если нужно скрывать линии при отсутствии генерации
+                         document.getElementById('solarLineV').style.display = 'none';
+                         document.getElementById('solarLineH').style.display = 'none';
+                    }
                 }
             }
 
