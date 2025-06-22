@@ -85,7 +85,6 @@
             function updateBatteryFlow(power) {
                 const indicator = document.getElementById('batteryFlowIndicator');
                 const label = document.getElementById('batteryFlowLabel');
-            
                 const maxPower = 100000;  // Вт
                 const maxWidth = 1300;   // Половина общей ширины (2600 / 2)
                 const centerX = 1525;    // Центр батареи
@@ -109,17 +108,56 @@
                     fillColor = `rgb(255, ${g}, 0)`;  // жёлтый → красный
                 }
             
-                indicator.setAttribute('x', xPosition);
-                indicator.setAttribute('width', fillWidth);
-                indicator.setAttribute('fill', fillColor);
+                // Обновление индикатора (если есть)
+                if (indicator) {
+                    indicator.setAttribute('x', xPosition);
+                    indicator.setAttribute('width', fillWidth);
+                    indicator.setAttribute('fill', fillColor);
+                }
             
+                // Обновление текста
                 const kilowatts = (clampedPower / 1000).toFixed(1).replace('-0.0', '0.0');
-                if (clampedPower < 0) {
-                    label.textContent = `Разряд: ${Math.abs(kilowatts)} кВт`;
-                } else if (clampedPower > 0) {
-                    label.textContent = `Заряд: ${kilowatts} кВт`;
-                } else {
-                    label.textContent = `Нет потока`;
+                if (label) {
+                    if (clampedPower < 0) {
+                        label.textContent = `Разряд: ${Math.abs(kilowatts)} кВт`;
+                    } else if (clampedPower > 0) {
+                        label.textContent = `Заряд: ${kilowatts} кВт`;
+                    } else {
+                        label.textContent = `Нет потока`;
+                    }
+                }
+            
+                // Обновление линий батареи
+                const batteryRectV = document.getElementById('batteryFlowRectV');
+                const batteryRectH = document.getElementById('batteryFlowRectH');
+                const batteryAnimV = document.getElementById('batteryFlowAnimV');
+                const batteryAnimH = document.getElementById('batteryFlowAnimH');
+                
+                if (batteryRectV && batteryRectH && batteryAnimV && batteryAnimH) {
+                    // Изменяем цвет обеих линий
+                    batteryRectV.setAttribute('fill', fillColor);
+                    batteryRectH.setAttribute('fill', fillColor);
+                    
+                    // Управляем анимацией в зависимости от направления потока
+                    if (clampedPower < 0) {
+                        // Разряд - поток вниз по вертикали и влево по горизонтали
+                        batteryAnimV.setAttribute('from', '0,40');
+                        batteryAnimV.setAttribute('to', '0,0');
+                        batteryAnimH.setAttribute('from', '0,0');
+                        batteryAnimH.setAttribute('to', '40,0');
+                    } else if (clampedPower > 0) {
+                        // Заряд - поток вверх по вертикали и вправо по горизонтали
+                        batteryAnimV.setAttribute('from', '0,0');
+                        batteryAnimV.setAttribute('to', '0,40');
+                        batteryAnimH.setAttribute('from', '40,0');
+                        batteryAnimH.setAttribute('to', '0,0');
+                    } else {
+                        // Нет потока - останавливаем анимацию
+                        batteryAnimV.setAttribute('from', '0,0');
+                        batteryAnimV.setAttribute('to', '0,0');
+                        batteryAnimH.setAttribute('from', '0,0');
+                        batteryAnimH.setAttribute('to', '0,0');
+                    }
                 }
             }
             
