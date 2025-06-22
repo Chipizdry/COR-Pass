@@ -299,42 +299,48 @@
        
         <svg width="540" height="600" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <!-- Вертикальный поток (сверху вниз) -->
-              <pattern id="flowVertical" patternUnits="userSpaceOnUse" width="20" height="20">
-                <rect width="20" height="10" fill="#00ff00"></rect>
-                <animateTransform attributeName="patternTransform" type="translate" from="0,40" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
+              <pattern id="flowLoad" patternUnits="userSpaceOnUse" width="20" height="20">
+                <rect width="10" height="20" fill="#00ff00"></rect>
+                <animateTransform attributeName="patternTransform" type="translate" from="0,0" to="40,0" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
-          
-              <!-- Горизонтальный поток (слева направо) -->
-              <pattern id="flowHorizontal" patternUnits="userSpaceOnUse" width="20" height="20">
+              <pattern id="flowGrid" patternUnits="userSpaceOnUse" width="20" height="20">
                 <rect width="10" height="20" fill="#00ff00"></rect>
                 <animateTransform attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
+              <pattern id="flowSolarV" patternUnits="userSpaceOnUse" width="20" height="20">
+                <rect width="20" height="10" fill="#00ff00"></rect>
+                <animateTransform attributeName="patternTransform" type="translate" from="0,40" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
+              </pattern>
+              <pattern id="flowSolarH" patternUnits="userSpaceOnUse" width="20" height="20">
+                <rect width="10" height="20" fill="#00ff00"></rect>
+                <animateTransform attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
+              </pattern>
+              <pattern id="flowBatteryH" patternUnits="userSpaceOnUse" width="20" height="20">
+                <rect width="10" height="20" fill="#00ff00"></rect>
+                <animateTransform attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
+              </pattern>
+              <pattern id="flowBatteryV" patternUnits="userSpaceOnUse" width="20" height="20">
+                <rect width="20" height="10" fill="#00ff00"></rect>
+                <animateTransform attributeName="patternTransform" type="translate" from="0,00" to="0,40" dur="1s" repeatCount="indefinite"></animateTransform>
+              </pattern>
             </defs>
-          
-            <!-- Внешний контур (единая толстая линия) -->
+
+            <!--Линия нагрузки-->
             <polyline points="320,200 530,200" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
+            <polyline points="320,200 530,200" fill="none" stroke="url(#flowLoad)" stroke-width="6" stroke-linejoin="round"></polyline>
+            <!--Линия сети-->
             <polyline points="20,200 165,200" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
-
-
+            <polyline points="20,200 165,200" fill="none" stroke="url(#flowGrid)" stroke-width="6" stroke-linejoin="round"></polyline>
+            <!--Линия солнечных панелей-->
             <polyline points="280,340 280,523" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
             <polyline points="280,518 460,518" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
-
-
+            <polyline points="280,340 280,521" fill="none" stroke="url(#flowSolarV)" stroke-width="6" stroke-linejoin="round"></polyline>
+            <polyline points="277,518 460,518" fill="none" stroke="url(#flowSolarH)" stroke-width="6" stroke-linejoin="round"></polyline>
+            <!--Линия батарей-->
             <polyline points="200,340, 200,523" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
             <polyline points="200,518 50,518" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
-          
-            <!-- Внутренняя заливка по направлениям -->
-            <polyline points="320,200 530,200" fill="none" stroke="url(#flowHorizontal)" stroke-width="6" stroke-linejoin="round"></polyline>
-            <polyline points="20,200 165,200" fill="none" stroke="url(#flowHorizontal)" stroke-width="6" stroke-linejoin="round"></polyline>
-
-
-            <polyline points="280,340 280,520" fill="none" stroke="url(#flowVertical)" stroke-width="6" stroke-linejoin="round"></polyline>
-            <polyline points="280,518 460,518" fill="none" stroke="url(#flowHorizontal)" stroke-width="6" stroke-linejoin="round"></polyline>
-
-
-            <polyline points="200,340, 200,523" fill="none" stroke="url(#flowVertical)" stroke-width="6" stroke-linejoin="round"></polyline>
-            <polyline points="200,518 50,518" fill="none" stroke="url(#flowHorizontal)" stroke-width="6" stroke-linejoin="round"></polyline>
+            <polyline points="200,340, 200,521" fill="none" stroke="url(#flowBatteryV)" stroke-width="6" stroke-linejoin="round"></polyline>
+            <polyline points="200,518 50,518" fill="none" stroke="url(#flowBatteryH)" stroke-width="6" stroke-linejoin="round"></polyline>         
           </svg>
         
 </div>
