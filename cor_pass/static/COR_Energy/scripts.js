@@ -217,22 +217,50 @@
                     fillColor = `rgb(255, ${g}, 0)`;
                 }
             
-                // Применяем атрибуты
-                indicator.setAttribute('x', xPosition);
-                indicator.setAttribute('width', fillWidth);
-                indicator.setAttribute('fill', fillColor);
-            
-                const kilowatts = (clampedPower / 100).toFixed(1).replace('-0.0', '0.0');
-                if (clampedPower < 0) {
-                    label.textContent = `Отдача: ${Math.abs(kilowatts)} кВт`;
-                } else if (clampedPower > 0) {
-                    label.textContent = `Потребление: ${kilowatts} кВт`;
-                } else {
-                    label.textContent = `Нет потока`;
+                // Обновление индикатора
+                if (indicator) {
+                    indicator.setAttribute('x', xPosition);
+                    indicator.setAttribute('width', fillWidth);
+                    indicator.setAttribute('fill', fillColor);
                 }
             
-            }
+                // Обновление линии сети
+                const networkLine = document.getElementById('networkFlowLine');
+                const flowRect = document.getElementById('gridFlowRect');
+                const flowAnim = document.getElementById('gridFlowAnim');
+                
+                if (networkLine && flowRect && flowAnim) {
+                    // Изменяем цвет
+                    flowRect.setAttribute('fill', fillColor);
+                    
+                    // Меняем направление анимации в зависимости от направления потока
+                    if (clampedPower < 0) {
+                        // Отдача в сеть - поток справа налево
+                        flowAnim.setAttribute('from', '40,0');
+                        flowAnim.setAttribute('to', '0,0');
+                    } else if (clampedPower > 0) {
+                        // Потребление из сети - поток слева направо
+                        flowAnim.setAttribute('from', '0,0');
+                        flowAnim.setAttribute('to', '40,0');
+                    } else {
+                        // Нет потока - останавливаем анимацию
+                        flowAnim.setAttribute('from', '0,0');
+                        flowAnim.setAttribute('to', '0,0');
+                    }
+                }
             
+                // Обновление текста
+                if (label) {
+                    const kilowatts = (clampedPower / 100).toFixed(1).replace('-0.0', '0.0');
+                    if (clampedPower < 0) {
+                        label.textContent = `Отдача: ${Math.abs(kilowatts)} кВт`;
+                    } else if (clampedPower > 0) {
+                        label.textContent = `Потребление: ${kilowatts} кВт`;
+                    } else {
+                        label.textContent = `Нет потока`;
+                    }
+                }
+            }
             
             // Обновляем ширину и цвет заливки в зависимости от уровня заряда
             function updateBatteryFill(level) {
