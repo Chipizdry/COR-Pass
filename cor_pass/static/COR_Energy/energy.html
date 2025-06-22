@@ -19,11 +19,11 @@
     
         <div class="connection-status">
             <span id="connectionIndicator" class="status-indicator"></span>
-            Соединение с сервером  <p>Сигнал, dBm.: <span id="Signal">0</span></p>
+            Соединение с сервером 
         </div>
              
     
-        <h2>Control Panel</h2>
+        <h2>COR-Energy Трасса E-95</h2>
 
 
         <!-- Вкладки -->
@@ -41,29 +41,28 @@
                 <div id="batteryFlowLabel" style="text-align: center; margin-bottom: -20px; font-size: 14px; font-weight: bold;">
                     Заряд/Разряд батареи
                 </div>
-                <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
-                     width="260" height="260" viewBox="0 0 3600 1560" style="border: 0px solid red" preserveAspectRatio="xMidYMid meet">
-                     <rect id="batteryFlowFrame" x="0" y="-500" width="3050" height="360" fill="none" stroke="#333333" stroke-width="20"></rect>
-                     <line x1="1525" y1="-180" x2="1525" y2="-500" stroke="#333333" stroke-width="20" stroke-dasharray="40"></line>
-                     <rect id="batteryFlowIndicator" x="1650" y="-500" width="0" height="350" fill="green" />
-                    <!-- Заливка, изменяющаяся по уровню заряда -->
-                    
-                    <rect id="batteryFill" x="330" y="110" width="2600" height="1400" fill="green" />
-                    <!-- Лимит разряда -->
-                    <line id="batteryLimitLine" x1="830" y1="110" x2="830" y2="1510" stroke="red" stroke-width="15" opacity="100"></line>
-                    <text id="batteryLimitText" x="330" y="790" fill="red" font-size="200" text-anchor="middle" opacity="0">min</text>
-                    <!-- Контур батарейки -->
-                    <g fill="none" stroke="black" stroke-width="100">
-                        <path d="M415 1500 c-63 -31 -116 -93 -132 -153 -7 -28 -13 -100 -13 -159 l0
-                            -108 -108 0 c-71 0 -112 -4 -120 -12 -17 -17 -17 -569 0 -586 8 -8 49 -12 120
-                            -12 l108 0 0 -104 c0 -154 11 -200 62 -253 24 -24 61 -52 84 -63 39 -20 66
-                            -20 1255 -20 1377 0 1275 -6 1353 81 24 26 46 62 50 80 11 56 7 1131 -5 1173
-                            -6 21 -28 58 -50 81 -74 80 18 75 -1348 75 -1197 0 -1217 0 -1256 -20z m2511
-                            -93 c23 -15 46 -39 53 -53 17 -38 15 -1141 -2 -1172 -7 -12 -31 -32 -52 -45
-                            l-40 -22 -1205 0 -1205 0 -39 24 c-67 42 -66 29 -66 631 0 580 0 581 51 629
-                            13 12 37 26 54 30 17 5 549 9 1220 8 l1190 -2 41 -28z"/>
-                    </g>
-                </svg>     
+                <svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="260" height="260" viewBox="0 0 3600 1560" style="border: 0px solid red" preserveAspectRatio="xMidYMid meet">
+                    <rect id="batteryFlowFrame" x="0" y="-500" width="3050" height="360" fill="none" stroke="#333333" stroke-width="20"></rect>
+                    <line x1="1525" y1="-180" x2="1525" y2="-500" stroke="#333333" stroke-width="20" stroke-dasharray="40"></line>
+                    <rect id="batteryFlowIndicator" x="1525" y="-500" width="14.201174" height="350" fill="rgb(6, 255, 0)"></rect>
+                   <!-- Заливка, изменяющаяся по уровню заряда -->
+                   
+                   <rect id="batteryFill" x="1032" y="720" width="1938" height="1400" fill="rgb(122.4, 255, 0)"></rect>
+                   <!-- Лимит разряда -->
+                   <line id="batteryLimitLine" x1="1950" y1="720" x2="1950" y2="2200" stroke="red" stroke-width="15" opacity="1"></line>
+                   <text id="batteryLimitText" x="2130" y="1570" fill="red" font-size="200" text-anchor="middle" opacity="1">min</text>
+                   <!-- Контур батарейки -->
+                   <g transform="translate(0.000000,650.000000) scale(1.00000,1.00000)" fill="none" stroke="black" stroke-width="100">
+                       <path d="M415 1500 c-63 -31 -116 -93 -132 -153 -7 -28 -13 -100 -13 -159 l0
+                           -108 -108 0 c-71 0 -112 -4 -120 -12 -17 -17 -17 -569 0 -586 8 -8 49 -12 120
+                           -12 l108 0 0 -104 c0 -154 11 -200 62 -253 24 -24 61 -52 84 -63 39 -20 66
+                           -20 1255 -20 1377 0 1275 -6 1353 81 24 26 46 62 50 80 11 56 7 1131 -5 1173
+                           -6 21 -28 58 -50 81 -74 80 18 75 -1348 75 -1197 0 -1217 0 -1256 -20z m2511
+                           -93 c23 -15 46 -39 53 -53 17 -38 15 -1141 -2 -1172 -7 -12 -31 -32 -52 -45
+                           l-40 -22 -1205 0 -1205 0 -39 24 c-67 42 -66 29 -66 631 0 580 0 581 51 629
+                           13 12 37 26 54 30 17 5 549 9 1220 8 l1190 -2 41 -28z"></path>
+                   </g>
+               </svg>
             </div>
 
 
@@ -292,13 +291,52 @@
             634 -223 808 -66 43 -197 90 -253 92 -21 0 1 9 61 24 125 32 210 81 302 174
             224 226 241 570 42 824 -46 59 -137 134 -202 167 -49 25 -166 60 -204 61 -21
             1 -4 7 49 20 129 32 218 81 310 174 118 118 171 235 182 401 16 253 -120 487
-            -350 598 -145 71 51 66 -2779 65 -1404 -1 -2566 -4 -2583 -6z"/>
-            <!-- Индикатор нагрузки (прямоугольник с заливкой) -->
-           
+            -350 598 -145 71 51 66 -2779 65 -1404 -1 -2566 -4 -2583 -6z"/> 
             </g>
-            </svg>
-            
+            </svg>  
         </div>
+
+       
+        <svg width="540" height="600" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <!-- Вертикальный поток (сверху вниз) -->
+              <pattern id="flowVertical" patternUnits="userSpaceOnUse" width="20" height="20">
+                <rect width="20" height="10" fill="#00ff00"></rect>
+                <animateTransform attributeName="patternTransform" type="translate" from="0,40" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
+              </pattern>
+          
+              <!-- Горизонтальный поток (слева направо) -->
+              <pattern id="flowHorizontal" patternUnits="userSpaceOnUse" width="20" height="20">
+                <rect width="10" height="20" fill="#00ff00"></rect>
+                <animateTransform attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
+              </pattern>
+            </defs>
+          
+            <!-- Внешний контур (единая толстая линия) -->
+            <polyline points="320,200 530,200" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
+            <polyline points="20,200 165,200" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
+
+
+            <polyline points="280,340 280,523" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
+            <polyline points="280,518 460,518" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
+
+
+            <polyline points="200,340, 200,523" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
+            <polyline points="200,518 50,518" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
+          
+            <!-- Внутренняя заливка по направлениям -->
+            <polyline points="320,200 530,200" fill="none" stroke="url(#flowHorizontal)" stroke-width="6" stroke-linejoin="round"></polyline>
+            <polyline points="20,200 165,200" fill="none" stroke="url(#flowHorizontal)" stroke-width="6" stroke-linejoin="round"></polyline>
+
+
+            <polyline points="280,340 280,520" fill="none" stroke="url(#flowVertical)" stroke-width="6" stroke-linejoin="round"></polyline>
+            <polyline points="280,518 460,518" fill="none" stroke="url(#flowHorizontal)" stroke-width="6" stroke-linejoin="round"></polyline>
+
+
+            <polyline points="200,340, 200,523" fill="none" stroke="url(#flowVertical)" stroke-width="6" stroke-linejoin="round"></polyline>
+            <polyline points="200,518 50,518" fill="none" stroke="url(#flowHorizontal)" stroke-width="6" stroke-linejoin="round"></polyline>
+          </svg>
+        
 </div>
 
         <!-- Контент вкладки Мониторинг -->

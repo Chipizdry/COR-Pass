@@ -150,7 +150,7 @@ footer {
 
 .inverter-icon {
     top: 160px;
-    left: 300px;
+    left: 315px;
 }
 
 .power-grid-icon {
@@ -268,4 +268,15 @@ footer {
 /* Если соединение активное — цвет зелёный */
 .status-indicator.active {
     background-color: rgb(7, 206, 7);
+}
+
+
+#gridInverterLine {
+    pointer-events: none;
+    z-index: 5;
+}
+
+#gridInverterLine1Anim, 
+#gridInverterLine2Anim {
+    transition: stroke 0.3s ease;
 }

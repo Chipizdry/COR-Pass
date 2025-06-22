@@ -109,7 +109,6 @@ async function fetchVebusStatus() {
 
         const data = await res.json();
         updateVebusDisplay(data);
-       
         return {
             success: true,
             data: data
