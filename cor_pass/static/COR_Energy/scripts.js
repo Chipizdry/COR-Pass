@@ -140,18 +140,45 @@
                 const hue = (1 - (powerKw / maxPower)) * 120;
                 const color = `hsl(${hue}, 100%, 50%)`;
             
-                // Обновляем атрибуты SVG
+                // Обновляем атрибуты SVG индикатора
                 const indicator = document.getElementById('loadIndicator');
                 if (indicator) {
                     indicator.setAttribute('width', width);
                     indicator.setAttribute('fill', color);
                 }
             
-            
+                // Обновление текста
                 const label = document.getElementById('loadIndicatorLabel');
                 if (label) {
                     const text = `Нагрузка:${powerKw.toFixed(1)} кВт`;
                     label.textContent = text;
+                }
+            
+                // Обновление линии нагрузки
+                const loadRect = document.getElementById('loadFlowRect');
+                const loadAnim = document.getElementById('loadFlowAnim');
+                const loadLine = document.getElementById('loadFlowLine');
+                
+                if (loadRect && loadAnim && loadLine) {
+                    // Изменяем цвет
+                    loadRect.setAttribute('fill', color);
+                    
+                    // Управляем анимацией
+                    if (powerKw > 0) {
+                        // Есть нагрузка - поток слева направо
+                        loadAnim.setAttribute('from', '0,0');
+                        loadAnim.setAttribute('to', '40,0');
+                        
+                        // Показываем линию
+                        loadLine.style.display = '';
+                    } else {
+                        // Нет нагрузки - останавливаем анимацию
+                        loadAnim.setAttribute('from', '0,0');
+                        loadAnim.setAttribute('to', '0,0');
+                        
+                        // Можно раскомментировать, если нужно скрывать линию при отсутствии нагрузки
+                        // loadLine.style.display = 'none';
+                    }
                 }
             }
            

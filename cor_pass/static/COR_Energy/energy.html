@@ -300,8 +300,8 @@
         <svg width="540" height="600" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="flowLoad" patternUnits="userSpaceOnUse" width="20" height="20">
-                <rect width="10" height="20" fill="#00ff00"></rect>
-                <animateTransform attributeName="patternTransform" type="translate" from="0,0" to="40,0" dur="1s" repeatCount="indefinite"></animateTransform>
+                    <rect id="loadFlowRect" width="10" height="20" fill="#00ff00"></rect>
+                    <animateTransform id="loadFlowAnim" attributeName="patternTransform" type="translate" from="0,0" to="40,0" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
               <pattern id="flowGrid" patternUnits="userSpaceOnUse" width="20" height="20">
                 <rect id="gridFlowRect" width="10" height="20" fill="#00ff00"></rect>
@@ -327,7 +327,7 @@
 
             <!--Линия нагрузки-->
             <polyline points="320,200 530,200" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
-            <polyline points="320,200 530,200" fill="none" stroke="url(#flowLoad)" stroke-width="6" stroke-linejoin="round"></polyline>
+            <polyline id="loadFlowLine" points="320,200 530,200" fill="none" stroke="url(#flowLoad)" stroke-width="6" stroke-linejoin="round"></polyline>
             <!--Линия сети-->
             <polyline points="20,200 165,200" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
             <polyline id="networkFlowLine" points="20,200 165,200" fill="none" stroke="url(#flowGrid)" stroke-width="6" stroke-linejoin="round"></polyline>
