@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="./css/header.css">
     <link rel="stylesheet" href="./css/glass.css">
     <link rel="stylesheet" href="./css/conclusion.css">
+    <link rel="stylesheet" href="./css/doctorSign.css">
+    <link rel="stylesheet" href="./css/modal.css">
 </head>
 <body>
 
@@ -32,21 +34,19 @@
                     </svg>
                 </button>
                 <div class="role-toggle">
-                    <button class="role-btn">Лікар</button>
-                </div>
-                <div class="role-toggle">
-                    <button class="role-btn">Лаборант</button>
+                    <button class="role-btn doc active">Лікар</button>
+                    <button class="role-btn lab">Лаборант</button>
                 </div>
             </div>
         </div>
         <div class="header-row bottom">
             <div>
                 <div class="tabs">
-                    <button class="tab">Направлення</button>
-                    <button class="tab">Вирізка</button>
-                    <button class="tab">Скельця</button>
-                    <button class="tab active">Заключення</button>
-                    <button class="tab">Дослідження</button>
+                    <button class="tab directionPage">Направлення</button>
+                    <button class="tab tenderloinPage">Вирізка</button>
+                    <button class="tab glassPage">Скельця</button>
+                    <button class="tab conclusionPage active">Заключення</button>
+                    <button class="tab explorationPage">Дослідження</button>
                 </div>
             </div>
             <div class="meta-info">
@@ -59,276 +59,48 @@
                         </svg>
                     </button>
                 </div>
-                <div>Кукліс Олег Геннадійович</div>
-                <div>Чол</div>
-                <div>65р</div>
+                <div id="userName"></div>
+                <div id="userGender"></div>
+                <div id="userAge"></div>
             </div>
         </div>
     </div>
     <div class="glassPageContent df jcsb">
         <div class="left">
-            <div class="top borderRadiusLeft">
-                Поточні кейси
+            <div class="top borderRadiusLeft df jcsb">
+                <div>
+                    Поточні кейси
+                </div>
+                <div class="glassPageRevert" style="display: none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="800px" height="800px" viewBox="0 0 24 24">
+                        <path fill="none" stroke="#000000" stroke-width="2" d="M8,3 L3,8 L8,13 M12,20 L15,20 C18.3137085,20 21,17.3137085 21,14 C21,10.6862915 18.3137085,8 15,8 L4,8"/>
+                    </svg>
+                </div>
             </div>
             <div class="bottom">
                 <div id="caseItems" class="caseItems">
-                    <div class="caseItem df aic jcsb">
-                        <div>
-                            <div class="caseItemDate">27.03.2025</div>
-                            <div class="caseItemLabel">S25B01251</div>
-                        </div>
-                        <div class="caseItemSample df aic jcc">
-                            1
-                        </div>
-                        <div>
-                            <div class="infoPlate cassette">
-                                1
-                            </div>
-                        </div>
-                        <div>
-                            <div class="infoPlate glass">
-                                1
-                            </div>
-                        </div>
-                    </div>
-                    <div class="caseItem df aic jcsb">
-                        <div>
-                            <div class="caseItemDate">27.03.2025</div>
-                            <div class="caseItemLabel">S25B01251</div>
-                        </div>
-                        <div class="caseItemSample df aic jcc">
-                            1
-                        </div>
-                        <div>
-                            <div class="infoPlate cassette">
-                                1
-                            </div>
-                        </div>
-                        <div>
-                            <div class="infoPlate glass">
-                                1
-                            </div>
-                        </div>
-                    </div>
-                    <div class="caseItem df active aic jcsb">
-                        <div>
-                            <div class="caseItemDate">27.03.2025</div>
-                            <div class="caseItemLabel">S25B01251</div>
-                        </div>
-                        <div class="caseItemSample df aic jcc">
-                            1
-                        </div>
-                        <div>
-                            <div class="infoPlate cassette">
-                                1
-                            </div>
-                        </div>
-                        <div>
-                            <div class="infoPlate glass">
-                                1
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
         <div class="middle df fdc">
             <div class="top">
-                Скельця
+                Заключення
             </div>
             <div class="bottom df ">
                 <div class="conclusionContent">
-                    <div class="conclusionTop df aic jcsb">
-                        <div class="conclusionTopLabel">
-                            S25B01251
-                        </div>
-                        <div class="conclusionTopDate">
-                            27.03.2025
-                        </div>
+                    <div id="reportWrapper">
+
                     </div>
-                    <div class="conclusionFormGroup">
-                        <div class="conclusionFormGroupLabel">
-                            Макроопис
-                        </div>
-                        <input type="text" class="conclusionFormGroupInput">
+                    <div class="conclusionBottom" id="doctorSignModalBtn">
+                        Підписати
                     </div>
-                    <div class="conclusionFormGroup">
-                        <div class="conclusionFormGroupLabel">
-                            Мікроопис
-                        </div>
-                        <input type="text" class="conclusionFormGroupInput">
-                    </div>
-                    <div class="conclusionFormGroup">
-                        <div class="conclusionFormGroupLabel">
-                            Імуногістохімічний профіль
-                        </div>
-                        <input type="text" class="conclusionFormGroupInput">
-                    </div>
-                    <div class="conclusionFormGroup">
-                        <div class="conclusionFormGroupLabel">
-                            Молекулярно-генетичний профіль
-                        </div>
-                        <input type="text" class="conclusionFormGroupInput">
-                    </div>
-                    <div class="conclusionFormGroup">
-                        <div class="conclusionFormGroupLabel">
-                            Патоморфологічний діагноз
-                        </div>
-                        <input type="text" class="conclusionFormGroupInput">
-                    </div>
-                    <div class="conclusionFormGroup">
-                        <div class="conclusionFormGroupLabel">
-                            Код ICD
-                        </div>
-                        <input type="text" class="conclusionFormGroupInput" placeholder="ICD - №: код">
-                    </div>
-                    <div class="conclusionFormGroup">
-                        <div class="conclusionFormGroupLabel">
-                            Коментар
-                        </div>
-                        <input type="text" class="conclusionFormGroupInput">
-                    </div>
-                    <div class="conclusionBottom">
-                        Створити підпис
+                    <div class="conclusionActionBottom" style="margin-bottom: 20px">
+                        Оновити репорт
                     </div>
                 </div>
-                <div class="glassContent df">
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper active">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
+                <div class="glassContent df" id="reportGlassWrapper">
+
                 </div>
             </div>
         </div>
@@ -338,7 +110,8 @@
                     <div class="commentsWrapperTop">
                         Патогістологічний висновок
                     </div>
-                    <textarea></textarea>
+                    <textarea id="casePathohistologicalConclusion"></textarea>
+                    <button class="commentsWrapperButton">Зберегти</button>
                 </div>
             </div>
             <div style="height: 50%" class="df fdc">
@@ -346,13 +119,433 @@
                     <div class="commentsWrapperTop">
                         Мікроопис
                     </div>
-                    <textarea></textarea>
+                    <textarea id="caseMicroDescription"></textarea>
+                    <button class="commentsWrapperButton">Зберегти</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="doctorSign" class="modal">
+        <div class="modalWrapper">
+            <div class="modalTitle">Підпис</div>
+            <div class="modalContent">
+                <div>
+                    <div class="doctorSignImgList open">
+                        <div>
+                            <label for="signFile" class="doctorSignUpload">
+                                <svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M15 12L12 12M12 12L9 12M12 12L12 9M12 12L12 15" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"/>
+                                    <path d="M7 3.33782C8.47087 2.48697 10.1786 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 10.1786 2.48697 8.47087 3.33782 7" stroke="#1C274C" stroke-width="1.5" stroke-linecap="round"/>
+                                </svg>
+                                <input type="file" id="signFile" accept="image/*" style="display: none;">
+                            </label>
+                            <div class="doctorSignImgWrapper df fdc">
+
+                            </div>
+                        </div>
+                        <div class="df aic jcc gap4">
+                            <div class="doctorSignButton">
+                                Підписати
+                            </div>
+                            <div id="openCreateDoctorSign" class="doctorSignButton">
+                                Cтворити підпис
+                            </div>
+                        </div>
+                    </div>
+                    <div class="doctorSignCreate">
+                        <div id="clearDoctorSign">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="512px" height="512px" viewBox="0 0 512 512">
+                                <path d="M469 472c0,0 0,0 0,0l-462 0c-3,0 -6,-2 -7,-5 -1,-3 1,-6 3,-8l103 -69c1,-1 2,-1 4,-1l7 0c5,10 11,19 19,27 21,20 48,32 77,32 29,0 57,-12 77,-32l27 -27 59 0c1,0 3,0 4,1l92 69c2,1 3,3 3,6 0,4 -3,7 -6,7z" fill="#6C00FF"/>
+                                <path d="M213 439c-27,0 -52,-10 -70,-29 -39,-39 -39,-103 0,-142l12 -12 142 141 -13 13c-19,19 -44,29 -71,29zm77 -95c-2,0 -3,-1 -5,-2l-75 -75c-2,-3 -2,-7 0,-10l102 -102c2,-1 3,-2 5,-2 2,0 4,1 5,2l75 75c1,2 2,3 2,5 0,2 -1,4 -2,5l-102 102c-1,1 -3,2 -5,2zm-65 -82l65 66 93 -93 -66 -65 -92 92zm-60 -16l136 -136 141 141 -136 136 -141 -141zm146 -146l58 -58c1,-1 3,-2 5,-2 1,0 3,1 4,2l132 132c1,1 2,3 2,5 0,2 -1,3 -2,5l-58 58 -141 -142z" fill="#6C00FF"/>
+                            </svg>
+                        </div>
+                        <div id="closeDoctorSignDraw">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="800px" height="800px" viewBox="0 0 24 24" fill="none">
+                                <path d="M10.0303 8.96965C9.73741 8.67676 9.26253 8.67676 8.96964 8.96965C8.67675 9.26255 8.67675 9.73742 8.96964 10.0303L10.9393 12L8.96966 13.9697C8.67677 14.2625 8.67677 14.7374 8.96966 15.0303C9.26255 15.3232 9.73743 15.3232 10.0303 15.0303L12 13.0607L13.9696 15.0303C14.2625 15.3232 14.7374 15.3232 15.0303 15.0303C15.3232 14.7374 15.3232 14.2625 15.0303 13.9696L13.0606 12L15.0303 10.0303C15.3232 9.73744 15.3232 9.26257 15.0303 8.96968C14.7374 8.67678 14.2625 8.67678 13.9696 8.96968L12 10.9393L10.0303 8.96965Z" fill="#1C274C"/>
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 1.25C6.06294 1.25 1.25 6.06294 1.25 12C1.25 17.9371 6.06294 22.75 12 22.75C17.9371 22.75 22.75 17.9371 22.75 12C22.75 6.06294 17.9371 1.25 12 1.25ZM2.75 12C2.75 6.89137 6.89137 2.75 12 2.75C17.1086 2.75 21.25 6.89137 21.25 12C21.25 17.1086 17.1086 21.25 12 21.25C6.89137 21.25 2.75 17.1086 2.75 12Z" fill="#1C274C"/>
+                            </svg>
+                        </div>
+                        <canvas id="drawing-board" style="width: 100%"></canvas>
+                        <div class="df aic jcc gap4">
+                            <div id="createDoctorSign" class="doctorSignButton active">
+                                Cтворити підпис
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<script src="./js/general.js"></script>
+<script src="./js/modal.js"></script>
+<script>
+    const PATIENT_COR_ID = new URLSearchParams(window.location.search).get('userCorId')
+
+    let currentUserCorId = PATIENT_COR_ID || null;
+    let currentCase = null;
+    let currentReport = null;
+    let activeSign = null;
+    let activeGlasses = []
+
+    const reportGlassWrapperNODE = document.querySelector('#reportGlassWrapper')
+    const reportWrapperNODE = document.querySelector('#reportWrapper')
+    const caseContentNODE = document.querySelector("#caseItems");
+    const caseLabelNode = document.querySelector('#searchCaseId');
+    const caseMicroDescriptionTextareaNODE = document.querySelector('#caseMicroDescription');
+    const casePathohistologicalConclusionTextareaNODE = document.querySelector('#casePathohistologicalConclusion');
+
+    const changeMicroDescription  = () => {
+        caseMicroDescriptionTextareaNODE.nextElementSibling.addEventListener('click', () => {
+            fetch(`${API_BASE_URL}/api/doctor/microdescription/${currentCase.id}`, {
+                method: "PUT",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    microdescription: caseMicroDescriptionTextareaNODE.value.trim(),
+                })
+            })
+                .then(res => res.json())
+                .then(() => {
+                    alert('Мікро опис успішно оновлений')
+                })
+        })
+    }
+    const changePathohistologicalConclusion  = () => {
+        casePathohistologicalConclusionTextareaNODE.nextElementSibling.addEventListener('click', () => {
+            fetch(`${API_BASE_URL}/api/doctor/pathohistological_conclusion/${currentCase.id}`, {
+                method: "PUT",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    pathohistological_conclusion: casePathohistologicalConclusionTextareaNODE.value.trim(),
+                })
+            })
+                .then(res => res.json())
+                .then(() => {
+                    alert('Патогістологічний висновок успішно оновлений')
+                })
+        })
+    }
+
+    const setReport = (currentReport, workCase) => {
+        const formNODE = document.createElement('form')
+        formNODE.setAttribute("id", "reportForm")
+
+        const reportHTmL = `
+        <div class="conclusionTop df aic jcsb">
+            <div class="conclusionTopLabel">
+                ${workCase.case_code}
+            </div>
+            <div class="conclusionTopDate">
+                ${new Date(workCase.creation_date).toLocaleDateString()}
+            </div>
+        </div>
+        <div class="conclusionFormGroup"  style="opacity: .2; pointer-events: none">
+            <div class="conclusionFormGroupLabel">
+                Макроопис
+            </div>
+            <input type="text" class="conclusionFormGroupInput" value="${currentReport.macro_description_from_case_params || ""}">
+        </div>
+        <div class="conclusionFormGroup"  style="opacity: .2; pointer-events: none">
+            <div class="conclusionFormGroupLabel">
+                Мікроопис
+            </div>
+            <input type="text" class="conclusionFormGroupInput" value="-">
+        </div>
+        <div class="conclusionFormGroup">
+            <div class="conclusionFormGroupLabel">
+                Імуногістохімічний профіль
+            </div>
+            <input type="text" name="immunohistochemical_profile" class="conclusionFormGroupInput" value="${currentReport.immunohistochemical_profile || ""}">
+        </div>
+        <div class="conclusionFormGroup">
+            <div class="conclusionFormGroupLabel">
+                Молекулярно-генетичний профіль
+            </div>
+            <input type="text" name="molecular_genetic_profile" class="conclusionFormGroupInput" value="${currentReport.molecular_genetic_profile || ""}">
+        </div>
+        <div class="conclusionFormGroup">
+            <div class="conclusionFormGroupLabel">
+                Патоморфологічний діагноз
+            </div>
+            <input type="text" name="pathomorphological_diagnosis" class="conclusionFormGroupInput" value="${currentReport.pathomorphological_diagnosis || ""}">
+        </div>
+        <div class="conclusionFormGroup">
+            <div class="conclusionFormGroupLabel">
+                Код ICD
+            </div>
+            <input type="text" name="icd_code" class="conclusionFormGroupInput" placeholder="ICD - №: код" value="${currentReport.icd_code || ""}">
+        </div>
+        <div class="conclusionFormGroup">
+            <div class="conclusionFormGroupLabel">
+                Коментар
+            </div>
+            <input type="text" name="comment" class="conclusionFormGroupInput" value="${currentReport.comment || ""}">
+        </div>
+        `
+
+        formNODE.innerHTML = reportHTmL
+        reportWrapperNODE.append(formNODE)
+
+        sendReportHandler()
+    }
+    const setReportGlasses = (currentGlassReport, activeGlassReport) => {
+        const allGlasses = currentGlassReport.samples.reduce((allGlasses, sample) => {
+            const allCassetteGlasses = sample.cassettes.reduce((allCassetteGlasses, cassette) => {
+                return [
+                    ...allCassetteGlasses,
+                    ...cassette.glasses.map((currentGlass) => ({
+                        ...currentGlass,
+                        cassette_number: cassette.cassette_number
+                    }))
+                ]
+            }, [])
+
+            return [...allGlasses, ...allCassetteGlasses]
+        }, [])
+
+        allGlasses.forEach((currentGlass) => {
+            reportGlassWrapperNODE.append(glassTemplate(currentGlass, activeGlassReport))
+        })
+
+        currentGlasses = allGlasses;
+    }
+    const setAllCases = () => {
+        const currentRoutePart = PATIENT_COR_ID ? `patients/${PATIENT_COR_ID}` : `current_cases`;
+        fetch(`${API_BASE_URL}/api/doctor/${currentRoutePart}/report-page-data`, {
+            method: "GET",
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            },
+        })
+            .then(res => res.json())
+            .then(cases => {
+                const {all_cases, last_case_for_report, report_details, all_glasses_for_last_case} = cases;
+                all_cases.forEach((currentCase, index) => {
+                    caseContentNODE.append(caseTemplate(currentCase, !index))
+                })
+
+                currentCase = last_case_for_report;
+                currentReport = report_details;
+                activeGlasses = report_details.attached_glasses
+                currentUserCorId = last_case_for_report.patient_id
+
+                setReport(report_details, last_case_for_report);
+                setReportGlasses(all_glasses_for_last_case, report_details.attached_glasses)
+
+                caseLabelNode.innerHTML = last_case_for_report.case_code
+                caseMicroDescriptionTextareaNODE.value = last_case_for_report.microdescription || ""
+                casePathohistologicalConclusionTextareaNODE.value = last_case_for_report.pathohistological_conclusion || ""
+
+                fetch(`${API_BASE_URL}/api/doctor/patients/${last_case_for_report.patient_id}`, {
+                    method: "GET",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    },
+                })
+                    .then(res => res.json())
+                    .then(userData => {
+                        document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
+                        document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
+                        document.querySelector('#userAge').innerHTML = `${userData.age}р`;
+                    })
+            })
+    }
+
+    const caseTemplate = (workCase, isActive) => {
+        const caseNewNODE = document.createElement('div');
+        caseNewNODE.classList.add('caseItem', 'df', 'aic', 'jcsb', ...(isActive ? ['active'] : []));
+        caseNewNODE.innerHTML = `
+            <div>
+                <div class="caseItemDate">${new Date(workCase.creation_date).toLocaleDateString()}</div>
+                <div class="caseItemLabel">${workCase.case_code}</div>
+            </div>
+            <div class="caseItemSample df aic jcc">
+                ${workCase.bank_count}
+            </div>
+            <div>
+                <div class="infoPlate cassette">
+                    ${workCase.cassette_count}
+                </div>
+            </div>
+            <div>
+                <div class="infoPlate glass">
+                    ${workCase.glass_count}
+                </div>
+            </div>
+        `;
+
+        caseNewNODE.addEventListener("click", () => {
+            fetch(`${API_BASE_URL}/api/doctor/cases/${workCase.id}/report`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                },
+            })
+                .then(res => res.json())
+                .then(caseData => {
+                    const {report_details, all_glasses_for_last_case, last_case_for_report} = caseData;
+
+                    document.querySelector('.caseItem.active').classList.remove('active')
+                    caseNewNODE.classList.add('active')
+
+                    reportWrapperNODE.innerHTML = ""
+                    reportGlassWrapperNODE.innerHTML = ""
+
+                    currentCase = last_case_for_report;
+                    currentReport = report_details;
+                    activeGlasses = report_details.attached_glasses
+                    currentUserCorId = last_case_for_report.patient_id
+
+                    setReport(report_details, last_case_for_report);
+                    setReportGlasses(all_glasses_for_last_case, report_details.attached_glasses)
+
+                    caseLabelNode.innerHTML = last_case_for_report.case_code
+                    caseMicroDescriptionTextareaNODE.value = last_case_for_report.microdescription || ""
+                    casePathohistologicalConclusionTextareaNODE.value = last_case_for_report.pathohistological_conclusion || ""
+
+                    fetch(`${API_BASE_URL}/api/doctor/patients/${last_case_for_report.patient_id}`, {
+                        method: "GET",
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                        },
+                    })
+                        .then(res => res.json())
+                        .then(userData => {
+                            document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
+                            document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
+                            document.querySelector('#userAge').innerHTML = `${userData.age}р`;
+                        })
+                })
+        });
+        return caseNewNODE
+    }
+    const glassTemplate = (currentGlass, activeGlass) => {
+        const activeGlassIds = activeGlass.map(({id}) => id)
+        const glassNewNODE = document.createElement('div');
+        glassNewNODE.classList = `glassWrapper ${activeGlassIds.includes(currentGlass.id) ? "active" : ""}`;
+
+        glassNewNODE.innerHTML = `
+            <div class="glassWrapperImg">
+                <img src="./assets/glassPreview.png" alt="glass">
+            </div>
+            <div class="glassWrapperText">
+                ${currentGlass.cassette_number} ??L0 H&E???
+            </div>
+        `;
+
+        glassNewNODE.addEventListener("click", () => {
+            const isActiveGlass =  glassNewNODE.classList.contains('active');
+            const actionMethod = isActiveGlass ? "remove" : "add"
+
+            glassNewNODE.classList[actionMethod]('active')
+
+            if(isActiveGlass){
+                activeGlasses = activeGlasses.filter(glass => glass.id !== currentGlass.id)
+            }
+
+            if(!isActiveGlass){
+                activeGlasses = [...activeGlasses, currentGlass];
+            }
+        });
+
+        return glassNewNODE
+    }
+
+    const sendReportHandler = () => {
+        document.querySelector('.conclusionActionBottom').addEventListener('click', () => {
+
+            const formNODE = document.querySelector('#reportForm');
+            const formData = Object.fromEntries(new FormData(formNODE).entries());
+
+            fetch(`${API_BASE_URL}/api/doctor/cases/${currentCase.id}/report/upsert`, {
+                method: "PUT",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    ...formData,
+                    attached_glass_ids: activeGlasses.map(({id}) => id)
+                })
+            })
+                .then(res => res.json())
+                .then(() => {
+                    alert('Заключення успішно створенно')
+                })
+
+        })
+    }
+
+    const switchRole = () => {
+        document.querySelector('.role-toggle .role-btn:not(.active)').addEventListener('click', (e) => {
+            window.location.href = `/static/lab.html?userCorId=${currentUserCorId}`
+        })
+    }
+    const goToTab = () => {
+        document.querySelectorAll(".tabs .tab:not(.active)").forEach(elem => {
+            elem.addEventListener('click', e => {
+                console.log(currentCase, "currentCase")
+                const element = e.currentTarget;
+                let queryString = []
+
+                if(PATIENT_COR_ID){
+                    queryString.push(`userCorId=${PATIENT_COR_ID}`)
+                }
+
+                if(currentCase?.id){
+                    queryString.push(`caseId=${currentCase?.id}`)
+                }
+
+
+                if(element.classList.contains('directionPage')){
+                    window.location.href = `/static/direction.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('tenderloinPage')){
+                    window.location.href = `/static/tenderloin.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('glassPage')){
+                    window.location.href = `/static/glass.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('conclusionPage')){
+                    window.location.href = `/static/conclusion.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('explorationPage')){
+                    window.location.href = `/static/exploration.html?${queryString.join('&')}`
+                }
+            })
+        })
+    }
+    const revertButtonHandler = () => {
+        const revertButtonNODE = document.querySelector('.glassPageRevert');
+        if(PATIENT_COR_ID){
+            revertButtonNODE.style.display = "block"
+        }
+
+        revertButtonNODE.addEventListener('click', () => {
+            window.location.href = `/static/conclusion.html`
+        })
+    }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", (event) => {
+        goToTab()
+        switchRole()
+        setAllCases()
+        changeMicroDescription()
+        revertButtonHandler()
+        changePathohistologicalConclusion()
+        showTextareaButton('caseMicroDescription')
+        showTextareaButton('casePathohistologicalConclusion')
+    });
+</script>
+<script type="module" src="./js/doctorSignModal.js"></script>
 
 </body>
 </html>

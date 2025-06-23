@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="./css/infoPlate.css">
     <link rel="stylesheet" href="./css/comments.css">
     <link rel="stylesheet" href="./css/header.css">
-<!--    <link rel="stylesheet" href="./css/index.css">-->
-<!--    <link rel="stylesheet" href="./css/case.css">-->
+    <!--    <link rel="stylesheet" href="./css/index.css">-->
+    <!--    <link rel="stylesheet" href="./css/case.css">-->
     <link rel="stylesheet" href="./css/glass.css">
 </head>
 <body>
@@ -33,21 +33,19 @@
                     </svg>
                 </button>
                 <div class="role-toggle">
-                    <button class="role-btn">Лікар</button>
-                </div>
-                <div class="role-toggle">
-                    <button class="role-btn">Лаборант</button>
+                    <button class="role-btn doc active">Лікар</button>
+                    <button class="role-btn lab">Лаборант</button>
                 </div>
             </div>
         </div>
         <div class="header-row bottom">
             <div>
                 <div class="tabs">
-                    <button class="tab">Направлення</button>
-                    <button class="tab">Вирізка</button>
-                    <button class="tab active">Скельця</button>
-                    <button class="tab">Заключення</button>
-                    <button class="tab">Дослідження</button>
+                    <button class="tab directionPage">Направлення</button>
+                    <button class="tab tenderloinPage">Вирізка</button>
+                    <button class="tab glassPage active">Скельця</button>
+                    <button class="tab conclusionPage">Заключення</button>
+                    <button class="tab explorationPage">Дослідження</button>
                 </div>
             </div>
             <div class="meta-info">
@@ -60,221 +58,47 @@
                         </svg>
                     </button>
                 </div>
-                <div>Кукліс Олег Геннадійович</div>
-                <div>Чол</div>
-                <div>65р</div>
+                <div id="userName"></div>
+                <div id="userGender"></div>
+                <div id="userAge"></div>
             </div>
         </div>
     </div>
     <div class="glassPageContent df jcsb">
         <div class="left">
-            <div class="top borderRadiusLeft">
-                Поточні кейси
+            <div class="top borderRadiusLeft df jcsb">
+                <div>
+                    Поточні кейси
+                </div>
+                <div class="glassPageRevert" style="display: none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="800px" height="800px" viewBox="0 0 24 24">
+                        <path fill="none" stroke="#000000" stroke-width="2" d="M8,3 L3,8 L8,13 M12,20 L15,20 C18.3137085,20 21,17.3137085 21,14 C21,10.6862915 18.3137085,8 15,8 L4,8"/>
+                    </svg>
+                </div>
             </div>
             <div class="bottom">
                 <div id="caseItems" class="caseItems">
-                    <div class="caseItem df aic jcsb">
-                        <div>
-                            <div class="caseItemDate">27.03.2025</div>
-                            <div class="caseItemLabel">S25B01251</div>
-                        </div>
-                        <div class="caseItemSample df aic jcc">
-                            1
-                        </div>
-                        <div>
-                            <div class="infoPlate cassette">
-                                1
-                            </div>
-                        </div>
-                        <div>
-                            <div class="infoPlate glass">
-                                1
-                            </div>
-                        </div>
-                    </div>
-                    <div class="caseItem df aic jcsb">
-                        <div>
-                            <div class="caseItemDate">27.03.2025</div>
-                            <div class="caseItemLabel">S25B01251</div>
-                        </div>
-                        <div class="caseItemSample df aic jcc">
-                            1
-                        </div>
-                        <div>
-                            <div class="infoPlate cassette">
-                                1
-                            </div>
-                        </div>
-                        <div>
-                            <div class="infoPlate glass">
-                                1
-                            </div>
-                        </div>
-                    </div>
-                    <div class="caseItem df active aic jcsb">
-                        <div>
-                            <div class="caseItemDate">27.03.2025</div>
-                            <div class="caseItemLabel">S25B01251</div>
-                        </div>
-                        <div class="caseItemSample df aic jcc">
-                            1
-                        </div>
-                        <div>
-                            <div class="infoPlate cassette">
-                                1
-                            </div>
-                        </div>
-                        <div>
-                            <div class="infoPlate glass">
-                                1
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
         <div class="middle df fdc">
-            <div class="top">
-                Скельця
+            <div class="top df aic jcsb">
+                <div>
+                    Скельця
+                </div>
+                <div class="topActions df aic">
+                    <div class="topActionsItem">
+                        Відкрити всі
+                    </div>
+                    <div class="topActionsItem" id="activeGlassCount" style="display: none">
+                        Відкрити відібрані (<span>0</span>)
+                    </div>
+                </div>
             </div>
             <div class="bottom df ">
-                <div class="glassContent df">
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper active">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
-                    <div class="glassWrapper">
-                        <div class="glassWrapperImg">
-                            <img src="./assets/glassPreview.png" alt="glass">
-                        </div>
-                        <div class="glassWrapperText">
-                            A1 L0 H&E
-                        </div>
-                    </div>
+                <div id="glassItems" class="glassContent df">
+
                 </div>
             </div>
         </div>
@@ -284,7 +108,8 @@
                     <div class="commentsWrapperTop">
                         Патогістологічний висновок
                     </div>
-                    <textarea></textarea>
+                    <textarea id="casePathohistologicalConclusion"></textarea>
+                    <button class="commentsWrapperButton">Зберегти</button>
                 </div>
             </div>
             <div style="height: 50%" class="df fdc">
@@ -292,12 +117,295 @@
                     <div class="commentsWrapperTop">
                         Мікроопис
                     </div>
-                    <textarea></textarea>
+                    <textarea id="caseMicroDescription"></textarea>
+                    <button class="commentsWrapperButton">Зберегти</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script src="./js/general.js"></script>
+<script>
+    const PATIENT_COR_ID = new URLSearchParams(window.location.search).get('userCorId')
+
+    let currentUserCorId = PATIENT_COR_ID || null;
+    let currentCase = null;
+    let currentGlasses = null;
+    let activeGlasses = []
+
+    const caseContentNODE = document.querySelector("#caseItems");
+    const glassContentNODE = document.querySelector("#glassItems");
+    const activeGlassCountNode = document.querySelector('#activeGlassCount');
+    const caseLabelNode = document.querySelector('#searchCaseId');
+    const caseMicroDescriptionTextareaNODE = document.querySelector('#caseMicroDescription');
+    const casePathohistologicalConclusionTextareaNODE = document.querySelector('#casePathohistologicalConclusion');
+
+    const changeMicroDescription  = () => {
+        caseMicroDescriptionTextareaNODE.nextElementSibling.addEventListener('click', () => {
+            fetch(`${API_BASE_URL}/api/doctor/microdescription/${currentCase.id}`, {
+                method: "PUT",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    microdescription: caseMicroDescriptionTextareaNODE.value.trim(),
+                })
+            })
+                .then(res => res.json())
+                .then(() => {
+                    alert('Мікро опис успішно оновлений')
+                })
+        })
+    }
+    const changePathohistologicalConclusion  = () => {
+        casePathohistologicalConclusionTextareaNODE.nextElementSibling.addEventListener('click', () => {
+            fetch(`${API_BASE_URL}/api/doctor/pathohistological_conclusion/${currentCase.id}`, {
+                method: "PUT",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    pathohistological_conclusion: casePathohistologicalConclusionTextareaNODE.value.trim(),
+                })
+            })
+                .then(res => res.json())
+                .then(() => {
+                    alert('Патогістологічний висновок успішно оновлений')
+                })
+        })
+    }
+
+    const caseTemplate = (workCase, isActive) => {
+        const caseNewNODE = document.createElement('div');
+        caseNewNODE.classList.add('caseItem', 'df', 'aic', 'jcsb', ...(isActive ? ['active'] : []));
+        caseNewNODE.innerHTML = `
+            <div>
+                <div class="caseItemDate">${new Date(workCase.creation_date).toLocaleDateString()}</div>
+                <div class="caseItemLabel">${workCase.case_code}</div>
+            </div>
+            <div class="caseItemSample df aic jcc">
+                ${workCase.bank_count}
+            </div>
+            <div>
+                <div class="infoPlate cassette">
+                    ${workCase.cassette_count}
+                </div>
+            </div>
+            <div>
+                <div class="infoPlate glass">
+                    ${workCase.glass_count}
+                </div>
+            </div>
+        `;
+
+        caseNewNODE.addEventListener("click", () => {
+            fetch(`${API_BASE_URL}/api/doctor/cases/${workCase.id}/glass-details`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                },
+            })
+                .then(res => res.json())
+                .then(caseData => {
+                    const {single_case_for_glass_page} = caseData;
+                    document.querySelector('.caseItem.active').classList.remove('active')
+                    caseNewNODE.classList.add('active')
+
+                    glassContentNODE.innerHTML = '';
+                    setAllGlasses(single_case_for_glass_page)
+                    currentCase = single_case_for_glass_page
+                    currentUserCorId = single_case_for_glass_page.patient_cor_id
+
+                    caseLabelNode.innerHTML = single_case_for_glass_page.case_code
+                    caseMicroDescriptionTextareaNODE.value = single_case_for_glass_page.microdescription || ""
+                    casePathohistologicalConclusionTextareaNODE.value = single_case_for_glass_page.pathohistological_conclusion || ""
+
+                    activeGlasses = []
+                    activeGlassCountNode.style.display = "none";
+
+
+                    fetch(`${API_BASE_URL}/api/doctor/patients/${single_case_for_glass_page.patient_cor_id}`, {
+                        method: "GET",
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                        },
+                    })
+                        .then(res => res.json())
+                        .then(userData => {
+                            document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
+                            document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
+                            document.querySelector('#userAge').innerHTML = `${userData.age}р`;
+
+                        })
+                })
+        });
+        return caseNewNODE
+    }
+    const glassTemplate = (currentGlass) => {
+        const glassNewNODE = document.createElement('div');
+        glassNewNODE.classList.add("glassWrapper");
+        glassNewNODE.innerHTML = `
+            <div class="glassWrapperImg">
+                <img src="./assets/glassPreview.png" alt="glass">
+            </div>
+            <div class="glassWrapperText">
+                ${currentGlass.cassette_number} L${currentGlass.glass_number}? ${currentGlass.staining}
+            </div>
+        `;
+
+        glassNewNODE.addEventListener("click", () => {
+            const isActiveGlass =  glassNewNODE.classList.contains('active');
+            const actionMethod = isActiveGlass ? "remove" : "add"
+
+            glassNewNODE.classList[actionMethod]('active')
+
+            const countActiveGlass = document.querySelectorAll('.glassWrapper.active').length
+            activeGlassCountNode.style.display = countActiveGlass ? "block" : "none";
+            activeGlassCountNode.querySelector('span').innerHTML = countActiveGlass;
+
+            if(isActiveGlass){
+                activeGlasses = activeGlasses.filter(glass => glass.id !== currentGlass.id)
+            }
+
+            if(!isActiveGlass){
+                activeGlasses = [...activeGlasses, currentGlass];
+            }
+        });
+
+        return glassNewNODE
+    }
+
+    const setAllGlasses = (currentCase) => {
+        const allGlasses = currentCase.samples.reduce((allGlasses, sample) => {
+            const allCassetteGlasses = sample.cassettes.reduce((allCassetteGlasses, cassette) => {
+                return [
+                    ...allCassetteGlasses,
+                    ...cassette.glasses.map((currentGlass) => ({
+                        ...currentGlass,
+                        cassette_number: cassette.cassette_number
+                    }))
+                ]
+            }, [])
+
+            return [...allGlasses, ...allCassetteGlasses]
+        }, [])
+
+        allGlasses.forEach((currentGlass) => {
+            glassContentNODE.append(glassTemplate(currentGlass))
+        })
+
+        currentGlasses = allGlasses;
+    }
+    const setAllCases = () => {
+        const currentRoutePart = PATIENT_COR_ID ? `patients/${PATIENT_COR_ID}` : `current_cases`
+
+        fetch(`${API_BASE_URL}/api/doctor/${currentRoutePart}/glass-details`, {
+            method: "GET",
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            },
+        })
+            .then(res => res.json())
+            .then(cases => {
+                const {all_cases, first_case_details_for_glass} = cases;
+                all_cases.forEach((currentCase, index) => {
+                    caseContentNODE.append(caseTemplate(currentCase, !index))
+                })
+
+                if(!first_case_details_for_glass){
+                    return;
+                }
+
+                currentCase = first_case_details_for_glass;
+                currentUserCorId = first_case_details_for_glass.patient_cor_id
+                setAllGlasses(first_case_details_for_glass)
+
+                caseLabelNode.innerHTML = first_case_details_for_glass.case_code
+                caseMicroDescriptionTextareaNODE.value = first_case_details_for_glass.microdescription || ""
+                casePathohistologicalConclusionTextareaNODE.value = first_case_details_for_glass.pathohistological_conclusion || ""
+
+                fetch(`${API_BASE_URL}/api/doctor/patients/${first_case_details_for_glass.patient_cor_id}`, {
+                    method: "GET",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    },
+                })
+                    .then(res => res.json())
+                    .then(userData => {
+                        document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
+                        document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
+                        document.querySelector('#userAge').innerHTML = `${userData.age}р`;
+
+                    })
+            })
+
+    }
+
+    const switchRole = () => {
+        document.querySelector('.role-toggle .role-btn:not(.active)').addEventListener('click', (e) => {
+            window.location.href = `/static/lab.html?userCorId=${currentUserCorId}`
+        })
+    }
+    const goToTab = () => {
+        document.querySelectorAll(".tabs .tab:not(.active)").forEach(elem => {
+            elem.addEventListener('click', e => {
+                console.log(currentCase, "currentCase")
+                const element = e.currentTarget;
+                let queryString = []
+
+                if(PATIENT_COR_ID){
+                    queryString.push(`userCorId=${PATIENT_COR_ID}`)
+                }
+
+                if(currentCase?.id){
+                    queryString.push(`caseId=${currentCase?.id}`)
+                }
+
+
+                if(element.classList.contains('directionPage')){
+                    window.location.href = `/static/direction.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('tenderloinPage')){
+                    window.location.href = `/static/tenderloin.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('glassPage')){
+                    window.location.href = `/static/glass.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('conclusionPage')){
+                    window.location.href = `/static/conclusion.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('explorationPage')){
+                    window.location.href = `/static/exploration.html?${queryString.join('&')}`
+                }
+            })
+        })
+    }
+    const revertButtonHandler = () => {
+        const revertButtonNODE = document.querySelector('.glassPageRevert');
+        if(PATIENT_COR_ID){
+            revertButtonNODE.style.display = "block"
+        }
+
+        revertButtonNODE.addEventListener('click', () => {
+            window.location.href = `/static/glass.html`
+        })
+    }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", (event) => {
+        goToTab()
+        switchRole()
+        setAllCases()
+        revertButtonHandler()
+        changeMicroDescription()
+        changePathohistologicalConclusion()
+        showTextareaButton('caseMicroDescription')
+        showTextareaButton('casePathohistologicalConclusion')
+    });
+</script>
 
 
 </body>

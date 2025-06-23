@@ -14,6 +14,8 @@ from datetime import datetime
 from cor_pass.database import models
 from cor_pass.database.models import (
     AccessLevel,
+    PatientClinicStatus,
+    PatientStatus,
     Status,
     Doctor_Status,
     AuthSessionStatus,
@@ -145,6 +147,7 @@ class UserSessionModel(BaseModel):
     device_os: str
     refresh_token: str
     jti: str
+    access_token: str
 
 
 class UserSessionResponseModel(BaseModel):
@@ -390,7 +393,7 @@ class DoctorWithRelationsResponse(BaseModel):
     work_email: str
     phone_number: Optional[str]
     first_name: Optional[str]
-    surname: Optional[str]
+    middle_name: Optional[str]
     last_name: Optional[str]
     doctors_photo: Optional[str] = Field(None, description="Ссылка на фото")
     scientific_degree: Optional[str]
@@ -414,7 +417,7 @@ class DoctorCreate(BaseModel):
     )
     phone_number: Optional[str] = Field(None, description="Номер телефона")
     first_name: str = Field(..., description="Имя врача")
-    surname: str = Field(..., description="Отчество врача")
+    middle_name: str = Field(..., description="Отчество врача")
     last_name: str = Field(..., description="Фамилия врача")
     passport_code: str = Field(..., description="Номер паспорта")
     taxpayer_identification_number: str = Field(..., description="ИНН")
@@ -433,7 +436,7 @@ class DoctorCreate(BaseModel):
                 "work_email": "doctor@example.com",
                 "phone_number": "+3806666666",
                 "first_name": "John",
-                "surname": "Doe",
+                "middle_name": "Doe",
                 "last_name": "Smith",
                 "passport_code": "CN123456",
                 "taxpayer_identification_number": "1234567890",
@@ -474,7 +477,7 @@ class DoctorResponse(BaseModel):
     work_email: EmailStr = Field(..., description="Рабочий имейл")
     phone_number: Optional[str] = Field(None, description="Номер телефона")
     first_name: Optional[str] = Field(None, description="Имя врача")
-    surname: Optional[str] = Field(None, description="Отчество врача")
+    middle_name: Optional[str] = Field(None, description="Отчество врача")
     last_name: Optional[str] = Field(None, description="Фамилия врача")
     doctors_photo: Optional[str] = Field(None, description="Ссылка на фото врача")
     scientific_degree: Optional[str] = Field(None, description="Научная степень")
@@ -490,6 +493,27 @@ class DoctorResponse(BaseModel):
         from_attributes = True
         arbitrary_types_allowed = True
 
+class DoctorResponseForSignature(BaseModel):
+    id: str = Field(..., description="ID врача")
+    doctor_id: str = Field(..., description="COR-ID врача")
+    work_email: EmailStr = Field(..., description="Рабочий имейл")
+    phone_number: Optional[str] = Field(None, description="Номер телефона")
+    first_name: Optional[str] = Field(None, description="Имя врача")
+    middle_name: Optional[str] = Field(None, description="Отчество врача")
+    last_name: Optional[str] = Field(None, description="Фамилия врача")
+    # doctors_photo: Optional[str] = Field(None, description="Ссылка на фото врача")
+    # scientific_degree: Optional[str] = Field(None, description="Научная степень")
+    # date_of_last_attestation: Optional[date] = Field(
+    #     None, description="Дата последней атестации"
+    # )
+    # status: Doctor_Status
+    # place_of_registration: Optional[str] = Field(None, description="Место прописки")
+    # passport_code: Optional[str] = Field(None, description="Номер паспорта")
+    # taxpayer_identification_number: Optional[str] = Field(None, description="ИНН")
+
+    class Config:
+        from_attributes = True
+        arbitrary_types_allowed = True
 
 class DoctorCreateResponse(BaseModel):
     id: str = Field(..., description="ID врача")
@@ -497,7 +521,7 @@ class DoctorCreateResponse(BaseModel):
     work_email: EmailStr = Field(..., description="Рабочий имейл")
     phone_number: Optional[str] = Field(None, description="Номер телефона")
     first_name: str = Field(..., description="Имя врача")
-    surname: str = Field(..., description="Отчество врача")
+    middle_name: str = Field(..., description="Отчество врача")
     last_name: str = Field(..., description="Фамилия врача")
     scientific_degree: Optional[str] = Field(None, description="Научная степень")
     date_of_last_attestation: Optional[date] = Field(
@@ -594,6 +618,16 @@ class PatientResponce(BaseModel):
     status: Optional[str]
 
 
+class PatientDecryptedResponce(BaseModel):
+    patient_cor_id: str
+    surname: Optional[str] = None
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    sex: Optional[str]
+    birth_date: Optional[Union[date, int]] = None
+    age: Optional[int] = None
+    status: Optional[PatientStatus] = None
+
 class PaginatedPatientsResponse(BaseModel):
     items: List[PatientResponce]
     total: int
@@ -630,10 +664,6 @@ class ExistingPatientAdd(BaseModel):
 
 # Модели для лабораторных исследований
 
-# class GrossingStatus(str, Enum):
-#     processing = "processing"
-#     completed = "completed"
-
 
 class GlassBase(BaseModel):
     glass_number: int
@@ -653,6 +683,13 @@ class GlassCreate(BaseModel):
 class Glass(GlassBase):
     id: str
     cassette_id: str
+
+    class Config:
+        from_attributes = True
+
+class GlassForGlassPage(GlassBase):
+    id: str
+    # cassette_id: str
 
     class Config:
         from_attributes = True
@@ -715,6 +752,15 @@ class Cassette(CassetteBase):
     class Config:
         from_attributes = True
 
+class CassetteForGlassPage(BaseModel):
+    # id: str
+    # sample_id: str
+    cassette_number: str
+    glasses: List[Glass] = []
+
+    class Config:
+        from_attributes = True
+
 
 class DeleteCassetteRequest(BaseModel):
     cassette_ids: List[str]
@@ -730,6 +776,16 @@ class Sample(SampleBase):
     case_id: str
     macro_description: Optional[str] = None
     cassettes: List[Cassette] = []
+
+    class Config:
+        from_attributes = True
+
+class SampleForGlassPage(BaseModel):
+    # id: str
+    # case_id: str
+    # macro_description: Optional[str] = None
+    sample_number: str
+    cassettes: List[CassetteForGlassPage] = []
 
     class Config:
         from_attributes = True
@@ -806,9 +862,9 @@ class Case(BaseModel):
     bank_count: int
     cassette_count: int
     glass_count: int
-    # samples: List = []  # Связь с банками
-    # directions: List = []
-    # case_parameters: Optional[List] = None
+    pathohistological_conclusion: Optional[str] = None
+    microdescription: Optional[str] = None
+    grossing_status: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -850,6 +906,9 @@ class CaseParametersScheema(BaseModel):
     fixation: FixationType
     macro_description: Optional[str]
 
+    class Config:
+        from_attributes = True
+
 
 class SampleWithoutCassettesSchema(BaseModel):
     id: str
@@ -868,6 +927,8 @@ class CaseDetailsResponse(BaseModel):
     bank_count: int
     cassette_count: int
     glass_count: int
+    pathohistological_conclusion: Optional[str] = None
+    microdescription: Optional[str] = None
     samples: List[SampleWithoutCassettesSchema | Sample]
 
 
@@ -878,6 +939,8 @@ class SimpleCaseResponse(BaseModel):
     bank_count: int
     cassette_count: int
     glass_count: int
+    pathohistological_conclusion: Optional[str] = None
+    microdescription: Optional[str] = None
 
 
 class CaseListResponse(BaseModel):
@@ -921,18 +984,6 @@ class GenerateManufacturedDevices(BaseModel):
 
 
 # Модели для принтеров
-
-
-"""
-    device_class = Column(String, nullable=False)
-    device_identifier = Column(String, nullable=False, unique=True, index=True)
-    subnet_mask = Column(String, nullable=True)
-    gateway = Column(String, nullable=True)
-    ip_address = Column(String, nullable=False)
-    port = Column(Integer, nullable=True)
-    comment = Column(String, nullable=True)
-    location = Column(String, nullable=True)
-"""
 
 
 class CreatePrintingDevice(BaseModel):
@@ -979,39 +1030,24 @@ class PrintRequest(BaseModel):
     labels: List[Label]
 
 
-
-
-#Схемы для направлений 
-
-# Для использования ResearchType в Pydantic
-# class StudyType(str, Enum):
-#     CYTOLOGY = "Цитология"
-#     PATHOHISTOLOGY = "Патогистология"
-#     IMMUNOHISTOCHEMISTRY = "Иммуногистохимия"
-#     FISH_CISH = "FISH/CISH"
-
-# Схема для прикрепленного файла в ответе
 class ReferralAttachmentResponse(BaseModel):
     id: str
     filename: str
     content_type: str
-    # Вместо file_data будем возвращать URL для получения файла
     file_url: Optional[str] = Field(None, description="URL файла")
 
     class Config:
-        from_attributes = True # Для совместимости с SQLAlchemy
+        from_attributes = True 
 
-# Схема для создания прикрепленного файла (для внутреннего использования или если вы принимаете base64)
-# В случае загрузки через Form-Data, эта схема не всегда напрямую используется для приема данных.
+
 class ReferralAttachmentCreate(BaseModel):
     filename: str
     content_type: str
-    file_data: bytes # Принимаем байты, если это не Form-Data загрузка
+    file_data: bytes 
 
-# Схема для создания Направления
+
 class ReferralCreate(BaseModel):
     case_id: str = Field(..., description="ID связанного кейса")
-    case_number: str = Field(..., description="Номер кейса")
     research_type: Optional[StudyType] = Field(None, description="Вид исследования")
     container_count: Optional[int] = Field(None, description="Фактическое количество контейнеров")
     medical_card_number: Optional[str] = Field(None, description="Номер медкарты")
@@ -1025,7 +1061,7 @@ class ReferralCreate(BaseModel):
     final_report_delivery: Optional[str] = Field(None, description="Финальный репорт отправить")
     issued_at: Optional[date] = Field(None, description="Выдано (дата)")
 
-# Схема для ответа Направления (что возвращает API)
+
 class ReferralResponse(BaseModel):
     id: str
     case_id: str
@@ -1048,9 +1084,21 @@ class ReferralResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class ReferralResponseForDoctor(BaseModel):
+    case_details: Optional[Case]
+    referral_id: Optional[str] = Field(..., description="Referral ID")
+    # case_id: str = Field(..., description="Сase ID")
+    # case_number: str = Field(..., description="Сase Code")
+    # pathohistological_conclusion: Optional[str] = None
+    # microdescription: Optional[str] = None
+    attachments: Optional[List[ReferralAttachmentResponse]] = [] # Список прикрепленных файлов
+    
+
+    class Config:
+        from_attributes = True
+
 
 class ReferralUpdate(BaseModel):
-    # case_id не включаем сюда, так как по нему мы ищем
     case_number: Optional[str] = None
     research_type: Optional[str] = None
     container_count: Optional[int] = None
@@ -1105,10 +1153,449 @@ class DeleteMyAccount(BaseModel):
 
 
 class FullUserInfoResponse(BaseModel):
-    user_info: UserDb # user_info всегда будет присутствовать
-    user_roles: Optional[List[str]] = None # Список ролей, может отсутствовать
-    profile: Optional[ProfileResponse] = None # Профиль, может отсутствовать
-    doctor_info: Optional[DoctorWithRelationsResponse] = None # Информация о докторе, может отсутствовать
-
+    user_info: UserDb 
+    user_roles: Optional[List[str]] = None 
+    profile: Optional[ProfileResponse] = None 
+    doctor_info: Optional[DoctorWithRelationsResponse] = None 
     class Config:
         from_attributes = True 
+
+class UserDataResponse(BaseModel):
+    user_info: UserDb 
+    class Config:
+        from_attributes = True 
+
+class UserProfileResponseForAdmin(BaseModel):
+    profile: Optional[ProfileResponse] = None 
+    class Config:
+        from_attributes = True 
+
+class UserDoctorsDataResponseForAdmin(BaseModel):
+    doctor_info: Optional[DoctorWithRelationsResponse] = None 
+    class Config:
+        from_attributes = True 
+
+class UserRolesResponseForAdmin(BaseModel):
+    user_roles: Optional[List[str]] = None 
+    class Config:
+        from_attributes = True 
+
+class ReferralFileSchema(BaseModel):
+    id: Optional[str] = None 
+    file_name: Optional[str] = None 
+    file_type: Optional[str] = None 
+    file_url: Optional[str] = None 
+
+    class Config:
+        from_attributes = True
+
+
+class FirstCaseReferralDetailsSchema(BaseModel):
+    id: str
+    case_code: str
+    creation_date: datetime
+    pathohistological_conclusion: Optional[str] = None
+    microdescription: Optional[str] = None
+    general_macrodescription: Optional[str] = None
+    grossing_status: Optional[str] = None
+    patient_cor_id: Optional[str] = None
+   
+    attachments: Optional[List[ReferralFileSchema]] = None 
+
+    class Config:
+        from_attributes = True
+
+
+class PatientCasesWithReferralsResponse(BaseModel):
+    all_cases: List[Case]
+    case_details: Optional[Case]
+    first_case_direction: Optional[FirstCaseReferralDetailsSchema] = None
+
+    class Config:
+        from_attributes = True
+
+
+
+class FirstCaseGlassDetailsSchema(BaseModel):
+    id: str
+    case_code: str
+    creation_date: datetime
+    pathohistological_conclusion: Optional[str] = None
+    microdescription: Optional[str] = None
+    general_macrodescription: Optional[str] = None
+    grossing_status: Optional[str] = None
+    patient_cor_id: Optional[str] = None
+
+    samples: List[SampleForGlassPage] 
+
+    class Config:
+        from_attributes = True
+
+
+class PatientGlassPageResponse(BaseModel):
+    all_cases: List[Case] 
+    first_case_details_for_glass: Optional[FirstCaseGlassDetailsSchema] = None 
+
+    class Config:
+        from_attributes = True
+
+
+class SingleCaseGlassPageResponse(BaseModel):
+    single_case_for_glass_page: Optional[FirstCaseGlassDetailsSchema] = None
+
+
+
+
+class PathohistologicalConclusionResponse(BaseModel):
+    pathohistological_conclusion: Optional[str] = None
+
+class UpdatePathohistologicalConclusion(BaseModel):
+    pathohistological_conclusion: str
+
+
+
+class MicrodescriptionResponse(BaseModel):
+    microdescription: Optional[str] = None
+
+class UpdateMicrodescription(BaseModel):
+    microdescription: str
+
+
+class SampleForExcisionPage(BaseModel):
+    id: str
+    sample_number: str 
+    is_archived: bool = False 
+    macro_description: Optional[str] = None 
+
+    class Config:
+        from_attributes = True
+
+
+class LastCaseExcisionDetailsSchema(BaseModel):
+    id: str
+    case_code: str
+    creation_date: datetime
+    pathohistological_conclusion: Optional[str] = None
+    microdescription: Optional[str] = None
+    case_parameters: Optional[CaseParametersScheema] = None
+    grossing_status: Optional[str] = None
+    patient_cor_id: Optional[str] = None
+
+    samples: List[SampleForExcisionPage]
+
+    class Config:
+        from_attributes = True
+
+
+class PatientExcisionPageResponse(BaseModel):
+    all_cases: List[Case]
+    last_case_details_for_excision: Optional[LastCaseExcisionDetailsSchema] = None 
+
+    class Config:
+        from_attributes = True
+
+
+class SingleCaseExcisionPageResponse(BaseModel):
+
+    case_details_for_excision: Optional[LastCaseExcisionDetailsSchema] = None 
+
+    class Config:
+        from_attributes = True
+
+        
+class DoctorSignatureBase(BaseModel):
+    signature_name: Optional[str] = None
+    is_default: bool = False
+
+
+class DoctorSignatureCreate(DoctorSignatureBase):
+    pass 
+
+class DoctorSignatureResponse(DoctorSignatureBase):
+    id: str
+    doctor_id: str
+    signature_scan_data: Optional[str] = None 
+    signature_scan_type: Optional[str] = None 
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class ReportSignatureSchema(BaseModel):
+    id: str
+    doctor: DoctorResponseForSignature 
+    signed_at: datetime
+
+    doctor_signature: Optional[DoctorSignatureResponse] = None 
+
+    class Config:
+        from_attributes = True
+
+class ReportBaseSchema(BaseModel):
+    immunohistochemical_profile: Optional[str] = None
+    molecular_genetic_profile: Optional[str] = None
+    pathomorphological_diagnosis: Optional[str] = None
+    icd_code: Optional[str] = None
+    comment: Optional[str] = None
+    
+    attached_glass_ids: Optional[List[str]] = None 
+
+class ReportCreateSchema(ReportBaseSchema):
+    pass
+
+class ReportUpdateSchema(ReportBaseSchema):
+    pass
+
+
+class ReportResponseSchema(BaseModel):
+    id: str
+    case_id: str
+    case_details: Optional[Case] = None 
+    macro_description_from_case_params: Optional[str] = None
+    microdescription_from_case: Optional[str] = None
+
+    immunohistochemical_profile: Optional[str] = None
+    molecular_genetic_profile: Optional[str] = None
+    pathomorphological_diagnosis: Optional[str] = None
+    icd_code: Optional[str] = None
+    comment: Optional[str] = None
+
+    signatures: List[ReportSignatureSchema] = [] 
+    
+    attached_glasses: List[Glass] = []
+
+    class Config:
+        from_attributes = True
+
+
+class PatientReportPageResponse(BaseModel):
+    all_cases: List[Case] 
+    
+    last_case_for_report: Optional[Case] = None 
+    report_details: Optional[ReportResponseSchema] = None
+    
+    all_glasses_for_last_case: List[FirstCaseGlassDetailsSchema] = [] 
+
+    class Config:
+        from_attributes = True
+
+
+
+class SignReportRequest(BaseModel):
+    doctor_signature_id: Optional[str] = None
+
+
+
+
+
+
+# Тестовые схемы под репорт
+class GlassTestModelScheema(BaseModel):
+    id: str
+    glass_number: int
+    cassette_id: str
+    staining: Optional[str] = None
+
+
+class CassetteTestForGlassPage(BaseModel):
+    id: str
+    cassette_number: str
+    sample_id: str 
+
+    glasses: List[GlassTestModelScheema] = [] 
+
+class SampleTestForGlassPage(BaseModel):
+    id: str
+    sample_number: str 
+    case_id: str 
+
+    cassettes: List[CassetteTestForGlassPage] = [] 
+
+class FirstCaseTestGlassDetailsSchema(BaseModel):
+    id: str
+    case_code: str
+    creation_date: datetime 
+    grossing_status: Optional[str] = None
+    samples: List[SampleTestForGlassPage]
+    class Config:
+        from_attributes = True
+
+
+class PatientTestReportPageResponse(BaseModel):
+    all_cases: List[Case]
+    last_case_for_report: Optional[Case]
+    report_details: Optional[ReportResponseSchema]
+    all_glasses_for_last_case: Optional[FirstCaseTestGlassDetailsSchema] = None
+    class Config:
+        from_attributes = True
+
+class CaseIDReportPageResponse(BaseModel):
+    last_case_for_report: Optional[Case] = None 
+    report_details: Optional[ReportResponseSchema] = None
+    all_glasses_for_last_case: Optional[FirstCaseTestGlassDetailsSchema] = None
+
+    class Config:
+        from_attributes = True
+
+
+
+
+class FinalReportResponseSchema(BaseModel):
+    id: str
+    case_id: str
+    case_code: str
+    
+
+    biopsy_date: Optional[date] = None
+    arrival_date: Optional[date] = None
+    report_date: Optional[date] = None
+
+    # Пациент
+    patient_cor_id: Optional[str] = None
+    patient_first_name: Optional[str] = None
+    patient_surname: Optional[str] = None
+    patient_middle_name: Optional[str] = None
+    patient_sex: Optional[str] = None
+    patient_birth_date: Optional[date] = None
+    patient_full_age: Optional[int] = None
+    patient_phone_number: Optional[str] = None
+    patient_email: Optional[str] = None
+
+
+    # направление 
+    medical_card_number: Optional[str] = None
+    medical_institution: Optional[str] = None
+    medical_department: Optional[str] = None
+    attending_doctor: Optional[str] = None
+    clinical_data: Optional[str] = None
+    clinical_diagnosis: Optional[str] = None
+
+    painting: Optional[List[StainingType]] = None
+
+    # Параметры кейса
+    macroarchive: Optional[MacroArchive] = None
+    decalcification: Optional[DecalcificationType] = None
+    fixation: Optional[FixationType] = None
+    num_blocks: Optional[int] = None
+    containers_recieved: Optional[int] = None
+    containers_actual: Optional[int] = None
+
+    # заключение (репорт)
+    macrodescription: Optional[str] = None
+    microdescription: Optional[str] = None
+    pathomorphological_diagnosis: Optional[str] = None
+    immunohistochemical_profile: Optional[str] = None
+    molecular_genetic_profile: Optional[str] = None
+    comment: Optional[str] = None
+    icd_code: Optional[str] = None
+
+
+    signatures: List[ReportSignatureSchema] = [] 
+    attached_glasses: List[Glass] = []
+
+    class Config:
+        from_attributes = True
+
+
+class PatientFinalReportPageResponse(BaseModel):
+    all_cases: Optional[List[Case]] = None
+    last_case_details: Optional[Case] = None
+    report_details: Optional[FinalReportResponseSchema]
+    class Config:
+        from_attributes = True
+
+class CaseFinalReportPageResponse(BaseModel):
+    case_details: Case
+    report_details: Optional[FinalReportResponseSchema]
+    class Config:
+        from_attributes = True
+
+
+class LabAssistantCreate(BaseModel):
+    first_name: str = Field(..., description="Имя лаборанта")
+    middle_name: str = Field(..., description="Отчество лаборанта")
+    last_name: str = Field(..., description="Фамилия лаборанта")
+
+    class Config:
+        from_attributes = True
+
+
+class LabAssistantResponse(BaseModel):
+
+    id: str
+    lab_assistant_cor_id: str
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class EnergyManagerCreate(BaseModel):
+    first_name: str = Field(..., description="Имя менеджера энергии")
+    middle_name: str = Field(..., description="Отчество менеджера энергии")
+    last_name: str = Field(..., description="Фамилия менеджера энергии")
+
+    class Config:
+        from_attributes = True
+
+
+class EnergyManagerResponse(BaseModel):
+
+    id: str
+    energy_manager_cor_id: str
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+
+
+class PatientResponseForGetPatients(BaseModel):
+    id: str
+    patient_cor_id: str
+    surname: Optional[str] = None
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    birth_date: Optional[date] = None
+    sex: Optional[str] = None
+    email: Optional[str] = None
+    phone_number: Optional[str] = None
+    address: Optional[str] = None
+    change_date: Optional[datetime] = None
+    doctor_status: Optional[PatientStatus] = None
+    clinic_status: Optional[PatientClinicStatus] = None
+
+
+
+
+class GetAllPatientsResponce(BaseModel):
+    patients: List[PatientResponseForGetPatients]
+    total_count: int
+
+
+
+class LawyerCreate(BaseModel):
+    first_name: str = Field(..., description="Имя менеджера энергии")
+    middle_name: str = Field(..., description="Отчество менеджера энергии")
+    last_name: str = Field(..., description="Фамилия менеджера энергии")
+
+    class Config:
+        from_attributes = True
+
+
+class LawyerResponse(BaseModel):
+
+    id: str
+    lawyer_cor_id: str
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+

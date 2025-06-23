@@ -10,10 +10,38 @@ from cor_pass.database.models import (
     Diploma,
     Certificate,
     ClinicAffiliation,
+    Lawyer,
+    User,
 )
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from cor_pass.schemas import LawyerCreate
+
+
+
+
+async def create_lawyer(
+    lawyer_data: LawyerCreate,
+    db: AsyncSession,
+    user: User,
+) -> Lawyer:
+    """
+    Асинхронная сервисная функция по созданию lawyer.
+    """
+    lawyer = Lawyer(
+        lawyer_cor_id=user.cor_id,
+        first_name = lawyer_data.first_name,
+        surname = lawyer_data.last_name,
+        middle_name = lawyer_data.middle_name
+    )
+
+    db.add(lawyer)
+
+    await db.commit()
+    await db.refresh(lawyer)
+
+    return lawyer 
 
 async def get_doctors(
     skip: int,

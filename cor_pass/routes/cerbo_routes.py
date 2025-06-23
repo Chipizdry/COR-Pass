@@ -310,7 +310,7 @@ async def get_ess_ac_status(request: Request):
             }
         }
 
-        # Логи отладки
+        # Add logging for debugging
       #  logging.info("ESS AC Status:")
       #  logging.info(f"Input Voltages: L1={response['input']['voltages']['l1']}V, L2={response['input']['voltages']['l2']}V, L3={response['input']['voltages']['l3']}V")
       #  logging.info(f"Input Currents: L1={response['input']['currents']['l1']}A, L2={response['input']['currents']['l2']}A, L3={response['input']['currents']['l3']}A")
@@ -395,6 +395,9 @@ async def set_vebus_soc(control: VebusSOCControl, request: Request):
         scaled_value = int(control.soc_threshold * 10)
 
         await client.write_register(
+           # address=30,  # адрес регистра VE.Bus SoC
+           # value=scaled_value,
+           # slave=ESS_UNIT_ID
             address=2901,  # адрес регистра VE.Bus SoC
             value=scaled_value,
             slave=100
@@ -547,14 +550,26 @@ async def get_ess_advanced_settings(request: Request):
         logging.error("❗ Ошибка при чтении ESS настроек", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
+
 @router.get("/solarchargers_status")
 async def get_solarchargers_status(request: Request):
     """
-    Быстрое чтение PV-напряжения и тока с MPPT по Modbus
+    Читает PV-напряжение и ток с Victron MPPT Solar Chargers (UID 1–13 и 100)
     """
     try:
         client = request.app.state.modbus_client
         slave_ids = list(range(1, 14)) + [100]
+
+        reg_map = {
+            "pv_voltage_0": (3700, 100, False),
+            "pv_voltage_1": (3701, 100, False),
+            "pv_voltage_2": (3702, 100, False),
+            "pv_voltage_3": (3703, 100, False),
+            "pv_power_0": (3724, 1, False),
+            "pv_power_1": (3725, 1, False),
+            "pv_power_2": (3726, 1, False),
+            "pv_power_3": (3727, 1, False),
+        }
 
         results = {}
 
@@ -562,44 +577,25 @@ async def get_solarchargers_status(request: Request):
             charger_data = {}
 
             try:
-                # Читаем диапазон: 3700–3703 и 3724–3727 = 8 регистров
-                addresses = [
-                    ("pv_voltage_0", 3700, 100, False),
-                    ("pv_voltage_1", 3701, 100, False),
-                    ("pv_voltage_2", 3702, 100, False),
-                    ("pv_voltage_3", 3703, 100, False),
-                    ("pv_power_0", 3724, 1, False),
-                    ("pv_power_1", 3725, 1, False),
-                    ("pv_power_2", 3726, 1, False),
-                    ("pv_power_3", 3727, 1, False),
-                ]
-
-                # Все нужные адреса
-                needed_regs = [3700, 3701, 3702, 3703, 3724, 3725, 3726, 3727]
-                min_reg = min(needed_regs)
-                max_reg = max(needed_regs)
-                count = max_reg - min_reg + 1
-
-                # Один запрос
-                res = await client.read_input_registers(address=min_reg, count=count, slave=slave)
-
-                if res.isError() or not hasattr(res, "registers"):
-                    for name, reg, scale, _ in addresses:
+                for name, (reg, scale, is_signed) in reg_map.items():
+                    res = await client.read_input_registers(address=reg, count=1, slave=slave)
+                    if res.isError() or not hasattr(res, "registers"):
                         charger_data[name] = None
-                    logging.warning(f"⚠️ Ошибка чтения диапазона у slave {slave}")
-                else:
-                    regs = res.registers  # список считанных значений
-                    for name, reg, scale, is_signed in addresses:
-                        idx = reg - min_reg
-                        raw = regs[idx]
+                        logging.warning(f"⚠️ Ошибка чтения {name} у slave {slave}")
+                    else:
+                        raw = res.registers[0]
                         value = decode_signed_16(raw) if is_signed else raw
                         charger_data[name] = round(value / scale, 2)
+
+             #   logging.info(f"🔆 MPPT {slave}: {charger_data}")
 
             except Exception as e:
                 charger_data["error"] = str(e)
                 logging.warning(f"⚠️ Исключение при чтении slave {slave}: {e}")
 
             results[f"charger_{slave}"] = charger_data
+
+           # await asyncio.sleep(0.05)
 
         return results
 

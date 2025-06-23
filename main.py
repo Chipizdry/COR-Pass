@@ -6,12 +6,15 @@ import uvicorn
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from fastapi import FastAPI, Request, Depends, HTTPException, status, APIRouter
+from fastapi import FastAPI, Request, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from prometheus_client import Counter, Histogram
 from prometheus_client import generate_latest
+
+from prometheus_fastapi_instrumentator import PrometheusFastApiInstrumentator
+
 from starlette.responses import Response
 
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -19,7 +22,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from fastapi_limiter import FastAPILimiter
 
-from cor_pass.routes.cerbo_routes import router as cerbo_router, create_modbus_client, close_modbus_client
+
 from cor_pass.routes import auth, person
 from cor_pass.database.db import get_db
 from cor_pass.database.redis_db import redis_client
@@ -41,10 +44,13 @@ from cor_pass.routes import (
     cassettes,
     glasses,
     dicom_router,
-    svs_router,
     printing_device,
     printer,
-    cerbo_routes,
+    websocket_events,
+    svs_router,
+    lab_assistants,
+    energy_managers,
+    cerbo_routes
 )
 from cor_pass.config.config import settings
 from cor_pass.services.ip2_location import initialize_ip2location
@@ -55,6 +61,7 @@ from fastapi.responses import JSONResponse
 from collections import defaultdict
 from jose import JWTError, jwt
 
+# from cor_pass.routes.cerbo_gx import create_modbus_client, close_modbus_client
 import logging
 
 from cor_pass.services.websocket import check_session_timeouts, cleanup_auth_sessions
@@ -134,7 +141,7 @@ api_description += """
 app = FastAPI(
     title="COR-ID API",
     description=api_description, 
-    version="1.0.0", 
+    version="1.0.1", 
     openapi_url="/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -147,9 +154,12 @@ app.mount("/static", StaticFiles(directory="cor_pass/static"), name="static")
 origins = settings.allowed_redirect_urls
 
 
-@app.get("/metrics")
-async def metrics():
-    return Response(generate_latest(), media_type="text/plain")
+PrometheusFastApiInstrumentator().instrument(app).expose(app, "/metrics")
+
+
+# @app.get("/metrics")
+# async def metrics():
+#     return Response(generate_latest(), media_type="text/plain")
 
 
 # Пример метрик
@@ -265,19 +275,17 @@ async def custom_identifier(request: Request) -> str:
 @app.on_event("startup")
 async def startup():
     print("------------- STARTUP --------------")
+    logger.info("------------- STARTUP --------------")
     await FastAPILimiter.init(redis_client, identifier=custom_identifier)
-    await create_modbus_client(app)
-
     asyncio.create_task(check_session_timeouts())
     asyncio.create_task(cleanup_auth_sessions())
     initialize_ip2location()
-
-
-
+    await cerbo_routes.create_modbus_client(app)
+    # asyncio.create_task(cerbo_GX.read_modbus_and_cache())
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    await close_modbus_client(app)
+    await cerbo_routes.close_modbus_client(app)
 
 auth_attempts = defaultdict(list)
 blocked_ips = {}
@@ -302,8 +310,11 @@ app.include_router(dicom_router.router, prefix="/api")
 app.include_router(svs_router.router, prefix="/api")
 app.include_router(printing_device.router, prefix="/api")
 app.include_router(printer.router, prefix="/api")
-#app.include_router(cerbo_gx.router, prefix="/api")
-app.include_router(cerbo_router, prefix="/api")
+app.include_router(websocket_events.router, prefix="/api")
+app.include_router(lab_assistants.router, prefix="/api")
+app.include_router(cerbo_routes.router, prefix="/api")
+app.include_router(energy_managers.router, prefix="/api")
+# app.include_router(cerbo_router, prefix="/api") # Change router
 if __name__ == "__main__":
     uvicorn.run(
         app="main:app",

@@ -1,6 +1,7 @@
 import enum
 import uuid
 from sqlalchemy import (
+    ARRAY,
     Column,
     Integer,
     String,
@@ -41,11 +42,34 @@ class AuthSessionStatus(enum.Enum):
     TIMEOUT: str = "timeout"
 
 
+# class PatientStatus(enum.Enum):
+#     registered = "registered"
+#     under_treatment = "under_treatment"
+#     discharged = "discharged"
+
+
 class PatientStatus(enum.Enum):
     registered = "registered"
+    diagnosed = "diagnosed"
     under_treatment = "under_treatment"
+    hospitalized = "hospitalized"
     discharged = "discharged"
+    died = "died"
+    in_process = "in_process"
+    referred_for_additional_consultation = "referred_for_additional_consultation"
 
+class PatientClinicStatus(enum.Enum):
+    registered = "registered"
+    diagnosed = "diagnosed"
+    under_treatment = "under_treatment"
+    hospitalized = "hospitalized"
+    discharged = "discharged"
+    died = "died"
+    in_process = "in_process"
+    referred_for_additional_consultation = "referred_for_additional_consultation"
+    awaiting_report = "awaiting_report"
+    completed = "completed"
+    error = "error"
 
 # Типы макроархива для параметров кейса
 class MacroArchive(enum.Enum):
@@ -126,8 +150,8 @@ class StainingType(enum.Enum):
 
 
 class Grossing_status(enum.Enum):
-    PROCESSING = "processing"
-    COMPLETED = "completed"
+    PROCESSING = "PROCESSING"
+    COMPLETED = "COMPLETED"
 
 
 class User(Base):
@@ -174,9 +198,6 @@ class User(Base):
         "Doctor", back_populates="user", cascade="all, delete-orphan"
     )
 
-    user_doctors = relationship(
-        "Doctor", back_populates="user", cascade="all, delete-orphan"
-    )
     patient = relationship("Patient", back_populates="user", uselist=False)
 
     devices = relationship("Device", back_populates="user")
@@ -191,6 +212,16 @@ class User(Base):
         back_populates="accessing_user",
     )
     profile = relationship("Profile", back_populates="user", uselist=False, cascade="all, delete-orphan")
+
+    user_lab_assistants = relationship(
+        "LabAssistant", back_populates="user", cascade="all, delete-orphan"
+    )
+    user_energy_managers = relationship(
+        "EnergyManager", back_populates="user", cascade="all, delete-orphan"
+    )
+    user_lawyers = relationship(
+        "Lawyer", back_populates="user", cascade="all, delete-orphan"
+    )
 
     # Индексы
     __table_args__ = (
@@ -208,7 +239,7 @@ class Doctor(Base):
     work_email = Column(String(250), unique=True, nullable=False)
     phone_number = Column(String(20), nullable=True)
     first_name = Column(String(100), nullable=True)
-    surname = Column(String(100), nullable=True)
+    middle_name = Column(String(100), nullable=True)
     last_name = Column(String(100), nullable=True)
     doctors_photo = Column(LargeBinary, nullable=True)
     scientific_degree = Column(String(100), nullable=True)
@@ -234,7 +265,49 @@ class Doctor(Base):
     patient_statuses = relationship(
         "DoctorPatientStatus", back_populates="doctor", cascade="all, delete-orphan"
     )
+    signatures = relationship("DoctorSignature", back_populates="doctor", cascade="all, delete-orphan")
 
+
+class LabAssistant(Base):
+    __tablename__ = "lab_assistants"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    lab_assistant_cor_id = Column(
+        String(36), ForeignKey("users.cor_id"), unique=True, nullable=False
+    )
+    first_name = Column(String(100), nullable=True)
+    surname = Column(String(100), nullable=True)
+    middle_name = Column(String(100), nullable=True)
+    lab_assistants_photo = Column(LargeBinary, nullable=True)
+
+
+    user = relationship("User", back_populates="user_lab_assistants")
+
+class EnergyManager(Base):
+    __tablename__ = "energy_managers"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    energy_manager_cor_id = Column(
+        String(36), ForeignKey("users.cor_id"), unique=True, nullable=False
+    )
+    first_name = Column(String(100), nullable=True)
+    surname = Column(String(100), nullable=True)
+    middle_name = Column(String(100), nullable=True)
+    lab_assistants_photo = Column(LargeBinary, nullable=True)
+
+
+    user = relationship("User", back_populates="user_energy_managers")
+
+class Lawyer(Base):
+    __tablename__ = "lawyers"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    lawyer_cor_id = Column(
+        String(36), ForeignKey("users.cor_id"), unique=True, nullable=False
+    )
+    first_name = Column(String(100), nullable=True)
+    surname = Column(String(100), nullable=True)
+    middle_name = Column(String(100), nullable=True)
+
+
+    user = relationship("User", back_populates="user_lawyers")
 
 class Diploma(Base):
     __tablename__ = "diplomas"
@@ -287,6 +360,7 @@ class UserSession(Base):
     device_os = Column(String(250), nullable=True)
     jti = Column(String, unique=True, nullable=True, comment="JTI последнего Access токена, выданного для этой сессии")
     refresh_token = Column(LargeBinary, nullable=True)
+    access_token = Column(LargeBinary, nullable=True)
     created_at = Column(DateTime, nullable=False, default=func.now())
     updated_at = Column(
         DateTime, nullable=False, default=func.now(), onupdate=func.now()
@@ -424,10 +498,20 @@ class Patient(Base):
 
     user = relationship("User", back_populates="patient")
     doctor_statuses = relationship("DoctorPatientStatus", back_populates="patient")
+    clinic_statuses = relationship("PatientClinicStatusModel", back_populates="patient")
 
     def __repr__(self):
         return f"<Patient(id='{self.id}', patient_cor_id='{self.patient_cor_id}')>"
 
+class PatientClinicStatusModel(Base):
+    __tablename__ = "clinic_patient_statuses"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    patient_id = Column(String(36), ForeignKey("patients.id"), nullable=False)
+    patient_status_for_clinic = Column(Enum(PatientClinicStatus), default=PatientClinicStatus.registered)
+    assigned_date = Column(DateTime, default=func.now())
+    updated_date = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    patient = relationship("Patient", back_populates="clinic_statuses")
 
 class DoctorPatientStatus(Base):
     __tablename__ = "doctor_patient_statuses"
@@ -456,11 +540,14 @@ class Case(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     patient_id = Column(String(36), index=True)
     creation_date = Column(DateTime, default=func.now())
-    case_code = Column(String(250), index=True)
+    case_code = Column(String(250), index=True, unique=True)
     bank_count = Column(Integer, default=0)
     cassette_count = Column(Integer, default=0)
     glass_count = Column(Integer, default=0)
     grossing_status = Column(Enum(Grossing_status), default=Grossing_status.PROCESSING)
+    pathohistological_conclusion = Column(Text, nullable=True)
+    microdescription = Column(Text, nullable=True)
+    general_macrodescription = Column(Text, nullable=True)
 
     samples = relationship(
         "Sample", back_populates="case", cascade="all, delete-orphan"
@@ -472,6 +559,7 @@ class Case(Base):
         back_populates="case",
         cascade="all, delete-orphan",
     )
+    report = relationship("Report", back_populates="case", uselist=False, cascade="all, delete-orphan") 
 
 
 # Банка
@@ -541,6 +629,7 @@ class CaseParameters(Base):
     case = relationship("Case", back_populates="case_parameters")
 
 
+
 # Направление на исследование
 class Referral(Base):
     __tablename__ = "referrals"
@@ -549,8 +638,7 @@ class Referral(Base):
         String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4())
     )
     case_id = Column(String, ForeignKey("cases.id"), unique=True ,nullable=False, comment="ID связанного кейса") 
-    case_number = Column(String, index=True, nullable=False, comment="Номер кейса") # Дублируем для удобства поиска
-
+    case_number = Column(String, index=True, nullable=False, comment="Номер кейса") 
     created_at = Column(DateTime, default=func.now(), comment="Дата создания направления")
     research_type = Column(Enum(StudyType), nullable=True, comment="Вид исследования")
     container_count = Column(Integer, nullable=True, comment="Фактическое количество контейнеров")
@@ -692,6 +780,58 @@ class Profile(Base):
     def __repr__(self):
         return f"<Profile(id='{self.id}', user_id='{self.user_id}')>"
 
+
+
+class DoctorSignature(Base):
+    __tablename__ = "doctor_signatures"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    doctor_id = Column(String(36), ForeignKey("doctors.id"), nullable=False)
+    signature_name = Column(String(255), nullable=True) 
+    signature_scan_data = Column(LargeBinary, nullable=True)
+    signature_scan_type = Column(String, nullable=True)  
+    is_default = Column(Boolean, default=False) 
+    created_at = Column(DateTime, default=func.now())
+
+    # Связи
+    doctor = relationship("Doctor", back_populates="signatures")
+
+
+
+class ReportSignature(Base):
+    __tablename__ = "report_signatures"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    report_id = Column(String(36), ForeignKey("reports.id"), nullable=False)
+    doctor_id = Column(String(36), ForeignKey("doctors.id"), nullable=False)
+    doctor_signature_id = Column(String(36), ForeignKey("doctor_signatures.id"), nullable=True) # <-- Ссылка на DoctorSignature
+    signed_at = Column(DateTime, default=func.now())
+    
+
+    # Связи
+    report = relationship("Report", back_populates="signatures")
+    doctor = relationship("Doctor") 
+    doctor_signature = relationship("DoctorSignature")
+
+class Report(Base):
+    __tablename__ = "reports"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    case_id = Column(String(36), ForeignKey("cases.id"), unique=True, nullable=False) 
+
+
+    immunohistochemical_profile = Column(Text, nullable=True)
+    molecular_genetic_profile = Column(Text, nullable=True)
+    pathomorphological_diagnosis = Column(Text, nullable=True)
+    icd_code = Column(String(50), nullable=True)
+    comment = Column(Text, nullable=True)
+    
+    # Список ID стёкол, прикрепленных к этому заключению
+    attached_glass_ids = Column(ARRAY(String(36)), nullable=True, default=[]) 
+
+    # Связи
+    case = relationship("Case", back_populates="report")
+    signatures = relationship("ReportSignature", back_populates="report") 
 
 
 # Base.metadata.create_all(bind=engine)

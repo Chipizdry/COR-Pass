@@ -40,11 +40,15 @@ async def create_user_session(
     encrypted_refresh_token = await encrypt_data(
         data=body.refresh_token, key=await decrypt_user_key(user.unique_cipher_key)
     )
+    encrypted_access_token = await encrypt_data(
+        data=body.access_token, key=await decrypt_user_key(user.unique_cipher_key)
+    )
 
     if existing_session:
         existing_session.refresh_token = encrypted_refresh_token
         existing_session.jti = body.jti
         existing_session.updated_at = func.now()
+        existing_session.access_token = encrypted_access_token
         try:
             db.add(existing_session)
             await db.commit()
@@ -61,7 +65,8 @@ async def create_user_session(
             ip_address=body.ip_address,
             device_os=body.device_os,
             refresh_token=encrypted_refresh_token,
-            jti = body.jti
+            jti = body.jti,
+            access_token = encrypted_access_token
         )
         try:
             db.add(new_session)
@@ -101,7 +106,7 @@ async def update_user_session_jti(db: AsyncSession, session_id: str, new_jti: st
 
 
 async def update_session_token(
-    user: User, token: str | None, device_info: str, jti: str, db: AsyncSession
+    user: User, token: str | None, device_info: str, jti: str, access_token: str, db: AsyncSession
 ) -> UserSession | None:
     """
     Асинхронно обновляет refresh token для сессии пользователя на указанном устройстве.
@@ -114,15 +119,20 @@ async def update_session_token(
         )
         result = await db.execute(stmt)
         existing_session = result.scalar_one_or_none()
+        key = await decrypt_user_key(user.unique_cipher_key)
 
         if existing_session and token is not None:
             encrypted_refresh_token = await encrypt_data(
-                data=token, key=await decrypt_user_key(user.unique_cipher_key)
+                data=token, key=key
             )
+            encrypted_access_token = await encrypt_data(
+                data=access_token, key=key
+    )
 
             existing_session.refresh_token = encrypted_refresh_token
             existing_session.jti = jti
             existing_session.updated_at = func.now()
+            existing_session.access_token = encrypted_access_token
             try:
                 db.add(existing_session)
                 await db.commit()
@@ -197,6 +207,7 @@ async def create_auth_session(request: InitiateLoginRequest, db: AsyncSession) -
     Асинхронно создает запись сессии для авторизации по Cor ID.
     """
     email = request.email
+    email = email.lower()
     cor_id = request.cor_id
     session_token = uuid.uuid4().hex
     expires_at = datetime.now() + timedelta(minutes=10)  # 10 минут на подтверждение

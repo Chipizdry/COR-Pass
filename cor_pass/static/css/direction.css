@@ -2,4 +2,10 @@
   overflow: auto;
   margin: auto;
   height: 100%;
+  padding: 10px;
+  gap: 16px;
+}
+.directionImg{
+  width: 100%;
+  max-width: 500px;
 }

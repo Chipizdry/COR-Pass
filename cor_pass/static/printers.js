@@ -1,5 +1,5 @@
 
-const PRINTER_IP = "192.168.154.193"; // Здесь вы можете задать или получить IP-адрес
+const PRINTER_IP = "192.168.154.209"; // Здесь вы можете задать или получить IP-адрес
 
 
 
@@ -138,75 +138,4 @@ async function addDevice() {
         console.error('Ошибка при добавлении устройства:', error);
         alert('Произошла ошибка при добавлении устройства: ' + error.message);
     }
-}
-
-
-async function fetchDevices() {
-    try {
-        // Получаем токен из localStorage
-        const token = localStorage.getItem('access_token');
-        if (!token) {
-            throw new Error('Токен доступа не найден');
-        }
-
-        const response = await fetch('/api/printing_devices/all?skip=0&limit=100', {
-            method: 'GET',
-            headers: {
-                'accept': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        // Логируем полный ответ для отладки
-        console.log('Полный ответ сервера:', {
-            status: response.status,
-            statusText: response.statusText,
-            headers: Object.fromEntries(response.headers.entries()),
-            url: response.url
-        });
-
-        if (!response.ok) {
-            // Пытаемся получить текст ошибки, если есть
-            let errorText = response.statusText;
-            try {
-                const errorData = await response.json();
-                errorText = errorData.detail || JSON.stringify(errorData);
-            } catch (e) {
-                // Не удалось распарсить JSON с ошибкой
-            }
-            throw new Error(`Ошибка HTTP ${response.status}: ${errorText}`);
-        }
-        
-        const devices = await response.json();
-        console.log('Получен список устройств:', devices);
-        displayDevices(devices);
-        
-        return devices; // Возвращаем данные для возможного дальнейшего использования
-    } catch (error) {
-        console.error('Ошибка при получении устройств:', error);
-        
-    }
-}
-
-// Функция для отображения устройств в таблице
-function displayDevices(devices) {
-    const tableBody = document.getElementById("devicesTableBody");
-    tableBody.innerHTML = ""; // Очищаем таблицу
-    
-    devices.forEach(device => {
-        const row = document.createElement("tr");
-        
-        row.innerHTML = `
-            <td>${device.device_class || ''}</td>
-            <td>${device.device_identifier || ''}</td>
-            <td>${device.ip_address || ''}</td>
-            <td>${device.subnet_mask || ''}</td>
-            <td>${device.gateway || ''}</td>
-            <td>${device.port || ''}</td>
-            <td>${device.comment || ''}</td>
-            <td>${device.location || ''}</td>
-        `;
-        
-        tableBody.appendChild(row);
-    });
 }

@@ -1,5 +1,6 @@
+from sqlite3 import IntegrityError
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Depends, Query, status
+from fastapi import APIRouter, Body, HTTPException, Depends, Query, status
 from fastapi.responses import StreamingResponse
 
 from cor_pass.database.db import get_db
@@ -7,20 +8,71 @@ from cor_pass.database.db import get_db
 from cor_pass.database.models import (
     Doctor_Status,
 )
-from cor_pass.services.access import lawyer_access
+from cor_pass.services.access import lawyer_access, admin_access
 from cor_pass.schemas import (
     CertificateResponse,
     ClinicAffiliationResponse,
     DiplomaResponse,
     DoctorResponse,
     DoctorWithRelationsResponse,
+    LawyerCreate,
+    LawyerResponse,
 )
-from cor_pass.repository import lawyer
+from cor_pass.repository import lawyer as repository_lawyer
+from cor_pass.repository import person as repository_person
 import base64
 from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.services.logger import logger
 
 router = APIRouter(prefix="/lawyer", tags=["Lawyer"])
+
+@router.post(
+    "/signup_as_lawyer",
+    response_model=LawyerResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(admin_access)],
+    tags=["Admin"]
+)
+async def signup_user_as_lawyer(
+    user_cor_id: str,
+    lawyer_data: LawyerCreate = Body(...),
+    db: AsyncSession = Depends(get_db),
+):
+
+    user = await repository_person.get_user_by_corid(db=db, cor_id=user_cor_id)
+    if not user:
+        logger.debug(f"User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    try:
+        lawyer = await repository_lawyer.create_lawyer(
+            lawyer_data=lawyer_data,
+            db=db,
+            user=user,
+        )
+    except IntegrityError as e:
+        logger.error(f"Database integrity error: {e}")
+        await db.rollback()
+        detail = "Database error occurred. Please check the data for duplicates or invalid entries."
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail)
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred during lawyer creation.",
+        )
+    # Сериализуем ответ
+    lawyer_response = LawyerResponse(
+        id=lawyer.id,
+        lawyer_cor_id=lawyer.lawyer_cor_id,
+        first_name=lawyer.first_name,
+        last_name=lawyer.surname,
+        middle_name=lawyer.middle_name
+    )
+
+    return lawyer_response
 
 
 @router.get(
@@ -53,7 +105,7 @@ async def get_all_doctors(
     :return: Список врачей.
     :rtype: List[DoctorResponse]
     """
-    list_doctors = await lawyer.get_doctors(
+    list_doctors = await repository_lawyer.get_doctors(
         skip=skip,
         limit=limit,
         db=db,
@@ -72,7 +124,7 @@ async def get_all_doctors(
             work_email=doctor.work_email,
             phone_number=doctor.phone_number,
             first_name=doctor.first_name,
-            surname=doctor.surname,
+            middle_name=doctor.middle_name,
             last_name=doctor.last_name,
             scientific_degree=doctor.scientific_degree,
             date_of_last_attestation=doctor.date_of_last_attestation,
@@ -114,7 +166,7 @@ async def assign_status(
 
     :rtype: dict
     """
-    doctor = await lawyer.get_doctor(doctor_id=doctor_id, db=db)
+    doctor = await repository_lawyer.get_doctor(doctor_id=doctor_id, db=db)
 
     if not doctor:
         raise HTTPException(
@@ -124,7 +176,7 @@ async def assign_status(
     if doctor_status == doctor.status:
         return {"message": "The account status has already been assigned"}
     else:
-        await lawyer.approve_doctor(doctor=doctor, db=db, status=doctor_status)
+        await repository_lawyer.approve_doctor(doctor=doctor, db=db, status=doctor_status)
         return {
             "message": f"{doctor.first_name} {doctor.last_name}'s status - {doctor_status.value}"
         }
@@ -135,20 +187,20 @@ async def delete_user(doctor_id: str, db: AsyncSession = Depends(get_db)):
     """
     **Delete doctor by doctor_id. / Удаление врача по doctor_id**\n
     """
-    doctor = await lawyer.get_doctor(doctor_id=doctor_id, db=db)
+    doctor = await repository_lawyer.get_doctor(doctor_id=doctor_id, db=db)
     if not doctor:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Doctor not found"
         )
     else:
-        await lawyer.delete_doctor_by_doctor_id(db=db, doctor_id=doctor_id)
+        await repository_lawyer.delete_doctor_by_doctor_id(db=db, doctor_id=doctor_id)
         return {"message": f" doctor - was deleted"}
 
 
 @router.get("/doctors/{doctor_id}/photo", dependencies=[Depends(lawyer_access)])
 async def get_doctor_photo(doctor_id: str, db: AsyncSession = Depends(get_db)):
     """Получает фотографию врача из базы данных."""
-    doctor = await lawyer.get_doctor(
+    doctor = await repository_lawyer.get_doctor(
         doctor_id=doctor_id, db=db
     )  # Assuming you have a function to get basic doctor info
     if not doctor or not doctor.doctors_photo:
@@ -167,7 +219,7 @@ async def get_doctor_photo(doctor_id: str, db: AsyncSession = Depends(get_db)):
 @router.get("/diplomas/{diploma_id}", dependencies=[Depends(lawyer_access)])
 async def get_diploma_file(diploma_id: str, db: AsyncSession = Depends(get_db)):
     """Получает файл диплома (изображение или PDF) из базы данных."""
-    document = await lawyer.get_diploma_by_id(diploma_id=diploma_id, db=db)
+    document = await repository_lawyer.get_diploma_by_id(diploma_id=diploma_id, db=db)
     if not document or not document.file_data or not document.file_type:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Document or file not found"
@@ -182,7 +234,7 @@ async def get_diploma_file(diploma_id: str, db: AsyncSession = Depends(get_db)):
 @router.get("/certificates/{certificate_id}", dependencies=[Depends(lawyer_access)])
 async def get_certificate_file(certificate_id: str, db: AsyncSession = Depends(get_db)):
     """Получает файл сертификата (изображение или PDF) из базы данных."""
-    document = await lawyer.get_certificate_by_id(certificate_id=certificate_id, db=db)
+    document = await repository_lawyer.get_certificate_by_id(certificate_id=certificate_id, db=db)
     if not document or not document.file_data or not document.file_type:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Document or file not found"
@@ -213,7 +265,7 @@ async def get_doctor_with_relations(
     :return: Информация о враче со всеми связями.\n
     :rtype: DoctorWithRelationsResponse
     """
-    doctor = await lawyer.get_all_doctor_info(doctor_id=doctor_id, db=db)
+    doctor = await repository_lawyer.get_all_doctor_info(doctor_id=doctor_id, db=db)
 
     if not doctor:
         raise HTTPException(
@@ -226,7 +278,7 @@ async def get_doctor_with_relations(
         work_email=doctor.work_email,
         phone_number=doctor.phone_number,
         first_name=doctor.first_name,
-        surname=doctor.surname,
+        middle_name=doctor.middle_name,
         doctors_photo=f"/doctors/{doctor_id}/photo" if doctor.doctors_photo else None,
         last_name=doctor.last_name,
         place_of_registration=doctor.place_of_registration,

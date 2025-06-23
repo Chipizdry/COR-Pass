@@ -17,6 +17,7 @@ from cor_pass.repository import device as repository_devices
 from cor_pass.config.config import settings
 from cor_pass.services import redis_service
 from cor_pass.services.logger import logger
+from cor_pass.services.websocket_events_manager import websocket_events_manager 
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -173,6 +174,14 @@ class Auth:
 
             if await redis_service.is_jti_blacklisted(jti):
                 logger.warning(f"Revoked token detected with JTI: {jti}")
+                event_data = {
+                    "channel": "cor-erp-prod",
+                    "event_type": "token_blacklisted",
+                    "token": token,
+                    "reason": "Token explicitly revoked or logged out.",
+                    "timestamp": datetime.now(timezone.utc).timestamp()
+                }
+                await websocket_events_manager.broadcast_event(event_data)
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Токен отозван. Используйте новый токен или авторизуйтесь заново.",
@@ -181,6 +190,14 @@ class Auth:
 
             if datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
                 logger.warning(f"Expired token detected for JTI: {jti}")
+                event_data = {
+                    "channel": "cor-erp-prod",
+                    "event_type": "token_expired",
+                    "token": token,
+                    "reason": "Token has naturally expired.",
+                    "timestamp": datetime.now(timezone.utc).timestamp()
+                }
+                await websocket_events_manager.broadcast_event(event_data)
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Срок действия токена истёк. Пожалуйста, обновите токен.",

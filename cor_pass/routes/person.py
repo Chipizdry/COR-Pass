@@ -1,7 +1,8 @@
 from fastapi import APIRouter, File, HTTPException, Depends, UploadFile, status
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from cor_pass.database.db import get_db
 from cor_pass.services import redis_service
+from cor_pass.services.websocket_events_manager import websocket_events_manager
 from cor_pass.services.auth import auth_service
 from cor_pass.services.cipher import decrypt_data, decrypt_user_key
 from cor_pass.services.image_validation import validate_image_file
@@ -563,7 +564,20 @@ async def remove_session(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Вы не можете отозвать чужую сессию.")
     if session_to_revoke.jti:
         blacklist_expires = timedelta(seconds=settings.access_token_expiration)
-        await redis_service.add_jti_to_blacklist(session_to_revoke.jti, blacklist_expires)
+    await redis_service.add_jti_to_blacklist(session_to_revoke.jti, blacklist_expires)
+    token = session_to_revoke.access_token
+    session_token = await decrypt_data(
+                    encrypted_data=token,
+                    key=await decrypt_user_key(current_user.unique_cipher_key),
+                )
+    event_data = {
+        "channel": "cor-erp-prod",
+        "event_type": "token_blacklisted",
+        "token": session_token,
+        "reason": "Token explicitly revoked or logged out.",
+        "timestamp": datetime.now(timezone.utc).timestamp()
+    }
+    await websocket_events_manager.broadcast_event(event_data)
 
     session = await repository_session.delete_session(current_user, db, session_id)
     if session is None:

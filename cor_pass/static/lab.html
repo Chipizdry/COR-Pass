@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="./css/modal.css">
     <link rel="stylesheet" href="./css/caseSettings.css">
     <link rel="stylesheet" href="./css/header.css">
+    <link rel="stylesheet" href="./css/directionModal.css">
     <title>Document</title>
 </head>
 <body>
@@ -38,28 +39,28 @@
                         </svg>
 
                     </div>
-                    <div id="createCase" class="actionButton create df aic jcc" style="background: #05B96D">
+                    <div data-help-text="Додати дослідження" data-help-text-delete="Видалити дослідження" id="createCase" class="actionButton create df aic jcc" style="background: #05B96D">
                         <img src="./assets/plusCircle.svg" alt="plusCircle">
                     </div>
                 </div>
                 <div id="parentMark" class="parentMark df aic gap4">
-                    <div data-value="Standard" class="casePlate active">S</div>
-                    <div data-value="Urgent" class="casePlate">U</div>
-                    <div data-value="Frozen" class="casePlate">F</div>
+                    <div data-value="Standard" data-help-text="Терміновості дослідження: Стандартний" class="casePlate active">S</div>
+                    <div data-value="Urgent" data-help-text="Терміновості дослідження: Терміново" class="casePlate">U</div>
+                    <div data-value="Frozen" data-help-text="Терміновості дослідження: Заморожений" class="casePlate">F</div>
                 </div>
                 <div class="divider"></div>
                 <div id="childMark" class="childMark">
                     <div class="df aic gap4">
-                        <div data-value="Resectio" class="casePlate active">R</div>
-                        <div data-value="Biopsy" class="casePlate">B</div>
-                        <div data-value="Excisio" class="casePlate">E</div>
-                        <div data-value="Cytology" class="casePlate">C</div>
+                        <div data-value="Resectio" data-help-text="Тип дослідження: Резекція" class="casePlate active">R</div>
+                        <div data-value="Biopsy" data-help-text="Тип дослідження: Біопсія" class="casePlate">B</div>
+                        <div data-value="Excisio" data-help-text="Тип дослідження: Висічення" class="casePlate">E</div>
+                        <div data-value="Cytology" data-help-text="Тип дослідження: Цитологія" class="casePlate">C</div>
                     </div>
                     <div class="df aic gap4">
-                        <div data-value="Cellblock" class="casePlate">X</div>
-                        <div data-value="Second Opinion" class="casePlate">S</div>
-                        <div data-value="Autopsy" class="casePlate">A</div>
-                        <div data-value="Electron Microscopy" class="casePlate">Y</div>
+                        <div data-value="Cellblock" data-help-text="Тип дослідження: Клітинний блок" class="casePlate">X</div>
+                        <div data-value="Second Opinion" data-help-text="Тип дослідження: Друга думка" class="casePlate">S</div>
+                        <div data-value="Autopsy" data-help-text="Тип дослідження: Аутопсія" class="casePlate">A</div>
+                        <div data-value="Electron Microscopy" data-help-text="Тип дослідження: Електронна мікроскопія" class="casePlate">Y</div>
                     </div>
                 </div>
             </div>
@@ -94,7 +95,10 @@
                         </svg>
 
                     </div>
-                    <div id="createSpecimen" class="actionButton create df aic jcc"
+                    <div id="createSpecimen"
+                         data-help-text="Додати зарзок"
+                         data-help-text-delete="Видалити зразок"
+                         class="actionButton create df aic jcc"
                          style="margin-top: 8px; background: #ED1064">
                         <img src="./assets/plusCircle.svg" alt="plusCircle">
                     </div>
@@ -132,15 +136,12 @@
                                 <path d="M13 21v-2a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v2"/>
                             </svg>
                         </button>
-                        <div class="role-toggle">
-                            <button class="role-btn active">Добавить пациента</button>
-                        </div>
                     </div>
                 </div>
-                <div class="header-row bottom">
+                <div class="header-row bottom" style="gap: 20px">
                     <div>
                         <div class="meta-info">
-                            <div>
+                            <div class="df aic">
                                 <span id="searchCaseId"></span>
                                 <button class="edit-btn" aria-label="Edit case">
                                     <svg class="icon-edit" viewBox="0 0 24 24">
@@ -149,16 +150,21 @@
                                     </svg>
                                 </button>
                             </div>
-                            <div id="userName">Кукліс Олег Геннадійович</div>
-                            <div id="userGender">Чол</div>
-                            <div id="userAge">65р</div>
+                            <div id="userName" style="white-space: nowrap"></div>
+                            <div id="userGender"></div>
+                            <div id="userAge"></div>
                         </div>
                         <div class="tabs">
-                            <button class="tab">Направлення</button>
+                            <button class="tab" id="directionModalBtn">Направлення</button>
                             <button class="tab" id="caseSettingsModalBtn">Параметри кейсу</button>
                         </div>
                     </div>
-
+                    <div class="infoHeader">
+                        <div class="infoHeaderIcon">
+                            <img src="./assets/info.svg" alt="info">
+                        </div>
+                        <div id="infoText"></div>
+                    </div>
                 </div>
             </div>
             <div class="df jcsb contentCassette">
@@ -183,10 +189,12 @@
                     </div>
                     <div class="df aic jcsb">
                         <div class="actionButton borderRightNone create" id="createCassette"
+                             data-help-text="Додати касету"
+                             data-help-text-delete="Видалити касету"
                              style="background: #B2AFBA">
                             <img src="./assets/plusCircle.svg" alt="plusCircle">
                         </div>
-                        <div class="actionButton borderLeftNone print" style="background: #B2AFBA">
+                        <div class="actionButton borderLeftNone print" style="background: #B2AFBA"   data-help-text="Додати і роздрукувати касету">
                             <img src="./assets/print.svg" alt="print">
                         </div>
                     </div>
@@ -254,11 +262,56 @@
             </div>
         </div>
     </div>
+    <div id="caseDirection" class="modal">
+        <div class="modalWrapper">
+            <div class="modalTitle">Направлення</div>
+            <div class="directorModalTop">
+                <!-- cor-id -->
+                <b>S25B01251</b>
+                <span class="mid"><span id="todayMeta"></span> | Фото/скан документу</span>
+            </div>
+            <div class="df gap4">
+                <div class="directorModalLeft"></div>
+
+                <div class="directorModalRight" id="uploadArea">
+                    <div class="upload-box" id="uploadBox" tabindex="0">
+                        <div class="upload-icon">
+                            <svg viewBox="0 0 24 24"><path d="M12 4v10M7 9l5-5 5 5"/><rect x="4" y="18" width="16" height="2" rx="1"/></svg>
+                        </div>
+                        <span>Перетягніть сюди свої файли<br><b>або скануйте</b></span>
+                        <small class="note">до 5 файлів</small>
+                        <input type="file" id="fileInput" multiple accept="image/*,.pdf" hidden>
+                    </div>
+                </div>
+            </div>
+            <div class="directorModalFooter">
+                <button class="btn btn-primary" id="caseDirectionSubmit">Зберегти</button>
+                <button class="btn btn-outline" id="caseDirectionScan">Сканувати</button>
+            </div>
+        </div>
+    </div>
 </div>
 
+<script src="./COR_ID_Js/general_fun.js"></script>
 <script src="./js/general.js"></script>
-
 <script>
+    const infoTextNODE = document.querySelector('#infoText')
+
+    const helpTextShowHendler = (wrapperNODE) => {
+        wrapperNODE.querySelectorAll("[data-help-text]").forEach(elem => {
+            elem.addEventListener('mouseenter', () => {
+                const dataSetAttr = elem.classList.contains('delete') ? "helpTextDelete" : "helpText"
+                infoTextNODE.innerHTML = elem.dataset[dataSetAttr]
+            });
+
+            elem.addEventListener('mouseleave', () => {
+                infoTextNODE.innerHTML = ""
+            });
+        })
+    }
+</script>
+<script>
+    const PATIENT_COR_ID = new URLSearchParams(window.location.search).get('userCorId')
     let cases = []
 
     //Draw HTML Template
@@ -403,31 +456,36 @@
                 document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
                 document.querySelector('#userAge').innerHTML = `${userData.age}р`;
 
-                    fetch(`${API_BASE_URL}/api/cases/patients/${PATIENT_COR_ID}/overview`, {
+                fetch(`${API_BASE_URL}/api/cases/patients/${PATIENT_COR_ID}/overview`, {
                     method: "GET",
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
                     },
                 })
-                        .then(res => res.json())
-                        .then(casesList => {
-                            cases = casesList.all_cases
-                            cases[0].samples = casesList.first_case_details.samples.map(({cassettes, ...sampleData}, index) => {
-                                return {
-                                    ...sampleData,
-                                    ...(!index ? {cassettes} : {})
-                                }
-                            })
+                    .then(res => res.json())
+                    .then(casesList => {
+                        cases = casesList.all_cases
 
-                            macroDescriptionTextareaNODE.value = cases[0].samples.macro_description || "";
+                        if(!casesList.first_case_details){
+                            return;
+                        }
 
-                            cases.forEach((currentCase, index) => {
-                                caseContentNODE.append(caseTemplate(currentCase, !index))
-                            })
-
-                            setPathomorphologyTemplate(0, 0)
-                            countCaseInputNODE.setAttribute('data-delete-count', cases.length - 1)
+                        cases[0].samples = casesList.first_case_details.samples.map(({cassettes, ...sampleData}, index) => {
+                            return {
+                                ...sampleData,
+                                ...(!index ? {cassettes} : {})
+                            }
                         })
+
+                        macroDescriptionTextareaNODE.value = cases[0].samples.macro_description || "";
+
+                        cases.forEach((currentCase, index) => {
+                            caseContentNODE.append(caseTemplate(currentCase, !index))
+                        })
+
+                        setPathomorphologyTemplate(0, 0)
+                        countCaseInputNODE.setAttribute('data-delete-count', cases.length - 1)
+                    })
             })
 
     }
@@ -458,7 +516,7 @@
                             <div class="infoPlate qr">
                                 QR
                             </div>
-                            <div>
+                            <div data-help-text="Роздрукувати QR код дослідженням">
                                 <img src="./assets/print.svg" alt="print">
                             </div>
                         </div>
@@ -466,7 +524,7 @@
                             <div class="infoPlate cassette">
                                 ${currentCase.cassette_count}
                             </div>
-                            <div>
+                            <div data-help-text="Роздрукувати всі касети з дослідженням">
                                 <img src="./assets/print.svg" alt="print">
                             </div>
                         </div>
@@ -474,12 +532,14 @@
                             <div class="infoPlate glass">
                                 ${currentCase.glass_count}
                             </div>
-                            <div>
+                            <div data-help-text="Роздрукувати всі скельця з дослідженням">
                                 <img src="./assets/print.svg" alt="print">
                             </div>
                         </div>
                     </div>
         `
+
+        helpTextShowHendler(caseNewNODE)
 
         caseNewNODE.addEventListener("click", () => {
             fetch(`${API_BASE_URL}/api/cases/${currentCase.id}`, {
@@ -509,16 +569,16 @@
                                 ${currentSpecimen.sample_number}
                             </div>
                         </div>
-                        <div class="specimenItemArchive" style="cursor: pointer">
+                        <div class="specimenItemArchive" style="cursor: pointer" data-help-text="Наявність архіву">
                             <img src="./assets/${currentSpecimen.archive ? "archiveActive" : "archive"}.svg" alt="archive">
                         </div>
                     </div>
-           <div class="specimenItemBottom df gap8 aic">
+                    <div class="specimenItemBottom df gap8 aic">
                         <div class="df aic fdc">
                             <div class="infoPlate cassette">
                                 ${currentSpecimen.cassette_count}
                             </div>
-                            <div>
+                            <div data-help-text="Роздрукувати всі касети з зразком">
                                 <img src="./assets/print.svg" alt="print">
                             </div>
                         </div>
@@ -526,12 +586,14 @@
                             <div class="infoPlate glass">
                                 ${currentSpecimen.glass_count}
                             </div>
-                            <div>
+                            <div data-help-text="Роздрукувати всі скельця з зразком">
                                 <img src="./assets/print.svg" alt="print">
                             </div>
                         </div>
                     </div>
         `
+
+        helpTextShowHendler(specimenNewNODE)
 
         specimenNewNODE.addEventListener("click", () => {
             fetch(`${API_BASE_URL}/api/samples/${currentSpecimen.id}`, {
@@ -583,47 +645,51 @@
         cassetteColumnNODE.classList.add("cassetteColumn")
         cassetteColumnNODE.innerHTML = `
             <div class="cassetteItem df aic jcc">
-                    <div class="cassetteItemImg">
-                            <img src="./assets/cassetteItem.svg" alt="caseItem">
-                            <div class="cassetteAction df jcsb aic">
-                                <div>${currentCassette.cassette_number}</div>
-                                <div class="cassetteComment"><img src="./assets/${currentCassette.comment?.length ? "commentActive" : "comment"}.svg" alt="comment"></div>
-                                <div class="cassettePrint"><img src="./assets/print.svg" alt="print"></div>
-                            </div>
+                <div class="cassetteItemImg">
+                    <img src="./assets/cassetteItem.svg" alt="caseItem">
+                    <div class="cassetteAction df jcsb aic">
+                        <div>${currentCassette.cassette_number}</div>
+                        <div class="cassetteComment" data-help-text="Коментар">
+                            <img src="./assets/${currentCassette.comment?.length ? "commentActive" : "comment"}.svg" alt="comment">
                         </div>
+                        <div class="cassettePrint" data-help-text="Друг касети"><img src="./assets/print.svg" alt="print"></div>
+                    </div>
+                </div>
             </div>
             <div class="glassPlaceholder placeholder" data-glass-index='${index}'>
-                        <div class="df aic jcc counter">
-                            <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z" fill="#7527B2"/>
-                            </svg>
-                            <input  data-delete-count="${currentCassette.glasses.length - 1}" type="number" value="1" class="counterInput" style="color: #88C6FF">
-                            <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z" fill="#7527B2"/>
-                                <path d="M13 16.9831C13 17.5447 12.5523 18 12 18C11.4477 18 11 17.5447 11 16.9831L11 7.01695C11 6.4553 11.4477 6 12 6C12.5523 6 13 6.4553 13 7.01695V16.9831Z" fill="#7527B2"/>
-                            </svg>
-                        </div>
-                        <div class="df aic jcsb glassMark">
-                            <div>
-                                H&E
-                            </div>
-                            <div>
-                                <img src="./assets/arrowDown.svg" alt="arrowDown">
-                            </div>
-                        </div>
-                        <div class="df aic jcsb">
-                            <div class="actionButton borderRightNone create" id="createGlass">
-                                <img src="./assets/plusCircle.svg" alt="plusCircle">
-                            </div>
-                            <div class="actionButton borderLeftNone print">
-                                <img src="./assets/print.svg" alt="print">
-                            </div>
-                        </div>
+                <div class="df aic jcc counter">
+                    <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z" fill="#7527B2"/>
+                    </svg>
+                    <input  data-delete-count="${currentCassette.glasses.length - 1}" type="number" value="1" class="counterInput" style="color: #88C6FF">
+                    <svg class="counterAction" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7.01695 13C6.4553 13 6 12.5523 6 12C6 11.4477 6.4553 11 7.01695 11L16.9831 11C17.5447 11 18 11.4477 18 12C18 12.5523 17.5447 13 16.9831 13L7.01695 13Z" fill="#7527B2"/>
+                        <path d="M13 16.9831C13 17.5447 12.5523 18 12 18C11.4477 18 11 17.5447 11 16.9831L11 7.01695C11 6.4553 11.4477 6 12 6C12.5523 6 13 6.4553 13 7.01695V16.9831Z" fill="#7527B2"/>
+                    </svg>
+                </div>
+                <div class="df aic jcsb glassMark" data-help-text="Фарбування скельця">
+                    <div>
+                        H&E
                     </div>
+                    <div>
+                        <img src="./assets/arrowDown.svg" alt="arrowDown">
+                    </div>
+                </div>
+                <div class="df aic jcsb">
+                    <div class="actionButton borderRightNone create" data-help-text="Додати скельце" data-help-text-delete="Видалити скельце" id="createGlass">
+                        <img src="./assets/plusCircle.svg" alt="plusCircle">
+                    </div>
+                    <div class="actionButton borderLeftNone print"  data-help-text="Додати і роздрукувати скельце">
+                        <img src="./assets/print.svg" alt="print">
+                    </div>
+                </div>
+            </div>
             <div class="glassItems df fdc">
                 ${glassesTemplate}
             </div>
         `;
+
+        helpTextShowHendler(cassetteColumnNODE)
 
         cassetteColumnNODE.querySelector('.cassetteComment').addEventListener('click', () => {
             cassetteCommentModalNODE.dataset.id = currentCassette.id;
@@ -1000,6 +1066,10 @@
                                 elem.remove()
                             })
 
+                            glassContentNODE
+                                .closest('.cassetteColumn')
+                                .querySelector('.counterInput')
+                                .setAttribute('data-delete-count', cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[index].glasses.length + 1)
                             changeItemCountOnEntity()
                             glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
                             alert(`Скельц${+countOfGlassInput.value>1 ? "я" : "е"} успішно видаленн${+countOfGlassInput.value>1 ? "і" : "е"}`)
@@ -1035,6 +1105,10 @@
                                 glassContentNODE.innerHTML += glassTemplate(glass)
                             })
 
+                            glassContentNODE
+                                .closest('.cassetteColumn')
+                                .querySelector('.counterInput')
+                                .setAttribute('data-delete-count', cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[index].glasses.length - 1)
                             changeItemCountOnEntity()
                             glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
                             alert(`Скельц${+countOfGlassInput.value > 1 ? "я" : "е"} успішно ствернн${+countOfGlassInput.value>1 ? "і" : "е"}`)
@@ -1161,7 +1235,6 @@
             elem.querySelector('.actionButton.create img').setAttribute('src',  `./assets/plusCircle.svg`)
         })}
     const changeMacroDescription = () => {
-
         macroDescriptionTextareaNODE.nextElementSibling.addEventListener('click', () => {
             const currentSample = cases[lastActiveCaseIndex]?.samples[lastActiveSpecimenIndex];
 
@@ -1178,12 +1251,35 @@
                 .then(res => res.json())
                 .then(() => {
                     alert('Макро опис успішно оновлений')
+
+                    macroDescriptionTextareaNODE.nextElementSibling.style.display = "none";
                 })
         })
+    }
+    const switchRole = () => {
+        const {roles} = decodeToken(getToken())
+
+        if(roles.includes('doctor')){
+            const headerNODE = document.querySelector('.role-container')
+            const toggleDiv = document.createElement('div');
+            toggleDiv.classList.add('role-toggle')
+            toggleDiv.innerHTML = `
+            <div class="role-toggle">
+                <button class="role-btn doc">Лікар</button>
+                <button class="role-btn lab active">Лаборант</button>
+            </div>
+            `
+            headerNODE.append(toggleDiv)
+
+            document.querySelector('.role-toggle .role-btn:not(.active)').addEventListener('click', (e) => {
+                window.location.href = `/static/glass.html?userCorId=${PATIENT_COR_ID}`
+            })
+        }
     }
 </script>
 <script>
     document.addEventListener("DOMContentLoaded", (event) => {
+        helpTextShowHendler(document)
         createOrDeleteCaseHandler()
         createOrDeleteSpecimenHandler()
         createOrDeleteCassetteHandler()
@@ -1191,6 +1287,9 @@
 
         changeMacroDescription()
         setAllCases()
+
+        showTextareaButton('sampleMacroDescription')
+        switchRole()
     });
 </script>
 <script>
@@ -1304,6 +1403,7 @@
 
 <script src="./js/modal.js"></script>
 <script src="./js/caseSettings.js"></script>
+<script src="./js/directionModal.js"></script>
 
 </body>
 </html>

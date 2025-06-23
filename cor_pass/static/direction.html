@@ -32,21 +32,19 @@
                     </svg>
                 </button>
                 <div class="role-toggle">
-                    <button class="role-btn">Лікар</button>
-                </div>
-                <div class="role-toggle">
-                    <button class="role-btn">Лаборант</button>
+                    <button class="role-btn doc active">Лікар</button>
+                    <button class="role-btn lab">Лаборант</button>
                 </div>
             </div>
         </div>
         <div class="header-row bottom">
             <div>
                 <div class="tabs">
-                    <button class="tab active">Направлення</button>
-                    <button class="tab">Вирізка</button>
-                    <button class="tab">Скельця</button>
-                    <button class="tab">Заключення</button>
-                    <button class="tab">Дослідження</button>
+                    <button class="tab directionPage active">Направлення</button>
+                    <button class="tab tenderloinPage">Вирізка</button>
+                    <button class="tab glassPage">Скельця</button>
+                    <button class="tab conclusionPage">Заключення</button>
+                    <button class="tab explorationPage">Дослідження</button>
                 </div>
             </div>
             <div class="meta-info">
@@ -59,86 +57,36 @@
                         </svg>
                     </button>
                 </div>
-                <div>Кукліс Олег Геннадійович</div>
-                <div>Чол</div>
-                <div>65р</div>
+                <div id="userName"></div>
+                <div id="userGender"></div>
+                <div id="userAge"></div>
             </div>
         </div>
     </div>
     <div class="glassPageContent df jcsb">
         <div class="left">
-            <div class="top borderRadiusLeft">
-                Поточні кейси
+            <div class="top borderRadiusLeft df jcsb">
+                <div>
+                    Поточні кейси
+                </div>
+                <div class="glassPageRevert" style="display: none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="800px" height="800px" viewBox="0 0 24 24">
+                        <path fill="none" stroke="#000000" stroke-width="2" d="M8,3 L3,8 L8,13 M12,20 L15,20 C18.3137085,20 21,17.3137085 21,14 C21,10.6862915 18.3137085,8 15,8 L4,8"/>
+                    </svg>
+                </div>
             </div>
             <div class="bottom">
                 <div id="caseItems" class="caseItems">
-                    <div class="caseItem df aic jcsb">
-                        <div>
-                            <div class="caseItemDate">27.03.2025</div>
-                            <div class="caseItemLabel">S25B01251</div>
-                        </div>
-                        <div class="caseItemSample df aic jcc">
-                            1
-                        </div>
-                        <div>
-                            <div class="infoPlate cassette">
-                                1
-                            </div>
-                        </div>
-                        <div>
-                            <div class="infoPlate glass">
-                                1
-                            </div>
-                        </div>
-                    </div>
-                    <div class="caseItem df aic jcsb">
-                        <div>
-                            <div class="caseItemDate">27.03.2025</div>
-                            <div class="caseItemLabel">S25B01251</div>
-                        </div>
-                        <div class="caseItemSample df aic jcc">
-                            1
-                        </div>
-                        <div>
-                            <div class="infoPlate cassette">
-                                1
-                            </div>
-                        </div>
-                        <div>
-                            <div class="infoPlate glass">
-                                1
-                            </div>
-                        </div>
-                    </div>
-                    <div class="caseItem df active aic jcsb">
-                        <div>
-                            <div class="caseItemDate">27.03.2025</div>
-                            <div class="caseItemLabel">S25B01251</div>
-                        </div>
-                        <div class="caseItemSample df aic jcc">
-                            1
-                        </div>
-                        <div>
-                            <div class="infoPlate cassette">
-                                1
-                            </div>
-                        </div>
-                        <div>
-                            <div class="infoPlate glass">
-                                1
-                            </div>
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>
         <div class="middle df fdc">
             <div class="top">
-                Скельця
+                Направлення
             </div>
             <div class="bottom df ">
-                <div class="directionWrapper">
-                    <img class="directionImg" src="./assets/document.png" alt="doc">
+                <div class="directionWrapper df fdc" id="directionAttachment">
                 </div>
             </div>
         </div>
@@ -148,7 +96,8 @@
                     <div class="commentsWrapperTop">
                         Патогістологічний висновок
                     </div>
-                    <textarea></textarea>
+                    <textarea id="casePathohistologicalConclusion"></textarea>
+                    <button class="commentsWrapperButton">Зберегти</button>
                 </div>
             </div>
             <div style="height: 50%" class="df fdc">
@@ -156,12 +105,271 @@
                     <div class="commentsWrapperTop">
                         Мікроопис
                     </div>
-                    <textarea></textarea>
+                    <textarea id="caseMicroDescription"></textarea>
+                    <button class="commentsWrapperButton">Зберегти</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+
+<script src="./js/general.js"></script>
+<script>
+    const PATIENT_COR_ID = new URLSearchParams(window.location.search).get('userCorId')
+
+    let currentCase = null;
+    let currentUserCorId = PATIENT_COR_ID || null;
+
+    const directionAttachmentNODE = document.querySelector("#directionAttachment");
+    const caseContentNODE = document.querySelector("#caseItems");
+    const caseLabelNode = document.querySelector('#searchCaseId');
+    const caseMicroDescriptionTextareaNODE = document.querySelector('#caseMicroDescription');
+    const casePathohistologicalConclusionTextareaNODE = document.querySelector('#casePathohistologicalConclusion');
+
+    const changeMicroDescription  = () => {
+        caseMicroDescriptionTextareaNODE.nextElementSibling.addEventListener('click', () => {
+            fetch(`${API_BASE_URL}/api/doctor/microdescription/${currentCase.id}`, {
+                method: "PUT",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    microdescription: caseMicroDescriptionTextareaNODE.value.trim(),
+                })
+            })
+                .then(res => res.json())
+                .then(() => {
+                    alert('Мікро опис успішно оновлений')
+                })
+        })
+    }
+    const changePathohistologicalConclusion  = () => {
+        casePathohistologicalConclusionTextareaNODE.nextElementSibling.addEventListener('click', () => {
+            fetch(`${API_BASE_URL}/api/doctor/pathohistological_conclusion/${currentCase.id}`, {
+                method: "PUT",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    pathohistological_conclusion: casePathohistologicalConclusionTextareaNODE.value.trim(),
+                })
+            })
+                .then(res => res.json())
+                .then(() => {
+                    alert('Патогістологічний висновок успішно оновлений')
+                })
+        })
+    }
+
+    const caseTemplate = (workCase, isActive) => {
+        const caseNewNODE = document.createElement('div');
+        caseNewNODE.classList.add('caseItem', 'df', 'aic', 'jcsb', ...(isActive ? ['active'] : []));
+        caseNewNODE.innerHTML = `
+            <div>
+                <div class="caseItemDate">${new Date(workCase.creation_date).toLocaleDateString()}</div>
+                <div class="caseItemLabel">${workCase.case_code}</div>
+            </div>
+            <div class="caseItemSample df aic jcc">
+                ${workCase.bank_count}
+            </div>
+            <div>
+                <div class="infoPlate cassette">
+                    ${workCase.cassette_count}
+                </div>
+            </div>
+            <div>
+                <div class="infoPlate glass">
+                    ${workCase.glass_count}
+                </div>
+            </div>
+        `;
+
+        caseNewNODE.addEventListener("click", () => {
+            fetch(`${API_BASE_URL}/api/doctor/patients/referrals/${workCase.id}`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                },
+            })
+                .then(res => res.json())
+                .then(currentCaseDetail => {
+                    const {attachments, case_details} = currentCaseDetail
+                    directionAttachmentNODE.innerHTML = ""
+
+                    document.querySelector('.caseItem.active').classList.remove('active')
+                    caseNewNODE.classList.add('active')
+
+                    showFiles(attachments)
+                    currentCase = case_details
+                    currentUserCorId = case_details.patient_id
+
+                    caseLabelNode.innerHTML = case_details.case_code
+                    caseMicroDescriptionTextareaNODE.value = case_details.microdescription || ""
+                    casePathohistologicalConclusionTextareaNODE.value = case_details.pathohistological_conclusion || ""
+
+                    fetch(`${API_BASE_URL}/api/doctor/patients/${case_details.patient_id}`, {
+                        method: "GET",
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                        },
+                    })
+                        .then(res => res.json())
+                        .then(userData => {
+                            document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
+                            document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
+                            document.querySelector('#userAge').innerHTML = `${userData.age}р`;
+
+                        })
+                })
+        });
+        return caseNewNODE
+    }
+
+
+    const setAllCases = () => {
+        const currentRoutePart = PATIENT_COR_ID ? `patients/${PATIENT_COR_ID}` : `current_cases`
+        fetch(`${API_BASE_URL}/api/doctor/${currentRoutePart}/referral_page`, {
+            method: "GET",
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            },
+        })
+            .then(res => res.json())
+            .then(cases => {
+                const {all_cases, case_details, first_case_direction} = cases;
+                all_cases.forEach((currentCase, index) => {
+                    caseContentNODE.append(caseTemplate(currentCase, !index))
+                })
+
+                if(!first_case_direction){
+                    return;
+                }
+
+                currentCase = case_details;
+                currentUserCorId = case_details.patient_id;
+                setAllAttachment(first_case_direction)
+
+                caseLabelNode.innerHTML = case_details.case_code
+                caseMicroDescriptionTextareaNODE.value = case_details.microdescription || ""
+                casePathohistologicalConclusionTextareaNODE.value = case_details.pathohistological_conclusion || ""
+
+                fetch(`${API_BASE_URL}/api/doctor/patients/${case_details.patient_id}`, {
+                    method: "GET",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    },
+                })
+                    .then(res => res.json())
+                    .then(userData => {
+                        document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
+                        document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
+                        document.querySelector('#userAge').innerHTML = `${userData.age}р`;
+
+                    })
+            })
+
+    }
+    const setAllAttachment = (currentCase) => {
+        showFiles(currentCase.attachments)
+    }
+    const showFiles = files => {
+        if(!files.length) {
+            directionAttachmentNODE.innerHTML = "Немає жодного направлення"
+
+            return;
+        }
+
+        files.forEach((file)=>{
+            const fileViewerWrapperNODE = document.createElement('div');
+            fileViewerWrapperNODE.className = 'thumb';
+            // <img className="directionImg" src="./assets/document.png" alt="doc">
+
+            const imgNODE = document.createElement('img');
+            imgNODE.classList = "directionImg"
+
+            if(file.file_url){
+                fetch(`${API_BASE_URL}/api${file.file_url}`, {
+                    method: "GET",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    },
+                })
+                    .then(response => response.blob())
+                    .then(blob => {
+                        imgNODE.src = URL.createObjectURL(blob);
+                        imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
+                        fileViewerWrapperNODE.appendChild(imgNODE);
+                        directionAttachmentNODE.appendChild(fileViewerWrapperNODE);
+                    })
+            }
+        });
+    }
+
+    const switchRole = () => {
+        document.querySelector('.role-toggle .role-btn:not(.active)').addEventListener('click', (e) => {
+            window.location.href = `/static/lab.html?userCorId=${currentUserCorId}`
+        })
+    }
+    const goToTab = () => {
+        document.querySelectorAll(".tabs .tab:not(.active)").forEach(elem => {
+            elem.addEventListener('click', e => {
+                console.log(currentCase, "currentCase")
+                const element = e.currentTarget;
+                let queryString = []
+
+                if(PATIENT_COR_ID){
+                    queryString.push(`userCorId=${PATIENT_COR_ID}`)
+                }
+
+                if(currentCase?.id){
+                    queryString.push(`caseId=${currentCase?.id}`)
+                }
+
+
+                if(element.classList.contains('directionPage')){
+                    window.location.href = `/static/direction.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('tenderloinPage')){
+                    window.location.href = `/static/tenderloin.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('glassPage')){
+                    window.location.href = `/static/glass.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('conclusionPage')){
+                    window.location.href = `/static/conclusion.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('explorationPage')){
+                    window.location.href = `/static/exploration.html?${queryString.join('&')}`
+                }
+            })
+        })
+    }
+    const revertButtonHandler = () => {
+        const revertButtonNODE = document.querySelector('.glassPageRevert');
+        if(PATIENT_COR_ID){
+            revertButtonNODE.style.display = "block"
+        }
+
+        revertButtonNODE.addEventListener('click', () => {
+            window.location.href = `/static/direction.html`
+        })
+    }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", (event) => {
+        goToTab()
+        switchRole()
+        setAllCases()
+        changeMicroDescription()
+        revertButtonHandler()
+        changePathohistologicalConclusion()
+        showTextareaButton('caseMicroDescription')
+        showTextareaButton('casePathohistologicalConclusion')
+    });
+</script>
 
 
 </body>

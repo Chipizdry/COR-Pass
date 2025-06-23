@@ -32,21 +32,19 @@
                     </svg>
                 </button>
                 <div class="role-toggle">
-                    <button class="role-btn">Лікар</button>
-                </div>
-                <div class="role-toggle">
-                    <button class="role-btn">Лаборант</button>
+                    <button class="role-btn doc active">Лікар</button>
+                    <button class="role-btn lab">Лаборант</button>
                 </div>
             </div>
         </div>
         <div class="header-row bottom">
             <div>
                 <div class="tabs">
-                    <button class="tab">Направлення</button>
-                    <button class="tab active">Вирізка</button>
-                    <button class="tab">Скельця</button>
-                    <button class="tab">Заключення</button>
-                    <button class="tab">Дослідження</button>
+                    <button class="tab directionPage">Направлення</button>
+                    <button class="tab tenderloinPage active">Вирізка</button>
+                    <button class="tab glassPage">Скельця</button>
+                    <button class="tab conclusionPage">Заключення</button>
+                    <button class="tab explorationPage">Дослідження</button>
                 </div>
             </div>
             <div class="meta-info">
@@ -59,76 +57,26 @@
                         </svg>
                     </button>
                 </div>
-                <div>Кукліс Олег Геннадійович</div>
-                <div>Чол</div>
-                <div>65р</div>
+                <div id="userName"></div>
+                <div id="userGender"></div>
+                <div id="userAge"></div>
             </div>
         </div>
     </div>
     <div class="glassPageContent df jcsb">
         <div class="left">
-            <div class="top borderRadiusLeft">
-                Поточні кейси
+            <div class="top borderRadiusLeft df jcsb">
+                <div>
+                    Поточні кейси
+                </div>
+                <div class="glassPageRevert" style="display: none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="800px" height="800px" viewBox="0 0 24 24">
+                        <path fill="none" stroke="#000000" stroke-width="2" d="M8,3 L3,8 L8,13 M12,20 L15,20 C18.3137085,20 21,17.3137085 21,14 C21,10.6862915 18.3137085,8 15,8 L4,8"/>
+                    </svg>
+                </div>
             </div>
             <div class="bottom">
                 <div id="caseItems" class="caseItems">
-                    <div class="caseItem df aic jcsb">
-                        <div>
-                            <div class="caseItemDate">27.03.2025</div>
-                            <div class="caseItemLabel">S25B01251</div>
-                        </div>
-                        <div class="caseItemSample df aic jcc">
-                            1
-                        </div>
-                        <div>
-                            <div class="infoPlate cassette">
-                                1
-                            </div>
-                        </div>
-                        <div>
-                            <div class="infoPlate glass">
-                                1
-                            </div>
-                        </div>
-                    </div>
-                    <div class="caseItem df aic jcsb">
-                        <div>
-                            <div class="caseItemDate">27.03.2025</div>
-                            <div class="caseItemLabel">S25B01251</div>
-                        </div>
-                        <div class="caseItemSample df aic jcc">
-                            1
-                        </div>
-                        <div>
-                            <div class="infoPlate cassette">
-                                1
-                            </div>
-                        </div>
-                        <div>
-                            <div class="infoPlate glass">
-                                1
-                            </div>
-                        </div>
-                    </div>
-                    <div class="caseItem df active aic jcsb">
-                        <div>
-                            <div class="caseItemDate">27.03.2025</div>
-                            <div class="caseItemLabel">S25B01251</div>
-                        </div>
-                        <div class="caseItemSample df aic jcc">
-                            1
-                        </div>
-                        <div>
-                            <div class="infoPlate cassette">
-                                1
-                            </div>
-                        </div>
-                        <div>
-                            <div class="infoPlate glass">
-                                1
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -137,43 +85,7 @@
                 Вирізка
             </div>
             <div class="bottom df ">
-                <div class="tenderloinContent">
-                    <div class="tenderloinTitle">
-                        Загальні параметри вирізки
-                    </div>
-                    <div class="df aic" style="margin-bottom: 18px; gap: 16px">
-                        <div>
-                            <span class="tenderloinSubTitle">
-                                Декальцінація:
-                            </span>
-                            Відсутня
-                        </div>
-                        <div>
-                            <span class="tenderloinSubTitle">
-                                Тип зразків:
-                            </span>
-                            Блоки/скельця
-                        </div>
-                        <div>
-                            <span class="tenderloinSubTitle">
-                                Фіксація:
-                            </span>
-                            10% NBF
-                        </div>
-                    </div>
-                    <div class="tenderloinTitle">
-                        Макроопис
-                    </div>
-                    <div class="tenderloinMargin">
-                        But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness.
-                    </div>
-                    <div class="tenderloinMargin">
-                        <span class="tenderloinSubTitle">Зразок А (з архівом):</span> But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound
-                    </div>
-                    <div>
-                        <span class="tenderloinSubTitle">Зразок B (без архіву):</span> But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer
-                    </div>
-                </div>
+                <div class="tenderloinContent" id="tenderloinContent"></div>
             </div>
         </div>
         <div class="right">
@@ -182,7 +94,8 @@
                     <div class="commentsWrapperTop">
                         Патогістологічний висновок
                     </div>
-                    <textarea></textarea>
+                    <textarea id="casePathohistologicalConclusion"></textarea>
+                    <button class="commentsWrapperButton">Зберегти</button>
                 </div>
             </div>
             <div style="height: 50%" class="df fdc">
@@ -190,12 +103,287 @@
                     <div class="commentsWrapperTop">
                         Мікроопис
                     </div>
-                    <textarea></textarea>
+                    <textarea id="caseMicroDescription"></textarea>
+                    <button class="commentsWrapperButton">Зберегти</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script src="./js/general.js"></script>
+<script>
+    const PATIENT_COR_ID = new URLSearchParams(window.location.search).get('userCorId')
+
+    let currentCase = null;
+    let currentUserCorId = PATIENT_COR_ID || null;
+
+    const caseContentNODE = document.querySelector("#caseItems");
+    const tenderloinContentNODE = document.querySelector("#tenderloinContent");
+    const caseLabelNode = document.querySelector('#searchCaseId');
+    const caseMicroDescriptionTextareaNODE = document.querySelector('#caseMicroDescription');
+    const casePathohistologicalConclusionTextareaNODE = document.querySelector('#casePathohistologicalConclusion');
+
+    const changeMicroDescription  = () => {
+        caseMicroDescriptionTextareaNODE.nextElementSibling.addEventListener('click', () => {
+            fetch(`${API_BASE_URL}/api/doctor/microdescription/${currentCase.id}`, {
+                method: "PUT",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    microdescription: caseMicroDescriptionTextareaNODE.value.trim(),
+                })
+            })
+                .then(res => res.json())
+                .then(() => {
+                    alert('Мікро опис успішно оновлений')
+                })
+        })
+    }
+    const changePathohistologicalConclusion  = () => {
+        casePathohistologicalConclusionTextareaNODE.nextElementSibling.addEventListener('click', () => {
+            fetch(`${API_BASE_URL}/api/doctor/pathohistological_conclusion/${currentCase.id}`, {
+                method: "PUT",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    pathohistological_conclusion: casePathohistologicalConclusionTextareaNODE.value.trim(),
+                })
+            })
+                .then(res => res.json())
+                .then(() => {
+                    alert('Патогістологічний висновок успішно оновлений')
+                })
+        })
+    }
+
+    const caseTemplate = (workCase, isActive) => {
+        const caseNewNODE = document.createElement('div');
+        caseNewNODE.classList.add('caseItem', 'df', 'aic', 'jcsb', ...(isActive ? ['active'] : []));
+        caseNewNODE.innerHTML = `
+            <div>
+                <div class="caseItemDate">${new Date(workCase.creation_date).toLocaleDateString()}</div>
+                <div class="caseItemLabel">${workCase.case_code}</div>
+            </div>
+            <div class="caseItemSample df aic jcc">
+                ${workCase.bank_count}
+            </div>
+            <div>
+                <div class="infoPlate cassette">
+                    ${workCase.cassette_count}
+                </div>
+            </div>
+            <div>
+                <div class="infoPlate glass">
+                    ${workCase.glass_count}
+                </div>
+            </div>
+        `;
+
+        caseNewNODE.addEventListener("click", () => {
+            fetch(`${API_BASE_URL}/api/doctor/cases/${workCase.id}/excision-details`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                },
+            })
+                .then(res => res.json())
+                .then(caseData => {
+                    const {case_details_for_excision} = caseData;
+                    document.querySelector('.caseItem.active').classList.remove('active')
+                    caseNewNODE.classList.add('active')
+
+                    setTenderloin(case_details_for_excision)
+                    currentCase = case_details_for_excision
+                    currentUserCorId = case_details_for_excision.patient_cor_id
+
+
+                    caseLabelNode.innerHTML = case_details_for_excision.case_code
+                    caseMicroDescriptionTextareaNODE.value = case_details_for_excision.microdescription || ""
+                    casePathohistologicalConclusionTextareaNODE.value = case_details_for_excision.pathohistological_conclusion || ""
+
+                    fetch(`${API_BASE_URL}/api/doctor/patients/${case_details_for_excision.patient_cor_id}`, {
+                        method: "GET",
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                        },
+                    })
+                        .then(res => res.json())
+                        .then(userData => {
+                            document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
+                            document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
+                            document.querySelector('#userAge').innerHTML = `${userData.age}р`;
+
+                        })
+                })
+        });
+        return caseNewNODE
+    }
+    const setTenderloin = (currentCase) => {
+        let macroDescription = ""
+        const sampleInfo = currentCase.samples.reduce((sampleInfo, sample) => {
+            if(sample.macro_description){
+                return sampleInfo + (
+                    `
+                    <div class="tenderloinMargin">
+                        <span class="tenderloinSubTitle">Зразок ${sample.sample_number} (${sample.is_archived ? "з архівом" : "без архіва"}):</span>
+                        ${sample.macro_description}
+                    </div>
+                    `
+                )
+            }
+
+            return sampleInfo;
+        }, '')
+        // currentCase.case_parameters.macro_description
+
+        if(currentCase.case_parameters.macro_description || sampleInfo){
+            macroDescription += `<div class="tenderloinTitle">Макроопис</div>`
+            macroDescription += `<div class="tenderloinMargin">${currentCase.case_parameters.macro_description || "-"}</div>`
+            macroDescription += sampleInfo
+        }
+
+
+        tenderloinContentNODE.innerHTML = `
+            <div class="tenderloinTitle">
+                        Загальні параметри вирізки
+                    </div>
+            <div class="df aic" style="margin-bottom: 18px; gap: 16px">
+                <div>
+                    <span class="tenderloinSubTitle">
+                        Декальцінація:
+                    </span>
+                    ${currentCase.case_parameters.decalcification}
+                </div>
+                <div>
+                    <span class="tenderloinSubTitle">
+                        Тип зразків:
+                    </span>
+                    ${currentCase.case_parameters.sample_type}
+                </div>
+                <div>
+                    <span class="tenderloinSubTitle">
+                        Фіксація:
+                    </span>
+                    ${currentCase.case_parameters.fixation}
+                </div>
+            </div>
+            ${macroDescription}
+        `
+    }
+
+
+    const setAllCases = () => {
+        const currentRoutePart = PATIENT_COR_ID ? `patients/${PATIENT_COR_ID}` : `current_cases`
+        fetch(`${API_BASE_URL}/api/doctor/${currentRoutePart}/excision-details`, {
+            method: "GET",
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            },
+        })
+            .then(res => res.json())
+            .then(cases => {
+                const {all_cases, last_case_details_for_excision} = cases;
+                all_cases.forEach((currentCase, index) => {
+                    caseContentNODE.append(caseTemplate(currentCase, !index))
+                })
+
+                if(!last_case_details_for_excision){
+                    return;
+                }
+
+                currentUserCorId = last_case_details_for_excision.patient_cor_id
+                currentCase = last_case_details_for_excision;
+                setTenderloin(last_case_details_for_excision)
+
+                caseLabelNode.innerHTML = last_case_details_for_excision.case_code
+                caseMicroDescriptionTextareaNODE.value = last_case_details_for_excision.microdescription || ""
+                casePathohistologicalConclusionTextareaNODE.value = last_case_details_for_excision.pathohistological_conclusion || ""
+
+                fetch(`${API_BASE_URL}/api/doctor/patients/${last_case_details_for_excision.patient_cor_id}`, {
+                    method: "GET",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    },
+                })
+                    .then(res => res.json())
+                    .then(userData => {
+                        document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
+                        document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
+                        document.querySelector('#userAge').innerHTML = `${userData.age}р`;
+
+                    })
+            })
+
+
+    }
+
+
+    const revertButtonHandler = () => {
+        const revertButtonNODE = document.querySelector('.glassPageRevert');
+        if(PATIENT_COR_ID){
+            revertButtonNODE.style.display = "block"
+        }
+
+        revertButtonNODE.addEventListener('click', () => {
+            window.location.href = `/static/tenderloin.html`
+        })
+    }
+    const switchRole = () => {
+        document.querySelector('.role-toggle .role-btn:not(.active)').addEventListener('click', (e) => {
+            window.location.href = `/static/lab.html?userCorId=${currentUserCorId}`
+        })
+    }
+    const goToTab = () => {
+        document.querySelectorAll(".tabs .tab:not(.active)").forEach(elem => {
+            elem.addEventListener('click', e => {
+                console.log(currentCase, "currentCase")
+                const element = e.currentTarget;
+                let queryString = []
+
+                if(PATIENT_COR_ID){
+                    queryString.push(`userCorId=${PATIENT_COR_ID}`)
+                }
+
+                if(currentCase?.id){
+                    queryString.push(`caseId=${currentCase?.id}`)
+                }
+
+                if(element.classList.contains('directionPage')){
+                    window.location.href = `/static/direction.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('tenderloinPage')){
+                    window.location.href = `/static/tenderloin.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('glassPage')){
+                    window.location.href = `/static/glass.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('conclusionPage')){
+                    window.location.href = `/static/conclusion.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('explorationPage')){
+                    window.location.href = `/static/exploration.html?${queryString.join('&')}`
+                }
+            })
+        })
+    }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", (event) => {
+        goToTab()
+        switchRole()
+        setAllCases()
+        revertButtonHandler()
+        changeMicroDescription()
+        changePathohistologicalConclusion()
+        showTextareaButton('caseMicroDescription')
+        showTextareaButton('casePathohistologicalConclusion')
+    });
+</script>
 
 
 </body>

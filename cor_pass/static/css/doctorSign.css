@@ -1,0 +1,127 @@
+.doctorSignButton{
+    padding: 12px 24px;
+    border: none;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+    text-align: center;
+    border: 1px solid #6C00FF;
+}
+.doctorSignButton.active{
+    background: #6C00FF;
+    color: #FFFFFF;
+}
+.doctorSignImgList{
+    display: none;
+}
+.doctorSignImgList.open{
+    display: block;
+}
+.doctorSignImgWrapper{
+    gap: 16px;
+    margin-bottom: 30px;
+}
+.doctorSignUpload{
+    border: 2px solid black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    max-width: 400px;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+.doctorSignUpload svg{
+    height: 40px;
+    width: 40px;
+}
+
+.doctorSignImg{
+    position: relative;
+    height: 100px;
+    max-width: max-content;
+}
+
+.doctorSignImg.check .doctorSignImgBtn.check{
+    display: flex;
+}
+.doctorSignImg:hover .doctorSignImgBtn.default{
+    display: flex !important;
+}
+
+.doctorSignImg img{
+    height: 100%;
+    object-fit: cover;
+    border: 2px solid black;
+}
+.doctorSignImgBtn{
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: white;
+    border-radius: 100%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.doctorSignImgBtn.check{
+    right: 30px;
+    display: none;
+}
+.doctorSignImgBtn.default{
+    right: initial;
+    left: 0;
+}
+.doctorSignImgBtn svg{
+    width: 60%;
+    height: 60%;
+}
+
+.doctorSignCreate{
+    display: none;
+    position: relative;
+}
+.doctorSignCreate canvas{
+    margin-bottom: 30px;
+    background: white;
+}
+.clearDoctorSign{
+    position: absolute;
+}
+.doctorSignCreate.open{
+    display: block;
+}
+#clearDoctorSign{
+    width: 40px;
+    height: 40px;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    border: 1px solid #6C00FF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 100%;
+    cursor: pointer;
+}
+#closeDoctorSignDraw{
+    width: 40px;
+    height: 40px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border: 1px solid #6C00FF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 100%;
+    cursor: pointer;
+}
+#clearDoctorSign svg{
+    width: 60%;
+    height: 60%;
+}

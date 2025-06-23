@@ -177,14 +177,11 @@ async def upsert_referral_endpoint(
     Если для данного `case_id` направление уже существует, оно будет обновлено.
     В противном случае будет создано новое направление.
     """
-    case = await case_service.get_case(db, referral_data.case_id)
+    case = await case_service.get_single_case(db=db, case_id=referral_data.case_id)
     if not case:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Associated Case not found")
-
-    # Вызываем новую сервисную функцию
-    db_referral = await case_service.upsert_referral(db, referral_data)
+    db_referral = await case_service.upsert_referral(db=db, referral_data=referral_data, case=case)
     
-    # Формируем URLs для вложений
     attachments_response = [
         ReferralAttachmentResponse(
             id=att.id,
@@ -201,16 +198,16 @@ async def upsert_referral_endpoint(
     return referral_response_obj
 
 
-@router.get("/referrals/{referral_id}", response_model=ReferralResponse, dependencies=[Depends(doctor_access)])
+@router.get("/referrals/{case_id}", response_model=ReferralResponse, dependencies=[Depends(doctor_access)])
 async def get_single_referral(
-    referral_id: str,
+    case_id: str,
     db: AsyncSession = Depends(get_db)
 ):
     """
-    **Получение информации о направлении по ID**\n
+    **Получение информации о направлении по case_id**\n
     Возвращает полную информацию о направлении, включая ссылки на прикрепленные файлы.
     """
-    referral = await case_service.get_referral(db, referral_id)
+    referral = await case_service.get_referral_by_case(db=db, case_id=case_id)
     if not referral:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Referral not found")
 
@@ -229,7 +226,7 @@ async def get_single_referral(
     referral_response_obj.attachments = attachments_response
 
     return referral_response_obj
-
+ 
 @router.post("/{referral_id}/attachments", response_model=ReferralAttachmentResponse, dependencies=[Depends(doctor_access)])
 async def upload_referral_attachment(
     referral_id: str,

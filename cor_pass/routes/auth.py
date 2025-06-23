@@ -34,7 +34,7 @@ from cor_pass.schemas import (
     RecoveryCodeModel,
     UserSessionModel,
 )
-from cor_pass.database.models import UserSession
+from cor_pass.database.models import User, UserSession
 from cor_pass.repository import person as repository_person
 from cor_pass.repository import user_session as repository_session
 from cor_pass.repository import cor_id as repository_cor_id
@@ -118,7 +118,8 @@ async def signup(
         "device_info": device_information["device_info"],  # Информация об устройстве
         "ip_address": device_information["ip_address"],  # IP-адрес
         "device_os": device_information["device_os"],
-        "jti": access_token_jti  # Идентификатор актуального access токена  # Операционная система
+        "jti": access_token_jti,
+        "access_token": access_token
     }
     new_session = await repository_session.create_user_session(
         body=UserSession(**session_data),  # Передаём данные для сессии
@@ -243,7 +244,8 @@ async def login(
         "device_info": device_information["device_info"],  # Информация об устройстве
         "ip_address": device_information["ip_address"],  # IP-адрес
         "device_os": device_information["device_os"],
-        "jti": access_token_jti  # Идентификатор актуального access токена
+        "jti": access_token_jti,
+        "access_token": access_token  
     }
     new_session = await repository_session.create_user_session(
         body=UserSessionModel(**session_data),  # Передаём данные для сессии
@@ -271,14 +273,14 @@ async def login(
     dependencies=[Depends(RateLimiter(times=5, seconds=60))],
 )
 async def initiate_login(
-    request: InitiateLoginRequest, db: AsyncSession = Depends(get_db)
+    body: InitiateLoginRequest, db: AsyncSession = Depends(get_db)
 ):
     """
     Инициирует процесс входа пользователя через Cor-ID.
     Получает email и/или cor-id, генерирует session_token и сохраняет информацию о сессии CorIdAuthSession.
     """
 
-    session_token = await repository_session.create_auth_session(request, db)
+    session_token = await repository_session.create_auth_session(request=body, db=db)
 
     return {"session_token": session_token}
 
@@ -289,14 +291,15 @@ async def initiate_login(
     dependencies=[Depends(RateLimiter(times=60, seconds=60))],
 )
 async def check_session_status(
-    request: CheckSessionRequest, db: AsyncSession = Depends(get_db)
+    body: CheckSessionRequest, request: Request, db: AsyncSession = Depends(get_db), device_info: dict = Depends(di.get_device_header)
 ):
     """
     Проверка стутуса заявки на вход и возврат токенов в случае её подтверждения
     """
-    email = request.email
-    cor_id = request.cor_id
-    session_token = request.session_token
+    email = body.email
+    email = email.lower()
+    cor_id = body.cor_id
+    session_token = body.session_token
     db_session = await repository_session.get_auth_approved_session(session_token, db)
     if not db_session:
         raise HTTPException(
@@ -325,6 +328,7 @@ async def check_session_status(
     # Проверка ролей
     user_roles = await repository_person.get_user_roles(email=user.email, db=db)
 
+
     # Получаем токены
     token_data = {"oid": str(user.id), "corid": user.cor_id, "roles": user_roles}
     expires_delta = (
@@ -333,11 +337,28 @@ async def check_session_status(
         else None
     )
 
-    access_token = await auth_service.create_access_token(
+    access_token, access_token_jti = await auth_service.create_access_token(
         data=token_data, expires_delta=expires_delta
     )
     refresh_token = await auth_service.create_refresh_token(
         data=token_data, expires_delta=expires_delta
+    )
+    # Создаём новую сессию
+    device_information = di.get_device_info(request)
+    session_data = {
+        "user_id": user.cor_id,
+        "refresh_token": refresh_token,
+        "device_type": device_information["device_type"],  # Тип устройства
+        "device_info": device_information["device_info"],  # Информация об устройстве
+        "ip_address": device_information["ip_address"],  # IP-адрес
+        "device_os": device_information["device_os"],
+        "jti": access_token_jti,
+        "access_token": access_token
+    }
+    new_session = await repository_session.create_user_session(
+        body=UserSession(**session_data),  # Передаём данные для сессии
+        user=user,
+        db=db,
     )
     response = ConfirmCheckSessionResponse(
         status="approved",
@@ -354,17 +375,35 @@ async def check_session_status(
     dependencies=[Depends(user_access)],
 )
 async def confirm_login(
-    request: ConfirmLoginRequest, db: AsyncSession = Depends(get_db)
+    request: Request,
+    body: ConfirmLoginRequest,
+    current_user: User = Depends(auth_service.get_current_user), 
+    db: AsyncSession = Depends(get_db),
+    device_info: dict = Depends(di.get_device_header),
 ):
     """
     Подтверждает или отклоняет запрос на вход от Cor-ID.
     Получает email и/или cor-id, session_token и статус, обновляет сессию и отправляет результат через WebSocket.
     Требует авторизацию
     """
-    email = request.email
-    cor_id = request.cor_id
-    session_token = request.session_token
-    confirmation_status = request.status.lower()
+    email = body.email
+    email = email.lower()
+    cor_id = body.cor_id
+
+    if email and current_user.email != email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Вы не можете подтвердить вход под данным аккаунтом",
+        )
+
+    elif cor_id and current_user.cor_id != cor_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Вы не можете подтвердить вход под данным аккаунтом",
+        )
+
+    session_token = body.session_token
+    confirmation_status = body.status.lower()
 
     db_session = await repository_session.get_auth_session(session_token, db)
 
@@ -416,6 +455,23 @@ async def confirm_login(
             data=token_data, expires_delta=expires_delta
         )
 
+        # Создаём новую сессию
+        device_information = di.get_device_info(request)
+        session_data = {
+            "user_id": user.cor_id,
+            "refresh_token": refresh_token,
+            "device_type": "MobileCorEnergy",  # Тип устройства
+            "device_info": device_information["device_info"],  # Информация об устройстве
+            "ip_address": device_information["ip_address"],  # IP-адрес
+            "device_os": device_information["device_os"],
+            "jti": access_token_jti,
+            "access_token": access_token
+        }
+        new_session = await repository_session.create_user_session(
+            body=UserSession(**session_data),  # Передаём данные для сессии
+            user=user,
+            db=db,
+        )
         await send_websocket_message(
             session_token,
             {
@@ -503,16 +559,26 @@ async def refresh_token(
                 detail="Invalid refresh token for this device",
             )
     elif existing_sessions:
-        # For non-mobile, we might just check if any session exists for the device
-        is_valid_session = True
+        for session in existing_sessions:
+            try:
+                session_token = await decrypt_data(
+                    encrypted_data=session.refresh_token,
+                    key=await decrypt_user_key(user.unique_cipher_key),
+                )
+                if session_token == token:
+                    is_valid_session = True
+                    break
+            except Exception:
+                logger.warning(
+                    f"Failed to decrypt refresh token for session {session.id}"
+                )
+        if not is_valid_session:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token for this device",
+            )
+    is_valid_session = True
 
-    if not is_valid_session and device_information["device_type"] != "Mobile":
-        logger.warning(
-            f"No active session found for user {user.email} on device {device_information.get('device_info')}"
-        )
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="No active session found"
-        )
     # Проверка ролей
     user_roles = await repository_person.get_user_roles(email=user.email, db=db)
 
@@ -532,7 +598,7 @@ async def refresh_token(
     )
 
     await repository_session.update_session_token(
-        user=user, token=refresh_token, device_info=device_information["device_info"], db=db, jti=access_token_jti
+        user=user, token=refresh_token, device_info=device_information["device_info"], db=db, jti=access_token_jti, access_token=access_token
     )
     logger.debug(
         f"{user.email}'s refresh token updated for device {device_information.get('device_info')}"
@@ -744,7 +810,8 @@ async def restore_account_by_text(
         "device_info": device_information["device_info"],  # Информация об устройстве
         "ip_address": device_information["ip_address"],  # IP-адрес
         "device_os": device_information["device_os"],  # Операционная система
-        "jti": access_token_jti  # Идентификатор актуального access токена
+        "jti": access_token_jti,
+        "access_token": access_token
     }
     new_session = await repository_session.create_user_session(
         body=UserSession(**session_data),  # Передаём данные для сессии
@@ -828,7 +895,8 @@ async def upload_recovery_file(
             ],  # Информация об устройстве
             "ip_address": device_information["ip_address"],  # IP-адрес
             "device_os": device_information["device_os"],  # Операционная система
-            "jti": access_token_jti  # Идентификатор актуального access токена
+            "jti": access_token_jti,
+            "access_token": access_token
         }
         new_session = await repository_session.create_user_session(
             body=UserSession(**session_data),  # Передаём данные для сессии

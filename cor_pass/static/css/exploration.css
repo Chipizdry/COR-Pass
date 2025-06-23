@@ -51,6 +51,7 @@ hr {
   width: 80px;
   height: 60px;
   object-fit: contain;
+  margin: auto;
 }
 
 .main-title {
@@ -211,6 +212,8 @@ hr {
   display: flex;
   justify-content: space-between;
   margin: 12px 0;
+  flex-wrap: wrap;
+  gap: 24px;
 }
 
 .images-section img {

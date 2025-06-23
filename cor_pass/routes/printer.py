@@ -13,12 +13,12 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Printer"])
 
 
-PRINTER_IP = "192.168.154.193"
+PRINTER_IP = "192.168.154.209"
 
 
 @router.post("/print_labels")
 async def print_labels(data: PrintRequest):
-    printer_url = "http://192.168.154.193:8080/task/new"
+    printer_url = "http://192.168.154.209:8080/task/new"
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(printer_url, json=data.dict())

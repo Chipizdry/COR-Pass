@@ -1,11 +1,9 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, UploadFile, File, status
-from fastapi.responses import StreamingResponse, HTMLResponse,Response
+from fastapi.responses import StreamingResponse, HTMLResponse
 import os
 import numpy as np
 import pydicom
-import openslide
 import logging
-import xml.etree.ElementTree as ET
 from openslide import OpenSlide, OpenSlideUnsupportedFormatError
 from skimage.transform import resize
 from PIL import Image

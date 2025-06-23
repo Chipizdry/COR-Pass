@@ -38,6 +38,9 @@ scikit-image = "^0.25.2"
 openslide-python = "^1.4.2"
 openslide-bin = "^4.0.0.8"
 ip2location = "^8.10.5"
+pip = "^25.1.1"
+pymodbus = "^3.9.2"
+prometheus-fastapi-instrumentator = "^7.1.0"
 
 
 [build-system]

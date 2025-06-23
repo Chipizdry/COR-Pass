@@ -32,21 +32,19 @@
                     </svg>
                 </button>
                 <div class="role-toggle">
-                    <button class="role-btn">Лікар</button>
-                </div>
-                <div class="role-toggle">
-                    <button class="role-btn">Лаборант</button>
+                    <button class="role-btn doc active">Лікар</button>
+                    <button class="role-btn lab">Лаборант</button>
                 </div>
             </div>
         </div>
         <div class="header-row bottom">
             <div>
                 <div class="tabs">
-                    <button class="tab">Направлення</button>
-                    <button class="tab">Вирізка</button>
-                    <button class="tab">Скельця</button>
-                    <button class="tab">Заключення</button>
-                    <button class="tab active">Дослідження</button>
+                    <button class="tab directionPage">Направлення</button>
+                    <button class="tab tenderloinPage">Вирізка</button>
+                    <button class="tab glassPage">Скельця</button>
+                    <button class="tab conclusionPage">Заключення</button>
+                    <button class="tab explorationPage active">Дослідження</button>
                 </div>
             </div>
             <div class="meta-info">
@@ -59,241 +57,34 @@
                         </svg>
                     </button>
                 </div>
-                <div>Кукліс Олег Геннадійович</div>
-                <div>Чол</div>
-                <div>65р</div>
+                <div id="userName"></div>
+                <div id="userGender"></div>
+                <div id="userAge"></div>
             </div>
         </div>
     </div>
     <div class="glassPageContent df jcsb">
         <div class="left">
-            <div class="top borderRadiusLeft">
-                Поточні кейси
+            <div class="top borderRadiusLeft df jcsb">
+                <div>
+                    Поточні кейси
+                </div>
+                <div class="glassPageRevert" style="display: none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="800px" height="800px" viewBox="0 0 24 24">
+                        <path fill="none" stroke="#000000" stroke-width="2" d="M8,3 L3,8 L8,13 M12,20 L15,20 C18.3137085,20 21,17.3137085 21,14 C21,10.6862915 18.3137085,8 15,8 L4,8"/>
+                    </svg>
+                </div>
             </div>
             <div class="bottom">
-                <div id="caseItems" class="caseItems">
-                    <div class="caseItem df aic jcsb">
-                        <div>
-                            <div class="caseItemDate">27.03.2025</div>
-                            <div class="caseItemLabel">S25B01251</div>
-                        </div>
-                        <div class="caseItemSample df aic jcc">
-                            1
-                        </div>
-                        <div>
-                            <div class="infoPlate cassette">
-                                1
-                            </div>
-                        </div>
-                        <div>
-                            <div class="infoPlate glass">
-                                1
-                            </div>
-                        </div>
-                    </div>
-                    <div class="caseItem df aic jcsb">
-                        <div>
-                            <div class="caseItemDate">27.03.2025</div>
-                            <div class="caseItemLabel">S25B01251</div>
-                        </div>
-                        <div class="caseItemSample df aic jcc">
-                            1
-                        </div>
-                        <div>
-                            <div class="infoPlate cassette">
-                                1
-                            </div>
-                        </div>
-                        <div>
-                            <div class="infoPlate glass">
-                                1
-                            </div>
-                        </div>
-                    </div>
-                    <div class="caseItem df active aic jcsb">
-                        <div>
-                            <div class="caseItemDate">27.03.2025</div>
-                            <div class="caseItemLabel">S25B01251</div>
-                        </div>
-                        <div class="caseItemSample df aic jcc">
-                            1
-                        </div>
-                        <div>
-                            <div class="infoPlate cassette">
-                                1
-                            </div>
-                        </div>
-                        <div>
-                            <div class="infoPlate glass">
-                                1
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <div id="caseItems" class="caseItems"></div>
             </div>
         </div>
         <div class="middle df fdc">
             <div class="top">
-                Скельця
+                Дослідження
             </div>
             <div class="bottom df ">
-                <div class="report-wrapper">
-                    <div class="report-container">
-
-                        <header class="report-header">
-                            <div class="hdr-left">
-                                Kyiv, Ukraine 02000,<br>
-                                Akademika Dobrokhotova St. 13
-                            </div>
-                            <div class="hdr-center">
-                                <img src="./assets/logo.png" alt="Logo" class="logo">
-                            </div>
-                            <div class="hdr-right">
-                                info@limbachgruppe.net,<br>
-                                +38 (044) 333 75 01
-                            </div>
-                        </header>
-
-                        <div class="report-content">
-
-                            <h1 class="main-title">Патоморфологічне дослідження</h1>
-                            <div class="doc-subtitle">
-                                <strong>МЕДИЧНА ДОКУМЕНТАЦІЯ 014/о</strong> Затверджена наказом МОЗ України 29.05.2013 р. № 435
-                            </div>
-                            <div class="report-number">№ U24B0826</div>
-                            <div class="report-type">Патогістологія</div>
-                            <hr>
-
-                            <section class="report-dates">
-                                <div><strong>Дата біопсії:</strong> 28.05.2024 | 20:11</div>
-                                <div><strong>Дата надходження:</strong> 28.05.2024 | 17:09</div>
-                                <div><strong>Дата завершення:</strong> 28.05.2024 | 20:11</div>
-                            </section>
-                            <hr>
-
-                            <section class="patient-section">
-                                <div class="patient-name">
-                                    <strong>Пацієнт:</strong> Іванова Оксана Володимирівна
-                                </div>
-                                <hr class="patient-hr">
-                                <div class="patient-details">
-                                    <span><strong>Стать:</strong> Жін</span>
-                                    <span><strong>Д/н:</strong> 22.03.1955</span>
-                                    <span><strong>Вік:</strong> 69 років</span>
-                                    <span><strong>Контакт:</strong> +38 (050) 398 75 01, 456@gmail.com</span>
-                                </div>
-                            </section>
-                            <hr>
-
-                            <section class="case-info">
-                                <div class="info-item">
-                                    <div class="info-label"><strong>Медична карта:</strong></div>
-                                    <div class="info-value">№ 12387387439</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label"><strong>Медичний заклад:</strong></div>
-                                    <div class="info-value">Яківська лікарня ім. Корчо</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label"><strong>Відділення:</strong></div>
-                                    <div class="info-value">Патологічне</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label"><strong>Лікуючий лікар:</strong></div>
-                                    <div class="info-value">Тодуров I.M.</div>
-                                </div>
-                            </section>
-                            <hr>
-
-                            <section class="clinical-section">
-                                <p><strong>Клінічні дані:</strong> Lorem ipsum dolor sit amet.</p>
-                                <hr class="mini-hr">
-                                <p><strong>Клінічний діагноз:</strong> Aenean leo ligula, porttitor eu.</p>
-                            </section>
-                            <hr>
-
-                            <section class="stats-section">
-                                <div class="stats-item">
-                                    <strong>Кількість контейнерів:</strong>
-                                    <div class="stats-line">
-                                        <strong>Отримано</strong> <span class="stats-value">6</span>
-                                        <strong>Заявлено</strong> <span class="stats-value">6</span>
-                                    </div>
-                                </div>
-                                <div class="stats-item">
-                                    <strong>Кількість блоків:</strong>
-                                    <div class="stats-line">
-                                        <span class="stats-value">6</span>
-                                    </div>
-                                </div>
-                                <div class="stats-item">
-                                    <strong>Фіксація:</strong>
-                                    <div class="stats-line">
-                                        <span class="stats-value">10% NBF</span>
-                                    </div>
-                                </div>
-                                <div class="stats-item">
-                                    <strong>Декальцинація:</strong>
-                                    <div class="stats-line">
-                                        <span class="stats-value">Відсутня</span>
-                                    </div>
-                                </div>
-                                <div class="stats-item">
-                                    <strong>Макрохран:</strong>
-                                    <div class="stats-line">
-                                        <span class="stats-value">ESS—Без запасу</span>
-                                    </div>
-                                </div>
-                                <div class="stats-item">
-                                    <strong>Фарбування:</strong>
-                                    <div class="stats-line">
-                                        <span class="stats-value">H&E</span>
-                                    </div>
-                                </div>
-                            </section>
-                            <hr>
-
-                            <section class="text-section">
-                                <p><strong>Макроскопічний опис:</strong> Cytokeratin 7 – виражена реакція.</p>
-                            </section>
-                            <hr>
-                            <section class="text-section">
-                                <p><strong>Мікроскопічний опис:</strong> Низькодиференційована пухлина.</p>
-                            </section>
-                            <hr>
-                            <section class="text-section">
-                                <p><strong>Патоморфологічний діагноз:</strong> Lorem ipsum dolor sit amet.</p>
-                            </section>
-                            <hr>
-                            <section class="text-section">
-                                <p><strong>Коментар:</strong> Потрібна клінічна кореляція.</p>
-                            </section>
-                            <hr>
-
-                            <section class="images-section">
-                                <img src="./assets/pato1.jfif" alt="slide1">
-                                <img src="./assets/pato2.jfif" alt="slide2">
-                            </section>
-
-                            <section class="signoff-section">
-                                <div class="signoff-left">
-                                    <strong>Лікар-патологоанатом:</strong> Григорчук О.В.
-                                    <img src="./assets/sign.jpg" alt="signature">
-                                </div>
-                                <div class="signoff-right"><strong>Дата:</strong> 28.05.2024 | 17:27</div>
-                            </section>
-
-                        </div>
-
-                        <div class="doc-footer">
-                            <div class="footer-left">
-                                <strong>МЕДИЧНА ДОКУМЕНТАЦІЯ 014/о</strong> Затверджена наказом МОЗ України 29.05.2013 р. № 435
-                            </div>
-                            <div class="footer-right">Документ створено ПЗ COR-Lab</div>
-                        </div>
-
-                    </div>
-                </div>
+                <div class="report-wrapper" id="explorationContent"></div>
             </div>
         </div>
         <div class="right">
@@ -302,7 +93,8 @@
                     <div class="commentsWrapperTop">
                         Патогістологічний висновок
                     </div>
-                    <textarea></textarea>
+                    <textarea id="casePathohistologicalConclusion"></textarea>
+                    <button class="commentsWrapperButton">Зберегти</button>
                 </div>
             </div>
             <div style="height: 50%" class="df fdc">
@@ -310,13 +102,431 @@
                     <div class="commentsWrapperTop">
                         Мікроопис
                     </div>
-                    <textarea></textarea>
+                    <textarea id="caseMicroDescription"></textarea>
+                    <button class="commentsWrapperButton">Зберегти</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<script src="./js/general.js"></script>
+<script>
+    const PATIENT_COR_ID = new URLSearchParams(window.location.search).get('userCorId')
+
+    let currentUserCorId = PATIENT_COR_ID || null;
+    let currentCase = null;
+
+    const caseContentNODE = document.querySelector("#caseItems");
+    const explorationContentNODE = document.querySelector("#explorationContent");
+    const caseLabelNode = document.querySelector('#searchCaseId');
+    const caseMicroDescriptionTextareaNODE = document.querySelector('#caseMicroDescription');
+    const casePathohistologicalConclusionTextareaNODE = document.querySelector('#casePathohistologicalConclusion');
+
+    const changeMicroDescription  = () => {
+        caseMicroDescriptionTextareaNODE.nextElementSibling.addEventListener('click', () => {
+            fetch(`${API_BASE_URL}/api/doctor/microdescription/${currentCase.id}`, {
+                method: "PUT",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    microdescription: caseMicroDescriptionTextareaNODE.value.trim(),
+                })
+            })
+                .then(res => res.json())
+                .then(() => {
+                    alert('Мікро опис успішно оновлений')
+                })
+        })
+    }
+    const changePathohistologicalConclusion  = () => {
+        casePathohistologicalConclusionTextareaNODE.nextElementSibling.addEventListener('click', () => {
+            fetch(`${API_BASE_URL}/api/doctor/pathohistological_conclusion/${currentCase.id}`, {
+                method: "PUT",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    pathohistological_conclusion: casePathohistologicalConclusionTextareaNODE.value.trim(),
+                })
+            })
+                .then(res => res.json())
+                .then(() => {
+                    alert('Патогістологічний висновок успішно оновлений')
+                })
+        })
+    }
+    const getImages = async (fileUrl) => {
+        return fetch(`${API_BASE_URL}/api${fileUrl}`, {
+            method: "GET",
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            },
+        })
+            .then(response => response.blob())
+            .then(blob => {
+                return blob
+            })
+    }
+
+    const caseTemplate = (workCase, isActive) => {
+        const caseNewNODE = document.createElement('div');
+        caseNewNODE.classList.add('caseItem', 'df', 'aic', 'jcsb', ...(isActive ? ['active'] : []));
+        caseNewNODE.innerHTML = `
+            <div>
+                <div class="caseItemDate">${new Date(workCase.creation_date).toLocaleDateString()}</div>
+                <div class="caseItemLabel">${workCase.case_code}</div>
+            </div>
+            <div class="caseItemSample df aic jcc">
+                ${workCase.bank_count}
+            </div>
+            <div>
+                <div class="infoPlate cassette">
+                    ${workCase.cassette_count}
+                </div>
+            </div>
+            <div>
+                <div class="infoPlate glass">
+                    ${workCase.glass_count}
+                </div>
+            </div>
+        `;
+
+        caseNewNODE.addEventListener("click", () => {
+            fetch(`${API_BASE_URL}/api/doctor/cases/${workCase.id}/final-report`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                },
+            })
+                .then(res => res.json())
+                .then(caseData => {
+                    const {case_details, report_details} = caseData;
+                    document.querySelector('.caseItem.active').classList.remove('active')
+                    caseNewNODE.classList.add('active')
+
+                    setReport(report_details)
+                    currentCase = case_details
+                    currentUserCorId = case_details.patient_id
+
+                    caseLabelNode.innerHTML = case_details.case_code
+                    caseMicroDescriptionTextareaNODE.value = case_details.microdescription || ""
+                    casePathohistologicalConclusionTextareaNODE.value = case_details.pathohistological_conclusion || ""
+                    fetch(`${API_BASE_URL}/api/doctor/patients/${case_details.patient_id}`, {
+                        method: "GET",
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                        },
+                    })
+                        .then(res => res.json())
+                        .then(userData => {
+                            document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
+                            document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
+                            document.querySelector('#userAge').innerHTML = `${userData.age}р`;
+                        })
+                })
+        });
+        return caseNewNODE
+    }
+
+    const setReport = (currentCase) => {
+        explorationContentNODE.innerHTML = ``;
+        const signatures = currentCase.signatures;
+        currentCase.attached_glasses = currentCase.attached_glasses.map(data => ({
+            ...data,
+            file_url: "/cases/attachments/315163fc-db4b-41ca-9980-2054c1761af1"
+        }))
+
+        explorationContentNODE.innerHTML = `
+            <div class="report-container">
+                <header class="report-header">
+                    <div class="hdr-left">
+                        Kyiv, Ukraine 02000,<br>
+                        Akademika Dobrokhotova St. 13
+                    </div>
+                    <div class="hdr-center">
+                        <img src="./assets/logo.png" alt="Logo" class="logo">
+                    </div>
+                    <div class="hdr-right">
+                        info@limbachgruppe.net,<br>
+                        +38 (044) 333 75 01
+                    </div>
+                </header>
+
+                <div class="report-content">
+
+                    <h1 class="main-title">Патоморфологічне дослідження</h1>
+                    <div class="doc-subtitle">
+                        <strong>МЕДИЧНА ДОКУМЕНТАЦІЯ 014/о</strong> Затверджена наказом МОЗ України 29.05.2013 р. № 435
+                    </div>
+                    <div class="report-number">№ ${currentCase.case_code}</div>
+                    <div class="report-type">Патогістологія</div>
+                    <hr>
+
+                    <section class="report-dates">
+                        <div><strong>Дата біопсії:</strong> ${currentCase.biopsy_date || "-"}</div>
+                        <div><strong>Дата надходження:</strong> ${currentCase.arrival_date || "-"}</div>
+                        <div><strong>Дата завершення:</strong> ${currentCase.report_date || "-"}</div>
+                    </section>
+                    <hr>
+
+                    <section class="patient-section">
+                        <div class="patient-name">
+                            <strong>Пацієнт:</strong> ${`${currentCase.patient_surname} ${currentCase.patient_first_name} ${currentCase.patient_middle_name}`}
+                        </div>
+                        <hr class="patient-hr">
+                        <div class="patient-details">
+                            <span><strong>Стать:</strong> ${currentCase.patient_sex === "F"? "Жін": "Чол" }</span>
+                            <span><strong>Д/н:</strong> ${new Date(currentCase.patient_birth_date).toLocaleDateString()}</span>
+                            <span><strong>Вік:</strong> ${getAge(currentCase.patient_birth_date)} років</span>
+                            <span><strong>Контакт:</strong> ${currentCase.patient_phone_number}, ${currentCase.patient_email}</span>
+                        </div>
+                    </section>
+                    <hr>
+
+                    <section class="case-info">
+                        <div class="info-item">
+                            <div class="info-label"><strong>Медична карта:</strong></div>
+                            <div class="info-value">№ ${currentCase.medical_card_number || "-"}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label"><strong>Медичний заклад:</strong></div>
+                            <div class="info-value">${currentCase.medical_institution || "-"}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label"><strong>Відділення:</strong></div>
+                            <div class="info-value">${currentCase.medical_department || "-"}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label"><strong>Лікуючий лікар:</strong></div>
+                            <div class="info-value">${currentCase.attending_doctor || "-"}</div>
+                        </div>
+                    </section>
+                    <hr>
+
+                    <section class="clinical-section">
+                        <p><strong>Клінічні дані:</strong> ${currentCase.clinical_data || "-"}</p>
+                        <hr class="mini-hr">
+                        <p><strong>Клінічний діагноз:</strong> ${currentCase.clinical_diagnosis || "-"}</p>
+                    </section>
+                    <hr>
+
+                    <section class="stats-section">
+                        <div class="stats-item">
+                            <strong>Кількість контейнерів:</strong>
+                            <div class="stats-line">
+                                <strong>Отримано</strong> <span class="stats-value">${currentCase.containers_recieved || "-"}</span>
+                                <strong>Заявлено</strong> <span class="stats-value">${currentCase.containers_actual || "-"}</span>
+                            </div>
+                        </div>
+                        <div class="stats-item">
+                            <strong>Кількість блоків:</strong>
+                            <div class="stats-line">
+                                <span class="stats-value">${currentCase.num_blocks || "-"}</span>
+                            </div>
+                        </div>
+                        <div class="stats-item">
+                            <strong>Фіксація:</strong>
+                            <div class="stats-line">
+                                <span class="stats-value">${currentCase.fixation || "-"}</span>
+                            </div>
+                        </div>
+                        <div class="stats-item">
+                            <strong>Декальцинація:</strong>
+                            <div class="stats-line">
+                                <span class="stats-value">${currentCase.decalcification || ""}</span>
+                            </div>
+                        </div>
+                        <div class="stats-item">
+                            <strong>Макроархів:</strong>
+                            <div class="stats-line">
+                                <span class="stats-value">${currentCase.macroarchive || "-"}</span>
+                            </div>
+                        </div>
+                        <div class="stats-item">
+                            <strong>Фарбування:</strong>
+                            <div class="stats-line">
+                                <span class="stats-value">H&E</span>
+                            </div>
+                        </div>
+                    </section>
+                    <hr>
+
+                    <section class="text-section">
+                        <p><strong>Макроскопічний опис:</strong> ${currentCase.macrodescription || "-"}</p>
+                    </section>
+                    <hr>
+                    <section class="text-section">
+                        <p><strong>Мікроскопічний опис:</strong> ${currentCase.microdescription || "-"}</p>
+                    </section>
+                    <hr>
+                    <section class="text-section">
+                        <p><strong>Патоморфологічний діагноз:</strong> ${currentCase.pathomorphological_diagnosis || "-"}</p>
+                    </section>
+                    <hr>
+                    <section class="text-section">
+                        <p><strong>Коментар:</strong> ${currentCase.comment || "-"}</p>
+                    </section>
+                    <hr>
+
+                    <section class="images-section" id="attachedGlassesReport">
+                    </section>
+
+                    <section id="signaturesDoctorReport">
+
+                    </section>
+                </div>
+                <div class="doc-footer">
+                    <div class="footer-left">
+                        <strong>МЕДИЧНА ДОКУМЕНТАЦІЯ 014/о</strong> Затверджена наказом МОЗ України 29.05.2013 р. № 435
+                    </div>
+                    <div class="footer-right">Документ створено ПЗ COR-Lab</div>
+                </div>
+            </div>
+        `
+
+        const allFiles = [
+            ...currentCase.attached_glasses.map(({file_url}) => file_url),
+            ...signatures.map(({doctor_signature}) => doctor_signature.signature_scan_data)
+        ]
+
+        Promise.all(allFiles.map(getImages))
+            .then(filesBlob => {
+                const glassFiles = filesBlob.slice(0, currentCase.attached_glasses.length)
+                const doctorFiles = filesBlob.slice(currentCase.attached_glasses.length)
+
+                glassFiles.forEach((blob) => {
+                    const attachedGlassesReportNODE = document.querySelector('#attachedGlassesReport')
+                    const imgNODE = document.createElement('img');
+                    imgNODE.src = URL.createObjectURL(blob);
+                    imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
+                    attachedGlassesReportNODE.appendChild(imgNODE);
+                })
+
+                doctorFiles.forEach((blob, index) => {
+                    const currentDoctor = signatures[index]
+                    const signaturesDoctorReportNODE = document.querySelector('#signaturesDoctorReport')
+                    signaturesDoctorReportNODE.innerHTML += `
+                    <div class="signoff-section">
+                        <div class="signoff-left">
+                            <strong>Лікар-патологоанатом:</strong> ${currentDoctor.doctor.last_name} ${currentDoctor.doctor.first_name} ${currentDoctor.doctor.middle_name}
+                            <img src="${URL.createObjectURL(blob)}" alt="signature">
+                        </div>
+                        <div class="signoff-right"><strong>Дата:</strong> ${new Date(currentDoctor.signed_at).toLocaleDateString()}</div>
+                    </div>
+                    `
+                })
+
+
+            })
+    }
+    const setAllCases = () => {
+        const currentRoutePart = PATIENT_COR_ID ? `patients/${PATIENT_COR_ID}` : `current_cases`
+        fetch(`${API_BASE_URL}/api/doctor/${currentRoutePart}/final-report-page-data?skip=0&limit=100000`, {
+            method: "GET",
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            },
+        })
+            .then(res => res.json())
+            .then(cases => {
+                const {all_cases, report_details, last_case_details} = cases;
+                all_cases.forEach((currentCase, index) => {
+                    caseContentNODE.append(caseTemplate(currentCase, !index))
+                })
+
+                if(!report_details){
+                    return;
+                }
+
+                currentUserCorId = last_case_details.patient_id
+                currentCase = last_case_details;
+                setReport(report_details)
+
+                caseLabelNode.innerHTML = last_case_details.case_code
+                caseMicroDescriptionTextareaNODE.value = last_case_details.microdescription || ""
+                casePathohistologicalConclusionTextareaNODE.value = last_case_details.pathohistological_conclusion || ""
+
+                fetch(`${API_BASE_URL}/api/doctor/patients/${last_case_details.patient_id}`, {
+                    method: "GET",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    },
+                })
+                    .then(res => res.json())
+                    .then(userData => {
+                        document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
+                        document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
+                        document.querySelector('#userAge').innerHTML = `${userData.age}р`;
+                    })
+            })
+    }
+
+    const switchRole = () => {
+        document.querySelector('.role-toggle .role-btn:not(.active)').addEventListener('click', (e) => {
+            window.location.href = `/static/lab.html?userCorId=${currentUserCorId}`
+        })
+    }
+    const goToTab = () => {
+        document.querySelectorAll(".tabs .tab:not(.active)").forEach(elem => {
+            elem.addEventListener('click', e => {
+                console.log(currentCase, "currentCase")
+                const element = e.currentTarget;
+                let queryString = []
+
+                if(PATIENT_COR_ID){
+                    queryString.push(`userCorId=${PATIENT_COR_ID}`)
+                }
+
+                if(currentCase?.id){
+                    queryString.push(`caseId=${currentCase?.id}`)
+                }
+
+
+                if(element.classList.contains('directionPage')){
+                    window.location.href = `/static/direction.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('tenderloinPage')){
+                    window.location.href = `/static/tenderloin.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('glassPage')){
+                    window.location.href = `/static/glass.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('conclusionPage')){
+                    window.location.href = `/static/conclusion.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('explorationPage')){
+                    window.location.href = `/static/exploration.html?${queryString.join('&')}`
+                }
+            })
+        })
+    }
+    const revertButtonHandler = () => {
+        const revertButtonNODE = document.querySelector('.glassPageRevert');
+        if(PATIENT_COR_ID){
+            revertButtonNODE.style.display = "block"
+        }
+
+        revertButtonNODE.addEventListener('click', () => {
+            window.location.href = `/static/exploration.html`
+        })
+    }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", (event) => {
+        goToTab()
+        switchRole()
+        setAllCases()
+        changeMicroDescription()
+        revertButtonHandler()
+        changePathohistologicalConclusion()
+        showTextareaButton('caseMicroDescription')
+        showTextareaButton('casePathohistologicalConclusion')
+    });
+</script>
 
 </body>
 </html>
