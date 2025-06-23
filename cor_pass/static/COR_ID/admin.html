@@ -615,7 +615,7 @@ async function showUserRoles(corId) {
         rolesList.innerHTML = '';
 
         // Создаем элементы только для отображения ролей
-        const allRoles = ['admin', 'lawyer', 'cor-int', 'active_user', 'doctor'];
+        const allRoles = ['admin', 'lawyer', 'cor-int', 'active_user', 'doctor','energy_manager', 'lab_assistant'];
         allRoles.forEach(role => {
             const isChecked = userRoles.includes(role);
             
