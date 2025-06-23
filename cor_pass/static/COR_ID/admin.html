@@ -748,20 +748,19 @@ function showLabAssistantInfo(userData) {
     `;
 }
 async function showDoctorInfo(corId) {
+    const roleInfoContent = document.getElementById("roleInfoContent");
+    
     try {
         console.log('[DoctorInfo] Начало загрузки данных врача для corId:', corId);
         
-        // Проверяем, что corId - строка
         if (typeof corId !== 'string') {
             const errorMsg = `Ожидался string corId, получено: ${typeof corId}`;
             console.error('[DoctorInfo] Ошибка:', errorMsg, corId);
             throw new Error(errorMsg);
         }
 
-        console.log('[DoctorInfo] Запрашиваем данные с сервера...');
-        const startTime = performance.now();
+        roleInfoContent.innerHTML = '<p>Загрузка данных врача...</p>';
         
-        // Получаем данные врача с сервера
         const response = await fetch(`/api/admin/get_user_info/${corId}/doctors-data`, {
             method: 'GET',
             headers: {
@@ -770,101 +769,50 @@ async function showDoctorInfo(corId) {
             }
         });
 
-        const requestTime = performance.now() - startTime;
-        console.log(`[DoctorInfo] Ответ сервера получен за ${requestTime.toFixed(2)} мс`, response);
-
         if (!response.ok) {
-            const errorMsg = `Ошибка HTTP: ${response.status} ${response.statusText}`;
-            console.error('[DoctorInfo] Ошибка ответа:', errorMsg);
-            throw new Error(errorMsg);
+            throw new Error(`Ошибка HTTP: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
-        console.log('[DoctorInfo] Получены данные врача:', {
-            corId: corId,
-            doctorInfo: data.doctor_info,
-            diplomasCount: data.doctor_info?.diplomas?.length || 0,
-            certificatesCount: data.doctor_info?.certificates?.length || 0,
-            clinicsCount: data.doctor_info?.clinic_affiliations?.length || 0
-        });
-
         const doctorInfo = data.doctor_info || {};
         
-        // Логирование структуры данных перед рендерингом
-        console.debug('[DoctorInfo] Структура данных перед рендерингом:', {
-            personalInfo: {
-                first_name: doctorInfo.first_name,
-                last_name: doctorInfo.last_name,
-                work_email: doctorInfo.work_email
-            },
-            hasDiplomas: doctorInfo.diplomas && doctorInfo.diplomas.length > 0,
-            hasCertificates: doctorInfo.certificates && doctorInfo.certificates.length > 0,
-            hasClinics: doctorInfo.clinic_affiliations && doctorInfo.clinic_affiliations.length > 0
-        });
-
-        console.log('[DoctorInfo] Начинаем формирование модального окна...');
-        const modalContent = `
-            <div class="modal-content">
-                <span class="close" onclick="closeModal('doctorModal')">&times;</span>
-                <h2>Информация о враче</h2>
-                
-                <div class="doctor-tabs">
-                    <!-- Вкладки -->
-                    <div class="tabs-header">
-                        <button class="tab-btn active" data-tab="personal">Личные данные</button>
-                        <button class="tab-btn" data-tab="diplomas">Дипломы</button>
-                        <button class="tab-btn" data-tab="certificates">Сертификаты</button>
-                        <button class="tab-btn" data-tab="clinics">Клиники</button>
-                    </div>
-                    
-                    <!-- Контент вкладок -->
-                    <div class="tabs-content">
-                        <!-- Личные данные -->
-                        <div id="personal-tab" class="tab-pane active">
-                            ${renderPersonalInfo(doctorInfo)}
-                        </div>
-                        
-                        <!-- Дипломы -->
-                        <div id="diplomas-tab" class="tab-pane">
-                            ${renderDiplomas(doctorInfo.diplomas || [])}
-                        </div>
-                        
-                        <!-- Сертификаты -->
-                        <div id="certificates-tab" class="tab-pane">
-                            ${renderCertificates(doctorInfo.certificates || [])}
-                        </div>
-                        
-                        <!-- Клиники -->
-                        <div id="clinics-tab" class="tab-pane">
-                            ${renderClinics(doctorInfo.clinic_affiliations || [])}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="modal-footer">
-                    <button onclick="saveDoctorInfo('${corId}')">Сохранить изменения</button>
-                </div>
+        // Формируем HTML для отображения в roleInfoModal
+        roleInfoContent.innerHTML = `
+    <h3>Информация о враче</h3>
+    <div class="doctor-tabs">
+        <div class="tabs-header">
+            <button class="tab-btn active" data-tab="personal">Личные данные</button>
+            <button class="tab-btn" data-tab="diplomas">Дипломы</button>
+            <button class="tab-btn" data-tab="certificates">Сертификаты</button>
+            <button class="tab-btn" data-tab="clinics">Клиники</button>
+        </div>
+        
+        <div class="tabs-content">
+            <div id="personal-tab" class="tab-pane">
+                ${renderPersonalInfo(doctorInfo)}
             </div>
-        `;
-        
-        console.log('[DoctorInfo] Модальное окно сформировано, отображаем...');
-        showModal('doctorModal', modalContent);
-        
-        console.log('[DoctorInfo] Инициализация вкладок...');
-        initTabs();
-        
-        console.log('[DoctorInfo] Загрузка данных завершена успешно');
-        
-    } catch (error) {
-        console.error('[DoctorInfo] Критическая ошибка:', {
-            error: error,
-            message: error.message,
-            stack: error.stack
-        });
-        alert('Не удалось загрузить информацию о враче: ' + error.message);
-    }
-}
+            <div id="diplomas-tab" class="tab-pane">
+                ${renderDiplomas(doctorInfo.diplomas || [])}
+            </div>
+            <div id="certificates-tab" class="tab-pane">
+                ${renderCertificates(doctorInfo.certificates || [])}
+            </div>
+            <div id="clinics-tab" class="tab-pane">
+                ${renderClinics(doctorInfo.clinic_affiliations || [])}
+            </div>
+        </div>
+    </div>
+`;
 
+
+initTabs();
+    } catch (error) {
+        console.error('[DoctorInfo] Ошибка:', error);
+        roleInfoContent.innerHTML = `<p class="error">Не удалось загрузить информацию о враче: ${error.message}</p>`;
+    }
+    
+    // Не нужно вызывать showModal, так как roleInfoModal уже открыт
+}
 // Функции для рендеринга разных разделов
 function renderPersonalInfo(doctor) {
     return `
@@ -992,19 +940,35 @@ function closeModal(modalId) {
 }
 
 function initTabs() {
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Убираем активный класс у всех кнопок и панелей
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-            
-            // Добавляем активный класс текущей кнопке и соответствующей панели
-            this.classList.add('active');
-            const tabId = this.getAttribute('data-tab');
-            document.getElementById(`${tabId}-tab`).classList.add('active');
-        });
+    const tabsContainer = document.querySelector('.doctor-tabs');
+    if (!tabsContainer) return;
+
+    // Установите первую вкладку как активную по умолчанию
+    const firstTab = tabsContainer.querySelector('.tab-btn');
+    const firstPane = tabsContainer.querySelector('.tab-pane');
+    if (firstTab && firstPane) {
+        firstTab.classList.add('active');
+        firstPane.classList.add('active');
+    }
+
+    // Обработчик кликов
+    tabsContainer.addEventListener('click', function(e) {
+        const btn = e.target.closest('.tab-btn');
+        if (!btn) return;
+
+        // Убираем активный класс у всех кнопок и панелей
+        tabsContainer.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        tabsContainer.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        
+        // Добавляем активный класс текущей кнопке и соответствующей панели
+        btn.classList.add('active');
+        const tabId = btn.getAttribute('data-tab');
+        const pane = tabsContainer.querySelector(`#${tabId}-tab`);
+        if (pane) pane.classList.add('active');
     });
 }
+
+
 
     </script>
 </body>
