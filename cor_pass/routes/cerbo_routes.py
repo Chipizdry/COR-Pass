@@ -6,6 +6,8 @@ from pymodbus.client import AsyncModbusTcpClient
 from pydantic import BaseModel, Field
 from typing import Optional
 
+ERROR_THRESHOLD = 3
+error_count = 0
 
 # Конфигурация Modbus
 MODBUS_IP = "91.203.25.12"
