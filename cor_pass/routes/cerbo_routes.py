@@ -117,14 +117,59 @@ class EssFeedInControl(BaseModel):
 # Создание роутера FastAPI
 router = APIRouter(prefix="/modbus", tags=["Modbus"])
 
+async def create_modbus_client(app):
+    try:
+        if hasattr(app.state, "modbus_client") and app.state.modbus_client:
+            await app.state.modbus_client.close()
+            logging.info("🔌 Старый клиент Modbus закрыт")
+
+        app.state.modbus_client = AsyncModbusTcpClient(host=MODBUS_IP, port=MODBUS_PORT)
+        await app.state.modbus_client.connect()
+
+        if not app.state.modbus_client.connected:
+            logging.error("❌ Не удалось подключиться к Modbus серверу")
+        else:
+            logging.info("✅ Подключение к Modbus серверу установлено")
+
+    except Exception as e:
+        logging.exception("❗ Ошибка при создании Modbus клиента", exc_info=e)
+#
 
 # --- Клиент хранения ---
-async def create_modbus_client(app):
-    app.state.modbus_client = AsyncModbusTcpClient(host=MODBUS_IP, port=MODBUS_PORT)
-    await app.state.modbus_client.connect()
+#async def create_modbus_client(app):
+#    app.state.modbus_client = AsyncModbusTcpClient(host=MODBUS_IP, port=MODBUS_PORT)
+#    await app.state.modbus_client.connect()
 
 async def close_modbus_client(app):
-    await app.state.modbus_client.close()
+    client = getattr(app.state, "modbus_client", None)
+    if client and client.connected:
+        await client.close()
+        logging.info("🔌 Клиент Modbus отключён")
+
+
+
+#async def close_modbus_client(app):
+#    await app.state.modbus_client.close()
+
+
+async def get_modbus_client(app):
+    global error_count
+
+    client = getattr(app.state, "modbus_client", None)
+    if client is None or not client.connected:
+        logging.warning("🔄 Создание нового Modbus клиента...")
+        client = AsyncModbusTcpClient(host=MODBUS_IP, port=MODBUS_PORT)
+        await client.connect()
+        app.state.modbus_client = client
+        error_count = 0
+
+    return client
+
+def register_modbus_error():
+    global error_count
+    error_count += 1
+    logging.warning(f"❗ Modbus ошибка #{error_count}")
+
 
 # Функции декодирования
 def decode_signed_16(value: int) -> int:
@@ -136,10 +181,11 @@ def decode_signed_32(high: int, low: int) -> int:
 
 # Получение статуса батареи
 @router.get("/battery_status")
+
 async def get_battery_status(request: Request):
     try:
-        client = request.app.state.modbus_client
-
+        #client = request.app.state.modbus_client
+        client = await get_modbus_client(request.app)  
         addresses = [REGISTERS[key] for key in REGISTERS]
         start = min(addresses)
         count = max(addresses) - start + 1
@@ -152,6 +198,7 @@ async def get_battery_status(request: Request):
 
         def get_value(name: str) -> int:
             return raw[REGISTERS[name] - start]
+        error_count = 0
 
         return {
             "soc": get_value("soc") / 10,
@@ -163,6 +210,7 @@ async def get_battery_status(request: Request):
         }
 
     except Exception as e:
+        register_modbus_error()
         logging.error("❗ Ошибка получения данных с батареи", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
@@ -175,7 +223,8 @@ async def get_inverter_power_status(request: Request):
     Исключает чтение input_power_l1/l2/l3 (регистры 872, 874, 876)
     """
     try:
-        client = request.app.state.modbus_client
+       #client = request.app.state.modbus_client
+        client = await get_modbus_client(request.app)
         slave = INVERTER_ID
         reg_map = {
             "dc_power": 870,
@@ -194,7 +243,7 @@ async def get_inverter_power_status(request: Request):
             value = decode_signed_32(res.registers[0], res.registers[1])
             result[name] = value
            # logging.info(f"✅ {name}: {value} Вт")
-
+        error_count = 0
         return {
             "dc_power": result["dc_power"],
             "ac_output": {
@@ -206,6 +255,7 @@ async def get_inverter_power_status(request: Request):
         }
 
     except Exception as e:
+        register_modbus_error()
         logging.error("❗ Ошибка получения данных мощности инвертора", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
@@ -219,7 +269,8 @@ async def get_ess_ac_status(request: Request):
     - Power (L1-L3)
     """
     try:
-        client = request.app.state.modbus_client
+        #client = request.app.state.modbus_client
+        client = await get_modbus_client(request.app) 
         slave = ESS_UNIT_ID
         
         # Define all registers to read (address: description)
@@ -272,7 +323,7 @@ async def get_ess_ac_status(request: Request):
             elif "power" in reg_name:
                 return decode_signed_16(value) * 10  # int16 scaled by 0.1
             return value
-
+        error_count = 0  
         # Build response structure
         response = {
             "input": {
@@ -324,6 +375,7 @@ async def get_ess_ac_status(request: Request):
         return response
 
     except Exception as e:
+        register_modbus_error()
         logging.error("❗ Ошибка чтения AC параметров ESS", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
@@ -348,7 +400,7 @@ async def get_vebus_status(request: Request):
         def val(idx): return r[idx - start]
 
         def s16(v): return decode_signed_16(v)
-
+        error_count = 0
         return {
             "output_frequency_hz": s16(val(21)) / 100,
             "input_current_limit_a": s16(val(22)) / 10,
@@ -380,6 +432,7 @@ async def get_vebus_status(request: Request):
         }
 
     except Exception as e:
+        register_modbus_error()
         logging.error("❗ Ошибка чтения VE.Bus регистров", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
@@ -401,9 +454,10 @@ async def set_vebus_soc(control: VebusSOCControl, request: Request):
             value=scaled_value,
             slave=100
         )
-
+        error_count = 0
         return {"status": "ok"}
     except Exception as e:
+        register_modbus_error()
         logging.error("❗ Ошибка установки VE.Bus SoC", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
@@ -435,11 +489,12 @@ async def set_ess_advanced_setpoint_fine(control: EssAdvancedControl, request: R
             value=register_value,
             slave=slave
         )
-        
+        error_count = 0  
         logging.info(f"✅ Установлено AC Power Setpoint Fine: {control.ac_power_setpoint_fine} W (регистр 2703 = {register_value})")
         return {"status": "ok", "value": control.ac_power_setpoint_fine}
         
     except Exception as e:
+        register_modbus_error() 
         logging.error("❗ Ошибка записи AC Power Setpoint Fine", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
@@ -460,10 +515,11 @@ async def set_grid_limiting_status(data: GridLimitUpdate, request: Request):
 
         if result.isError():
             raise HTTPException(status_code=500, detail="Ошибка записи регистра 2709")
-
+        error_count = 0
         return {"success": True, "grid_limiting_status": value}
 
     except Exception as e:
+        register_modbus_error()
         import logging
         logging.error("❗ Ошибка при записи grid_limiting_status", exc_info=e)
         raise HTTPException(status_code=500, detail="Ошибка записи Modbus")
@@ -491,6 +547,7 @@ async def get_ess_settings(request: Request):
             raise HTTPException(status_code=500, detail="Ошибка чтения регистров ESS Settings")
 
         regs = result.registers
+        error_count = 0
         return {
             "battery_life_state": regs[0],               # 2900
             "minimum_soc_limit": regs[1] / 10.0,         # 2901, scale x10
@@ -499,6 +556,7 @@ async def get_ess_settings(request: Request):
         }
 
     except Exception as e:
+        register_modbus_error()
         logging.error("❗ Ошибка чтения ESS настроек", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
@@ -524,7 +582,7 @@ async def get_ess_advanced_settings(request: Request):
         r_main = result_main.registers
         def safe_main(idx): return r_main[idx - start_main] if (idx - start_main) < len(r_main) else None
         def s16(v): return decode_signed_16(v) if v is not None else None
-
+        error_count = 0
         # Формируем результат
         result_data = {
             "ac_power_setpoint": safe_main(2700),  # Просто читаем значение регистра 2700
@@ -546,6 +604,7 @@ async def get_ess_advanced_settings(request: Request):
         return result_data
 
     except Exception as e:
+        register_modbus_error() 
         logging.error("❗ Ошибка при чтении ESS настроек", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
@@ -602,9 +661,10 @@ async def get_solarchargers_status(request: Request):
                 logging.warning(f"⚠️ Исключение при чтении slave {slave}: {e}")
 
             results[f"charger_{slave}"] = charger_data
-
+        error_count = 0
         return results
 
     except Exception as e:
+        register_modbus_error()
         logging.error("❗ Общая ошибка при опросе MPPT", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
