@@ -134,7 +134,7 @@
                         <button class="modal-button close" data-action="close" id="closeRoleInfoModal">✖</button>
                     </div>
                 </div>
-                <div id="roleInfoContent" style="padding: 20px;">
+                <div id="roleInfoContent" style="padding: 0px;">
                     <!-- Здесь будет информация о роли -->
                 </div>
             </div> 
@@ -813,27 +813,27 @@ initTabs();
 // Функции для рендеринга разных разделов
 function renderPersonalInfo(doctor) {
     return `
-        <div class="form-group">
+        <div class="form-group-width">
             <label>Имя:</label>
             <input type="text" id="doctorFirstName" value="${doctor.first_name || ''}">
         </div>
-        <div class="form-group">
+        <div class="form-group-width">
             <label>Фамилия:</label>
             <input type="text" id="doctorLastName" value="${doctor.last_name || ''}">
         </div>
-        <div class="form-group">
+        <div class="form-group-width">
             <label>Отчество:</label>
             <input type="text" id="doctorMiddleName" value="${doctor.middle_name || ''}">
         </div>
-        <div class="form-group">
+        <div class="form-group-width">
             <label>Рабочий email:</label>
             <input type="email" id="doctorWorkEmail" value="${doctor.work_email || ''}">
         </div>
-        <div class="form-group">
+        <div class="form-group-width">
             <label>Телефон:</label>
             <input type="tel" id="doctorPhone" value="${doctor.phone_number || ''}">
         </div>
-        <div class="form-group">
+        <div class="form-group-width">
             <label>Научная степень:</label>
             <input type="text" id="doctorDegree" value="${doctor.scientific_degree || ''}">
         </div>
@@ -841,48 +841,45 @@ function renderPersonalInfo(doctor) {
 }
 
 function renderDiplomas(diplomas) {
-    if (diplomas.length === 0) return '<p>Нет данных о дипломах</p>';
-    
-    return `
-        
-            ${diplomas.map((diploma, index) => `
-                <div data-id="${diploma.id}">
-                    <h4>Диплом ${index + 1}</h4>
-                    <div class="form-group">
-                        <label>Университет:</label>
-                        <input type="text" value="${diploma.university || ''}">
-                    </div>
-                    <div class="form-group">
-                        <label>Серия:</label>
-                        <input type="text" value="${diploma.series || ''}">
-                    </div>
-                    <div class="form-group">
-                        <label>Номер:</label>
-                        <input type="text" value="${diploma.number || ''}">
-                    </div>
-                </div>
-            `).join('')}
-       
-    `;
+    const list = diplomas.length > 0 ? diplomas : [{}];  // хотя бы один пустой
+
+    return list.map((diploma, index) => `
+        <div data-id="${diploma.id || ''}">
+            <h4>Диплом</h4>
+            <div class="form-group-width">
+                <label>Университет:</label>
+                <input type="text" value="${diploma.university || ''}">
+            </div>
+            <div class="form-group-width">
+                <label>Серия:</label>
+                <input type="text" value="${diploma.series || ''}">
+            </div>
+            <div class="form-group-width">
+                <label>Номер:</label>
+                <input type="text" value="${diploma.number || ''}">
+            </div>
+        </div>
+    `).join('');
 }
 
+
 function renderCertificates(certificates) {
-    if (certificates.length === 0) return '<p>Нет данных о сертификатах</p>';
-    
+    const list = certificates.length > 0 ? certificates : [{}];
+
     return `
         <div class="documents-list">
-            ${certificates.map((cert, index) => `
-                <div data-id="${cert.id}">
-                    <h4>Сертификат ${index + 1}</h4>
-                    <div class="form-group">
+            ${list.map((cert, index) => `
+                <div data-id="${cert.id || ''}">
+                    <h4>Сертификат</h4>
+                    <div class="form-group-width">
                         <label>Университет:</label>
                         <input type="text" value="${cert.university || ''}">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group-width">
                         <label>Серия:</label>
                         <input type="text" value="${cert.series || ''}">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group-width">
                         <label>Номер:</label>
                         <input type="text" value="${cert.number || ''}">
                     </div>
@@ -893,22 +890,22 @@ function renderCertificates(certificates) {
 }
 
 function renderClinics(clinics) {
-    if (clinics.length === 0) return '<p>Нет данных о клиниках</p>';
-    
+    const list = clinics.length > 0 ? clinics : [{}];
+
     return `
         <div class="clinics-list">
-            ${clinics.map((clinic, index) => `
-                <div data-id="${clinic.id}">
-                    <h4>Клиника ${index + 1}</h4>
-                    <div class="form-group">
+            ${list.map((clinic, index) => `
+                <div data-id="${clinic.id || ''}">
+                    <h4>Клиника</h4>
+                    <div class="form-group-width">
                         <label>Название:</label>
                         <input type="text" value="${clinic.clinic_name || ''}">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group-width">
                         <label>Отделение:</label>
                         <input type="text" value="${clinic.department || ''}">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group-width">
                         <label>Должность:</label>
                         <input type="text" value="${clinic.position || ''}">
                     </div>

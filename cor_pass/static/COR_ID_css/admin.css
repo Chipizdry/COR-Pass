@@ -334,9 +334,6 @@ margin: 0 5px;
 
 .tab-pane {
     display: none;
-    padding: 10px;
-    background: #f9f9f9;
-    border-radius: 4px;
 }
 
 .tab-pane.active {
@@ -355,13 +352,14 @@ margin: 0 5px;
     color: #555;
 }
 
+/*
 .form-group input {
     width: 100%;
     padding: 6px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 12px;
-}
+} */
 
 .documents-list, .clinics-list {
     display: grid;

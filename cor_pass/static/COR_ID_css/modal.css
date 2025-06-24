@@ -292,11 +292,12 @@
 .form-group-width input[type="email"],
 .form-group-width input[type="range"],
 .form-group-width input[type="text"],
+.form-group-width input[type="tel"],
 .form-group-width input[type="date"] {
     width: 100%;
     padding: 10px;
     margin-bottom: 10px;
-    border: 1px solid #f0f0f0;
+    border: 1px solid #ffffff;
     border-radius: 12px;
     box-sizing: border-box;
 }
