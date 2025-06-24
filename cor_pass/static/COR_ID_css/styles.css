@@ -82,6 +82,11 @@ input[type="text"] {
     box-sizing: border-box;
 }
 
+input:focus, textarea:focus, select:focus {
+    outline: 2px solid #7B43F2; /* Фиолетовый цвет */
+
+}
+
  .toggle-password {
     position: absolute;
     right: 10px;

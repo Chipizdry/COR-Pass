@@ -311,10 +311,10 @@ margin: 0 5px;
 
 .tabs-header {
     display: flex;
-    border-bottom: 1px solid #ddd;
-    margin-bottom: 10px;
+    border: 1px solid #7B43F2;
+    border-radius: 12px;
+    margin: 1px 20px;
 }
-
 .tab-btn {
     padding: 8px 15px;
     background: none;
@@ -327,10 +327,20 @@ margin: 0 5px;
 }
 
 .tab-btn.active {
-    border-bottom: 2px solid #7B43F2;
+    border: 2px solid #7B43F2;
     color: #7B43F2;
-    font-weight: bold;
+    background-color: #FFFFFF;
+    height: 60px;
+    margin: 0px;
 }
+
+.tab-btn:hover {
+    border: 2px solid #7B43F2;
+    background: none;
+    height: 60px;
+    margin: 0px;
+}
+
 
 .tab-pane {
     display: none;
