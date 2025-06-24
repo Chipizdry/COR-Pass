@@ -270,6 +270,10 @@ footer {
     background-color: rgb(7, 206, 7);
 }
 
+.status-indicator.warning {
+    background-color: yellow;
+}
+
 
 #gridInverterLine {
     pointer-events: none;

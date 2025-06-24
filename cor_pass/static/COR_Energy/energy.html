@@ -831,6 +831,7 @@ function toggleVisibility() {
         if (tick % 6 === 0) fetchEss();
         if (tick % 7 === 0) fetchEssAdvancedSettings();
         if (tick % 9 === 0) fetchStatus();
+        if (tick % 30 === 0) checkConnectionStatus();
 
         if (tick >= 60) tick = 0;
       }, 100);
@@ -843,7 +844,7 @@ function toggleVisibility() {
         fetchVebusStatus(); 
         fetchEssAdvancedSettings();
         fetchSolarChargerStatus();
-     
+        checkConnectionStatus();
     </script>
     
 </body>

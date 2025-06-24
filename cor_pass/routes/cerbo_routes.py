@@ -6,7 +6,7 @@ from pymodbus.client import AsyncModbusTcpClient
 from pydantic import BaseModel, Field
 from typing import Optional
 
-ERROR_THRESHOLD = 3
+ERROR_THRESHOLD = 9
 error_count = 0
 
 # Конфигурация Modbus
@@ -146,23 +146,36 @@ async def close_modbus_client(app):
         await client.close()
         logging.info("🔌 Клиент Modbus отключён")
 
-
-
-#async def close_modbus_client(app):
-#    await app.state.modbus_client.close()
-
-
+# Получение клиента с реконнектом при ошибках
 async def get_modbus_client(app):
     global error_count
-
     client = getattr(app.state, "modbus_client", None)
-    if client is None or not client.connected:
-        logging.warning("🔄 Создание нового Modbus клиента...")
-        client = AsyncModbusTcpClient(host=MODBUS_IP, port=MODBUS_PORT)
-        await client.connect()
-        app.state.modbus_client = client
-        error_count = 0
 
+    # Если клиент не подключен — создаём новый
+    if client is None or not client.connected:
+        logging.warning(f"🔄 Переподключение Modbus клиента... (errors: {error_count})")
+
+        # Закрытие старого клиента, если есть
+        if client:
+            try:
+                await client.close()
+            except Exception as e:
+                logging.warning(f"⚠️ Ошибка при закрытии клиента: {e}")
+
+        # Новый клиент
+        new_client = AsyncModbusTcpClient(host=MODBUS_IP, port=MODBUS_PORT)
+        await new_client.connect()
+
+        if not new_client.connected:
+            logging.error("❌ Не удалось переподключиться к Modbus серверу")
+        else:
+            logging.info("✅ Новое подключение к Modbus успешно")
+        error_count = 0  # сброс после успешного подключения
+        app.state.modbus_client = new_client
+        
+        return new_client
+
+    # Если клиент есть и подключён
     return client
 
 def register_modbus_error():
@@ -178,6 +191,12 @@ def decode_signed_16(value: int) -> int:
 def decode_signed_32(high: int, low: int) -> int:
     combined = (high << 16) | low
     return combined - 0x100000000 if combined >= 0x80000000 else combined
+
+
+@router.get("/error_count")
+async def get_error_count():
+    """Возвращает текущее количество ошибок Modbus"""
+    return {"error_count": error_count}
 
 # Получение статуса батареи
 @router.get("/battery_status")

@@ -444,3 +444,38 @@
 
 
 
+// Функция для проверки состояния соединения
+async function checkConnectionStatus() {
+    try {
+        const response = await fetch('/api/modbus/error_count');
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        updateConnectionIndicator(data.error_count);
+        console.log('Ошибки:', data.error_count);
+    } catch (error) {
+        console.error('Error fetching connection status:', error);
+        // Если запрос не удался, считаем что соединение плохое
+        updateConnectionIndicator(9); // ERROR_THRESHOLD
+    }
+}
+
+
+// Функция для обновления индикатора соединения
+function updateConnectionIndicator(errorCount) {
+    const indicator = document.getElementById('connectionIndicator');
+    const ERROR_THRESHOLD = 9; // Должно совпадать с серверной константой
+    
+    if (errorCount >= ERROR_THRESHOLD) {
+        indicator.classList.remove('active');
+        indicator.style.backgroundColor = 'red';
+    } else if (errorCount === 0) {
+        indicator.classList.add('active');
+        indicator.style.backgroundColor = 'rgb(7, 206, 7)';
+    } else {
+        // Промежуточное состояние (например, желтый для 1-8 ошибок)
+        indicator.classList.remove('active');
+        indicator.style.backgroundColor = 'yellow';
+    }
+}
