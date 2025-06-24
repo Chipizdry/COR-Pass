@@ -785,9 +785,7 @@ async function showDoctorInfo(corId) {
             <button class="tab-btn" data-tab="diplomas">Дипломы</button>
             <button class="tab-btn" data-tab="certificates">Сертификаты</button>
             <button class="tab-btn" data-tab="clinics">Клиники</button>
-        </div>
-        
-        <div class="tabs-content">
+        </div>     
             <div id="personal-tab" class="tab-pane">
                 ${renderPersonalInfo(doctorInfo)}
             </div>
@@ -800,7 +798,6 @@ async function showDoctorInfo(corId) {
             <div id="clinics-tab" class="tab-pane">
                 ${renderClinics(doctorInfo.clinic_affiliations || [])}
             </div>
-        </div>
     </div>
 `;
 
@@ -847,9 +844,9 @@ function renderDiplomas(diplomas) {
     if (diplomas.length === 0) return '<p>Нет данных о дипломах</p>';
     
     return `
-        <div class="documents-list">
+        
             ${diplomas.map((diploma, index) => `
-                <div class="document-card" data-id="${diploma.id}">
+                <div data-id="${diploma.id}">
                     <h4>Диплом ${index + 1}</h4>
                     <div class="form-group">
                         <label>Университет:</label>
@@ -865,7 +862,7 @@ function renderDiplomas(diplomas) {
                     </div>
                 </div>
             `).join('')}
-        </div>
+       
     `;
 }
 
@@ -875,7 +872,7 @@ function renderCertificates(certificates) {
     return `
         <div class="documents-list">
             ${certificates.map((cert, index) => `
-                <div class="document-card" data-id="${cert.id}">
+                <div data-id="${cert.id}">
                     <h4>Сертификат ${index + 1}</h4>
                     <div class="form-group">
                         <label>Университет:</label>
@@ -901,7 +898,7 @@ function renderClinics(clinics) {
     return `
         <div class="clinics-list">
             ${clinics.map((clinic, index) => `
-                <div class="clinic-card" data-id="${clinic.id}">
+                <div data-id="${clinic.id}">
                     <h4>Клиника ${index + 1}</h4>
                     <div class="form-group">
                         <label>Название:</label>
