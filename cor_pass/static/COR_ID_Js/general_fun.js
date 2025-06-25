@@ -16,7 +16,7 @@ const modalConfigs = {
     Dicom_upload_modal: { width: '460px', height: 'auto', top: 'auto', left: 'auto' },
     recovery_modal: { width: '250px', height: 'auto', top: 'auto', left: 'auto' },
     rolesModal: { width: '250px', height: 'auto', top: '50px', left: '50px' },
-    roleInfoModal: { width: '460px', height: '650px', top: 'auto', left: 'auto' },
+    roleInfoModal: { width: '460px', height: '680px', top: 'auto', left: 'auto' },
 
     batteryModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
     loadSettingsModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },

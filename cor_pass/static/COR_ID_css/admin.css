@@ -314,16 +314,20 @@ margin: 0 5px;
     border: 1px solid #7B43F2;
     border-radius: 12px;
     margin: 1px 20px;
+    width: 417px;
 }
+
+
 .tab-btn {
-    padding: 8px 15px;
+    padding: 6px 6px;
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 11px;
     color: #291161;
     border-bottom: 2px solid transparent;
     transition: all 0.3s;
+    width: 95px;
 }
 
 .tab-btn.active {

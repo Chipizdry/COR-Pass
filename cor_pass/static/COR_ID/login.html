@@ -209,7 +209,7 @@ document.getElementById('send-recovery-btn').addEventListener('click', async fun
                             const accessToken = result.access_token;
 
                             localStorage.setItem('access_token', result.access_token);
-                            localStorage.setItem('refresh_token', result.refresh_token);
+                          //  localStorage.setItem('refresh_token', result.refresh_token);
                             const url = `/static/COR_ID/mainscreen.html`;
 
                             window.location.href = url;
@@ -381,8 +381,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const searchParams = url.searchParams;
 
             // Получаем значения redirect_url и cor-id
-            const redirectUrl = searchParams.get('redirectUrl'); // Указываем ключ 'redirectUrl'
-            const corId = searchParams.get('corId'); // Указываем ключ 'cor_id'
+         //   const redirectUrl = searchParams.get('redirectUrl'); // Указываем ключ 'redirectUrl'
+          //  const corId = searchParams.get('corId'); // Указываем ключ 'cor_id'
 
         form.addEventListener('submit', (event) => {
             event.preventDefault();
@@ -413,22 +413,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             const accessToken = response.access_token;
                             const savedRedirectUrl = localStorage.getItem('redirectUrl');
 
-                            const accessToken_rcv = new URLSearchParams(window.location.search).get('access_token');
-                            const refreshToken_rcv = new URLSearchParams(window.location.search).get('refresh_token');
-                            const savedRedirectUrl_rcv = localStorage.getItem('redirectUrl');
-
-                            if (savedRedirectUrl && savedRedirectUrl !== 'null' && savedRedirectUrl !== 'undefined') {
-                        // Перенаправляем на savedRedirectUrl с access_token и refresh_token
-                           window.location.href = `${savedRedirectUrl}?access_token=${accessToken}&refresh_token=${refreshToken}`;
-                         } else {
-                           console.log(" Не найдены параметры redirect_url или cor_id.");
-
-
+            
                            localStorage.setItem('access_token', response.access_token);
                            localStorage.setItem('refresh_token', response.refresh_token);
                            const url = `/static/COR_ID/mainscreen.html`;
                            window.location.href = url;
-                              }
+                              
 
                         }, 1500);
 

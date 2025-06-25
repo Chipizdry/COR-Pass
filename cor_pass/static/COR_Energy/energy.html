@@ -308,28 +308,28 @@
         <svg width="540" height="600" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="flowLoad" patternUnits="userSpaceOnUse" width="20" height="20">
-                    <rect id="loadFlowRect" width="10" height="20" fill="#00ff00"></rect>
+                    <rect id="loadFlowRect" width="10" height="20" fill="hsl(112.16959999999999, 100%, 50%)"></rect>
                     <animateTransform id="loadFlowAnim" attributeName="patternTransform" type="translate" from="0,0" to="40,0" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
               <pattern id="flowGrid" patternUnits="userSpaceOnUse" width="20" height="20">
-                <rect id="gridFlowRect" width="10" height="20" fill="#00ff00"></rect>
+                <rect id="gridFlowRect" width="10" height="20" fill="rgb(167, 255, 0)"></rect>
                 <animateTransform id="gridFlowAnim" attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
               <pattern id="flowSolarV" patternUnits="userSpaceOnUse" width="20" height="20">
-                    <rect id="solarFlowRectV" width="20" height="10" fill="#00ff00"></rect>
+                    <rect id="solarFlowRectV" width="20" height="10" fill="hsl(30.804799999999997, 100%, 50%)"></rect>
                     <animateTransform id="solarFlowAnimV" attributeName="patternTransform" type="translate" from="0,40" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
               <pattern id="flowSolarH" patternUnits="userSpaceOnUse" width="20" height="20">
-                    <rect id="solarFlowRectH" width="10" height="20" fill="#00ff00"></rect>
+                    <rect id="solarFlowRectH" width="10" height="20" fill="hsl(30.804799999999997, 100%, 50%)"></rect>
                     <animateTransform id="solarFlowAnimH" attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
               <pattern id="flowBatteryH" patternUnits="userSpaceOnUse" width="20" height="20">
-                <rect id="batteryFlowRectH" width="10" height="20" fill="#00ff00"></rect>
+                <rect id="batteryFlowRectH" width="10" height="20" fill="rgb(240, 255, 0)"></rect>
                 <animateTransform id="batteryFlowAnimH" attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
               <pattern id="flowBatteryV" patternUnits="userSpaceOnUse" width="20" height="20">
-                    <rect id="batteryFlowRectV" width="20" height="10" fill="#00ff00"></rect>
-                    <animateTransform id="batteryFlowAnimV" attributeName="patternTransform" type="translate" from="0,00" to="0,40" dur="1s" repeatCount="indefinite"></animateTransform>
+                    <rect id="batteryFlowRectV" width="20" height="10" fill="rgb(240, 255, 0)"></rect>
+                    <animateTransform id="batteryFlowAnimV" attributeName="patternTransform" type="translate" from="0,0" to="0,40" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
             </defs>
 
@@ -346,9 +346,9 @@
             <polyline id="solarLineH" points="277,518 460,518" fill="none" stroke="url(#flowSolarH)" stroke-width="6" stroke-linejoin="round"></polyline>
             <!--Линия батарей-->
             <polyline points="200,340, 200,523" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
-            <polyline points="200,518 50,518" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
+            <polyline points="200,518 65,518" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
             <polyline id="batteryLineV" points="200,340, 200,521" fill="none" stroke="url(#flowBatteryV)" stroke-width="6" stroke-linejoin="round"></polyline>
-            <polyline id="batteryLineH" points="200,518 50,518" fill="none" stroke="url(#flowBatteryH)" stroke-width="6" stroke-linejoin="round"></polyline>       
+            <polyline id="batteryLineH" points="200,518 65,518" fill="none" stroke="url(#flowBatteryH)" stroke-width="6" stroke-linejoin="round"></polyline>       
           </svg>
         
 </div>
