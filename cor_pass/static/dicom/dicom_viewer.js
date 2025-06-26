@@ -460,80 +460,97 @@ function updateSliders(volumeInfo) {
   }
   
 
+async function openFullscreenSVS() {
+  const token = getToken();  // сохраняем токен один раз
+  const svsViewerDiv = document.getElementById('svs-fullscreen-viewer');
+  svsViewerDiv.classList.remove('hidden');
+  svsViewerDiv.classList.add('visible');
+  const headers = {
+    Authorization: `Bearer ${token}`
+  };
 
-  async function openFullscreenSVS() {
-    const token = getToken();
-    const svsViewerDiv = document.getElementById('svs-fullscreen-viewer');
-    //svsViewerDiv.style.display = 'block';
-    svsViewerDiv.classList.remove('hidden');
-    svsViewerDiv.classList.add('visible');
-
-
-    try {
-        const svsMetadata = await loadSvsMetadata(token, true);
-        if (!svsMetadata) {
-            alert("Не удалось загрузить метаданные SVS.");
-            return;
-        }
-
-        const width = svsMetadata.dimensions.width;
-        const height = svsMetadata.dimensions.height;
-        const levels = svsMetadata.dimensions.levels;
-        const tileSize = 256;
-        console.log('[openFullscreenSVS] SVS Metadata:', {width,height,levels,tileSize });
-        if (viewer) viewer.destroy();
-
-        viewer = OpenSeadragon({
-          id: "openseadragon1",
-          prefixUrl: "/static/SVS_Viewer/images/",
-          showNavigator: false,
-          showZoomControl: false,
-          showFullPageControl: false,
-          showHomeControl: false,
-          showRotationControl: false,
-          minZoomLevel: 0.5,
-          maxZoomLevel: 10,
-          loadTilesWithAjax: true, // ОБЯЗАТЕЛЬНО для заголовков авторизации
-          ajaxHeaders: {
-              'Authorization': `Bearer ${token}`
-          },
-          tileSources: {
-              height: height,
-              width: width,
-              tileSize: tileSize,
-              maxLevel: levels - 1,
-              getTileUrl: function (level, x, y) {
-                  const url = `/api/svs/tile?level=${level}&x=${x}&y=${y}&tile_size=${tileSize}`;
-                  console.log('[Tile URL]', url);
-                  return url;
-              }
-          }
-      });
-      
-        viewer.addHandler('open', function () {
-            console.log('[openFullscreenSVS] Viewer opened');
-            viewer.viewport.goHome();
-            viewer.viewport.zoomTo(1);
-            viewer.viewport.panTo(new OpenSeadragon.Point(0.5, 0.5));
-        });
-
-        viewer.addHandler('tile-loaded', function (event) {
-            console.log('[openFullscreenSVS] Tile loaded:', event.tile);
-        });
-
-        const closeBtn = document.querySelector('.close-btn');
-        if (closeBtn) {
-            closeBtn.onclick = () => {
-                viewer.destroy();
-                svsViewerDiv.classList.remove('visible');
-                svsViewerDiv.classList.add('hidden');
-            };
-        }
-
-    } catch (error) {
-        console.error('[openFullscreenSVS] Error:', error);
-        document.getElementById('upload-status').textContent = `Error: ${ error}`;
+  try {
+    const svsMetadata = await loadSvsMetadata(token, true);
+    if (!svsMetadata) {
+      alert("❌ Не удалось загрузить метаданные SVS.");
+      return;
     }
+
+    const { width, height, levels } = svsMetadata.dimensions;
+    const tileSize = 256;
+
+
+    console.log('[openFullscreenSVS] Метаданные:', { width, height, levels });
+
+    if (viewer) {
+      console.log('[openFullscreenSVS] Уничтожение старого viewer');
+      viewer.destroy();
+    }
+
+   
+
+    viewer = OpenSeadragon({
+      id: "openseadragon1",
+      prefixUrl: "/static/SVS_Viewer/images/",
+      tileSources: {
+        width: width,
+        height: height,
+        tileSize: tileSize,
+        minLevel: 0,
+        maxLevel: levels - 1,
+        getTileUrl: (level, x, y) =>
+          `/api/svs/tile?level=${level}&x=${x}&y=${y}&tile_size=${tileSize}`
+      },
+      showNavigator: false,
+      showZoomControl: false,
+      showFullPageControl: false,
+      showHomeControl: false,
+      showRotationControl: false,
+      loadTilesWithAjax: true,
+      ajaxHeaders: headers,  
+      visibilityRatio: 0,
+      constrainDuringPan: false,
+      minZoomLevel: 0.01,
+      maxZoomPixelRatio: 8,
+      preserveImageSizeOnResize: true,
+      immediateRender: true
+    });
+
+    viewer.addHandler('open', () => {
+      console.log('[openFullscreenSVS] Viewer открыт');
+      const zoom = viewer.viewport.getZoom();
+      const homeZoom = viewer.viewport.getHomeZoom();
+      console.log('[ZOOM] Текущий зум:', zoom, 'Рекомендуемый:', homeZoom);
+      viewer.viewport.goHome(); 
+    });
+
+    viewer.addHandler('tile-loaded', (event) => {
+      console.log('[tile-loaded] Загружен тайл:', event.tile);
+    });
+
+    viewer.addHandler('tile-load-failed', (event) => {
+      console.warn('[tile-load-failed]', {
+        level: event.tile?.level,
+        x: event.tile?.x,
+        y: event.tile?.y,
+        url: event.tile?.url,
+        message: event.message
+      });
+    });
+
+    const closeBtn = document.querySelector('.close-btn');
+    if (closeBtn) {
+      closeBtn.onclick = () => {
+        console.log('[openFullscreenSVS] Закрытие viewer');
+        viewer.destroy();
+        viewer = null;
+        svsViewerDiv.classList.remove('visible');
+        svsViewerDiv.classList.add('hidden');
+      };
+    }
+
+  } catch (error) {
+    console.error('[openFullscreenSVS] Ошибка:', error);
+    document.getElementById('upload-status').textContent = `Ошибка загрузки: ${error}`;
+  }
 }
-
-

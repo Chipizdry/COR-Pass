@@ -6,6 +6,7 @@ from openslide import OpenSlide
 from io import BytesIO
 from cor_pass.services.auth import auth_service
 from cor_pass.database.models import User
+from PIL import Image
 
 logger = logging.getLogger("svs_logger")
 logging.basicConfig(level=logging.INFO)
@@ -106,51 +107,70 @@ def preview_svs(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/tile")
 def get_tile(
-    level: int = Query(...),
-    x: int = Query(...),
-    y: int = Query(...),
-    tile_size: int = Query(256),
+    level: int = Query(..., description="Zoom level"),
+    x: int = Query(..., description="Tile X index"),
+    y: int = Query(..., description="Tile Y index"),
+    tile_size: int = Query(256, description="Tile size in pixels"),
     current_user: User = Depends(auth_service.get_current_user)
 ):
-    user_slide_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id), "slides")
-    svs_files = [f for f in os.listdir(user_slide_dir) if f.lower().endswith('.svs')]
-
-    if not svs_files:
-        raise HTTPException(status_code=404, detail="No SVS found.")
-
-    svs_path = os.path.join(user_slide_dir, svs_files[0])
-
     try:
+        user_slide_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id), "slides")
+        svs_files = [f for f in os.listdir(user_slide_dir) if f.lower().endswith('.svs')]
+
+        if not svs_files:
+            logger.warning(f"[NO SVS] User {current_user.cor_id} has no SVS files")
+            raise HTTPException(status_code=404, detail="No SVS files found.")
+
+        svs_path = os.path.join(user_slide_dir, svs_files[0])
         slide = OpenSlide(svs_path)
 
-        if level >= slide.level_count:
-            raise HTTPException(status_code=400, detail="Invalid level")
+        if level < 0 or level >= slide.level_count:
+            logger.warning(f"[INVALID LEVEL] level={level}, max={slide.level_count - 1}")
+            return empty_tile()
 
-        # Размер изображения на этом уровне
         level_width, level_height = slide.level_dimensions[level]
+        tiles_x = (level_width + tile_size - 1) // tile_size
+        tiles_y = (level_height + tile_size - 1) // tile_size
 
-        # Проверка выхода за границы
-        if x * tile_size >= level_width or y * tile_size >= level_height:
-            raise HTTPException(status_code=404, detail="Tile out of bounds")
+        logger.info(f"[LEVEL INFO] level={level}, size={level_width}x{level_height}, tiles={tiles_x}x{tiles_y}")
 
-        # Позиция в пикселях на этом уровне
+        if x < 0 or x >= tiles_x or y < 0 or y >= tiles_y:
+            logger.warning(f"[OUT OF BOUNDS] level={level}, x={x}, y={y}, tiles_x={tiles_x}, tiles_y={tiles_y}")
+            return empty_tile()
+
         location = (x * tile_size, y * tile_size)
-        size = (
-            min(tile_size, level_width - location[0]),
-            min(tile_size, level_height - location[1])
-        )
+        region_width = min(tile_size, level_width - location[0])
+        region_height = min(tile_size, level_height - location[1])
 
-        tile = slide.read_region(location, level, size).convert("RGB")
+        # 💥 Ключевой момент: пересчёт координат в базовый уровень
+        downsample = slide.level_downsamples[level]
+        base_location = (int(location[0] * downsample), int(location[1] * downsample))
+        base_size = (int(region_width * downsample), int(region_height * downsample))
+
+        logger.debug(f"[TILE READ] level={level}, base_location={base_location}, base_size={base_size}")
+
+        region = slide.read_region(base_location, 0, base_size).convert("RGB")
+        region = region.resize((region_width, region_height), Image.LANCZOS)
+
         buf = BytesIO()
-        tile.save(buf, format="JPEG")
+        region.save(buf, format="JPEG")
         buf.seek(0)
+
         return StreamingResponse(buf, media_type="image/jpeg")
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        logger.critical(f"[UNEXPECTED ERROR] {traceback.format_exc()}")
+        return empty_tile()
 
 
-
-
+def empty_tile(color=(255, 255, 255)) -> StreamingResponse:
+    """Возвращает 1x1 JPEG-заглушку."""
+    img = Image.new("RGB", (1, 1), color)
+    buf = BytesIO()
+    img.save(buf, format="JPEG")
+    buf.seek(0)
+    return StreamingResponse(buf, media_type="image/jpeg")
