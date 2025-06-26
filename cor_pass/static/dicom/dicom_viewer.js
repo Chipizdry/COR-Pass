@@ -459,11 +459,89 @@ function updateSliders(volumeInfo) {
       `;
   }
   
+
+
+  const navOverlay = document.createElement('canvas');
+  navOverlay.id = 'tile-navigator';
+  navOverlay.width = 200;
+  navOverlay.height = 200;
+  navOverlay.style.position = 'absolute';
+  navOverlay.style.bottom = '10px';
+  navOverlay.style.right = '10px';
+  navOverlay.style.border = '1px solid white';
+  navOverlay.style.background = 'rgba(0,0,0,0.6)';
+  navOverlay.style.zIndex = '10001';
+  
+  document.getElementById('svs-fullscreen-viewer').appendChild(navOverlay);
+  const navCtx = navOverlay.getContext('2d');
+
+  function updateNavigator() {
+    const tiledImage = viewer.world.getItemAt(0);
+    if (!tiledImage || !tiledImage.source) return;
+  
+    const { tileSize, width, height, maxLevel } = tiledImage.source;
+  
+    // Надежный способ получить текущий уровень
+    const viewportZoom = viewer.viewport.getZoom();
+    const imageRatio = viewer.viewport.viewportToImageZoom(viewportZoom);
+    const level = Math.round(Math.log(imageRatio) / Math.log(2));
+    
+    const scale = Math.pow(2, maxLevel - level);
+    const levelWidth = width / scale;
+    const levelHeight = height / scale;
+  
+    const cols = Math.ceil(levelWidth / tileSize);
+    const rows = Math.ceil(levelHeight / tileSize);
+  
+    const canvasW = navOverlay.width;
+    const canvasH = navOverlay.height;
+    const scaleX = canvasW / levelWidth;
+    const scaleY = canvasH / levelHeight;
+  
+    navCtx.clearRect(0, 0, canvasW, canvasH);
+    navCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    navCtx.fillRect(0, 0, canvasW, canvasH);
+  
+    // Рисуем сетку тайлов
+    navCtx.strokeStyle = 'white';
+    navCtx.lineWidth = 0.5;
+    for (let x = 0; x <= cols; x++) {
+      navCtx.beginPath();
+      navCtx.moveTo(x * tileSize * scaleX, 0);
+      navCtx.lineTo(x * tileSize * scaleX, canvasH);
+      navCtx.stroke();
+    }
+    for (let y = 0; y <= rows; y++) {
+      navCtx.beginPath();
+      navCtx.moveTo(0, y * tileSize * scaleY);
+      navCtx.lineTo(canvasW, y * tileSize * scaleY);
+      navCtx.stroke();
+    }
+  
+    // Рисуем прямоугольник просмотра
+    const bounds = viewer.viewport.getBounds(true);
+    const x = bounds.x * levelWidth * scaleX;
+    const y = bounds.y * levelHeight * scaleY;
+    const w = bounds.width * levelWidth * scaleX;
+    const h = bounds.height * levelHeight * scaleY;
+  
+    navCtx.strokeStyle = 'red';
+    navCtx.lineWidth = 1.5;
+    navCtx.strokeRect(x, y, w, h);
+  
+    // Отображаем уровень
+    navCtx.fillStyle = 'yellow';
+    navCtx.font = '12px sans-serif';
+    navCtx.fillText(`Level: ${level}/${maxLevel}`, 8, canvasH - 8);
+    console.log('Current level:', level, 'Image ratio:', imageRatio, 'Viewport zoom:', viewportZoom);
+  }
+
   async function openFullscreenSVS() {
     const token = getToken();
     const svsViewerDiv = document.getElementById('svs-fullscreen-viewer');
     svsViewerDiv.classList.remove('hidden');
     svsViewerDiv.classList.add('visible');
+  
     const headers = {
       Authorization: `Bearer ${token}`
     };
@@ -477,7 +555,6 @@ function updateSliders(volumeInfo) {
   
       const { width, height, levels } = svsMetadata.dimensions;
       const tileSize = 256;
-      const lowestLevel = levels - 1;
   
       console.log('[openFullscreenSVS] Метаданные:', { width, height, levels });
   
@@ -510,38 +587,31 @@ function updateSliders(volumeInfo) {
         homeFillsViewer: true,
         preserveImageSizeOnResize: true,
         maxZoomPixelRatio: 8,
-        // ⚠️ Важно — чтобы не рендерил сразу с максимальным уровнем
-        immediateRender: false,
-        // 👇 Указываем, чтобы загрузить изображение на самом последнем уровне
-        defaultZoomLevel: 0.1
+        immediateRender: true,
       });
   
       viewer.addHandler('open', () => {
         console.log('[openFullscreenSVS] Viewer открыт');
-      
+  
         const tiledImage = viewer.world.getItemAt(0);
         if (!tiledImage) {
           console.warn('[openFullscreenSVS] Нет изображения в viewer.world');
           return;
         }
-      
-        // Вычисляем размер изображения на самом низком уровне
-        const scaleFactor = Math.pow(2, levels - 1); // если уровни уменьшены в 2 раза
+        viewer.addHandler('animation', updateNavigator);
+        viewer.addHandler('tile-loaded', updateNavigator);
+        // Перенесли расчёт зума сюда:
+        const scaleFactor = Math.pow(2, levels - 1);
         const imageWidthAtLowest = width / scaleFactor;
-      
-        // Размер видимой области (в пикселях экрана)
         const viewportWidth = viewer.viewport.containerSize.x;
-      
-        // Вычисляем нужный zoom, чтобы показать самый низкий уровень
         const targetZoom = viewportWidth / imageWidthAtLowest;
-      
+  
         console.log(`[ZOOM] Переход к уровню ${levels - 1}, zoom = ${targetZoom}`);
-      
-        // Устанавливаем нужный зум
+  
         setTimeout(() => {
           viewer.viewport.zoomTo(targetZoom, null, true);
           viewer.viewport.panTo(new OpenSeadragon.Point(0.5, 0.5));
-        }, 150); // даем время отрисоваться
+        }, 150);
       });
   
       viewer.addHandler('tile-loaded', (event) => {
