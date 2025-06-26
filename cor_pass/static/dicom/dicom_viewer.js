@@ -508,8 +508,9 @@ async function openFullscreenSVS() {
       showRotationControl: false,
       loadTilesWithAjax: true,
       ajaxHeaders: headers,  
-      visibilityRatio: 0,
-      constrainDuringPan: false,
+      visibilityRatio: 1,
+      constrainDuringPan: true,
+      homeFillsViewer: true,      
       minZoomLevel: 0.01,
       maxZoomPixelRatio: 8,
       preserveImageSizeOnResize: true,
@@ -518,10 +519,26 @@ async function openFullscreenSVS() {
 
     viewer.addHandler('open', () => {
       console.log('[openFullscreenSVS] Viewer открыт');
-      const zoom = viewer.viewport.getZoom();
-      const homeZoom = viewer.viewport.getHomeZoom();
-      console.log('[ZOOM] Текущий зум:', zoom, 'Рекомендуемый:', homeZoom);
-      viewer.viewport.goHome(); 
+    
+      const desiredLevel = levels - 1;  // уровень с наименьшим разрешением
+      const tiledImage = viewer.world.getItemAt(0);
+    
+      if (tiledImage) {
+        // вычислим желаемую ширину картинки на уровне
+        const imageWidthAtLevel = width / Math.pow(2, desiredLevel);
+        const viewportWidth = viewer.viewport.containerSize.x;
+    
+        // рассчитываем нужный зум
+        const desiredZoom = viewportWidth / imageWidthAtLevel;
+    
+        console.log('[ZOOM] Переход к уровню', desiredLevel, 'Zoom =', desiredZoom);
+    
+        // применим зум с небольшой задержкой — даём viewer открыть изображение
+        setTimeout(() => {
+          viewer.viewport.zoomTo(desiredZoom, null, true);
+          viewer.viewport.panTo(new OpenSeadragon.Point(0.5, 0.5)); // центрируем
+        }, 100); // 100 мс достаточно, но можно увеличить при необходимости
+      }
     });
 
     viewer.addHandler('tile-loaded', (event) => {
