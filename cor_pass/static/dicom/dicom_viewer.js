@@ -518,9 +518,30 @@ function updateSliders(volumeInfo) {
   
       viewer.addHandler('open', () => {
         console.log('[openFullscreenSVS] Viewer открыт');
-  
-        // Центрируем изображение
-        viewer.viewport.panTo(new OpenSeadragon.Point(0.5, 0.5));
+      
+        const tiledImage = viewer.world.getItemAt(0);
+        if (!tiledImage) {
+          console.warn('[openFullscreenSVS] Нет изображения в viewer.world');
+          return;
+        }
+      
+        // Вычисляем размер изображения на самом низком уровне
+        const scaleFactor = Math.pow(2, levels - 1); // если уровни уменьшены в 2 раза
+        const imageWidthAtLowest = width / scaleFactor;
+      
+        // Размер видимой области (в пикселях экрана)
+        const viewportWidth = viewer.viewport.containerSize.x;
+      
+        // Вычисляем нужный zoom, чтобы показать самый низкий уровень
+        const targetZoom = viewportWidth / imageWidthAtLowest;
+      
+        console.log(`[ZOOM] Переход к уровню ${levels - 1}, zoom = ${targetZoom}`);
+      
+        // Устанавливаем нужный зум
+        setTimeout(() => {
+          viewer.viewport.zoomTo(targetZoom, null, true);
+          viewer.viewport.panTo(new OpenSeadragon.Point(0.5, 0.5));
+        }, 150); // даем время отрисоваться
       });
   
       viewer.addHandler('tile-loaded', (event) => {
