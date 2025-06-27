@@ -24,7 +24,11 @@
     height: auto;
   }
   
-  
+  #tile-navigator {
+    width: 150px;
+    height: 150px;
+   
+  }
   .dicom-upload-container {
     margin-top: 25px;
     margin-bottom: 30px;

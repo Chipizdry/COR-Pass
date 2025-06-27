@@ -463,14 +463,15 @@ function updateSliders(volumeInfo) {
 
   const navOverlay = document.createElement('canvas');
   navOverlay.id = 'tile-navigator';
-  navOverlay.width = 80;
-  navOverlay.height = 80;
+  navOverlay.width = 150;  
+  navOverlay.height = 150; 
   navOverlay.style.position = 'absolute';
   navOverlay.style.bottom = '10px';
   navOverlay.style.right = '10px';
   navOverlay.style.border = '1px solid white';
   navOverlay.style.background = 'rgba(0,0,0,0.6)';
   navOverlay.style.zIndex = '10001';
+
   
   document.getElementById('svs-fullscreen-viewer').appendChild(navOverlay);
   const navCtx = navOverlay.getContext('2d');
@@ -531,10 +532,9 @@ function updateSliders(volumeInfo) {
   
     // Отображаем уровень
     navCtx.fillStyle = 'yellow';
-    navCtx.font = '12px sans-serif';
-    navCtx.fillText(`Level: ${level}/${maxLevel}`, 8, canvasH - 8);
-    console.log('Current level:', level, 'Image ratio:', imageRatio, 'Viewport zoom:', viewportZoom);
-  }
+    navCtx.font = '14px sans-serif'; // Увеличьте размер шрифта для лучшей читаемости
+    navCtx.fillText(`Level: ${level}/${maxLevel}`, 12, canvasH - 12);
+}
 
   async function openFullscreenSVS() {
     const token = getToken();
