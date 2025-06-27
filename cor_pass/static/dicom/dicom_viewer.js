@@ -463,8 +463,8 @@ function updateSliders(volumeInfo) {
 
   const navOverlay = document.createElement('canvas');
   navOverlay.id = 'tile-navigator';
-  navOverlay.width = 200;
-  navOverlay.height = 200;
+  navOverlay.width = 80;
+  navOverlay.height = 80;
   navOverlay.style.position = 'absolute';
   navOverlay.style.bottom = '10px';
   navOverlay.style.right = '10px';
