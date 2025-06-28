@@ -283,6 +283,16 @@ async function fetchEssAdvancedSettings() {
 
         const data = await res.json();
         updateEssAdvancedDisplay(data);
+
+
+            // Устанавливаем начальное значение для ползунка отдачи в сеть
+            const feedInValue = data.ac_power_setpoint_fine || 0;
+            // Обновляем исходное значение только если ползунок не был изменен пользователем
+            if (!isFeedInSliderChanged) {
+                initialFeedInValue = feedInValue;
+                document.getElementById('feedInPowerSlider').value = feedInValue;
+                document.getElementById('feedInSliderValue').textContent = feedInValue;
+            }
     } catch (err) {
         console.error("❗ Ошибка получения ESS расширенных настроек:", err);
     }
@@ -317,9 +327,9 @@ function formatInputSource(code) {
 
 
 
-// Функция сохранения значения
-async function saveAcSetpointFine() {
-    const sliderValue = parseInt(document.getElementById("ac_setpoint_fine_slider").value, 10);
+// Функция сохранения значения отдачи в сеть
+async function saveAcSetpoint() {
+    const sliderValue = parseInt(document.getElementById('feedInPowerSlider').value, 10);
     
     try {
         const res = await fetch('/api/modbus/ess_advanced_settings/setpoint_fine', {
@@ -337,24 +347,27 @@ async function saveAcSetpointFine() {
             throw new Error(error.detail || "Ошибка записи Setpoint Fine");
         }
 
-        const confirmation = document.getElementById('setpoint_confirmation');
-        confirmation.textContent = "✅ Настройки сохранены";
-        confirmation.style.color = "green";
-        confirmation.style.display = "block";
+        // Обновляем исходное значение после успешного сохранения
+        initialFeedInValue = sliderValue;
+        isFeedInSliderChanged = false;
+
+        // Очищаем таймер
+        if (feedInChangeTimeout) {
+            clearTimeout(feedInChangeTimeout);
+            feedInChangeTimeout = null;
+        }
+
+        showFeedInConfirmationMessage("✅ Настройки сохранены", true);
         
         // Обновляем данные на странице
         fetchEssAdvancedSettings();
         
     } catch (err) {
         console.error("❗ Ошибка установки Setpoint Fine:", err);
-        const confirmation = document.getElementById('setpoint_confirmation');
-        confirmation.textContent = "❌ Ошибка сохранения: " + err.message;
-        confirmation.style.color = "red";
-        confirmation.style.display = "block";
+        showFeedInConfirmationMessage("❌ Ошибка сохранения: " + err.message, false);
+        resetFeedInSlider();
     }
 }
-
-
 
 async function toggleGridLimitingStatus(enabled) {
     try {

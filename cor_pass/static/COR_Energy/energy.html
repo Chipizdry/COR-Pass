@@ -14,7 +14,6 @@
     <link rel="stylesheet" href="/static/COR_Energy/energy.css">
     <link rel="stylesheet" href="/static/COR_ID_css/styles.css">
     <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/modal.css">
-    <link rel="icon" type="image/png" href="/favicon.png">
     <title>COR-Energy</title>
     <script src="/static/COR_Energy/scripts.js"></script>
     <script src="/static/COR_Energy/power-settings.js"></script>
@@ -308,27 +307,27 @@
         <svg width="540" height="600" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="flowLoad" patternUnits="userSpaceOnUse" width="20" height="20">
-                    <rect id="loadFlowRect" width="10" height="20" fill="hsl(112.16959999999999, 100%, 50%)"></rect>
+                    <rect id="loadFlowRect" width="10" height="20" fill="#ffffff"></rect>
                     <animateTransform id="loadFlowAnim" attributeName="patternTransform" type="translate" from="0,0" to="40,0" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
               <pattern id="flowGrid" patternUnits="userSpaceOnUse" width="20" height="20">
-                <rect id="gridFlowRect" width="10" height="20" fill="rgb(167, 255, 0)"></rect>
+                <rect id="gridFlowRect" width="10" height="20" fill="#ffffff"></rect>
                 <animateTransform id="gridFlowAnim" attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
               <pattern id="flowSolarV" patternUnits="userSpaceOnUse" width="20" height="20">
-                    <rect id="solarFlowRectV" width="20" height="10" fill="hsl(30.804799999999997, 100%, 50%)"></rect>
+                    <rect id="solarFlowRectV" width="20" height="10" fill="#ffffff"></rect>
                     <animateTransform id="solarFlowAnimV" attributeName="patternTransform" type="translate" from="0,40" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
               <pattern id="flowSolarH" patternUnits="userSpaceOnUse" width="20" height="20">
-                    <rect id="solarFlowRectH" width="10" height="20" fill="hsl(30.804799999999997, 100%, 50%)"></rect>
+                    <rect id="solarFlowRectH" width="10" height="20" fill="#ffffff"></rect>
                     <animateTransform id="solarFlowAnimH" attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
               <pattern id="flowBatteryH" patternUnits="userSpaceOnUse" width="20" height="20">
-                <rect id="batteryFlowRectH" width="10" height="20" fill="rgb(240, 255, 0)"></rect>
+                <rect id="batteryFlowRectH" width="10" height="20" fill="#ffffff"></rect>
                 <animateTransform id="batteryFlowAnimH" attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
               <pattern id="flowBatteryV" patternUnits="userSpaceOnUse" width="20" height="20">
-                    <rect id="batteryFlowRectV" width="20" height="10" fill="rgb(240, 255, 0)"></rect>
+                    <rect id="batteryFlowRectV" width="20" height="10" fill="#ffffff"></rect>
                     <animateTransform id="batteryFlowAnimV" attributeName="patternTransform" type="translate" from="0,0" to="0,40" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
             </defs>
@@ -540,15 +539,13 @@
                     </table>
                     <!-- Суммарная мощность  -->
                     <p>Общая мощность нагрузки, КВт: <span id="inputPowerTotal">0</span></p>
-
-                    <input type="range" id="ac_setpoint_fine_slider" min="-100000" max="100000" step="100" value="0"   style="width: 300px;">
-                    <p>Текущее значение: <span id="ac_setpoint_fine_value">0</span> W</p>
-                    <button onclick="saveAcSetpointFine()">Сохранить</button>
-                    <div id="setpoint_confirmation" style="margin-top: 10px; display: none;"></div>
-                                    <!-- Кнопка Сохранить 
-                     <button id="saveLoadSettings" onclick="saveLoadSettings()">Сохранить</button>
-                     <div id="loadConfirmationMessage" style="margin-top: 10px; color: rgb(11, 226, 11); display: none;"></div>-->
-                
+                        <label for="feedInPowerSlider" style="font-weight: bold;">Ограничение отдачи в сеть (Вт)</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="range" id="feedInPowerSlider" min="-100000" max="100000" step="100" value="0" style="width: 250px;">
+                            <span id="feedInSliderValue">0</span>
+                        </div>
+                        <button id="saveFeedInButton" onclick="saveAcSetpoint()" disabled>Сохранить</button>
+                        <div id="feedInConfirmationMessage" style="margin-top: 10px; color: rgb(11, 226, 11); display: none;"></div>
             </div>
 
           <!--Модальное окно инвертора --> 
@@ -613,6 +610,11 @@
             let initialSocValue = 40;
             let socChangeTimeout = null;
             let isSliderChanged = false; // Флаг изменения ползунка
+
+            let initialFeedInValue = 0;
+            let feedInChangeTimeout = null;
+            let isFeedInSliderChanged = false;
+
         const modeNames = {
             1: "Charger Only",
             2: "Inverter Only",
@@ -633,11 +635,13 @@
             document.getElementById("batteryModal").style.display = "none";
                 }
 
-                    document.addEventListener('DOMContentLoaded', fetchGridLimitingStatus);
-                    document.getElementById("ac_setpoint_fine_slider").addEventListener("input", function() {
-                    document.getElementById("ac_setpoint_fine_value").textContent = this.value;
-                    });       
-                    
+                 //   document.addEventListener('DOMContentLoaded', fetchGridLimitingStatus);
+                 //   document.getElementById("ac_setpoint_fine_slider").addEventListener("input", function() {
+                 //   document.getElementById("ac_setpoint_fine_value").textContent = this.value;
+                 //   });       
+                    document.getElementById('feedInPowerSlider').addEventListener('input', function() {
+                        document.getElementById('feedInSliderValue').textContent = this.value;
+                    });
                     
 // Обработчик изменения ползунка батареи
 document.getElementById('State_Of_Сharge').addEventListener('input', function() {
@@ -659,7 +663,29 @@ document.getElementById('State_Of_Сharge').addEventListener('input', function()
     }, 4000);
 });
 
-                    
+      
+
+// Обработчик изменения ползунка отдачи в сеть
+document.getElementById('feedInPowerSlider').addEventListener('input', function() {
+    const newValue = this.value;
+    const saveButton = document.getElementById('saveFeedInButton');
+    document.getElementById('feedInSliderValue').textContent = newValue;
+    
+    isFeedInSliderChanged = true;
+    saveButton.disabled = false;
+    
+    // Сбрасываем предыдущий таймер, если он есть
+    if (feedInChangeTimeout) {
+        clearTimeout(feedInChangeTimeout);
+    }
+    
+    // Устанавливаем новый таймер на 4 секунды
+    feedInChangeTimeout = setTimeout(() => {
+        resetFeedInSlider();
+        showFeedInConfirmationMessage("Изменения не сохранены!!!", false);
+    }, 4000);
+});
+
 
         </script>
 

@@ -413,7 +413,7 @@
 
 
 
-    // Функция сброса ползунка
+    // Функция сброса ползунка лимита батареи
     function resetSocSlider() {
         const slider = document.getElementById('State_Of_Сharge');
         slider.value = initialSocValue;
@@ -441,7 +441,33 @@
         }, 4000);
     }
 
+// Функция показа сообщения для отдачи в сеть
+function showFeedInConfirmationMessage(message, isSuccess) {
+    const element = document.getElementById('feedInConfirmationMessage');
+    const saveButton = document.getElementById('saveFeedInButton');
+    element.textContent = message;
+    element.style.color = isSuccess ? "rgb(11, 226, 11)" : "red";
+    element.style.display = "block";
+    saveButton.disabled = true;
+    setTimeout(() => {
+        element.style.display = "none";
+    }, 4000);
+}
 
+// Функция сброса ползунка отдачи в сеть
+function resetFeedInSlider() {
+    const slider = document.getElementById('feedInPowerSlider');
+    slider.value = initialFeedInValue;
+    document.getElementById('feedInSliderValue').textContent = initialFeedInValue;
+    const saveButton = document.getElementById('saveFeedInButton');
+    isFeedInSliderChanged = false;
+    saveButton.disabled = true;
+    // Очищаем таймер
+    if (feedInChangeTimeout) {
+        clearTimeout(feedInChangeTimeout);
+        feedInChangeTimeout = null;
+    }
+}
 
 
 // Функция для проверки состояния соединения
