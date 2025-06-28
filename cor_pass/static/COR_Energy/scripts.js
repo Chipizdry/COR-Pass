@@ -515,7 +515,7 @@ function updateConnectionIndicator(errorCount) {
 
 function updateLoadData() {
     try {
-        const powerText = document.getElementById('total_load').textContent;
+        const powerText = document.getElementById('inputPowerTotal').textContent;
         const powerValue = parseFloat(powerText) || 0;
         
         if (powerValue !== lastPowerValue) {

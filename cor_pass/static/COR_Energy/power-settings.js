@@ -129,10 +129,10 @@ function updateLoadModal(data) {
     document.getElementById('powerPhaseC').textContent = (data.ac_output.l3 / 1000).toFixed(2);
     document.getElementById('total_load').textContent = (data.ac_output.total / 1000).toFixed(2);
     updateLoadIndicator(data.ac_output.total / 1000); 
-    const totalPower = (data.ac_output.total / 1000).toFixed(2);
-    if (typeof updatePowerChart === 'function') {
-        updatePowerChart(parseFloat(totalPower));
-    }
+   // const totalPower = (data.ac_output.total / 1000).toFixed(2);
+   // if (typeof updatePowerChart === 'function') {
+  //      updatePowerChart(parseFloat(totalPower));
+  //  }
 }
 
 function updateEssAcDisplay(data) {
@@ -161,6 +161,11 @@ function updateEssAcDisplay(data) {
     document.getElementById('outputCurrentL1').textContent = data.output.currents.l1.toFixed(1);
     document.getElementById('outputCurrentL2').textContent = data.output.currents.l2.toFixed(1);
     document.getElementById('outputCurrentL3').textContent = data.output.currents.l3.toFixed(1);
+
+    const totalPower = (data.input.powers.total / 1000).toFixed(2);
+    if (typeof updatePowerChart === 'function') {
+        updatePowerChart(parseFloat(totalPower));
+    }
 }
 
 
