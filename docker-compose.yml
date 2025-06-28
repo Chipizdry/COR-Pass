@@ -15,7 +15,8 @@ services:
       - postgres  
     env_file:
       - development.env
-
+    mem_limit: 10g
+    restart: always
   redis:
     image: redis:alpine
     ports:

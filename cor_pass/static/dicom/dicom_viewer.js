@@ -411,7 +411,10 @@ function updateSliders(volumeInfo) {
                 document.getElementById('metadata-content').innerHTML = metadataHTML;
                 document.getElementById('metadata-container').style.display = 'block';
             }
-            
+            console.log("SVS Metadata levels info:");
+            svsMetadata.levels.forEach((lvl, idx) => {
+              console.log(`Level ${idx}: size ${lvl.width}x${lvl.height}, tiles_x=${lvl.tiles_x}, tiles_y=${lvl.tiles_y}, total=${lvl.total_tiles}`);
+            });
             return svsMetadata;
         } catch (err) {
             console.error("Error loading SVS metadata:", err);
@@ -536,6 +539,9 @@ function updateSliders(volumeInfo) {
     navCtx.fillText(`Level: ${level}/${maxLevel}`, 12, canvasH - 12);
 }
 
+
+
+/*
   async function openFullscreenSVS() {
     const token = getToken();
     const svsViewerDiv = document.getElementById('svs-fullscreen-viewer');
@@ -644,4 +650,111 @@ function updateSliders(volumeInfo) {
       document.getElementById('upload-status').textContent = `Ошибка загрузки: ${error}`;
     }
   }
+  */
+
+  async function openFullscreenSVS() {
+    const token = getToken();
+    const svsViewerDiv = document.getElementById('svs-fullscreen-viewer');
+    svsViewerDiv.classList.remove('hidden');
+    svsViewerDiv.classList.add('visible');
   
+    const headers = {
+      Authorization: `Bearer ${token}`
+    };
+  
+    try {
+      const svsMetadata = await loadSvsMetadata(token, true);
+      if (!svsMetadata) {
+        alert("❌ Не удалось загрузить метаданные SVS.");
+        return;
+      }
+  
+      const tileSize = 256;
+  
+      // ⚠️ Используем только один уровень — последний
+      const lastLevelIndex = svsMetadata.dimensions.levels - 1;
+      const { width, height } = svsMetadata.levels[lastLevelIndex];
+  
+      console.log('[openFullscreenSVS] Метаданные (только последний уровень):', {
+        width,
+        height,
+        level: lastLevelIndex
+      });
+  
+      if (viewer) {
+        console.log('[openFullscreenSVS] Уничтожение старого viewer');
+        viewer.destroy();
+      }
+  
+      viewer = OpenSeadragon({
+        id: "openseadragon1",
+        prefixUrl: "/static/SVS_Viewer/images/",
+        tileSources: {
+          width: width,
+          height: height,
+          tileSize: tileSize,
+          minLevel: 0,
+          maxLevel: 0,
+          getTileUrl: (_level, x, y) =>
+            `/api/svs/tile?level=${lastLevelIndex}&x=${x}&y=${y}&tile_size=${tileSize}`
+        },
+        showNavigator: false,
+        showZoomControl: false,
+        showFullPageControl: false,
+        showHomeControl: false,
+        showRotationControl: false,
+        loadTilesWithAjax: true,
+        ajaxHeaders: headers,
+        visibilityRatio: 1,
+        constrainDuringPan: true,
+        homeFillsViewer: true,
+        preserveImageSizeOnResize: true,
+        maxZoomPixelRatio: 8,
+        immediateRender: true,
+      });
+  
+      viewer.addHandler('open', () => {
+        console.log('[openFullscreenSVS] Viewer открыт');
+  
+        const tiledImage = viewer.world.getItemAt(0);
+        if (!tiledImage) {
+          console.warn('[openFullscreenSVS] Нет изображения в viewer.world');
+          return;
+        }
+  
+        viewer.addHandler('animation', updateNavigator);
+        viewer.addHandler('tile-loaded', updateNavigator);
+  
+        viewer.viewport.goHome();
+      });
+  
+      viewer.addHandler('tile-loaded', (event) => {
+        console.log('[tile-loaded] Загружен тайл:', event.tile);
+      });
+  
+      viewer.addHandler('tile-load-failed', (event) => {
+        console.warn('[tile-load-failed]', {
+          level: event.tile?.level,
+          x: event.tile?.x,
+          y: event.tile?.y,
+          url: event.tile?.url,
+          message: event.message
+        });
+      });
+  
+      const closeBtn = document.querySelector('.close-btn');
+      if (closeBtn) {
+        closeBtn.onclick = () => {
+          console.log('[openFullscreenSVS] Закрытие viewer');
+          viewer.destroy();
+          viewer = null;
+          svsViewerDiv.classList.remove('visible');
+          svsViewerDiv.classList.add('hidden');
+        };
+      }
+  
+    } catch (error) {
+      console.error('[openFullscreenSVS] Ошибка:', error);
+      document.getElementById('upload-status').textContent = `Ошибка загрузки: ${error}`;
+    }
+  }

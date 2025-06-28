@@ -223,7 +223,7 @@
             
             function updateSolarPowerIndicator(totalPower) {
                 const maxWidth = 550;    // ширина SVG индикатора в пикселях (как у loadIndicator)
-                const maxPower = 150000; // максимальная мощность для 100%
+                const maxPower = 180000; // максимальная мощность для 100%
                 
                 // Ограничиваем мощность между 0 и maxPower
                 totalPower = Math.min(Math.max(totalPower, 0), maxPower);

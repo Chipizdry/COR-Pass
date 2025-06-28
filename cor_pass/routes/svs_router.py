@@ -17,7 +17,6 @@ router = APIRouter(prefix="/svs", tags=["SVS"])
 #os.makedirs(SVS_ROOT_DIR, exist_ok=True)
 DICOM_ROOT_DIR = "dicom_users_data"
 
-
 @router.get("/svs_metadata")
 def get_svs_metadata(current_user: User = Depends(auth_service.get_current_user)):
     user_slide_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id), "slides")
@@ -30,7 +29,9 @@ def get_svs_metadata(current_user: User = Depends(auth_service.get_current_user)
 
     try:
         slide = OpenSlide(svs_path)
-        
+
+        tile_size = 256  # размер тайла, подставь свой, если другой
+
         # Основные метаданные
         metadata = {
             "filename": svs_files[0],
@@ -50,12 +51,20 @@ def get_svs_metadata(current_user: User = Depends(auth_service.get_current_user)
             "full_properties": {}
         }
 
-        # Информация о уровнях
+        # Информация о уровнях + количество тайлов на уровне
         for level in range(slide.level_count):
+            width, height = slide.level_dimensions[level]
+            tiles_x = (width + tile_size - 1) // tile_size
+            tiles_y = (height + tile_size - 1) // tile_size
+
             metadata["levels"].append({
                 "downsample": float(slide.properties.get(f'openslide.level[{level}].downsample', 0)),
-                "width": int(slide.properties.get(f'openslide.level[{level}].width', 0)),
-                "height": int(slide.properties.get(f'openslide.level[{level}].height', 0))
+                # Размеры берём из slide.level_dimensions, а не из свойств, т.к. они надежнее
+                "width": width,
+                "height": height,
+                "tiles_x": tiles_x,
+                "tiles_y": tiles_y,
+                "total_tiles": tiles_x * tiles_y
             })
 
         # Все свойства для детального просмотра
@@ -65,7 +74,6 @@ def get_svs_metadata(current_user: User = Depends(auth_service.get_current_user)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.get("/preview_svs")
 def preview_svs(
@@ -107,7 +115,6 @@ def preview_svs(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/tile")
 def get_tile(
     level: int = Query(..., description="Zoom level"),
@@ -135,8 +142,6 @@ def get_tile(
         tiles_x = (level_width + tile_size - 1) // tile_size
         tiles_y = (level_height + tile_size - 1) // tile_size
 
-        logger.info(f"[LEVEL INFO] level={level}, size={level_width}x{level_height}, tiles={tiles_x}x{tiles_y}")
-
         if x < 0 or x >= tiles_x or y < 0 or y >= tiles_y:
             logger.warning(f"[OUT OF BOUNDS] level={level}, x={x}, y={y}, tiles_x={tiles_x}, tiles_y={tiles_y}")
             return empty_tile()
@@ -145,12 +150,9 @@ def get_tile(
         region_width = min(tile_size, level_width - location[0])
         region_height = min(tile_size, level_height - location[1])
 
-        # 💥 Ключевой момент: пересчёт координат в базовый уровень
         downsample = slide.level_downsamples[level]
         base_location = (int(location[0] * downsample), int(location[1] * downsample))
-        base_size = (int(region_width * downsample), int(region_height * downsample))
-
-        logger.debug(f"[TILE READ] level={level}, base_location={base_location}, base_size={base_size}")
+        base_size = (max(1, int(region_width * downsample)), max(1, int(region_height * downsample)))
 
         region = slide.read_region(base_location, 0, base_size).convert("RGB")
         region = region.resize((region_width, region_height), Image.LANCZOS)
@@ -163,9 +165,8 @@ def get_tile(
 
     except Exception as e:
         import traceback
-        logger.critical(f"[UNEXPECTED ERROR] {traceback.format_exc()}")
+        logger.error(f"[ERROR GET TILE] {traceback.format_exc()}")
         return empty_tile()
-
 
 def empty_tile(color=(255, 255, 255)) -> StreamingResponse:
     """Возвращает 1x1 JPEG-заглушку."""
