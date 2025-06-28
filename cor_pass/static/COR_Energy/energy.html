@@ -37,6 +37,7 @@
         <div class="tabs">
             <div class="tab active" onclick="openTab(event, 'control')">Управление</div>
             <div class="tab" onclick="openTab(event, 'monitor')">Мониторинг</div>
+            <div class="tab" onclick="openTab(event, 'timetable')">Расписание</div>        
             <div class="tab" onclick="openTab(event, 'settings')">Настройки</div>
         </div>
 
@@ -360,8 +361,13 @@
 
             <!-- Контейнер для графика -->
             <div id="chartContainer">
-                <canvas id="speedChart"></canvas>
+                <canvas id="powerChart"></canvas>
             </div>
+        </div>
+
+        <div id="timetable" class="tabcontent">
+
+
         </div>
 
        <!-- Контент вкладки Настройки -->
@@ -615,6 +621,13 @@
             let feedInChangeTimeout = null;
             let isFeedInSliderChanged = false;
 
+           
+            let lastPowerValue = 0;
+            let powerChart = null;
+            let timeData = [];
+            let powerData = [];
+            let timeCounter = 0;
+
         const modeNames = {
             1: "Charger Only",
             2: "Inverter Only",
@@ -693,22 +706,7 @@ document.getElementById('feedInPowerSlider').addEventListener('input', function(
 
 <script>
   
-			// Функция для скрытия линии
-			function hideLeftLine() {
-			    const leftLine = document.getElementById('leftLine');
-			    if (leftLine) {
-			        leftLine.style.display = 'none';  // Скрыть линию
-			    }
-			}
-			
-			// Функция для отображения линии
-			function showLeftLine() {
-			    const leftLine = document.getElementById('leftLine');
-			    if (leftLine) {
-			        leftLine.style.display = '';  // Показать линию (по умолчанию)
-			    }
-			}
-
+		
  
     
         // Функция для переключения вкладок
@@ -733,50 +731,55 @@ document.getElementById('feedInPowerSlider').addEventListener('input', function(
         }
 
 			
-
-			     // Инициализация данных для графика
-			var timeData = [];
-			var speedData = [];
-			var timeCounter = 0; // Счетчик времени в секундах
-			
-			var speedChart = new Chart(document.getElementById('speedChart'), {
-			    type: 'line',
-			    data: {
-			        labels: timeData,
-			        datasets: [{
-			            label: 'Скорость (об/мин)',
-			            data: speedData,
-			            borderColor: 'rgba(75, 192, 192, 1)',
-			            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-			            fill: true
-			        }]
-			    },
-    options: {
-        animation: {
-            duration: 300, // Уменьшаем время анимации для более плавного обновления
-            easing: 'easeOutQuad' // Используем более плавный эффект
+ // Инициализация данных для графика мощности
+ 
+ function initPowerChart() {
+    const ctx = document.getElementById('powerChart').getContext('2d');
+    
+    powerChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: timeData,
+            datasets: [{
+                label: 'Мощность (кВт)',
+                data: powerData,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderWidth: 2,
+                pointRadius: 0,
+                fill: true
+            }]
         },
-        scales: {
-            x: {
-                type: 'linear',
-                position: 'bottom',
-                title: {
-                    display: true,
-                    text: 'Время (сек)'
+        options: {
+            animation: {
+                duration: 300,
+                easing: 'easeOutQuad'
+            },
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    title: {
+                        display: true,
+                        text: 'Время (сек)'
+                    },
+                    min: 0,
+                    max: 600
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Мощность (кВт)'
+                    },
+                    min: -80,
+                    max: 80
                 }
             },
-            y: {
-                title: {
-                    display: true,
-                    text: 'Мощность (КВт)'
-                }
-            }
+            responsive: true,
+            maintainAspectRatio: false
         }
-    }
-});
-
-
-		
+    });
+}
 	
 
 // Функция для получения текущего времени в формате HH:MM:SS
@@ -827,23 +830,6 @@ function updateChart(newSpeed) {
         }
 
  
-
-
-// Функция для переключения видимости
-function toggleVisibility() {
-    const leftLine = document.getElementById('leftLine');
-    if (leftLine) {
-        // Если элемент видим, скрыть его, иначе показать
-        if (leftLine.style.display === 'none') {
-            showLeftLine();
-        } else {
-            hideLeftLine();
-        }
-    }
-}
-
-  setInterval(toggleVisibility, 500);
-
   
   let tick = 0;
      // Обновим интервал обновления

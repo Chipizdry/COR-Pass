@@ -8,6 +8,12 @@
                     document.getElementById('State_Of_Сharge').value = initialSocValue;
                     document.getElementById('socSliderValue').textContent = initialSocValue;
                 });
+
+                  // Инициализация графика мощности
+                initPowerChart();
+                
+                // Запуск обновления данных каждые 2 секунды
+                setInterval(updateLoadData, 2000);
                 makeModalDraggable('batteryModal');
              //   makeModalDraggable('inverterModal');
                 makeModalDraggable('loadSettingsModal');
@@ -503,5 +509,32 @@ function updateConnectionIndicator(errorCount) {
         // Промежуточное состояние (например, желтый для 1-8 ошибок)
         indicator.classList.remove('active');
         indicator.style.backgroundColor = 'yellow';
+    }
+}
+
+
+function updateLoadData() {
+    try {
+        const powerText = document.getElementById('total_load').textContent;
+        const powerValue = parseFloat(powerText) || 0;
+        
+        if (powerValue !== lastPowerValue) {
+            lastPowerValue = powerValue;
+            
+            timeCounter += 2;
+            timeData.push(timeCounter);
+            powerData.push(powerValue);
+
+            if (timeData.length > 300) {
+                timeData.shift();  
+                powerData.shift();
+            }
+
+            if (powerChart) {
+                powerChart.update();
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка при обновлении графика мощности:', error);
     }
 }
