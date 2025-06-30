@@ -470,7 +470,7 @@ function updateSliders(volumeInfo) {
   navOverlay.height = 150; 
   navOverlay.style.position = 'absolute';
   navOverlay.style.bottom = '10px';
-  navOverlay.style.right = '10px';
+  navOverlay.style.left = '10px';
   navOverlay.style.border = '1px solid white';
   navOverlay.style.background = 'rgba(0,0,0,0.6)';
   navOverlay.style.zIndex = '10001';
