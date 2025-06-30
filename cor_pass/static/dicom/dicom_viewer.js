@@ -693,8 +693,8 @@ function updateSliders(volumeInfo) {
           width: width,
           height: height,
           tileSize: tileSize,
-          minLevel: 0,
-          maxLevel: 0,
+          minLevel: lastLevelIndex,  
+          maxLevel: lastLevelIndex,
           getTileUrl: (_level, x, y) =>
             `/api/svs/tile?level=${lastLevelIndex}&x=${x}&y=${y}&tile_size=${tileSize}`
         },

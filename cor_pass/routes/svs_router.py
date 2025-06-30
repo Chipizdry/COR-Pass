@@ -114,7 +114,6 @@ def preview_svs(
         return StreamingResponse(buf, media_type="image/png")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 @router.get("/tile")
 def get_tile(
     level: int = Query(..., description="Zoom level"),
@@ -146,21 +145,20 @@ def get_tile(
             logger.warning(f"[OUT OF BOUNDS] level={level}, x={x}, y={y}, tiles_x={tiles_x}, tiles_y={tiles_y}")
             return empty_tile()
 
-        location = (x * tile_size, y * tile_size)
-        region_width = min(tile_size, level_width - location[0])
-        region_height = min(tile_size, level_height - location[1])
+        # Пересчёт координат тайла из текущего уровня в координаты уровня 0
+        scale = slide.level_downsamples[level]
+        location = (int(x * tile_size * scale), int(y * tile_size * scale))
 
-        downsample = slide.level_downsamples[level]
-        base_location = (int(location[0] * downsample), int(location[1] * downsample))
-        base_size = (max(1, int(region_width * downsample)), max(1, int(region_height * downsample)))
+        # Фактический размер региона (в пикселях уровня level)
+        region_width = min(tile_size, level_width - x * tile_size)
+        region_height = min(tile_size, level_height - y * tile_size)
 
-        region = slide.read_region(base_location, 0, base_size).convert("RGB")
-        region = region.resize((region_width, region_height), Image.LANCZOS)
+        region = slide.read_region(location, level, (region_width, region_height)).convert("RGB")
+        region = region.resize((tile_size, tile_size), Image.LANCZOS)
 
         buf = BytesIO()
         region.save(buf, format="JPEG")
         buf.seek(0)
-
         return StreamingResponse(buf, media_type="image/jpeg")
 
     except Exception as e:
@@ -168,6 +166,8 @@ def get_tile(
         logger.error(f"[ERROR GET TILE] {traceback.format_exc()}")
         return empty_tile()
 
+
+        
 def empty_tile(color=(255, 255, 255)) -> StreamingResponse:
     """Возвращает 1x1 JPEG-заглушку."""
     img = Image.new("RGB", (1, 1), color)

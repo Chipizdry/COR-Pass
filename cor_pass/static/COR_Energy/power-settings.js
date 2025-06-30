@@ -483,3 +483,20 @@ async function fetchSolarChargerStatus() {
         console.error('❗ Ошибка при получении данных:', error);
     }
 }
+
+
+
+async function fetchDynamicEssSettings() {
+    try {
+      const response = await fetch('/api/modbus/dynamic_ess_settings');
+      if (!response.ok) throw new Error("Ошибка запроса: " + response.status);
+      const data = await response.json();
+
+      for (const [key, value] of Object.entries(data)) {
+        const cell = document.getElementById(key);
+        if (cell) cell.textContent = value;
+      }
+    } catch (err) {
+      document.getElementById("error").textContent = "❗ Ошибка загрузки данных: " + err.message;
+    }
+  }

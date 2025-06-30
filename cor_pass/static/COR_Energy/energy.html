@@ -366,7 +366,7 @@
         </div>
 
         <div id="timetable" class="tabcontent">
-
+            
 
         </div>
 
@@ -844,7 +844,7 @@ function updateChart(newSpeed) {
         if (tick % 7 === 0) fetchEssAdvancedSettings();
         if (tick % 9 === 0) fetchStatus();
         if (tick % 30 === 0) checkConnectionStatus();
-
+        if (tick % 11 === 0) fetchDynamicEssSettings();
         if (tick >= 60) tick = 0;
       }, 100);
     
@@ -857,6 +857,7 @@ function updateChart(newSpeed) {
         fetchEssAdvancedSettings();
         fetchSolarChargerStatus();
         checkConnectionStatus();
+        fetchDynamicEssSettings();
     </script>
     
 </body>

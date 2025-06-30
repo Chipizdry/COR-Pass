@@ -91,8 +91,8 @@
             function updateBatteryFlow(power) {
                 const indicator = document.getElementById('batteryFlowIndicator');
                 const label = document.getElementById('batteryFlowLabel');
-                const maxPower = 100000;  // Вт
-                const maxWidth = 1300;   // Половина общей ширины (2600 / 2)
+                const maxPower = 140000;  // Вт
+                const maxWidth = 1400;   // Половина общей ширины (2600 / 2)
                 const centerX = 1525;    // Центр батареи
             
                 const clampedPower = Math.max(-maxPower, Math.min(maxPower, power));

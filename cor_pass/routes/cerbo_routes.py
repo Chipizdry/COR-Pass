@@ -3,8 +3,13 @@ import logging
 import json
 import asyncio
 from pymodbus.client import AsyncModbusTcpClient
+from pymodbus.exceptions import ModbusException
+from pymodbus.pdu import ExceptionResponse
+
 from pydantic import BaseModel, Field
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 ERROR_THRESHOLD = 9
 error_count = 0
@@ -687,3 +692,70 @@ async def get_solarchargers_status(request: Request):
         register_modbus_error()
         logging.error("❗ Общая ошибка при опросе MPPT", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
+
+
+
+@router.get("/dynamic_ess_settings")
+async def get_dynamic_ess_settings(request: Request):
+    client = request.app.state.modbus_client
+    try:
+        unit_id = 100
+        start_address = 5420
+        count = 10  # 5430 не читается
+        result = await client.read_holding_registers(start_address, count=count, slave=unit_id)
+
+        if result.isError():
+            raise HTTPException(status_code=500, detail=f"Modbus error: {result}")
+
+        regs = result.registers
+
+        if len(regs) != count:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Ожидалось {count} регистров, получено {len(regs)}: {regs}"
+            )
+
+        data = {
+            "BatteryCapacity_kWh": regs[0] / 10.0,                    # 5420
+            "FullChargeDuration_hr": regs[1],                         # 5421
+            "FullChargeInterval_day": regs[2],                        # 5422
+            "DynamicEssMode": regs[3],                                # 5423
+            "Schedule_AllowGridFeedIn": regs[4],                      # 5424
+            "Schedule_Duration_sec": regs[5],                         # 5425
+            "Schedule_Restrictions": regs[6],                         # 5426
+            "Schedule_TargetSoc_pct": regs[7],                        # 5427
+            "Schedule_Start_unix": (regs[8] << 16) + regs[9],         # 5428 + 5429
+            # Schedule_Strategy отсутствует — 5430 недоступен
+        }
+
+        return data
+
+    except Exception as e:
+        logger.error("🛑 Unexpected error", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Ошибка чтения Dynamic ESS: {e}")
+
+
+
+@router.get("/test_dynamic_ess_registers")
+async def test_dynamic_ess_registers(request: Request):
+    client = request.app.state.modbus_client
+    unit_id = 100
+    start = 5420
+    end = 5429
+
+    results = {}
+
+    for reg in range(start, end + 1):
+        try:
+            res = await client.read_holding_registers(address=reg, count=1, slave=unit_id)
+            if res.isError():
+                results[str(reg)] = f"❌ Error: {res}"
+            elif hasattr(res, "registers"):
+                results[str(reg)] = f"✅ Value: {res.registers[0]}"
+            else:
+                results[str(reg)] = "❓ No 'registers' attribute"
+        except Exception as e:
+            results[str(reg)] = f"💥 Exception: {str(e)}"
+
+    return results
+
