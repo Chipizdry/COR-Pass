@@ -114,6 +114,9 @@ def preview_svs(
         return StreamingResponse(buf, media_type="image/png")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+        
 @router.get("/tile")
 def get_tile(
     level: int = Query(..., description="Zoom level"),
@@ -167,7 +170,7 @@ def get_tile(
         return empty_tile()
 
 
-        
+
 def empty_tile(color=(255, 255, 255)) -> StreamingResponse:
     """Возвращает 1x1 JPEG-заглушку."""
     img = Image.new("RGB", (1, 1), color)

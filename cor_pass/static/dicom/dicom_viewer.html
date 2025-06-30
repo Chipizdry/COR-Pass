@@ -200,8 +200,10 @@ document.querySelector('.home').addEventListener('click', () => viewer.viewport.
 document.querySelector('.close-btn').addEventListener('click', () => {
     viewer.destroy();
  
+    const svsViewerDiv = document.getElementById('svs-fullscreen-viewer');
     svsViewerDiv.classList.remove('visible');
     svsViewerDiv.classList.add('hidden');
+   
 });
 </script>
 

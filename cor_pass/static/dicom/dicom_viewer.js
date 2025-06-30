@@ -480,22 +480,30 @@ function updateSliders(volumeInfo) {
   const navCtx = navOverlay.getContext('2d');
 
   function updateNavigator() {
+    if (!viewer || !viewer.world.getItemAt(0)) return;
+  
     const tiledImage = viewer.world.getItemAt(0);
     if (!tiledImage || !tiledImage.source) return;
   
-    const { tileSize, width, height, maxLevel } = tiledImage.source;
-  
-    // Надежный способ получить текущий уровень
-    const viewportZoom = viewer.viewport.getZoom();
-    const imageRatio = viewer.viewport.viewportToImageZoom(viewportZoom);
-    const level = Math.round(Math.log(imageRatio) / Math.log(2));
+    const levelsCount = tiledImage.source.levels.length;
     
-    const scale = Math.pow(2, maxLevel - level);
-    const levelWidth = width / scale;
-    const levelHeight = height / scale;
+    // Получаем текущий уровень через zoom
+    const zoom = viewer.viewport.getZoom(true);
+    const imageZoom = zoom * tiledImage.source.width / tiledImage.source.dimensions.x;
+    const osdLevel = Math.min(
+      Math.max(
+        Math.floor(Math.log(imageZoom) / Math.log(2)),
+        0
+      ),
+      levelsCount - 1
+    );
   
-    const cols = Math.ceil(levelWidth / tileSize);
-    const rows = Math.ceil(levelHeight / tileSize);
+    // Преобразуем OSD уровень в SVS уровень (инвертируем)
+    const svsLevel = (levelsCount - 1) - osdLevel;
+    const currentLevel = tiledImage.source.levels[osdLevel];
+    const levelWidth = currentLevel.width;
+    const levelHeight = currentLevel.height;
+    const tileSize = tiledImage.source.tileSize;
   
     const canvasW = navOverlay.width;
     const canvasH = navOverlay.height;
@@ -509,6 +517,10 @@ function updateSliders(volumeInfo) {
     // Рисуем сетку тайлов
     navCtx.strokeStyle = 'white';
     navCtx.lineWidth = 0.5;
+    
+    const cols = Math.ceil(levelWidth / tileSize);
+    const rows = Math.ceil(levelHeight / tileSize);
+  
     for (let x = 0; x <= cols; x++) {
       navCtx.beginPath();
       navCtx.moveTo(x * tileSize * scaleX, 0);
@@ -523,7 +535,7 @@ function updateSliders(volumeInfo) {
     }
   
     // Рисуем прямоугольник просмотра
-    const bounds = viewer.viewport.getBounds(true);
+    const bounds = viewer.viewport.getBoundsNoRotate();
     const x = bounds.x * levelWidth * scaleX;
     const y = bounds.y * levelHeight * scaleY;
     const w = bounds.width * levelWidth * scaleX;
@@ -533,11 +545,11 @@ function updateSliders(volumeInfo) {
     navCtx.lineWidth = 1.5;
     navCtx.strokeRect(x, y, w, h);
   
-    // Отображаем уровень
+    // Отображаем уровень (показываем SVS уровень, а не OSD уровень)
     navCtx.fillStyle = 'yellow';
-    navCtx.font = '14px sans-serif'; // Увеличьте размер шрифта для лучшей читаемости
-    navCtx.fillText(`Level: ${level}/${maxLevel}`, 12, canvasH - 12);
-}
+    navCtx.font = '14px sans-serif';
+    navCtx.fillText(`Level: ${svsLevel}/${levelsCount - 1}`, 12, canvasH - 12);
+  }
 
 
   async function openFullscreenSVS() {
@@ -558,33 +570,38 @@ function updateSliders(volumeInfo) {
       }
   
       const tileSize = 256;
+      const levelsCount = svsMetadata.dimensions.levels;
   
-      // ⚠️ Используем только один уровень — последний
-      const lastLevelIndex = svsMetadata.dimensions.levels - 1;
-      const { width, height } = svsMetadata.levels[lastLevelIndex];
-  
-      console.log('[openFullscreenSVS] Метаданные (только последний уровень):', {
-        width,
-        height,
-        level: lastLevelIndex
-      });
+      console.log('[openFullscreenSVS] Метаданные (все уровни):', svsMetadata);
   
       if (viewer) {
         console.log('[openFullscreenSVS] Уничтожение старого viewer');
         viewer.destroy();
       }
   
+      // Инвертируем порядок уровней (чтобы уровень 0 был наименьшим разрешением)
+      const invertedLevels = [...svsMetadata.levels].reverse();
+  
+      // Создаем tile source с инвертированными уровнями
       viewer = OpenSeadragon({
         id: "openseadragon1",
         prefixUrl: "/static/SVS_Viewer/images/",
         tileSources: {
-          width: width,
-          height: height,
+          width: svsMetadata.dimensions.width,
+          height: svsMetadata.dimensions.height,
           tileSize: tileSize,
-          minLevel: lastLevelIndex,  
-          maxLevel: lastLevelIndex,
-          getTileUrl: (_level, x, y) =>
-            `/api/svs/tile?level=${lastLevelIndex}&x=${x}&y=${y}&tile_size=${tileSize}`
+          minLevel: 0,
+          maxLevel: levelsCount - 1,
+          getTileUrl: (level, x, y) => {
+            // Преобразуем уровень OpenSeadragon в инвертированный уровень SVS
+            const svsLevel = (levelsCount - 1) - level;
+            return `/api/svs/tile?level=${svsLevel}&x=${x}&y=${y}&tile_size=${tileSize}`;
+          },
+          levels: invertedLevels.map((level, index) => ({
+            width: level.width,
+            height: level.height,
+            url: `/api/svs/tile?level=${(levelsCount - 1) - index}&tile_size=${tileSize}`
+          }))
         },
         showNavigator: false,
         showZoomControl: false,
@@ -599,41 +616,35 @@ function updateSliders(volumeInfo) {
         preserveImageSizeOnResize: true,
         maxZoomPixelRatio: 8,
         immediateRender: true,
+        zoomPerScroll: 1.2,
+        minZoomLevel: 0.1,
+        animationTime: 0.5,
+        springStiffness: 5.0,
+        imageLoaderLimit: 5
       });
   
       viewer.addHandler('open', () => {
         console.log('[openFullscreenSVS] Viewer открыт');
-  
-        const tiledImage = viewer.world.getItemAt(0);
-        if (!tiledImage) {
-          console.warn('[openFullscreenSVS] Нет изображения в viewer.world');
-          return;
-        }
-  
-        viewer.addHandler('animation', updateNavigator);
-        viewer.addHandler('tile-loaded', updateNavigator);
-  
         viewer.viewport.goHome();
+        
+        viewer.addHandler('zoom', updateNavigator);
+        viewer.addHandler('pan', updateNavigator);
+        viewer.addHandler('tile-loaded', updateNavigator);
       });
   
       viewer.addHandler('tile-loaded', (event) => {
-        console.log('[tile-loaded] Загружен тайл:', event.tile);
-      });
-  
-      viewer.addHandler('tile-load-failed', (event) => {
-        console.warn('[tile-load-failed]', {
-          level: event.tile?.level,
-          x: event.tile?.x,
-          y: event.tile?.y,
-          url: event.tile?.url,
-          message: event.message
+        const actualSvsLevel = (levelsCount - 1) - event.tile.level;
+        console.log('[tile-loaded] Загружен тайл:', {
+          osdLevel: event.tile.level,
+          svsLevel: actualSvsLevel,
+          x: event.tile.x,
+          y: event.tile.y
         });
       });
   
       const closeBtn = document.querySelector('.close-btn');
       if (closeBtn) {
         closeBtn.onclick = () => {
-          console.log('[openFullscreenSVS] Закрытие viewer');
           viewer.destroy();
           viewer = null;
           svsViewerDiv.classList.remove('visible');
