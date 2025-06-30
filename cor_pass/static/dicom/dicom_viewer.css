@@ -190,53 +190,6 @@ details pre {
 }
 
 
-.svs-fullscreen-viewer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #fff;
-  z-index: 2000;
-  display: none;
-}
-
-#svs-fullscreen-viewer {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgb(255, 255, 255);
-  z-index: 9999;
-  display: flex;
-  flex-direction: row;
-}
-.svs-viewer-container {
-  display: flex;
-  height: 100%;
-}
-
-
-.svs-image-container {
-  flex: 1;
-  position: relative;
-  overflow: auto;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  background: #f0f0f0;
-}
-
-
-.svs-main-image {
-  display: block;
-  width: auto;
-  height: auto;
-  max-width: none;
-  max-height: none;
-  transition: transform 0.2s ease;
-}
-
 .svs-toolbar {
   position: absolute;
   top: 10px;
@@ -245,28 +198,43 @@ details pre {
   gap: 5px;
   z-index: 10;
 }
-
-
-#svs-fullscreen-viewer,
-#openseadragon1 {
+#svs-fullscreen-viewer {
   position: fixed;
   top: 0;
   left: 0;
- /* width: 100vw;
-  height: 100vh; */
-  width: 100% !important;
-  height: 100% !important;
-  margin: 0;
-  padding: 0;
- /* overflow: hidden;*/
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: row;
+  background-color: black;
+  z-index: 9999;
+  overflow: hidden;
 }
+
+#openseadragon1 {
+  flex-grow: 1;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+
+#svs-fullscreen-viewer canvas {
+  max-width: none !important;
+  max-height: none !important;
+}
+
 .svs-metadata-panel {
   width: 300px;
-  height: 100%;
-  background-color: rgb(255, 255, 255);
+  height: 100vh;
+  background-color:white;
   color: white;
   overflow-y: auto;
+
+  position: relative; /* или просто убрать position:absolute */
 }
+
 
 .svs-metadata-panel.collapsed {
   width: 0;
@@ -328,20 +296,6 @@ details pre {
   background-size: 50px 50px;
   min-width: 100px;
   min-height: 100px;
-}
-
-.svs-image-container {
-  overflow: auto;
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-
-.svs-main-image {
-  display: block;
-  max-width: none;
-  max-height: none;
-  transition: transform 0.2s ease;
 }
 
 

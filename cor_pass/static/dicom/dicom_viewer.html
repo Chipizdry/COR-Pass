@@ -12,32 +12,7 @@
 </head>
 <body>
 
-  <div id="Dicom_upload_modal" class="modal" style="display: block;">
-
-    <div class="modal-header">     
-      <div class="modal-buttons">
-          <button class="modal-button close" data-action="close" id="closeDicom_upload_modal">✖</button>
-      </div>       
-      <h3 style="margin-top:30; color:#291161;font-size: 17px;">Upload Medical Files</h3>
-    </div>  
-      
-    <div class="dicom-upload-container">
-      <input type="file" id="dicom-upload" accept=".zip,.dcm,.svs" multiple>
-      <button onclick="handleUpload()">Upload DICOM files</button>
-      <div class="dicom-progress-container">
-
-          <div class="dicom-progress-bar" id="progress-bar">0%</div>
-      </div>
-      <div class="file-info" id="file-info"></div>
-      <div id="upload-status"></div>
-
-      <div class="svs-preview-container" id="svs-preview-container" style="display: none;">
-        <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">SVS Preview</h3>
-        <img id="svs-thumbnail" src="" alt="SVS Thumbnail" style="max-width: 512px; border: 1px solid #ccc; cursor: pointer;" onclick="openFullscreenSVS()" />
-      </div>
-    </div>
-    
-  </div>
+  
 
 
   <div class="viewer hidden" id="DcmViewerFrame">
@@ -97,8 +72,8 @@
 </div>
 
 <!-- SVS Fullscreen Viewer -->
-<div id="svs-fullscreen-viewer" class="hidden" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: black; z-index: 9999;">
-  <div id="openseadragon1" style="width: 100%; height: 100%;"></div>
+<div id="svs-fullscreen-viewer" class="hidden" >
+  <div id="openseadragon1"></div>
   
   <!-- Toolbar -->
   <div class="svs-toolbar" style="position: absolute; top: 10px; left: 10px; z-index: 10000; display: flex; gap: 5px;">
@@ -109,13 +84,39 @@
   </div>
   
   <!-- Metadata Panel -->
-  <div class="svs-metadata-panel" style="position: absolute; right: 0; top: 0; width: 300px; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.8); color: white; padding: 15px;">
+  <div class="svs-metadata-panel" style="position: absolute; right: 0; top: 0; width: 250px; height: 100%; overflow: auto; background-color: rgba(255, 255, 255, 0.8); color: white; padding: 15px;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
       <h3>Slide Metadata</h3>
       <button class="metadata-toggle" style="background: none; border: none; color: white; font-size: 1.5em;">≡</button>
     </div>
     <div id="svs-metadata-content"></div>
   </div>
+</div>
+
+
+  <!--Модальное окно загрузки SVS Dicom-->
+<div id="Dicom_upload_modal" class="modal" style="display: block;">
+  <div class="modal-header">     
+    <div class="modal-buttons">
+        <button class="modal-button close" data-action="close" id="closeDicom_upload_modal">✖</button>
+    </div>       
+    <h3 style="margin-top:30; color:#291161;font-size: 17px;">Upload Medical Files</h3>
+  </div>  
+    
+  <div class="dicom-upload-container">
+    <input type="file" id="dicom-upload" accept=".zip,.dcm,.svs" multiple>
+    <button onclick="handleUpload()">Upload DICOM files</button>
+    <div class="dicom-progress-container">
+        <div class="dicom-progress-bar" id="progress-bar">0%</div>
+    </div>
+    <div class="file-info" id="file-info"></div>
+    <div id="upload-status"></div>
+
+    <div class="svs-preview-container" id="svs-preview-container" style="display: none;">
+      <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">SVS Preview</h3>
+      <img id="svs-thumbnail" src="" alt="SVS Thumbnail" style="max-width: 512px; border: 1px solid #ccc; cursor: pointer;" onclick="openFullscreenSVS()" />
+    </div>
+  </div>  
 </div>
 
   <script src="/static/dicom/SVS_viewer.js"></script>
