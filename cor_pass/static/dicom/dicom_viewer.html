@@ -222,6 +222,7 @@
     let manualWindowCenter = 50;
     let manualWindowWidth = 400;
     let isDicomLoaded = false;
+    const NAV_ANIMATION_DURATION = 0.8;
 
     function updateViewMode() {
   currentMode = document.getElementById('view-mode').value;
@@ -290,6 +291,7 @@ function handleClickZoomIn() {
 function handleClickZoomOut() {
     viewer.viewport.zoomBy(0.8);
   }
+
   function handleClickLeft() {
     if (!viewer) return;
     
@@ -298,11 +300,9 @@ function handleClickZoomOut() {
     const bounds = viewport.getBounds();
     const imageBounds = viewer.world.getItemAt(0).getBounds();
     
-    // Рассчитываем новую позицию (смещаем на 1/8 ширины viewport)
     const deltaX = -bounds.width * 0.125;
     let newX = currentCenter.x + deltaX;
     
-    // Проверяем границы изображения
     const minX = imageBounds.x + bounds.width/2;
     const maxX = imageBounds.x + imageBounds.width - bounds.width/2;
     newX = Math.max(minX, Math.min(newX, maxX));
@@ -310,11 +310,18 @@ function handleClickZoomOut() {
     // Плавное перемещение
     viewport.panTo(
         new OpenSeadragon.Point(newX, currentCenter.y),
-        true
+        {
+            animationTime: NAV_ANIMATION_DURATION,
+            easing: function(t) {
+                // Простая квадратичная функция для плавности
+                return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            }
+        }
     );
     updateNavigator();
 }
 
+// Аналогично для остальных функций (right, up, down):
 function handleClickRight() {
     if (!viewer) return;
     
@@ -332,7 +339,12 @@ function handleClickRight() {
     
     viewport.panTo(
         new OpenSeadragon.Point(newX, currentCenter.y),
-        true
+        {
+            animationTime: NAV_ANIMATION_DURATION,
+            easing: function(t) {
+                return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            }
+        }
     );
     updateNavigator();
 }
@@ -354,7 +366,12 @@ function handleClickUp() {
     
     viewport.panTo(
         new OpenSeadragon.Point(currentCenter.x, newY),
-        true
+        {
+            animationTime: NAV_ANIMATION_DURATION,
+            easing: function(t) {
+                return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            }
+        }
     );
     updateNavigator();
 }
@@ -376,10 +393,18 @@ function handleClickDown() {
     
     viewport.panTo(
         new OpenSeadragon.Point(currentCenter.x, newY),
-        true
+        {
+            animationTime: NAV_ANIMATION_DURATION,
+            easing: function(t) {
+                return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            }
+        }
     );
     updateNavigator();
 }
+
+
+
 
 document.querySelector('.close-btn').addEventListener('click', () => {
     viewer.destroy();

@@ -311,3 +311,12 @@ details pre {
   opacity: 1;
   pointer-events: auto;
 }
+
+
+g[onclick] {
+  transition: transform 0.1s ease, opacity 0.2s ease;
+}
+
+g[onclick]:active {
+  transform: scale(0.99); /* Эффект нажатия */
+}
