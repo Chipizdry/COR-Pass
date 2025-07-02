@@ -138,12 +138,8 @@ async def create_modbus_client(app):
 
     except Exception as e:
         logging.exception("❗ Ошибка при создании Modbus клиента", exc_info=e)
-#
 
-# --- Клиент хранения ---
-#async def create_modbus_client(app):
-#    app.state.modbus_client = AsyncModbusTcpClient(host=MODBUS_IP, port=MODBUS_PORT)
-#    await app.state.modbus_client.connect()
+
 
 async def close_modbus_client(app):
     client = getattr(app.state, "modbus_client", None)
@@ -180,7 +176,6 @@ async def get_modbus_client(app):
         
         return new_client
 
-    # Если клиент есть и подключён
     return client
 
 def register_modbus_error():
@@ -387,7 +382,6 @@ async def get_ess_ac_status(request: Request):
             }
         }
 
-        # Логи отладки
       #  logging.info("ESS AC Status:")
       #  logging.info(f"Input Voltages: L1={response['input']['voltages']['l1']}V, L2={response['input']['voltages']['l2']}V, L3={response['input']['voltages']['l3']}V")
       #  logging.info(f"Input Currents: L1={response['input']['currents']['l1']}A, L2={response['input']['currents']['l2']}A, L3={response['input']['currents']['l3']}A")
@@ -740,7 +734,7 @@ async def get_dynamic_ess_settings(request: Request):
 async def test_dynamic_ess_registers(request: Request):
     client = request.app.state.modbus_client
     unit_id = 100
-    start = 5420
+    start = 5400
     end = 5429
 
     results = {}
