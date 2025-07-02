@@ -138,11 +138,11 @@
    <path d="M41.2627 180.75C40.8415 180.75 40.5 180.414 40.5 180C40.5 179.586 40.8415 179.25 41.2627 179.25H44.25L45.75 
    179.25H48.7373C49.1585 179.25 49.5 179.586 49.5 180C49.5 180.414 49.1585 180.75 48.7373 180.75L45.75 180.75H44.25L41.2627 180.75Z" fill="white"/>
    <path d="M44.25 180.75H45.75V179.25L44.25 179.25V180.75Z" fill="white"/></g>
-   <rect x="60" y="178" width="122" height="4" rx="2" fill="#B2AFBA" fill-opacity="0.2"/>
-   <rect x="60" y="178" width="50" height="4" rx="2" fill="#B2AFBA"/>
-   <rect x="99.5" y="170.5" width="19" height="19" rx="9.5" fill="#B2AFBA"/>
-   <rect x="99.5" y="170.5" width="19" height="19" rx="9.5" stroke="white"/>
-   <circle cx="109" cy="180" r="5" fill="white"/>
+   <rect x="60" y="178" width="122" height="4" rx="2" fill="#B2AFBA" fill-opacity="0.2" id="zoom-track-bg"/>
+   <rect x="60" y="178" width="50" height="4" rx="2" fill="#B2AFBA" id="zoom-track-filled"/>
+   <rect x="99.5" y="170.5" width="19" height="19" rx="9.5" fill="#B2AFBA" id="zoom-thumb"/>
+   <rect x="99.5" y="170.5" width="19" height="19" rx="9.5" stroke="white" id="zoom-thumb-border"/>
+   <circle cx="109" cy="180" r="5" fill="white" id="zoom-thumb-center"/>
    <g onclick="handleClickZoomIn()" style="cursor: pointer;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">
    <rect x="188" y="171" width="18" height="18" rx="9" fill="#B2AFBA"/>
    <path d="M193.263 180.75C192.841 180.75 192.5 180.414 192.5 180C192.5 179.586 192.841 179.25 193.263 179.25L200.737 
@@ -223,8 +223,16 @@
     let manualWindowWidth = 400;
     let isDicomLoaded = false;
     const NAV_ANIMATION_DURATION = 0.8;
-    const ZOOM_SLIDER_MIN = 0.1; // Минимальный уровень зума
-    const ZOOM_SLIDER_MAX = 5;    // Максимальный уровень зума
+   
+    // Константы для слайдера зума
+    const ZOOM_SLIDER_MIN = 0.8;
+    const ZOOM_SLIDER_MAX = 64;
+    const SLIDER_TRACK_WIDTH = 122; // Фиксированная ширина трека
+    const SLIDER_THUMB_WIDTH = 19;  // Ширина ползунка
+    const SLIDER_THUMB_OFFSET = 9.5; // Половина ширины ползунка
+    const SLIDER_START_X = 60;      // Начальная координата X трека
+    const CIRCLE_CENTER_X = 109;    // Исходная позиция центра круга
+
     let isZoomSliderDragging = false;
 
     function updateViewMode() {
@@ -307,172 +315,105 @@ function handleClickHome() {
 function updateZoomSlider() {
     if (!viewer) return;
     
-    // Получаем текущий уровень зума
     const zoom = viewer.viewport.getZoom();
-    
-    // Находим все необходимые элементы
-    const sliderTrack = document.querySelector('rect[x="60"][y="178"]');
-    const filledTrack = document.querySelector('rect[x="60"][y="178"][fill="#B2AFBA"]');
-    const thumb = document.querySelector('rect[x="99.5"][y="170.5"]');
-    const thumbCircle = document.querySelector('circle[cx="109"]');
-    
-    // Проверяем, что все элементы найдены
-    if (!sliderTrack || !filledTrack || !thumb || !thumbCircle) {
-        console.log("Не все элементы слайдера найдены");
-        return;
-    }
-    
-    // Рассчитываем позицию ползунка (0-1)
-    const sliderWidth = parseFloat(sliderTrack.getAttribute('width'));
     const normalizedZoom = Math.min(1, Math.max(0, 
         (zoom - ZOOM_SLIDER_MIN) / (ZOOM_SLIDER_MAX - ZOOM_SLIDER_MIN)
     ));
     
-    // Вычисляем новые позиции элементов
-    const filledWidth = normalizedZoom * sliderWidth;
-    const thumbPos = 60 + filledWidth - 9.5; // 9.5 - половина ширины ползунка
-    const circlePos = 109 + filledWidth - (sliderWidth / 2);
+    // Рассчитываем позицию ползунка
+    const filledWidth = Math.round(normalizedZoom * SLIDER_TRACK_WIDTH * 100) / 100;
+    const thumbPos = SLIDER_START_X + filledWidth - SLIDER_THUMB_OFFSET;
     
-    // Обновляем элементы
-    filledTrack.setAttribute('width', filledWidth);
-    thumb.setAttribute('x', thumbPos);
-    thumbCircle.setAttribute('cx', circlePos);
+    // Центр кружка должен быть на 4.5px правее от центра ползунка (так как радиус круга 5px)
+    const circlePos = thumbPos + SLIDER_THUMB_OFFSET;
+    
+    // Обновляем элементы по ID
+    const filledTrack = document.getElementById('zoom-track-filled');
+    const thumb = document.getElementById('zoom-thumb');
+    const thumbBorder = document.getElementById('zoom-thumb-border');
+    const thumbCircle = document.getElementById('zoom-thumb-center');
+    
+    if (filledTrack) filledTrack.setAttribute('width', filledWidth);
+    if (thumb) thumb.setAttribute('x', thumbPos);
+    if (thumbBorder) thumbBorder.setAttribute('x', thumbPos);
+    if (thumbCircle) thumbCircle.setAttribute('cx', circlePos);
 }
+
 
 
 // Инициализация слайдера зума
 function initZoomSlider() {
-    const sliderTrack = document.querySelector('rect[x="60"][y="178"]');
-    const thumb = document.querySelector('rect[x="99.5"][y="170.5"]');
+    const sliderTrack = document.getElementById('zoom-track-bg');
+    const thumb = document.getElementById('zoom-thumb');
+    const thumbCircle = document.getElementById('zoom-thumb-center');
     
-    if (!sliderTrack || !thumb) {
+    if (!sliderTrack || !thumb || !thumbCircle) {
         setTimeout(initZoomSlider, 100);
         return;
     }
     
-    // Обработка перетаскивания ползунка
-    thumb.addEventListener('mousedown', function(e) {
-        isZoomSliderDragging = true;
-        document.addEventListener('mousemove', handleSliderDrag);
-        document.addEventListener('mouseup', () => {
-            isZoomSliderDragging = false;
-            document.removeEventListener('mousemove', handleSliderDrag);
-        });
-        e.preventDefault();
-    });
+    // Обработка перетаскивания
+    thumb.addEventListener('mousedown', startDrag);
+    thumbCircle.addEventListener('mousedown', startDrag);
     
-    // Обработка клика по треку
+    function startDrag(e) {
+        isZoomSliderDragging = true;
+        document.addEventListener('mousemove', handleDrag);
+        document.addEventListener('mouseup', stopDrag);
+        e.preventDefault();
+    }
+    
+    function handleDrag(e) {
+    if (!isZoomSliderDragging || !viewer) return;
+    
+    const rect = sliderTrack.getBoundingClientRect();
+    let dragX = e.clientX - rect.left;
+    dragX = Math.max(0, Math.min(rect.width, dragX));
+    
+    const normalizedValue = dragX / rect.width;
+    const zoomLevel = ZOOM_SLIDER_MIN + 
+        normalizedValue * (ZOOM_SLIDER_MAX - ZOOM_SLIDER_MIN);
+    
+    viewer.viewport.zoomTo(zoomLevel);
+    
+    // Принудительное обновление позиции при перетаскивании
+    const filledWidth = dragX;
+    const thumbPos = SLIDER_START_X + filledWidth - SLIDER_THUMB_OFFSET;
+    const circlePos = thumbPos + SLIDER_THUMB_OFFSET;
+    
+    const thumb = document.getElementById('zoom-thumb');
+    const thumbBorder = document.getElementById('zoom-thumb-border');
+    const thumbCircle = document.getElementById('zoom-thumb-center');
+    
+    if (thumb) thumb.setAttribute('x', thumbPos);
+    if (thumbBorder) thumbBorder.setAttribute('x', thumbPos);
+    if (thumbCircle) thumbCircle.setAttribute('cx', circlePos);
+}
+    
+    function stopDrag() {
+        isZoomSliderDragging = false;
+        document.removeEventListener('mousemove', handleDrag);
+        document.removeEventListener('mouseup', stopDrag);
+    }
+    
+    // Обработка кликов по треку
     sliderTrack.addEventListener('click', function(e) {
         if (!viewer || isZoomSliderDragging) return;
         
         const rect = sliderTrack.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const width = rect.width;
+        let clickX = e.clientX - rect.left;
+        clickX = Math.max(0, Math.min(rect.width, clickX));
+        
+        const normalizedValue = clickX / rect.width;
         const zoomLevel = ZOOM_SLIDER_MIN + 
-            (Math.min(1, Math.max(0, clickX / width)) * 
-            (ZOOM_SLIDER_MAX - ZOOM_SLIDER_MIN));
+            normalizedValue * (ZOOM_SLIDER_MAX - ZOOM_SLIDER_MIN);
         
         viewer.viewport.zoomTo(zoomLevel);
     });
     
-    function handleSliderDrag(e) {
-        if (!isZoomSliderDragging || !viewer) return;
-        
-        const sliderTrack = document.querySelector('rect[x="60"][y="178"]');
-        const rect = sliderTrack.getBoundingClientRect();
-        const dragX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
-        const zoomLevel = ZOOM_SLIDER_MIN + 
-            (dragX / rect.width) * (ZOOM_SLIDER_MAX - ZOOM_SLIDER_MIN);
-        
-        viewer.viewport.zoomTo(zoomLevel);
-    }
-    
-    // Инициализация начального положения
     updateZoomSlider();
 }
 
-
-
-function setupZoomSlider() {
-    const sliderTrack = document.querySelector('rect[x="60"][y="178"]');
-    const thumb = document.querySelector('rect[x="99.5"][y="170.5"]');
-    const circle = document.querySelector('circle[cx="109"]');
-    
-    if (!sliderTrack || !thumb || !circle) {
-        console.log("Zoom slider elements not found, retrying...");
-        setTimeout(setupZoomSlider, 500);
-        return;
-    }
-    
-    // Обработчики для перетаскивания ползунка
-    thumb.addEventListener('mousedown', startZoomSliderDrag);
-    circle.addEventListener('mousedown', startZoomSliderDrag);
-    
-    function startZoomSliderDrag(e) {
-        isZoomSliderDragging = true;
-        document.addEventListener('mousemove', handleZoomSliderDrag);
-        document.addEventListener('mouseup', stopZoomSliderDrag);
-        e.preventDefault();
-    }
-    
-    function handleZoomSliderDrag(e) {
-        if (!isZoomSliderDragging || !viewer) return;
-        
-        const sliderTrack = document.querySelector('rect[x="60"][y="178"]');
-        if (!sliderTrack) return;
-        
-        const sliderRect = sliderTrack.getBoundingClientRect();
-        const sliderWidth = sliderRect.width;
-        const sliderLeft = sliderRect.left;
-        
-        let posX = e.clientX - sliderLeft;
-        posX = Math.max(0, Math.min(sliderWidth, posX));
-        
-        const normalizedValue = posX / sliderWidth;
-        const zoomValue = ZOOM_SLIDER_MIN + (normalizedValue * (ZOOM_SLIDER_MAX - ZOOM_SLIDER_MIN));
-        
-        // Обновляем визуальное представление
-        const thumb = document.querySelector('rect[x="99.5"][y="170.5"]');
-        const circle = document.querySelector('circle[cx="109"]');
-        const filledTrack = document.querySelector('rect[x="60"][y="178"][fill="#B2AFBA"]');
-        
-        if (!thumb || !circle || !filledTrack) return;
-        
-        const newPos = 60 + posX - 9.5;
-        
-        thumb.setAttribute('x', newPos);
-        circle.setAttribute('cx', 109 + posX - (sliderWidth/2));
-        filledTrack.setAttribute('width', posX);
-        
-        // Устанавливаем новый зум
-        viewer.viewport.zoomTo(zoomValue);
-    }
-    
-    function stopZoomSliderDrag() {
-        isZoomSliderDragging = false;
-        document.removeEventListener('mousemove', handleZoomSliderDrag);
-        document.removeEventListener('mouseup', stopZoomSliderDrag);
-    }
-    
-    // Обработчики кликов по треку
-    sliderTrack.addEventListener('click', function(e) {
-        if (!viewer) return;
-        
-        const sliderRect = sliderTrack.getBoundingClientRect();
-        const sliderWidth = sliderRect.width;
-        const sliderLeft = sliderRect.left;
-        
-        let posX = e.clientX - sliderLeft;
-        posX = Math.max(0, Math.min(sliderWidth, posX));
-        
-        const normalizedValue = posX / sliderWidth;
-        const zoomValue = ZOOM_SLIDER_MIN + (normalizedValue * (ZOOM_SLIDER_MAX - ZOOM_SLIDER_MIN));
-        
-        viewer.viewport.zoomTo(zoomValue);
-    });
-}
-
-setupZoomSlider();
 
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -531,7 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
     svgWrapper.style.top = top + 'px';
 }
 
-     setTimeout(initZoomSlider, 300);
+    
     
     function dragTouch(e) {
         if (!isDragging) return;
@@ -546,6 +487,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 
+    setTimeout(initZoomSlider, 300);
+    
+    // Обновление слайдера при изменении зума
     if (viewer) {
         viewer.addHandler('zoom', function() {
             if (!isZoomSliderDragging) {
