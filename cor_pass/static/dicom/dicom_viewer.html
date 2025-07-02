@@ -223,6 +223,9 @@
     let manualWindowWidth = 400;
     let isDicomLoaded = false;
     const NAV_ANIMATION_DURATION = 0.8;
+    const ZOOM_SLIDER_MIN = 0.1; // Минимальный уровень зума
+    const ZOOM_SLIDER_MAX = 5;    // Максимальный уровень зума
+    let isZoomSliderDragging = false;
 
     function updateViewMode() {
   currentMode = document.getElementById('view-mode').value;
@@ -280,142 +283,196 @@ function showMainContent() {
   document.getElementById('main-content').style.display = 'block';
 }
 
-
-function handleClickHome() {
-  viewer.viewport.goHome();
-  }
 function handleClickZoomIn() {
+    if (!viewer) return;
     viewer.viewport.zoomBy(1.2);
-  }
+    setTimeout(updateZoomSlider, 100); // Небольшая задержка для плавности
+}
 
 function handleClickZoomOut() {
+    if (!viewer) return;
     viewer.viewport.zoomBy(0.8);
-  }
-
-  function handleClickLeft() {
-    if (!viewer) return;
-    
-    const viewport = viewer.viewport;
-    const currentCenter = viewport.getCenter();
-    const bounds = viewport.getBounds();
-    const imageBounds = viewer.world.getItemAt(0).getBounds();
-    
-    const deltaX = -bounds.width * 0.125;
-    let newX = currentCenter.x + deltaX;
-    
-    const minX = imageBounds.x + bounds.width/2;
-    const maxX = imageBounds.x + imageBounds.width - bounds.width/2;
-    newX = Math.max(minX, Math.min(newX, maxX));
-    
-    // Плавное перемещение
-    viewport.panTo(
-        new OpenSeadragon.Point(newX, currentCenter.y),
-        {
-            animationTime: NAV_ANIMATION_DURATION,
-            easing: function(t) {
-                // Простая квадратичная функция для плавности
-                return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-            }
-        }
-    );
-    updateNavigator();
+    setTimeout(updateZoomSlider, 100);
 }
 
-// Аналогично для остальных функций (right, up, down):
-function handleClickRight() {
+function handleClickHome() {
     if (!viewer) return;
-    
-    const viewport = viewer.viewport;
-    const currentCenter = viewport.getCenter();
-    const bounds = viewport.getBounds();
-    const imageBounds = viewer.world.getItemAt(0).getBounds();
-    
-    const deltaX = bounds.width * 0.125;
-    let newX = currentCenter.x + deltaX;
-    
-    const minX = imageBounds.x + bounds.width/2;
-    const maxX = imageBounds.x + imageBounds.width - bounds.width/2;
-    newX = Math.max(minX, Math.min(newX, maxX));
-    
-    viewport.panTo(
-        new OpenSeadragon.Point(newX, currentCenter.y),
-        {
-            animationTime: NAV_ANIMATION_DURATION,
-            easing: function(t) {
-                return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-            }
-        }
-    );
-    updateNavigator();
-}
-
-function handleClickUp() {
-    if (!viewer) return;
-    
-    const viewport = viewer.viewport;
-    const currentCenter = viewport.getCenter();
-    const bounds = viewport.getBounds();
-    const imageBounds = viewer.world.getItemAt(0).getBounds();
-    
-    const deltaY = -bounds.height * 0.125;
-    let newY = currentCenter.y + deltaY;
-    
-    const minY = imageBounds.y + bounds.height/2;
-    const maxY = imageBounds.y + imageBounds.height - bounds.height/2;
-    newY = Math.max(minY, Math.min(newY, maxY));
-    
-    viewport.panTo(
-        new OpenSeadragon.Point(currentCenter.x, newY),
-        {
-            animationTime: NAV_ANIMATION_DURATION,
-            easing: function(t) {
-                return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-            }
-        }
-    );
-    updateNavigator();
-}
-
-function handleClickDown() {
-    if (!viewer) return;
-    
-    const viewport = viewer.viewport;
-    const currentCenter = viewport.getCenter();
-    const bounds = viewport.getBounds();
-    const imageBounds = viewer.world.getItemAt(0).getBounds();
-    
-    const deltaY = bounds.height * 0.125;
-    let newY = currentCenter.y + deltaY;
-    
-    const minY = imageBounds.y + bounds.height/2;
-    const maxY = imageBounds.y + imageBounds.height - bounds.height/2;
-    newY = Math.max(minY, Math.min(newY, maxY));
-    
-    viewport.panTo(
-        new OpenSeadragon.Point(currentCenter.x, newY),
-        {
-            animationTime: NAV_ANIMATION_DURATION,
-            easing: function(t) {
-                return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
-            }
-        }
-    );
-    updateNavigator();
+    viewer.viewport.goHome();
+    setTimeout(updateZoomSlider, 100);
 }
 
 
 
+// Функция для обновления позиции ползунка зума
+function updateZoomSlider() {
+    if (!viewer) return;
+    
+    // Получаем текущий уровень зума
+    const zoom = viewer.viewport.getZoom();
+    
+    // Находим все необходимые элементы
+    const sliderTrack = document.querySelector('rect[x="60"][y="178"]');
+    const filledTrack = document.querySelector('rect[x="60"][y="178"][fill="#B2AFBA"]');
+    const thumb = document.querySelector('rect[x="99.5"][y="170.5"]');
+    const thumbCircle = document.querySelector('circle[cx="109"]');
+    
+    // Проверяем, что все элементы найдены
+    if (!sliderTrack || !filledTrack || !thumb || !thumbCircle) {
+        console.log("Не все элементы слайдера найдены");
+        return;
+    }
+    
+    // Рассчитываем позицию ползунка (0-1)
+    const sliderWidth = parseFloat(sliderTrack.getAttribute('width'));
+    const normalizedZoom = Math.min(1, Math.max(0, 
+        (zoom - ZOOM_SLIDER_MIN) / (ZOOM_SLIDER_MAX - ZOOM_SLIDER_MIN)
+    ));
+    
+    // Вычисляем новые позиции элементов
+    const filledWidth = normalizedZoom * sliderWidth;
+    const thumbPos = 60 + filledWidth - 9.5; // 9.5 - половина ширины ползунка
+    const circlePos = 109 + filledWidth - (sliderWidth / 2);
+    
+    // Обновляем элементы
+    filledTrack.setAttribute('width', filledWidth);
+    thumb.setAttribute('x', thumbPos);
+    thumbCircle.setAttribute('cx', circlePos);
+}
 
-document.querySelector('.close-btn').addEventListener('click', () => {
-    viewer.destroy();
- 
-    const svsViewerDiv = document.getElementById('svs-fullscreen-viewer');
-    svsViewerDiv.classList.remove('visible');
-    svsViewerDiv.classList.add('hidden');
-   
-});
+
+// Инициализация слайдера зума
+function initZoomSlider() {
+    const sliderTrack = document.querySelector('rect[x="60"][y="178"]');
+    const thumb = document.querySelector('rect[x="99.5"][y="170.5"]');
+    
+    if (!sliderTrack || !thumb) {
+        setTimeout(initZoomSlider, 100);
+        return;
+    }
+    
+    // Обработка перетаскивания ползунка
+    thumb.addEventListener('mousedown', function(e) {
+        isZoomSliderDragging = true;
+        document.addEventListener('mousemove', handleSliderDrag);
+        document.addEventListener('mouseup', () => {
+            isZoomSliderDragging = false;
+            document.removeEventListener('mousemove', handleSliderDrag);
+        });
+        e.preventDefault();
+    });
+    
+    // Обработка клика по треку
+    sliderTrack.addEventListener('click', function(e) {
+        if (!viewer || isZoomSliderDragging) return;
+        
+        const rect = sliderTrack.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const width = rect.width;
+        const zoomLevel = ZOOM_SLIDER_MIN + 
+            (Math.min(1, Math.max(0, clickX / width)) * 
+            (ZOOM_SLIDER_MAX - ZOOM_SLIDER_MIN));
+        
+        viewer.viewport.zoomTo(zoomLevel);
+    });
+    
+    function handleSliderDrag(e) {
+        if (!isZoomSliderDragging || !viewer) return;
+        
+        const sliderTrack = document.querySelector('rect[x="60"][y="178"]');
+        const rect = sliderTrack.getBoundingClientRect();
+        const dragX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+        const zoomLevel = ZOOM_SLIDER_MIN + 
+            (dragX / rect.width) * (ZOOM_SLIDER_MAX - ZOOM_SLIDER_MIN);
+        
+        viewer.viewport.zoomTo(zoomLevel);
+    }
+    
+    // Инициализация начального положения
+    updateZoomSlider();
+}
 
 
+
+function setupZoomSlider() {
+    const sliderTrack = document.querySelector('rect[x="60"][y="178"]');
+    const thumb = document.querySelector('rect[x="99.5"][y="170.5"]');
+    const circle = document.querySelector('circle[cx="109"]');
+    
+    if (!sliderTrack || !thumb || !circle) {
+        console.log("Zoom slider elements not found, retrying...");
+        setTimeout(setupZoomSlider, 500);
+        return;
+    }
+    
+    // Обработчики для перетаскивания ползунка
+    thumb.addEventListener('mousedown', startZoomSliderDrag);
+    circle.addEventListener('mousedown', startZoomSliderDrag);
+    
+    function startZoomSliderDrag(e) {
+        isZoomSliderDragging = true;
+        document.addEventListener('mousemove', handleZoomSliderDrag);
+        document.addEventListener('mouseup', stopZoomSliderDrag);
+        e.preventDefault();
+    }
+    
+    function handleZoomSliderDrag(e) {
+        if (!isZoomSliderDragging || !viewer) return;
+        
+        const sliderTrack = document.querySelector('rect[x="60"][y="178"]');
+        if (!sliderTrack) return;
+        
+        const sliderRect = sliderTrack.getBoundingClientRect();
+        const sliderWidth = sliderRect.width;
+        const sliderLeft = sliderRect.left;
+        
+        let posX = e.clientX - sliderLeft;
+        posX = Math.max(0, Math.min(sliderWidth, posX));
+        
+        const normalizedValue = posX / sliderWidth;
+        const zoomValue = ZOOM_SLIDER_MIN + (normalizedValue * (ZOOM_SLIDER_MAX - ZOOM_SLIDER_MIN));
+        
+        // Обновляем визуальное представление
+        const thumb = document.querySelector('rect[x="99.5"][y="170.5"]');
+        const circle = document.querySelector('circle[cx="109"]');
+        const filledTrack = document.querySelector('rect[x="60"][y="178"][fill="#B2AFBA"]');
+        
+        if (!thumb || !circle || !filledTrack) return;
+        
+        const newPos = 60 + posX - 9.5;
+        
+        thumb.setAttribute('x', newPos);
+        circle.setAttribute('cx', 109 + posX - (sliderWidth/2));
+        filledTrack.setAttribute('width', posX);
+        
+        // Устанавливаем новый зум
+        viewer.viewport.zoomTo(zoomValue);
+    }
+    
+    function stopZoomSliderDrag() {
+        isZoomSliderDragging = false;
+        document.removeEventListener('mousemove', handleZoomSliderDrag);
+        document.removeEventListener('mouseup', stopZoomSliderDrag);
+    }
+    
+    // Обработчики кликов по треку
+    sliderTrack.addEventListener('click', function(e) {
+        if (!viewer) return;
+        
+        const sliderRect = sliderTrack.getBoundingClientRect();
+        const sliderWidth = sliderRect.width;
+        const sliderLeft = sliderRect.left;
+        
+        let posX = e.clientX - sliderLeft;
+        posX = Math.max(0, Math.min(sliderWidth, posX));
+        
+        const normalizedValue = posX / sliderWidth;
+        const zoomValue = ZOOM_SLIDER_MIN + (normalizedValue * (ZOOM_SLIDER_MAX - ZOOM_SLIDER_MIN));
+        
+        viewer.viewport.zoomTo(zoomValue);
+    });
+}
+
+setupZoomSlider();
 
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -473,6 +530,8 @@ document.addEventListener('DOMContentLoaded', function() {
     svgWrapper.style.left = left + 'px';
     svgWrapper.style.top = top + 'px';
 }
+
+     setTimeout(initZoomSlider, 300);
     
     function dragTouch(e) {
         if (!isDragging) return;
@@ -485,6 +544,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function endDrag() {
         isDragging = false;
     }
+
+
+    if (viewer) {
+        viewer.addHandler('zoom', function() {
+            if (!isZoomSliderDragging) {
+                updateZoomSlider();
+            }
+        });
+    }
+
 });
 </script>
 
