@@ -17,7 +17,10 @@
     <title>COR-Energy</title>
     <script src="/static/COR_Energy/scripts.js"></script>
     <script src="/static/COR_Energy/power-settings.js"></script>
+    <script src="/static/COR_Energy/chart.js"></script>
     <script src="/static/COR_ID_Js/general_fun.js"></script>
+  
+
     <!-- Подключаем библиотеку Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -355,10 +358,6 @@
 
         <!-- Контент вкладки Мониторинг -->
         <div id="monitor" class="tabcontent">
-           
-            <p>Температура: <span id="temperature">0</span>°C</p>
-            <p>Ток: <span id="current">0</span> A</p>
-
             <!-- Контейнер для графика -->
             <div id="chartContainer">
                 <canvas id="powerChart"></canvas>
@@ -624,9 +623,7 @@
            
             let lastPowerValue = 0;
             let powerChart = null;
-            let timeData = [];
-            let powerData = [];
-            let timeCounter = 0;
+            let chartUpdateInterval = null;
 
         const modeNames = {
             1: "Charger Only",
@@ -642,6 +639,17 @@
             power: 0,    // Мощность (Вт)
             soh: 0       // Состояние здоровья батареи (%)
         };
+
+
+
+
+
+
+
+
+
+
+
         updateBatteryFill(batteryData.soc);
             // Закрытие модального окна (если нужно)
             document.getElementById("closeBattery").onclick = function() {
@@ -730,56 +738,7 @@ document.getElementById('feedInPowerSlider').addEventListener('input', function(
             event.currentTarget.classList.add("active");
         }
 
-			
- // Инициализация данных для графика мощности
- 
- function initPowerChart() {
-    const ctx = document.getElementById('powerChart').getContext('2d');
-    
-    powerChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: timeData,
-            datasets: [{
-                label: 'Мощность (кВт)',
-                data: powerData,
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                borderWidth: 2,
-                pointRadius: 0,
-                fill: true
-            }]
-        },
-        options: {
-            animation: {
-                duration: 300,
-                easing: 'easeOutQuad'
-            },
-            scales: {
-                x: {
-                    type: 'linear',
-                    position: 'bottom',
-                    title: {
-                        display: true,
-                        text: 'Время (сек)'
-                    },
-                    min: 0,
-                    max: 600
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Мощность (кВт)'
-                    },
-                    min: -80,
-                    max: 80
-                }
-            },
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    });
-}
+
 	
 
 // Функция для получения текущего времени в формате HH:MM:SS
@@ -798,26 +757,6 @@ function getCurrentTimeFormatted() {
     // Возвращаем строку в формате HH:MM:SS
     return hours + ':' + minutes + ':' + seconds;
 }
-
-       // Функция для обновления данных графика
-function updateChart(newSpeed) {
-    timeCounter++; // Увеличиваем счетчик времени
-    var currentTime = getCurrentTimeFormatted();
-    
-    // Добавляем новые данные
-    timeData.push(timeCounter);
-    speedData.push(newSpeed);
-
-    // Если массивы превышают длину 90, удаляем только первое значение
-    if (timeData.length > 90) {
-        timeData.shift();  
-        speedData.shift();
-    }
-
-    // Обновляем график с плавной анимацией
-    speedChart.update();  
-}
-
 
 
 
