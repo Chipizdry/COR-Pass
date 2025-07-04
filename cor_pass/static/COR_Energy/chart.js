@@ -29,15 +29,17 @@ function processMeasurementsData(measurements) {
     const loadPower = [];
     const solarPower = [];
     const batteryPower = [];
+    const essTotalInputPower = []; 
     
     sortedMeasurements.forEach(measurement => {
         labels.push(new Date(measurement.measured_at).toLocaleTimeString());
         loadPower.push(Math.round(measurement.inverter_total_ac_output / 10) / 100);
         solarPower.push(Math.round(measurement.solar_total_pv_power / 10) / 100);
         batteryPower.push(Math.round(measurement.general_battery_power / 10) / 100);
+        essTotalInputPower.push(Math.round(measurement.ess_total_input_power / 10) / 100); 
     });
-    
-    return { labels, loadPower, solarPower, batteryPower };
+
+    return { labels, loadPower, solarPower, batteryPower, essTotalInputPower };
 }
 
 
@@ -77,6 +79,14 @@ function initPowerChart() {
                     data: [],
                     borderColor: 'rgba(153, 102, 255, 1)',
                     backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderWidth: 2,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Общая входная мощность ESS (кВт)',
+                    data: [],
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
                     borderWidth: 2,
                     pointRadius: 0
                 }
@@ -137,16 +147,16 @@ async function updateChartData() {
         if (!measurements || measurements.length === 0) return;
         
         // Обрабатываем данные
-        const { labels, loadPower, solarPower, batteryPower } = processMeasurementsData(measurements);
-        
-        // Обновляем график
+        const { labels, loadPower, solarPower, batteryPower, essTotalInputPower } = processMeasurementsData(measurements);
+
         powerChart.data.labels = labels;
         powerChart.data.datasets[0].data = loadPower;
         powerChart.data.datasets[1].data = solarPower;
         powerChart.data.datasets[2].data = batteryPower;
+        powerChart.data.datasets[3].data = essTotalInputPower;
         
         // Автоматически подстраиваем масштаб по Y
-        const allData = [...loadPower, ...solarPower, ...batteryPower];
+        const allData = [...loadPower, ...solarPower, ...batteryPower, ...essTotalInputPower];
         const maxPower = Math.max(...allData);
         const minPower = Math.min(...allData);
         
