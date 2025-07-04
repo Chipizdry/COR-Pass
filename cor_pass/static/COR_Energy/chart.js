@@ -7,7 +7,7 @@
 
 async function fetchMeasurements() {
     try {
-        const response = await fetch('/api/modbus/measurements/?page=1&page_size=60&object_name=COR-Energy');
+        const response = await fetch('/api/modbus/measurements/?page=1&page_size=60');
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
