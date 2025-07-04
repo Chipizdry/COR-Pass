@@ -426,16 +426,17 @@ async function fetchSolarChargerStatus() {
         }
 
         const data = await response.json();
-      //  console.log('✅ Принятые данные (сырье):', data);
+        // console.log('✅ Принятые данные (сырье):', data);
 
-        let totalAllPower = 0;
         const container = document.getElementById('solarTableContainer');
         container.innerHTML = ''; // Очистка
 
         const template = document.getElementById('solarTableTemplate');
 
+        // Обрабатываем каждый контроллер
         for (const [chargerId, values] of Object.entries(data)) {
-            if (chargerId === "total_power_all_devices") continue;
+            // Пропускаем поле с общей суммой (оно будет обработано отдельно)
+            if (chargerId === "total_pv_power") continue;
 
             let chargerTotalPower = 0;
             const clone = template.content.cloneNode(true);
@@ -445,19 +446,23 @@ async function fetchSolarChargerStatus() {
 
             const tbody = clone.querySelector('.table-body');
 
+            // Обрабатываем каждый PV вход (0-3)
             for (let i = 0; i < 4; i++) {
                 const voltage = values[`pv_voltage_${i}`];
                 const power = values[`pv_power_${i}`];
 
+                // Рассчитываем ток, если есть напряжение и мощность
                 let current = null;
                 if (voltage !== null && voltage > 0 && power !== null) {
                     current = parseFloat((power / voltage).toFixed(2));
                 }
 
+                // Суммируем мощность по устройству
                 if (power !== null) {
                     chargerTotalPower += power;
                 }
 
+                // Создаем строку таблицы
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>PV ${i + 1}</td>
@@ -470,20 +475,21 @@ async function fetchSolarChargerStatus() {
 
             // Установка итогов по устройству
             clone.querySelector('.device-total').innerText = chargerTotalPower.toFixed(2);
-            totalAllPower += chargerTotalPower;
-
             container.appendChild(clone);
         }
 
-        // Установка общей суммы
-        document.getElementById('totalAllPower').innerText = totalAllPower.toFixed(2);
-        updateSolarPowerIndicator(totalAllPower);
+        // Установка общей суммы из данных API (вместо самостоятельного расчета)
+        const totalPowerFromAPI = data.total_pv_power || 0;
+        document.getElementById('totalAllPower').innerText = totalPowerFromAPI.toFixed(2);
+        updateSolarPowerIndicator(totalPowerFromAPI);
 
     } catch (error) {
         console.error('❗ Ошибка при получении данных:', error);
+        // Можно добавить отображение ошибки в интерфейсе
+        document.getElementById('solarTableContainer').innerHTML = 
+            '<div class="error-message">Ошибка загрузки данных</div>';
     }
 }
-
 
 
 async function fetchDynamicEssSettings() {

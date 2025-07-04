@@ -158,3 +158,37 @@ img{
 .arrows .disable{
     pointer-events: none;
 }
+
+.alertWrapper{
+    position: fixed;
+    bottom: 50px;
+    right: 50px;
+    padding: 16px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0px 4px 20px 0px rgba(41, 17, 97, 0.05);
+    gap: 12px;
+    max-width: 600px;
+}
+.alertWrapper svg{
+    min-width: 24px;
+    width: 24px;
+    height: 24px;
+}
+.alertTitle{
+    color:  #291161;
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 6px;
+}
+.alertDescription{
+    color: #291161;
+    font-weight: 400;
+}
+.alertClose{
+    min-width: 24px;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+}
+

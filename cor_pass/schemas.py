@@ -9,8 +9,10 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-from typing import List, Optional, Union
+from typing import Generic, List, Optional, TypeVar, Union, Tuple
 from datetime import datetime
+
+from sqlalchemy import UUID
 from cor_pass.database import models
 from cor_pass.database.models import (
     AccessLevel,
@@ -633,37 +635,67 @@ class PaginatedPatientsResponse(BaseModel):
     total: int
 
 
+
 class NewPatientRegistration(BaseModel):
     email: EmailStr = Field(
         ..., description="Email пациента (будет использован для создания пользователя)"
     )
-    surname: str = Field(..., description="Фамилия пациента")
-    first_name: str = Field(..., description="Имя пациента")
+    surname: str = Field(..., min_length=1, description="Фамилия пациента")
+    first_name: str = Field(..., min_length=1, description="Имя пациента")
     middle_name: Optional[str] = Field(None, description="Отчество пациента")
-    birth_date: Optional[date] = Field(None, description="Дата рождения пациента")
-    sex: Optional[str] = Field(
-        None,
+    birth_date: date = Field(..., description="Дата рождения пациента")
+    sex: str = Field(
+        ...,
         max_length=1,
         description="Пол пациента, может быть 'M'(мужской) или 'F'(женский)",
     )
     phone_number: Optional[str] = Field(None, description="Номер телефона пациента")
     address: Optional[str] = Field(None, description="Адрес пациента")
+
+    @field_validator("birth_date")
+    @classmethod
+    def validate_birth_date(cls, v: Optional[date]) -> Optional[date]:
+        if v is None:
+            raise ValueError("Необходимо указать дату рождения")
+
+        min_birth_date = date(1900, 1, 1)
+        current_date = date.today() 
+
+        if v < min_birth_date:
+            raise ValueError("Дата рождения не может быть раньше 1 января 1900 года.")
+
+        if v > current_date:
+            raise ValueError("Дата рождения не может быть в будущем.")
+
+        return v
+    
     # photo: Optional[str] = Field(None, description="Фото пациента (base64 или blob)")
     # status: Optional[str] = Field("registered", description="Начальный статус пациента")
 
     @field_validator("sex")
-    def user_sex_must_be_m_or_f(cls, v):
-        if v not in ["M", "F"]:
-            raise ValueError('user_sex must be "M" or "F"')
-        return v
+    @classmethod 
+    def validate_sex_and_normalize(cls, v: str) -> str: 
+        normalized_v = v.upper() 
+        if normalized_v not in ["M", "F"]:
+            raise ValueError('Пол пациента должен быть "M" или "F".')
+        return normalized_v 
 
 
 class ExistingPatientAdd(BaseModel):
-    cor_id: str = Field(..., description="Cor ID существующего пользователя")
+    cor_id: str = Field(..., min_length=10, max_length=18, description="Cor ID существующего пользователя")
 
 
 # Модели для лабораторных исследований
 
+class CaseOwnerResponse(BaseModel):
+    id: Optional[str] = Field(None, description="ID врача")
+    doctor_id: Optional[str] = Field(None, description="COR-ID врача")
+    work_email: Optional[EmailStr] = Field(None, description="Рабочий имейл")
+    phone_number: Optional[str] = Field(None, description="Номер телефона")
+    first_name: Optional[str] = Field(None, description="Имя врача")
+    middle_name: Optional[str] = Field(None, description="Отчество врача")
+    last_name: Optional[str] = Field(None, description="Фамилия врача")
+    is_case_owner: Optional[bool] = Field(False, description="Владелец кейса")
 
 class GlassBase(BaseModel):
     glass_number: int
@@ -832,6 +864,7 @@ class CaseCreate(BaseModel):
         description="Тип исследования",
         example=MaterialType.R,
     )
+    num_samples: int = Field(1, ge=1, description="Количество семплов для создания в каждом кейсе")
 
 
 class CaseCreateResponse(BaseModel):
@@ -852,6 +885,8 @@ class UpdateCaseCode(BaseModel):
         max_length=5,
         description="Последние 5 целочисельных символлов кода кейса",
     )
+
+
 
 
 class Case(BaseModel):
@@ -930,6 +965,8 @@ class CaseDetailsResponse(BaseModel):
     pathohistological_conclusion: Optional[str] = None
     microdescription: Optional[str] = None
     samples: List[SampleWithoutCassettesSchema | Sample]
+    # case_owner: Optional[DoctorResponseForSignature] = None
+
 
 
 class SimpleCaseResponse(BaseModel):
@@ -1048,6 +1085,7 @@ class ReferralAttachmentCreate(BaseModel):
 
 class ReferralCreate(BaseModel):
     case_id: str = Field(..., description="ID связанного кейса")
+    biomaterial_date: Optional[date] = Field(None, description="Дата забора биоматериала")
     research_type: Optional[StudyType] = Field(None, description="Вид исследования")
     container_count: Optional[int] = Field(None, description="Фактическое количество контейнеров")
     medical_card_number: Optional[str] = Field(None, description="Номер медкарты")
@@ -1067,6 +1105,7 @@ class ReferralResponse(BaseModel):
     case_id: str
     case_number: str
     created_at: datetime
+    biomaterial_date: Optional[date]
     research_type: Optional[StudyType]
     container_count: Optional[int]
     medical_card_number: Optional[str]
@@ -1079,19 +1118,16 @@ class ReferralResponse(BaseModel):
     medical_procedure: Optional[str]
     final_report_delivery: Optional[str]
     issued_at: Optional[date]
-    attachments: List[ReferralAttachmentResponse] = [] # Список прикрепленных файлов
+    attachments: List[ReferralAttachmentResponse] = [] 
 
     class Config:
         from_attributes = True
 
 class ReferralResponseForDoctor(BaseModel):
     case_details: Optional[Case]
+    case_owner: Optional[CaseOwnerResponse]
     referral_id: Optional[str] = Field(..., description="Referral ID")
-    # case_id: str = Field(..., description="Сase ID")
-    # case_number: str = Field(..., description="Сase Code")
-    # pathohistological_conclusion: Optional[str] = None
-    # microdescription: Optional[str] = None
-    attachments: Optional[List[ReferralAttachmentResponse]] = [] # Список прикрепленных файлов
+    attachments: Optional[List[ReferralAttachmentResponse]] = []
     
 
     class Config:
@@ -1205,10 +1241,129 @@ class FirstCaseReferralDetailsSchema(BaseModel):
     class Config:
         from_attributes = True
 
+class DoctorSignatureBase(BaseModel):
+    signature_name: Optional[str] = None
+    is_default: bool = False
+
+
+class DoctorSignatureCreate(DoctorSignatureBase):
+    pass 
+
+class DoctorSignatureResponse(DoctorSignatureBase):
+    id: str
+    doctor_id: str
+    signature_scan_data: Optional[str] = None 
+    signature_scan_type: Optional[str] = None 
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class ReportSignatureSchema(BaseModel):
+    id: str
+    doctor: DoctorResponseForSignature 
+    signed_at: Optional[datetime] = None 
+
+    doctor_signature: Optional[DoctorSignatureResponse] = None 
+
+    class Config:
+        from_attributes = True
+
+class ReportBaseSchema(BaseModel):
+    immunohistochemical_profile: Optional[str] = None
+    molecular_genetic_profile: Optional[str] = None
+    pathomorphological_diagnosis: Optional[str] = None
+    icd_code: Optional[str] = None
+    comment: Optional[str] = None
+    
+    attached_glass_ids: Optional[List[str]] = None 
+
+class ReportCreateSchema(ReportBaseSchema):
+    pass
+
+class ReportUpdateSchema(ReportBaseSchema):
+    pass
+class DoctorDiagnosisSchema(BaseModel):
+    id: str
+    report_id: str
+    doctor: DoctorResponseForSignature 
+    created_at: datetime
+    immunohistochemical_profile: Optional[str] = None
+    molecular_genetic_profile: Optional[str] = None
+    pathomorphological_diagnosis: Optional[str] = None
+    icd_code: Optional[str] = None
+    comment: Optional[str] = None
+    report_microdescription: Optional[str] = None
+    report_macrodescription: Optional[str] = None
+    signature: Optional[ReportSignatureSchema] = None 
+
+    class Config:
+        from_attributes = True
+class FinalReportResponseSchema(BaseModel):
+    id: Optional[str] = None
+    case_id: str
+    case_code: str
+    
+    biopsy_date: Optional[date] = None
+    arrival_date: Optional[date] = None
+    report_date: Optional[date] = None
+
+    patient_cor_id: Optional[str] = None
+    patient_first_name: Optional[str] = None
+    patient_surname: Optional[str] = None
+    patient_middle_name: Optional[str] = None
+    patient_sex: Optional[str] = None
+    patient_birth_date: Optional[date] = None
+    patient_full_age: Optional[int] = None
+    patient_phone_number: Optional[str] = None
+    patient_email: Optional[str] = None
+
+    concatenated_macro_description: Optional[str] = None
+
+    medical_card_number: Optional[str] = None
+    medical_institution: Optional[str] = None
+    medical_department: Optional[str] = None
+    attending_doctor: Optional[str] = None
+    clinical_data: Optional[str] = None
+    clinical_diagnosis: Optional[str] = None
+
+    painting: Optional[List[StainingType]] = None
+    
+    macroarchive: Optional[MacroArchive] = None
+    decalcification: Optional[DecalcificationType] = None
+    fixation: Optional[FixationType] = None
+    num_blocks: Optional[int] = None
+    containers_recieved: Optional[int] = None
+    containers_actual: Optional[int] = None
+
+    doctor_diagnoses: List[DoctorDiagnosisSchema] = [] 
+
+    # attached_glass_ids: List[str] = [] 
+    attached_glasses: List[Glass] = [] 
+
+    class Config:
+        from_attributes = True
+
+class PatientFinalReportPageResponse(BaseModel):
+    all_cases: Optional[List[Case]] = None
+    last_case_details: Optional[Case] = None
+    case_owner: Optional[CaseOwnerResponse]
+    report_details: Optional[FinalReportResponseSchema]
+    class Config:
+        from_attributes = True
+
+class CaseFinalReportPageResponse(BaseModel):
+    case_details: Case
+    case_owner: Optional[CaseOwnerResponse]
+    report_details: Optional[FinalReportResponseSchema]
+    class Config:
+        from_attributes = True
+
 
 class PatientCasesWithReferralsResponse(BaseModel):
     all_cases: List[Case]
     case_details: Optional[Case]
+    case_owner: Optional[CaseOwnerResponse]
     first_case_direction: Optional[FirstCaseReferralDetailsSchema] = None
 
     class Config:
@@ -1234,7 +1389,9 @@ class FirstCaseGlassDetailsSchema(BaseModel):
 
 class PatientGlassPageResponse(BaseModel):
     all_cases: List[Case] 
-    first_case_details_for_glass: Optional[FirstCaseGlassDetailsSchema] = None 
+    first_case_details_for_glass: Optional[FirstCaseGlassDetailsSchema] = None
+    case_owner: Optional[CaseOwnerResponse]
+    report_details: Optional[FinalReportResponseSchema]
 
     class Config:
         from_attributes = True
@@ -1242,6 +1399,8 @@ class PatientGlassPageResponse(BaseModel):
 
 class SingleCaseGlassPageResponse(BaseModel):
     single_case_for_glass_page: Optional[FirstCaseGlassDetailsSchema] = None
+    case_owner: Optional[CaseOwnerResponse]
+    report_details: Optional[FinalReportResponseSchema]
 
 
 
@@ -1289,7 +1448,8 @@ class LastCaseExcisionDetailsSchema(BaseModel):
 
 class PatientExcisionPageResponse(BaseModel):
     all_cases: List[Case]
-    last_case_details_for_excision: Optional[LastCaseExcisionDetailsSchema] = None 
+    last_case_details_for_excision: Optional[LastCaseExcisionDetailsSchema] = None
+    case_owner: Optional[CaseOwnerResponse]
 
     class Config:
         from_attributes = True
@@ -1297,96 +1457,13 @@ class PatientExcisionPageResponse(BaseModel):
 
 class SingleCaseExcisionPageResponse(BaseModel):
 
-    case_details_for_excision: Optional[LastCaseExcisionDetailsSchema] = None 
+    case_details_for_excision: Optional[LastCaseExcisionDetailsSchema] = None
+    case_owner: Optional[CaseOwnerResponse]
 
     class Config:
         from_attributes = True
 
         
-class DoctorSignatureBase(BaseModel):
-    signature_name: Optional[str] = None
-    is_default: bool = False
-
-
-class DoctorSignatureCreate(DoctorSignatureBase):
-    pass 
-
-class DoctorSignatureResponse(DoctorSignatureBase):
-    id: str
-    doctor_id: str
-    signature_scan_data: Optional[str] = None 
-    signature_scan_type: Optional[str] = None 
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-class ReportSignatureSchema(BaseModel):
-    id: str
-    doctor: DoctorResponseForSignature 
-    signed_at: datetime
-
-    doctor_signature: Optional[DoctorSignatureResponse] = None 
-
-    class Config:
-        from_attributes = True
-
-class ReportBaseSchema(BaseModel):
-    immunohistochemical_profile: Optional[str] = None
-    molecular_genetic_profile: Optional[str] = None
-    pathomorphological_diagnosis: Optional[str] = None
-    icd_code: Optional[str] = None
-    comment: Optional[str] = None
-    
-    attached_glass_ids: Optional[List[str]] = None 
-
-class ReportCreateSchema(ReportBaseSchema):
-    pass
-
-class ReportUpdateSchema(ReportBaseSchema):
-    pass
-
-
-class ReportResponseSchema(BaseModel):
-    id: str
-    case_id: str
-    case_details: Optional[Case] = None 
-    macro_description_from_case_params: Optional[str] = None
-    microdescription_from_case: Optional[str] = None
-
-    immunohistochemical_profile: Optional[str] = None
-    molecular_genetic_profile: Optional[str] = None
-    pathomorphological_diagnosis: Optional[str] = None
-    icd_code: Optional[str] = None
-    comment: Optional[str] = None
-
-    signatures: List[ReportSignatureSchema] = [] 
-    
-    attached_glasses: List[Glass] = []
-
-    class Config:
-        from_attributes = True
-
-
-class PatientReportPageResponse(BaseModel):
-    all_cases: List[Case] 
-    
-    last_case_for_report: Optional[Case] = None 
-    report_details: Optional[ReportResponseSchema] = None
-    
-    all_glasses_for_last_case: List[FirstCaseGlassDetailsSchema] = [] 
-
-    class Config:
-        from_attributes = True
-
-
-
-class SignReportRequest(BaseModel):
-    doctor_signature_id: Optional[str] = None
-
-
-
-
 
 
 # Тестовые схемы под репорт
@@ -1407,7 +1484,8 @@ class CassetteTestForGlassPage(BaseModel):
 class SampleTestForGlassPage(BaseModel):
     id: str
     sample_number: str 
-    case_id: str 
+    case_id: str
+    sample_macro_description: Optional[str] = None
 
     cassettes: List[CassetteTestForGlassPage] = [] 
 
@@ -1421,100 +1499,11 @@ class FirstCaseTestGlassDetailsSchema(BaseModel):
         from_attributes = True
 
 
-class PatientTestReportPageResponse(BaseModel):
-    all_cases: List[Case]
-    last_case_for_report: Optional[Case]
-    report_details: Optional[ReportResponseSchema]
-    all_glasses_for_last_case: Optional[FirstCaseTestGlassDetailsSchema] = None
-    class Config:
-        from_attributes = True
-
-class CaseIDReportPageResponse(BaseModel):
-    last_case_for_report: Optional[Case] = None 
-    report_details: Optional[ReportResponseSchema] = None
-    all_glasses_for_last_case: Optional[FirstCaseTestGlassDetailsSchema] = None
-
-    class Config:
-        from_attributes = True
-
-
-
-
-class FinalReportResponseSchema(BaseModel):
-    id: str
-    case_id: str
-    case_code: str
-    
-
-    biopsy_date: Optional[date] = None
-    arrival_date: Optional[date] = None
-    report_date: Optional[date] = None
-
-    # Пациент
-    patient_cor_id: Optional[str] = None
-    patient_first_name: Optional[str] = None
-    patient_surname: Optional[str] = None
-    patient_middle_name: Optional[str] = None
-    patient_sex: Optional[str] = None
-    patient_birth_date: Optional[date] = None
-    patient_full_age: Optional[int] = None
-    patient_phone_number: Optional[str] = None
-    patient_email: Optional[str] = None
-
-
-    # направление 
-    medical_card_number: Optional[str] = None
-    medical_institution: Optional[str] = None
-    medical_department: Optional[str] = None
-    attending_doctor: Optional[str] = None
-    clinical_data: Optional[str] = None
-    clinical_diagnosis: Optional[str] = None
-
-    painting: Optional[List[StainingType]] = None
-
-    # Параметры кейса
-    macroarchive: Optional[MacroArchive] = None
-    decalcification: Optional[DecalcificationType] = None
-    fixation: Optional[FixationType] = None
-    num_blocks: Optional[int] = None
-    containers_recieved: Optional[int] = None
-    containers_actual: Optional[int] = None
-
-    # заключение (репорт)
-    macrodescription: Optional[str] = None
-    microdescription: Optional[str] = None
-    pathomorphological_diagnosis: Optional[str] = None
-    immunohistochemical_profile: Optional[str] = None
-    molecular_genetic_profile: Optional[str] = None
-    comment: Optional[str] = None
-    icd_code: Optional[str] = None
-
-
-    signatures: List[ReportSignatureSchema] = [] 
-    attached_glasses: List[Glass] = []
-
-    class Config:
-        from_attributes = True
-
-
-class PatientFinalReportPageResponse(BaseModel):
-    all_cases: Optional[List[Case]] = None
-    last_case_details: Optional[Case] = None
-    report_details: Optional[FinalReportResponseSchema]
-    class Config:
-        from_attributes = True
-
-class CaseFinalReportPageResponse(BaseModel):
-    case_details: Case
-    report_details: Optional[FinalReportResponseSchema]
-    class Config:
-        from_attributes = True
-
 
 class LabAssistantCreate(BaseModel):
-    first_name: str = Field(..., description="Имя лаборанта")
-    middle_name: str = Field(..., description="Отчество лаборанта")
-    last_name: str = Field(..., description="Фамилия лаборанта")
+    first_name: Optional[str] = Field(None, min_length=1, max_length=20, description="Имя лаборанта")
+    middle_name: Optional[str] = Field(None, min_length=1, max_length=20, description="Отчество лаборанта")
+    last_name: Optional[str] = Field(None, min_length=1, max_length=20, description="Фамилия лаборанта")
 
     class Config:
         from_attributes = True
@@ -1533,9 +1522,9 @@ class LabAssistantResponse(BaseModel):
 
 
 class EnergyManagerCreate(BaseModel):
-    first_name: str = Field(..., description="Имя менеджера энергии")
-    middle_name: str = Field(..., description="Отчество менеджера энергии")
-    last_name: str = Field(..., description="Фамилия менеджера энергии")
+    first_name: Optional[str] = Field(None, min_length=1, max_length=20, description="Имя менеджера энергии")
+    middle_name: Optional[str] = Field(None, min_length=1, max_length=20, description="Отчество менеджера энергии")
+    last_name: Optional[str] = Field(None, min_length=1, max_length=20, description="Фамилия менеджера энергии")
 
     class Config:
         from_attributes = True
@@ -1580,9 +1569,9 @@ class GetAllPatientsResponce(BaseModel):
 
 
 class LawyerCreate(BaseModel):
-    first_name: str = Field(..., description="Имя менеджера энергии")
-    middle_name: str = Field(..., description="Отчество менеджера энергии")
-    last_name: str = Field(..., description="Фамилия менеджера энергии")
+    first_name: str = Field(..., min_length=1, max_length=20, description="Имя менеджера энергии")
+    middle_name: str = Field(..., min_length=1, max_length=20, description="Отчество менеджера энергии")
+    last_name: str = Field(..., min_length=1, max_length=20, description="Фамилия менеджера энергии")
 
     class Config:
         from_attributes = True
@@ -1599,3 +1588,300 @@ class LawyerResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
+
+
+class ReportResponseSchema(BaseModel):
+    id: str
+    case_id: str
+    case_details: Optional[Case] = None 
+    macro_description_from_case_params: Optional[str] = None
+    microdescription_from_case: Optional[str] = None
+    concatenated_macro_description: Optional[str] = None
+
+    doctor_diagnoses: List[DoctorDiagnosisSchema] = [] 
+
+    attached_glasses: List[Glass] = []
+
+    class Config:
+        from_attributes = True
+class PatientReportPageResponse(BaseModel):
+    all_cases: List[Case] 
+    
+    last_case_for_report: Optional[Case] = None 
+    report_details: Optional[ReportResponseSchema] = None
+    
+    all_glasses_for_last_case: List[FirstCaseGlassDetailsSchema] = [] 
+
+    class Config:
+        from_attributes = True
+
+
+
+class SignReportRequest(BaseModel):
+    doctor_signature_id: Optional[str] = None
+
+
+
+class PatientTestReportPageResponse(BaseModel):
+    all_cases: List[Case]
+    last_case_for_report: Optional[Case]
+    case_owner: Optional[CaseOwnerResponse]
+    report_details: Optional[ReportResponseSchema]
+    all_glasses_for_last_case: Optional[FirstCaseTestGlassDetailsSchema] = None
+    class Config:
+        from_attributes = True
+
+class CaseIDReportPageResponse(BaseModel):
+    last_case_for_report: Optional[Case] = None
+    case_owner: Optional[CaseOwnerResponse]
+    report_details: Optional[ReportResponseSchema] = None
+    all_glasses_for_last_case: Optional[FirstCaseTestGlassDetailsSchema] = None
+
+    class Config:
+        from_attributes = True
+
+
+
+class DoctorDiagnosisInputSchema(BaseModel):
+    report_microdescription: Optional[str] = None
+    report_macrodescription: Optional[str] = None
+    pathomorphological_diagnosis: Optional[str] = None
+    icd_code: Optional[str] = None
+    comment: Optional[str] = None
+    immunohistochemical_profile: Optional[str] = None
+    molecular_genetic_profile: Optional[str] = None
+
+
+class ReportAndDiagnosisUpdateSchema(BaseModel):
+
+    attached_glass_ids: Optional[List[str]] = None 
+    doctor_diagnosis_data: Optional[DoctorDiagnosisInputSchema] = None
+
+
+
+
+class CaseCloseResponse(BaseModel):
+    message: str
+    case_id: str
+    new_status: str
+
+class CaseOwnershipResponse(BaseModel):
+    case_details: Optional[CaseDetailsResponse]
+    case_owner: Optional[CaseOwnerResponse]
+
+
+# class BloodPressureMeasurementCreate(BaseModel):
+#     systolic_pressure: Optional[int] = Field(None, gt=0, description="Систолическое (верхнее) давление")
+#     diastolic_pressure: Optional[int] = Field(None, gt=0, description="Диастолическое (нижнее) давление")
+#     pulse: Optional[int] = Field(None, gt=0, description="Пульс")
+#     measured_at: datetime = Field(..., description="Дата и время измерения (с устройства)")
+
+#     @field_validator('systolic_pressure')
+#     @classmethod
+#     def validate_systolic_range(cls, v):
+#         if not (50 <= v <= 250):
+#             raise ValueError("Систолическое давление должно быть в диапазоне от 50 до 250.")
+#         return v
+
+#     @field_validator('diastolic_pressure')
+#     @classmethod
+#     def validate_diastolic_range(cls, v):
+#         if not (30 <= v <= 150):
+#             raise ValueError("Диастолическое давление должно быть в диапазоне от 30 до 150.")
+#         return v
+
+
+#     @model_validator(mode='after') 
+#     def check_diastolic_less_than_systolic(self):
+#         if self.diastolic_pressure >= self.systolic_pressure:
+#             raise ValueError("Диастолическое давление не может быть выше или равно систолическому.")
+#         return self 
+
+
+
+
+
+# class BloodPressureMeasures(BaseModel):
+#     sistolic: Optional[int] = Field(None, alias="sistolic") 
+#     diastolic: Optional[int] = Field(None, alias="diastolic")
+
+
+# class IndividualResult(BaseModel):
+#     measures: str | BloodPressureMeasures 
+#     member: List[str] 
+
+
+# class TonometrIncomingData(BaseModel):
+#     created_at: datetime
+#     member: List[str] 
+#     result: List[IndividualResult]
+
+
+class NewBloodPressureMeasurementResponse(BaseModel):
+    id: str
+    systolic_pressure: Optional[int]
+    diastolic_pressure: Optional[int]
+    pulse: Optional[int]
+    measured_at: datetime
+    user_id: str
+    created_at: datetime
+
+class BloodPressureMeasurementCreate(BaseModel):
+    systolic_pressure: Optional[int] = Field(None, gt=0, description="Систолическое (верхнее) давление")
+    diastolic_pressure: Optional[int] = Field(None, gt=0, description="Диастолическое (нижнее) давление")
+    pulse: Optional[int] = Field(None, gt=0, description="Пульс")
+    measured_at: datetime = Field(..., description="Дата и время измерения (с устройства)")
+
+    @field_validator('systolic_pressure')
+    @classmethod
+    def validate_systolic_range(cls, v):
+        if v is not None and not (50 <= v <= 250): # Проверка на None
+            raise ValueError("Систолическое давление должно быть в диапазоне от 50 до 250.")
+        return v
+
+    @field_validator('diastolic_pressure')
+    @classmethod
+    def validate_diastolic_range(cls, v):
+        if v is not None and not (30 <= v <= 150): # Проверка на None
+            raise ValueError("Диастолическое давление должно быть в диапазоне от 30 до 150.")
+        return v
+
+    @model_validator(mode='after')
+    def check_diastolic_less_than_systolic(self):
+        # Проверяем, что оба значения не None, прежде чем сравнивать
+        if self.diastolic_pressure is not None and self.systolic_pressure is not None:
+            if self.diastolic_pressure >= self.systolic_pressure:
+                raise ValueError("Диастолическое давление не может быть выше или равно систолическому.")
+        # Если одно или оба значения None, валидация пропускается,
+        # так как это опциональные поля, и их отсутствие не является ошибкой для этого валидатора.
+        return self
+
+class BloodPressureMeasurementResponse(BloodPressureMeasurementCreate):
+    id: str = Field(..., description="Уникальный идентификатор измерения")
+    user_id: str = Field(..., description="Идентификатор пользователя, которому принадлежит измерение")
+    created_at: datetime = Field(..., description="Дата и время записи в БД")
+
+    class Config:
+        from_attributes = True     
+
+class MeasureValue(BaseModel):
+    value: int
+
+class BloodPressureMeasures(BaseModel):
+    sistolic: int = Field(..., gt=0, description="Систолическое (верхнее) давление")
+    diastolic: int = Field(..., gt=0, description="Диастолическое (нижнее) давление")
+
+    @field_validator('sistolic')
+    @classmethod
+    def validate_systolic_range(cls, v):
+        if not (50 <= v <= 250):
+            raise ValueError("Систолическое давление должно быть в диапазоне от 50 до 250.")
+        return v
+
+    @field_validator('diastolic')
+    @classmethod
+    def validate_diastolic_range(cls, v):
+        if not (30 <= v <= 150):
+            raise ValueError("Диастолическое давление должно быть в диапазоне от 30 до 150.")
+        return v
+
+    @model_validator(mode='after')
+    def check_diastolic_less_than_systolic(self):
+        if self.diastolic >= self.sistolic:
+            raise ValueError("Диастолическое давление не может быть выше или равно систолическому.")
+        return self
+
+MeasuresValue = Union[BloodPressureMeasures, str]
+
+class IndividualResult(BaseModel):
+    # 'measures' теперь может быть объектом или строкой
+    measures: MeasuresValue
+    # 'member' здесь - это список UUID-подобных строк, связанных с этим конкретным результатом
+    member: List[str]
+
+# --- 3. Основная модель для входящего запроса ---
+
+class TonometrIncomingData(BaseModel):
+    # 'created_at' - дата и время измерения
+    created_at: datetime
+    
+    # 'member' - список UUID-подобных строк, кто делал измерение на верхнем уровне
+    member: List[str]
+    
+    # 'result' - список IndividualResult
+    results: List[IndividualResult]
+    
+    # Поле 'id' отсутствует в вашем новом запросе, поэтому его можно удалить,
+    # или, если оно потенциально может появиться позже, оставить Optional[str] = None
+    # id: Optional[str] = None
+
+# Модели для опроса инвертора 
+
+class FullDeviceMeasurementCreate(BaseModel):
+    # Общая информация о измерении
+    measured_at: datetime = Field(..., description="Время измерения")
+    object_name: Optional[str] = Field(None, description="ID устройства, если применимо")
+    
+    # агрегированные данные
+    general_battery_power: float = Field(..., description="Общая мощность батареи") # Изменено на float
+    inverter_total_ac_output: float = Field(..., description="Общая выходная мощность AC инвертора") # Изменено на float
+    ess_total_input_power: float = Field(..., description="Общая входная мощность ESS") # Изменено на float
+    solar_total_pv_power: float = Field(..., description="Общая мощность солнечных панелей") # Изменено на float
+
+    class Config:
+        from_attributes = True
+
+class FullDeviceMeasurementResponse(FullDeviceMeasurementCreate):
+    id: str
+    created_at: datetime
+
+
+class CerboMeasurementResponse(BaseModel):
+    id: str = Field(..., description="Уникальный идентификатор записи") 
+    created_at: datetime = Field(..., description="Дата и время сохранения записи в БД")
+    measured_at: datetime = Field(..., description="Дата и время измерения, полученное с устройства")
+    object_name: Optional[str] = Field(None, description="Имя объекта/устройства")
+    general_battery_power: float = Field(..., description="Мощность батареи")
+    inverter_total_ac_output: float = Field(..., description="Общая выходная мощность инвертора AC")
+    ess_total_input_power: float = Field(..., description="Общая входная мощность ESS AC")
+    solar_total_pv_power: float = Field(..., description="Общая мощность солнечных панелей")
+
+    class Config:
+        from_attributes = True
+
+
+T = TypeVar("T")
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    items: List[T] = Field(..., description="Список элементов на текущей странице")
+    total_count: int = Field(..., description="Общее количество элементов")
+    page: int = Field(..., description="Текущий номер страницы (начиная с 1)")
+    page_size: int = Field(..., description="Количество элементов на странице")
+    total_pages: int = Field(..., description="Общее количество страниц")
+
+
+# Модель данных для управления ESS
+
+class VebusSOCControl(BaseModel):
+    soc_threshold: int 
+
+class EssAdvancedControl(BaseModel):
+    ac_power_setpoint_fine: int = Field(..., ge=-100000, le=100000)
+
+class GridLimitUpdate(BaseModel):
+    enabled: bool  # True → 1, False → 0
+
+class EssModeControl(BaseModel):
+    switch_position: int = Field(..., ge=1, le=4)
+
+
+class EssPowerControl(BaseModel):
+    ess_power_setpoint_l1: Optional[int] = Field(None, ge=-32768, le=32767)
+    ess_power_setpoint_l2: Optional[int] = Field(None, ge=-32768, le=32767)
+    ess_power_setpoint_l3: Optional[int] = Field(None, ge=-32768, le=32767)
+
+class EssFeedInControl(BaseModel):
+    max_feed_in_l1: Optional[int] = None
+    max_feed_in_l2: Optional[int] = None
+    max_feed_in_l3: Optional[int] = None

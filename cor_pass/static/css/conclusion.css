@@ -9,7 +9,7 @@
 }
 .conclusionFormGroupLabel{
   color:  #B1A1DA;
-  font-weight: 600;
+  font-weight: 400;
   margin-bottom: 4px;
 }
 .conclusionFormGroupInput{
@@ -22,7 +22,7 @@
 }
 .conclusionBottom{
   color: #7B43F2;
-  font-weight: 600;
+  font-weight: 400;
 }
 .conclusionActionBottom{
   padding: 12px 24px;
@@ -46,5 +46,11 @@
 .conclusionTopDate{
   color: #5B4296;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 400;
+}
+
+.conclusionSecondOpinion{
+  font-size: 12px;
+  margin-left: 10px;
+  margin-bottom: 5px;
 }

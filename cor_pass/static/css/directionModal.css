@@ -19,7 +19,7 @@
 
 .directorModalTop b {
     color: #9b94d4;
-    font-weight: 600;
+    font-weight: 400;
     position: absolute;
     left: 0;
 }
@@ -268,7 +268,7 @@
     min-width: 160px;
     height: 56px;
     font-size: 17px;
-    font-weight: 600;
+    font-weight: 400;
     cursor: pointer;
     border-radius: 18px;
     border: 2px solid transparent;

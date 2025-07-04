@@ -11,11 +11,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from prometheus_client import Counter, Histogram
-from prometheus_client import generate_latest
 
 from prometheus_fastapi_instrumentator import PrometheusFastApiInstrumentator
-
-from starlette.responses import Response
 
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -23,6 +20,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from fastapi_limiter import FastAPILimiter
 
 
+from cor_pass.repository.cerbo_service import cerbo_collection_task, close_modbus_client, create_modbus_client
 from cor_pass.routes import auth, person
 from cor_pass.database.db import get_db
 from cor_pass.database.redis_db import redis_client
@@ -50,7 +48,8 @@ from cor_pass.routes import (
     svs_router,
     lab_assistants,
     energy_managers,
-    cerbo_routes
+    cerbo_routes,
+    blood_pressures
 )
 from cor_pass.config.config import settings
 from cor_pass.services.ip2_location import initialize_ip2location
@@ -61,7 +60,6 @@ from fastapi.responses import JSONResponse
 from collections import defaultdict
 from jose import JWTError, jwt
 
-# from cor_pass.routes.cerbo_gx import create_modbus_client, close_modbus_client
 import logging
 
 from cor_pass.services.websocket import check_session_timeouts, cleanup_auth_sessions
@@ -191,12 +189,12 @@ async def exception_handler(request: Request, exc: Exception):
     )
 
 
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    logger.error("Request validation error", exc_info=exc)
+@app.exception_handler(ValueError)
+async def validation_exception_handler(request: Request, exc: ValueError):
     return JSONResponse(
+        logger.error("Произошла ошибка валидации", exc_info=exc),
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"detail": "Validation Error"},
+        content={"detail": "Произошла ошибка валидации", "error": str(exc)} 
     )
 
 
@@ -280,12 +278,15 @@ async def startup():
     asyncio.create_task(check_session_timeouts())
     asyncio.create_task(cleanup_auth_sessions())
     initialize_ip2location()
-    await cerbo_routes.create_modbus_client(app)
+    await create_modbus_client(app)
+    asyncio.create_task(cleanup_auth_sessions())
+    asyncio.create_task(cerbo_collection_task(app))
     # asyncio.create_task(cerbo_GX.read_modbus_and_cache())
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    await cerbo_routes.close_modbus_client(app)
+    logger.info("------------- SHUTDOWN --------------")
+    await close_modbus_client(app)
 
 auth_attempts = defaultdict(list)
 blocked_ips = {}
@@ -315,6 +316,8 @@ app.include_router(lab_assistants.router, prefix="/api")
 app.include_router(cerbo_routes.router, prefix="/api")
 app.include_router(energy_managers.router, prefix="/api")
 # app.include_router(cerbo_router, prefix="/api") # Change router
+app.include_router(blood_pressures.router, prefix="/api")
+
 if __name__ == "__main__":
     uvicorn.run(
         app="main:app",

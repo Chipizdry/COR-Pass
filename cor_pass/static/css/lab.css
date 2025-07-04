@@ -35,6 +35,7 @@
 
 .glassMark{
     margin-top: 4px;
+    position: relative;
 }
 .glassPlaceholder{
     padding: 12px 8px;
@@ -66,7 +67,7 @@
 .cassetteItem{
     padding: 12px 6px;
     height: 159px;
-    font-weight: 600;
+    font-weight: 400;
     border-bottom: 1px solid #B2AFBA;
 }
 .cassetteColumn{
@@ -125,7 +126,7 @@
 }
 .caseItem{
     cursor: pointer;
-    padding: 12px 10px;
+    padding: 12px 6px;
     height: 159px;
     min-height: 159px;
     width: 159px;
@@ -144,7 +145,7 @@
 .caseItemDate{
     font-size: 14px;
     color: #5B4296;
-    font-weight: 600;
+    font-weight: 400;
     margin-bottom: 8px;
 }
 .caseItemImgCount{
@@ -159,6 +160,7 @@
     margin-top: 8px;
     font-weight: 800;
     color: #5B4296;
+    font-size: 15px;
 }
 .caseItemImg{
     width: 50px;
@@ -193,9 +195,31 @@
     background: rgba(255, 255, 255, 0.60);
     color: #5B4296;
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 400;
     outline: none;
 }
 .cassetteCommentsArea::placeholder{
     color: #B1A1DA;
+}
+
+.glassPicker{
+    position: fixed;
+    padding: 20px;
+    border-radius: 20px;
+    border: 1px solid #FFF;
+    background: rgba(255, 255, 255, 1);
+    z-index: 1;
+    overflow: auto;
+}
+.glassPickerList{
+    padding: 8px 12px;
+    color: #5B4296;
+    font-size: 16px;
+    font-weight: 400;
+    white-space: nowrap;
+    cursor: pointer;
+    border-radius: 12px;
+}
+.glassPickerList.active{
+    background: #EFECF8;
 }

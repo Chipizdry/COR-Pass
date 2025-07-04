@@ -58,19 +58,19 @@ const drawHandlers = (canvasNode) => {
     window.addEventListener('keydown', revertDraw);
 }
 
-export const drawClear = () => {
+const drawClear = () => {
     const { ctx, canvasWidth, canvasHeight} = ctxOptions;
     ctx?.clearRect(0, 0, canvasWidth, canvasHeight);
     history = []
 }
 
-export const drawDestroy = () => {
+const drawDestroy = () => {
     window.removeEventListener('keydown', revertDraw);
     drawClear();
     ctxOptions = {};
 }
 
-export const drawInit = (canvasNode, options) => {
+const drawInit = (canvasNode, options) => {
     const {minWidth, minHeight} = options
 
     const dpr = window.devicePixelRatio || 1;

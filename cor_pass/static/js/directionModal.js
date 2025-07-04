@@ -9,6 +9,18 @@ document.addEventListener("DOMContentLoaded", (event) => {
     let uploadedFiles = []
     let currentReferralId = null
 
+    const initUploadArea = () => {
+        uploadArea.innerHTML = (
+            `<div class="upload-box" id="uploadBox" tabindex="0">
+                <div class="upload-icon">
+                    <svg viewBox="0 0 24 24"><path d="M12 4v10M7 9l5-5 5 5"/><rect x="4" y="18" width="16" height="2" rx="1"/></svg>
+                </div>
+                <span>Перетягніть сюди свої файли<br><b>або скануйте</b></span>
+                <small class="note">до 5 файлів</small>
+                <input type="file" id="fileInput" multiple accept="image/*,.pdf" hidden>
+            </div>`
+        )
+    }
     const closeModal  = () => {
         uploadedFiles = []
         currentReferralId = null
@@ -65,6 +77,19 @@ document.addEventListener("DOMContentLoaded", (event) => {
                 placeholder: "0",
             },
             {
+                label: "Дата забору біоматеріалу",
+                field: "biomaterial_date",
+                elementType: "input",
+                type: "date",
+            },
+            {
+                label: "Медкарта №",
+                field: "medical_card_number",
+                elementType: "input",
+                type: "text",
+                placeholder: "",
+            },
+            {
                 label: "Клінічні дані",
                 field: "clinical_data",
                 elementType: "textarea",
@@ -109,30 +134,25 @@ document.addEventListener("DOMContentLoaded", (event) => {
                 ]
             },
             {
+                label: "Лікуючий лікар ПІБ",
+                field: "attending_doctor",
+                elementType: "input",
+                type: "text",
+                placeholder: "",
+            },
+            {
                 label: "Контакти лікаря",
                 field: "doctor_contacts",
                 elementType: "input",
                 type: "text",
-                defaultValue: "+380"
+                placeholder: "+380"
             },
             {
                 label: "Медична процедура/операція",
                 field: "medical_procedure",
                 elementType: "input",
                 type: "text",
-            },
-            {
-                label: "Фінальний репорт відправити",
-                field: "final_report_delivery",
-                elementType: "input",
-                type: "email",
-                placeholder: "email@example.com"
-            },
-            {
-                label: "Виданий",
-                field: "issued_at",
-                elementType: "input",
-                type: "date",
+                placeholder: ""
             },
         ]
         const formWrapper = document.querySelector("#caseDirection .directorModalLeft")
@@ -175,7 +195,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
                 formNODE.innerHTML += `
                 <div class="directorModalFormGroup ${data.required ? "required" : ""}">
                     <label htmlFor="container_count">${data.label} ${data.required ? '<span class="req">*</span>' : ''}</label>
-                    <input id="${data.field}" value="${formDataField || data.defaultValue || ""}" type="${data.type}" name="${data.field}" class="input input-box ${data.required ? 'required' : ''}" placeholder="${data.placeholder}"
+                    <input id="${data.field}" value="${formDataField || data.defaultValue || ""}" type="${data.type}" name="${data.field}" class="input input-box ${data.required ? 'required' : ''}" placeholder="${data.placeholder || ""}"
                            min="1">
                 </div>
                 `
@@ -231,8 +251,9 @@ document.addEventListener("DOMContentLoaded", (event) => {
         if(!files.length) {
             return;
         }
+
         const cutTo5Files = [...files].slice(0,5);
-        uploadArea.querySelectorAll('.thumb').forEach(thumb => thumb.remove());
+        uploadArea.innerHTML = ""
 
         if(uploadBox.parentElement) {
             uploadBox.remove()
@@ -246,6 +267,8 @@ document.addEventListener("DOMContentLoaded", (event) => {
                 fileViewerWrapperNODE.classList.add('full')
             }
 
+
+            const isPDF = file?.content_type?.includes('pdf') || file?.type?.includes('pdf');
             const imgNODE = document.createElement('img');
 
             if(file.file_url){
@@ -257,6 +280,20 @@ document.addEventListener("DOMContentLoaded", (event) => {
                 })
                     .then(response => response.blob())
                     .then(blob => {
+                        if(isPDF){
+                            fileViewerWrapperNODE.innerHTML += `
+                            <div style="background: white; height: 100%; width: 100%">
+                                <embed
+                                    src="${URL.createObjectURL(blob)}#toolbar=0"
+                                    type="application/pdf"
+                                    style="border: none; background: white; margin: 0 auto; display: block; height: 100%; width: 100%;"
+                                ></embed>
+                            </div>
+                            `
+                            uploadArea.appendChild(fileViewerWrapperNODE);
+                            return;
+                        }
+
                         imgNODE.src = URL.createObjectURL(blob);
                         imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
                         fileViewerWrapperNODE.appendChild(imgNODE);
@@ -264,6 +301,21 @@ document.addEventListener("DOMContentLoaded", (event) => {
                     })
                 return;
             }
+
+            if(isPDF){
+                fileViewerWrapperNODE.innerHTML += `
+                            <div style="background: white; height: 100%; width: 100%">
+                                <embed
+                                    src="${URL.createObjectURL(file)}#toolbar=0"
+                                    type="application/pdf"
+                                    style="border: none; background: white; margin: 0 auto; display: block; height: 100%; width: 100%;"
+                                ></embed>
+                            </div>
+                            `
+                uploadArea.appendChild(fileViewerWrapperNODE);
+                return;
+            }
+
 
             imgNODE.src=URL.createObjectURL(file);
             imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
@@ -296,18 +348,21 @@ document.addEventListener("DOMContentLoaded", (event) => {
                     body: JSON.stringify({
                         case_id: cases[lastActiveCaseIndex].id,
                         ...formData,
-                        issued_at: formData.issued_at || null
+                        biomaterial_date: formData.biomaterial_date || null
                     })
                 })
                     .then(res => res.json())
                     .then((referralData) => {
-                        alert('Форму збережено!')
+                        if(!referralData.id){
+                            return showErrorAlert('Щось пішло не так');
+                        }
                         currentReferralId = referralData.id;
 
                         if(uploadedFiles.length){
                             Promise.all([...uploadedFiles].map(sendFileRequest))
                                 .then(res => {
-                                    alert('Файли успішно завантажились!')
+                                    showSuccessAlert('Форму збережено!')
+
 
                                     closeModal()
                                 })
@@ -315,11 +370,15 @@ document.addEventListener("DOMContentLoaded", (event) => {
                             return;
                         }
 
+                        showSuccessAlert('Форму збережено!')
                         closeModal()
+                    })
+                    .catch((e) => {
+                        showErrorAlert(e?.message || "Щось пішло не так")
                     })
             }
             else {
-                alert('Заповніть обов"язкові поля!')
+                showErrorAlert('Заповніть обов"язкові поля!')
             }
         })
 

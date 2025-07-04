@@ -3,10 +3,13 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.database.db import get_db
+from cor_pass.database.models import User
+from cor_pass.repository.lawyer import get_doctor
 from cor_pass.repository.patient import get_patient_by_corid
 from cor_pass.schemas import (
     CaseCreate,
     CaseDetailsResponse,
+    CaseOwnershipResponse,
     CaseParametersScheema,
     DeleteCasesRequest,
     DeleteCasesResponse,
@@ -20,6 +23,7 @@ from cor_pass.schemas import (
 from cor_pass.repository import case as case_service
 
 from cor_pass.services.access import doctor_access
+from cor_pass.services.auth import auth_service
 from cor_pass.services.document_validation import validate_document_file
 
 router = APIRouter(prefix="/cases", tags=["Cases"])
@@ -263,3 +267,39 @@ async def get_referral_attachment(
         yield attachment.file_data
 
     return StreamingResponse(file_data_stream(), media_type=attachment.content_type)
+
+
+
+@router.post("/{case_id}/take", response_model=CaseOwnershipResponse, summary="Взять кейс себе")
+async def take_case(
+    case_id: str,
+    user: User = Depends(auth_service.get_current_user), # Получаем ID текущего доктора
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Позволяет авторизованному доктору взять на себя владение указанным кейсом.
+    """
+    doctor = await get_doctor(doctor_id=user.cor_id, db=db)
+    try:
+        response = await case_service.take_case_ownership(db=db, case_id=case_id, doctor_id = doctor.doctor_id)
+        return response
+    except HTTPException as e:
+        raise e
+
+
+
+@router.post("/{case_id}/release", response_model=CaseOwnershipResponse, summary="Убрать кейс с себя")
+async def release_case(
+    case_id: str,
+    user: User = Depends(auth_service.get_current_user), # Получаем ID текущего доктора
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Позволяет авторизованному доктору отказаться от владения указанным кейсом.
+    """
+    doctor = await get_doctor(doctor_id=user.cor_id, db=db)
+    try:
+        response = await case_service.release_case_ownership(db=db, case_id=case_id, doctor_id = doctor.doctor_id)
+        return response
+    except HTTPException as e:
+        raise e

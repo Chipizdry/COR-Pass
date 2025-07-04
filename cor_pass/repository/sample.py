@@ -357,3 +357,75 @@ async def delete_samples(db: AsyncSession, samples_ids: List[str]) -> Dict[str, 
         response["message"] = f"Успешно удалено {deleted_count} семплов."
 
     return response
+
+
+
+async def _create_single_sample_with_dependencies(
+    db: AsyncSession, case_id: str, sample_char: str
+):
+    """
+    Создает один семпл, одну кассету и одно стекло.
+    Возвращает созданный семпл.
+    """
+    db_case = await db.get(db_models.Case, case_id)
+
+    # 1. Создаем семпл
+    db_sample = db_models.Sample(case_id=db_case.id, sample_number=sample_char)
+    db.add(db_sample)
+    db_case.bank_count += 1
+    await db.flush()  # Используем flush вместо commit, чтобы получить ID
+    await db.refresh(db_sample)
+    await db.refresh(db_case)
+
+    # 2. Создаем кассету
+    db_cassette = db_models.Cassette(
+        sample_id=db_sample.id, cassette_number=f"{sample_char}1"
+    )
+    db.add(db_cassette)
+    db_case.cassette_count += 1
+    db_sample.cassette_count += 1
+    await db.flush() # Используем flush
+    await db.refresh(db_cassette)
+    await db.refresh(db_case)
+    await db.refresh(db_sample)
+
+    # 3. Создаем стекло
+    db_glass = db_models.Glass(
+        cassette_id=db_cassette.id,
+        glass_number=0,
+        staining=db_models.StainingType.HE,
+    )
+    db.add(db_glass)
+    db_case.glass_count += 1
+    db_sample.glass_count += 1
+    db_cassette.glass_count += 1
+    await db.flush() # Используем flush
+    await db.refresh(db_glass)
+    await db.refresh(db_case)
+    await db.refresh(db_sample)
+    await db.refresh(db_cassette)
+
+    return db_sample
+
+async def _get_next_sample_char(db: AsyncSession, case_id: str):
+    """Определяет следующий доступный буквенный номер семпла."""
+    samples_result = await db.execute(
+        select(db_models.Sample.sample_number)
+        .where(db_models.Sample.case_id == case_id)
+        .order_by(db_models.Sample.sample_number)
+    )
+    existing_sample_numbers = samples_result.scalars().all()
+
+    if not existing_sample_numbers:
+        return "A"
+
+    last_sample_number = existing_sample_numbers[-1]
+    # Упрощенная логика:
+    if last_sample_number in ascii_uppercase:
+        last_index = ascii_uppercase.index(last_sample_number)
+        if last_index < len(ascii_uppercase) - 1:
+            return ascii_uppercase[last_index + 1]
+    
+    # Если формат не буква или буквы закончились, используем более сложную нумерацию.
+    # Ваш код для 'Z1', 'A1' и т.д.
+    return f"Z{len(existing_sample_numbers) + 1}"

@@ -49,6 +49,8 @@
                 </div>
             </div>
             <div class="meta-info">
+                <div id="reportOwnerInfo">
+                </div>
                 <div>
                     <span id="searchCaseId"></span>
                     <button class="edit-btn" aria-label="Edit case">
@@ -66,14 +68,12 @@
     </div>
     <div class="glassPageContent df jcsb">
         <div class="left">
-            <div class="top borderRadiusLeft df jcsb">
+            <div class="top borderRadiusLeft df aic">
+                <div class="glassPageRevert" style="display: none">
+                    <img src="./assets/arrow.svg" alt="arrow">
+                </div>
                 <div>
                     Поточні кейси
-                </div>
-                <div class="glassPageRevert" style="display: none">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="800px" height="800px" viewBox="0 0 24 24">
-                        <path fill="none" stroke="#000000" stroke-width="2" d="M8,3 L3,8 L8,13 M12,20 L15,20 C18.3137085,20 21,17.3137085 21,14 C21,10.6862915 18.3137085,8 15,8 L4,8"/>
-                    </svg>
                 </div>
             </div>
             <div class="bottom">
@@ -88,10 +88,10 @@
                     Скельця
                 </div>
                 <div class="topActions df aic">
-                    <div class="topActionsItem">
+                    <div class="topActionsItem open">
                         Відкрити всі
                     </div>
-                    <div class="topActionsItem" id="activeGlassCount" style="display: none">
+                    <div class="topActionsItem open" id="activeGlassCount" style="display: none">
                         Відкрити відібрані (<span>0</span>)
                     </div>
                 </div>
@@ -100,6 +100,7 @@
                 <div id="glassItems" class="glassContent df">
 
                 </div>
+
             </div>
         </div>
         <div class="right">
@@ -126,20 +127,61 @@
 </div>
 
 <script src="./js/general.js"></script>
+<script src="./js/alert.js"></script>
 <script>
     const PATIENT_COR_ID = new URLSearchParams(window.location.search).get('userCorId')
+    const INITIAL_CASE_ID = new URLSearchParams(window.location.search).get('caseId')
+    const myCorId = decodeTokenJWT(localStorage.getItem('access_token'))?.corid
 
     let currentUserCorId = PATIENT_COR_ID || null;
     let currentCase = null;
     let currentGlasses = null;
     let activeGlasses = []
 
+    const commentsWrapperButtonNODE = document.querySelectorAll('.commentsWrapperButton');
+    const reportOwnerInfoNODE = document.querySelector('#reportOwnerInfo')
     const caseContentNODE = document.querySelector("#caseItems");
     const glassContentNODE = document.querySelector("#glassItems");
     const activeGlassCountNode = document.querySelector('#activeGlassCount');
     const caseLabelNode = document.querySelector('#searchCaseId');
     const caseMicroDescriptionTextareaNODE = document.querySelector('#caseMicroDescription');
     const casePathohistologicalConclusionTextareaNODE = document.querySelector('#casePathohistologicalConclusion');
+
+
+
+    const changeUrlParams = () => {
+        const url = new URL(window.location);
+        const params = new URLSearchParams(url.search);
+
+        params.set('caseId', currentCase?.id);
+
+        window.history.replaceState(null, '', `${url.pathname}?${params}`);
+    }
+    const setCaseEdit = () => {
+        if(currentCase.grossing_status === "COMPLETED"){
+            commentsWrapperButtonNODE.forEach(elem => {
+                elem.closest('.commentsWrapper').style.opacity = 1;
+                elem.previousElementSibling.style.pointerEvents = "none"
+                elem.style.display = "none"
+            })
+            return;
+        }
+
+        commentsWrapperButtonNODE.forEach(elem => {
+            elem.closest('.commentsWrapper').style.opacity = 1;
+            elem.previousElementSibling.style.pointerEvents = "auto"
+            elem.style = ""
+        })
+    }
+    const setPathohistologicalConclusion = (currentReport) => {
+        const myReportData = currentReport.doctor_diagnoses.find(({doctor}) => doctor.doctor_id === myCorId)
+        casePathohistologicalConclusionTextareaNODE.value = ""
+        if(!myReportData){
+            return;
+        }
+
+        casePathohistologicalConclusionTextareaNODE.value = myReportData.pathomorphological_diagnosis || ""
+    }
 
     const changeMicroDescription  = () => {
         caseMicroDescriptionTextareaNODE.nextElementSibling.addEventListener('click', () => {
@@ -155,25 +197,27 @@
             })
                 .then(res => res.json())
                 .then(() => {
-                    alert('Мікро опис успішно оновлений')
+                    showSuccessAlert('Мікро опис успішно оновлений')
                 })
         })
     }
     const changePathohistologicalConclusion  = () => {
         casePathohistologicalConclusionTextareaNODE.nextElementSibling.addEventListener('click', () => {
-            fetch(`${API_BASE_URL}/api/doctor/pathohistological_conclusion/${currentCase.id}`, {
+            fetch(`${API_BASE_URL}/api/doctor/cases/${currentCase.id}/report/upsert`, {
                 method: "PUT",
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    pathohistological_conclusion: casePathohistologicalConclusionTextareaNODE.value.trim(),
+                    doctor_diagnosis_data: {
+                        pathomorphological_diagnosis: casePathohistologicalConclusionTextareaNODE.value.trim()
+                    }
                 })
             })
                 .then(res => res.json())
                 .then(() => {
-                    alert('Патогістологічний висновок успішно оновлений')
+                    showSuccessAlert('Заключення успішно створенно')
                 })
         })
     }
@@ -184,7 +228,7 @@
         caseNewNODE.innerHTML = `
             <div>
                 <div class="caseItemDate">${new Date(workCase.creation_date).toLocaleDateString()}</div>
-                <div class="caseItemLabel">${workCase.case_code}</div>
+                <div class="caseItemLabel" style="color: ${getCaseColor(workCase)}">${workCase.case_code}</div>
             </div>
             <div class="caseItemSample df aic jcc">
                 ${workCase.bank_count}
@@ -210,22 +254,29 @@
             })
                 .then(res => res.json())
                 .then(caseData => {
-                    const {single_case_for_glass_page} = caseData;
+                    const {single_case_for_glass_page, report_details, case_owner} = caseData;
                     document.querySelector('.caseItem.active').classList.remove('active')
                     caseNewNODE.classList.add('active')
 
                     glassContentNODE.innerHTML = '';
-                    setAllGlasses(single_case_for_glass_page)
                     currentCase = single_case_for_glass_page
                     currentUserCorId = single_case_for_glass_page.patient_cor_id
 
                     caseLabelNode.innerHTML = single_case_for_glass_page.case_code
+                    caseLabelNode.style.color = getCaseColor(single_case_for_glass_page)
                     caseMicroDescriptionTextareaNODE.value = single_case_for_glass_page.microdescription || ""
-                    casePathohistologicalConclusionTextareaNODE.value = single_case_for_glass_page.pathohistological_conclusion || ""
+                    caseMicroDescriptionTextareaNODE.placeholder = !case_owner?.id ? "Для того щоб писати мікроописв ви повині бути власником кейсу." : ""
 
                     activeGlasses = []
                     activeGlassCountNode.style.display = "none";
 
+                    setAllGlasses(single_case_for_glass_page)
+                    setCaseEdit()
+                    setOwnerInfo(case_owner)
+                    setPathohistologicalConclusion(report_details)
+                    changeUrlParams()
+
+                    commentsWrapperButtonNODE.forEach(elem => elem.classList.remove('open'))
 
                     fetch(`${API_BASE_URL}/api/doctor/patients/${single_case_for_glass_page.patient_cor_id}`, {
                         method: "GET",
@@ -237,26 +288,42 @@
                         .then(userData => {
                             document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
                             document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
-                            document.querySelector('#userAge').innerHTML = `${userData.age}р`;
-
+                            document.querySelector('#userAge').innerHTML = `${userData.age ? `${userData.age}р` : ''}`;
                         })
                 })
         });
         return caseNewNODE
     }
     const glassTemplate = (currentGlass) => {
+        const fileUrl = currentGlass?.file_url || "/cases/attachments/eb0f5825-f15e-40d2-bd2c-373690995a87"
+        const currentPaint = glassPaintList.find(({id}) => id === currentGlass.staining);
         const glassNewNODE = document.createElement('div');
-        glassNewNODE.classList.add("glassWrapper");
+        glassNewNODE.classList = `glassWrapper ${!fileUrl ? "disabled" : ""}`;
         glassNewNODE.innerHTML = `
             <div class="glassWrapperImg">
-                <img src="./assets/glassPreview.png" alt="glass">
             </div>
             <div class="glassWrapperText">
-                ${currentGlass.cassette_number} L${currentGlass.glass_number}? ${currentGlass.staining}
+                ${currentGlass.cassette_number} L${currentGlass.glass_number}? ${currentPaint?.short || currentGlass.staining}
             </div>
         `;
 
+        getImages(fileUrl)
+            .then(blob => {
+                if(!blob){
+                    return;
+                }
+
+                const imgNODE = document.createElement('img');
+                imgNODE.src = URL.createObjectURL(blob);
+                imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
+                glassNewNODE.querySelector('.glassWrapperImg').append(imgNODE);
+            })
+
         glassNewNODE.addEventListener("click", () => {
+            if(glassNewNODE.classList.contains('disabled')){
+                return;
+            }
+
             const isActiveGlass =  glassNewNODE.classList.contains('active');
             const actionMethod = isActiveGlass ? "remove" : "add"
 
@@ -278,6 +345,87 @@
         return glassNewNODE
     }
 
+    const setOwnerInfo = (caseOwner) => {
+        const caseIsClosed = currentCase?.grossing_status === "COMPLETED";
+        const hasOwner = caseOwner?.id
+        reportOwnerInfoNODE.innerHTML = ""
+
+        if(!caseOwner?.is_case_owner){
+            caseMicroDescriptionTextareaNODE.style.pointerEvents = "none"
+            caseMicroDescriptionTextareaNODE.nextElementSibling.style.display = "none"
+            if(!caseIsClosed){
+                caseMicroDescriptionTextareaNODE.closest('.commentsWrapper').style.opacity = .3;
+            }
+        }
+
+        if (hasOwner) {
+            if (!caseOwner?.is_case_owner || caseIsClosed) {
+                const div = document.createElement('div')
+                div.innerHTML = `Власник: ${getShortName(caseOwner.last_name, caseOwner.first_name, caseOwner.middle_name)}`;
+                div.classList = "caseBtnOwner owner";
+                div.style.marginBottom = 0;
+
+                reportOwnerInfoNODE.append(div)
+            }
+
+            if (caseOwner?.is_case_owner && !caseIsClosed) {
+                const div = document.createElement('div')
+                div.innerText = "Власний кейс";
+                div.classList = "caseBtnOwner my";
+                div.style.marginBottom = 0;
+
+                div.addEventListener('click', (e) => {
+                    fetch(`${API_BASE_URL}/api/cases/${currentCase.id}/release`, {
+                        method: "POST",
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                            "Content-Type": "application/json"
+                        },
+                    })
+                        .then(res => res.json())
+                        .then(({case_owner}) => {
+                            currentCaseOwner = case_owner
+                            setCaseEdit()
+                            setOwnerInfo(currentCaseOwner)
+                            caseLabelNode.style.color = getCaseColor({grossing_status: "CREATED"})
+                            document.querySelector('.caseItem.active .caseItemLabel').style.color = getCaseColor({grossing_status: "CREATED"})
+                            caseMicroDescriptionTextareaNODE.value = ""
+                            caseMicroDescriptionTextareaNODE.placeholder = !case_owner?.id ? "Для того щоб писати мікроописв ви повині бути власником кейсу." : ""
+                        })
+                })
+
+                reportOwnerInfoNODE.append(div)
+            }
+        }
+
+        if (!hasOwner && !caseIsClosed) {
+            const div = document.createElement('div')
+            div.classList = "caseBtnOwner"
+            div.innerText = "Забрати кейс"
+
+            div.addEventListener('click', (e) => {
+                fetch(`${API_BASE_URL}/api/cases/${currentCase.id}/take`, {
+                    method: "POST",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                        "Content-Type": "application/json"
+                    },
+                })
+                    .then(res => res.json())
+                    .then(({case_owner}) => {
+                        currentCaseOwner = case_owner;
+                        setCaseEdit()
+                        setOwnerInfo(case_owner)
+                        caseLabelNode.style.color = getCaseColor({grossing_status: "PROCESSING"})
+                        document.querySelector('.caseItem.active .caseItemLabel').style.color = getCaseColor({grossing_status: "PROCESSING"})
+                        caseMicroDescriptionTextareaNODE.value = ""
+                        caseMicroDescriptionTextareaNODE.placeholder = !case_owner?.id ? "Для того щоб писати мікроописв ви повині бути власником кейсу." : ""
+                    })
+            })
+
+            reportOwnerInfoNODE.append(div)
+        }
+    }
     const setAllGlasses = (currentCase) => {
         const allGlasses = currentCase.samples.reduce((allGlasses, sample) => {
             const allCassetteGlasses = sample.cassettes.reduce((allCassetteGlasses, cassette) => {
@@ -302,7 +450,7 @@
     const setAllCases = () => {
         const currentRoutePart = PATIENT_COR_ID ? `patients/${PATIENT_COR_ID}` : `current_cases`
 
-        fetch(`${API_BASE_URL}/api/doctor/${currentRoutePart}/glass-details`, {
+        fetch(`${API_BASE_URL}/api/doctor/${currentRoutePart}/glass-details?case_id=${INITIAL_CASE_ID || ""}`, {
             method: "GET",
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -310,9 +458,11 @@
         })
             .then(res => res.json())
             .then(cases => {
-                const {all_cases, first_case_details_for_glass} = cases;
+                const {all_cases, case_owner, report_details, first_case_details_for_glass} = cases;
+                const activeCaseIndex = all_cases.findIndex(({id}) => id === first_case_details_for_glass.id)
+
                 all_cases.forEach((currentCase, index) => {
-                    caseContentNODE.append(caseTemplate(currentCase, !index))
+                    caseContentNODE.append(caseTemplate(currentCase, activeCaseIndex === index))
                 })
 
                 if(!first_case_details_for_glass){
@@ -321,11 +471,17 @@
 
                 currentCase = first_case_details_for_glass;
                 currentUserCorId = first_case_details_for_glass.patient_cor_id
+
                 setAllGlasses(first_case_details_for_glass)
+                setCaseEdit()
+                setOwnerInfo(case_owner)
+                setPathohistologicalConclusion(report_details)
+                changeUrlParams()
 
                 caseLabelNode.innerHTML = first_case_details_for_glass.case_code
+                caseLabelNode.style.color = getCaseColor(first_case_details_for_glass)
                 caseMicroDescriptionTextareaNODE.value = first_case_details_for_glass.microdescription || ""
-                casePathohistologicalConclusionTextareaNODE.value = first_case_details_for_glass.pathohistological_conclusion || ""
+                caseMicroDescriptionTextareaNODE.placeholder = !case_owner?.id ? "Для того щоб писати мікроописв ви повині бути власником кейсу." : ""
 
                 fetch(`${API_BASE_URL}/api/doctor/patients/${first_case_details_for_glass.patient_cor_id}`, {
                     method: "GET",
@@ -337,7 +493,7 @@
                     .then(userData => {
                         document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
                         document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
-                        document.querySelector('#userAge').innerHTML = `${userData.age}р`;
+                        document.querySelector('#userAge').innerHTML = `${userData.age ? `${userData.age}р` : ''}`;
 
                     })
             })
@@ -352,7 +508,6 @@
     const goToTab = () => {
         document.querySelectorAll(".tabs .tab:not(.active)").forEach(elem => {
             elem.addEventListener('click', e => {
-                console.log(currentCase, "currentCase")
                 const element = e.currentTarget;
                 let queryString = []
 

@@ -11,12 +11,17 @@
     border: 2px solid #f5f4fb;
     max-height: max-content;
 }
+.glassWrapper.disabled{
+    opacity: .3;
+}
+
 .glassWrapper.active{
     border: 2px solid #5B4296;
 }
 .glassWrapperImg{
     width: 110px;
     height: 259px;
+    background: white;
 }
 
 .glassWrapperImg img{
@@ -44,8 +49,10 @@
     width: 20px;
     height: 20px;
     cursor: pointer;
+    transform: rotate(90deg);
+    margin-right: 12px;
 }
-.glassPageRevert svg{
+.glassPageRevert img{
     width: 100%;
     height: 100%;
 }
@@ -83,7 +90,7 @@
 }
 .caseItemDate{
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 400;
     margin-bottom: 6px;
 }
 .caseItemSample{
@@ -111,5 +118,20 @@
 .topActionsItem{
     cursor: pointer;
     color: #7B43F2;
-    font-weight: 600;
+    font-weight: 400;
+    display: none;
+}
+.topActionsItem.open{
+    display: block;
+}
+.caseBtnOwner{
+    color: #7B43F2;
+    font-weight: 400;
+    cursor: pointer;
+}
+.caseBtnOwner.my{
+    color: #49AC26;
+}
+.caseBtnOwner.owner{
+    color: #B2AFBA;
 }

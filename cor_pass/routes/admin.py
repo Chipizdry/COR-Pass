@@ -65,7 +65,7 @@ async def get_all_users(
     users_list_with_activity = []
 
     for user in list_users:
-        oid = str(user.id)  # Convert UUID to string for Redis
+        oid = str(user.id)  
         last_active = None
         if await redis_client.exists(oid):
             users_last_activity = await redis_client.get(oid)
@@ -104,10 +104,9 @@ async def get_all_users(
 
 async def _create_profile_response(db_profile, current_user, router_instance) -> ProfileResponse:
     """Формирует ProfileResponse, дешифруя поля и добавляя данные из User."""
-    response_data = db_profile.__dict__.copy() # Копируем, чтобы не изменять исходный ORM объект
+    response_data = db_profile.__dict__.copy() 
     decoded_key = base64.b64decode(settings.aes_key)
 
-    # Дешифруем нужные поля для ответа
     for field_name in ["surname", "first_name", "middle_name"]:
         encrypted_field = f"encrypted_{field_name}"
         encrypted_value = response_data.get(encrypted_field)
@@ -115,12 +114,12 @@ async def _create_profile_response(db_profile, current_user, router_instance) ->
             response_data[field_name] = await decrypt_data(encrypted_value, decoded_key)
         else:
             response_data[field_name] = None
-        # Удаляем зашифрованное поле из ответа
+
         response_data.pop(encrypted_field, None)
 
-    # Добавляем данные из User
+
     response_data["email"] = current_user.email
-    response_data["sex"] = current_user.user_sex # Если sex есть в User
+    response_data["sex"] = current_user.user_sex 
 
     # Добавляем URL для фото, если оно существует
     # if db_profile.photo_data:
@@ -159,7 +158,7 @@ async def get_all_user_info(
         try:
             last_active = users_last_activity_str
         except (ValueError, TypeError) as e:
-            print(f"Error parsing last_active from Redis: {e}")
+            logger.error(f"Error parsing last_active from Redis: {e}")
             last_active = None 
 
     full_user_data["user_info"] = UserDb(
@@ -272,7 +271,7 @@ async def get_user_data_info(
         try:
             last_active = users_last_activity_str
         except (ValueError, TypeError) as e:
-            print(f"Error parsing last_active from Redis: {e}")
+            logger.error(f"Error parsing last_active from Redis: {e}")
             last_active = None 
 
     user_data["user_info"] = UserDb(
@@ -711,7 +710,6 @@ async def disconnect_specific_ws_connection(connection_id: str):
     Отключает конкретное WebSocket-соединение по его ID.
     Требуются права администратора.
     """
-    # Теперь вызываем исправленный async метод disconnect
     await websocket_events_manager.disconnect(connection_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

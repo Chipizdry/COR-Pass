@@ -266,16 +266,6 @@ class Auth:
 
         return user
 
-    # Функция для проверки допустимости редирект URL
-    # def is_valid_redirect_url(self, redirectUrl):
-    #     allowed_urls = settings.allowed_redirect_urls
-    #     parsed_url = urlparse(redirectUrl)
-    #     if parsed_url.scheme not in ["http", "https"]:
-    #         return False
-    #     if f"{parsed_url.scheme}://{parsed_url.netloc}" not in allowed_urls:
-    #         return False
-    #     return True
-
     async def create_device_jwt(
         self, device_id: str, user_id: str, expires_delta: Optional[float] = None
     ):

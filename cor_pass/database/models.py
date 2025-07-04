@@ -3,6 +3,7 @@ import uuid
 from sqlalchemy import (
     ARRAY,
     Column,
+    Float,
     Integer,
     String,
     ForeignKey,
@@ -152,6 +153,7 @@ class StainingType(enum.Enum):
 class Grossing_status(enum.Enum):
     PROCESSING = "PROCESSING"
     COMPLETED = "COMPLETED"
+    CREATED = "CREATED"
 
 
 class User(Base):
@@ -222,6 +224,11 @@ class User(Base):
     user_lawyers = relationship(
         "Lawyer", back_populates="user", cascade="all, delete-orphan"
     )
+    blood_pressure_measurements = relationship(
+        "BloodPressureMeasurement", 
+        back_populates="user", 
+        cascade="all, delete-orphan"
+    )
 
     # Индексы
     __table_args__ = (
@@ -266,6 +273,9 @@ class Doctor(Base):
         "DoctorPatientStatus", back_populates="doctor", cascade="all, delete-orphan"
     )
     signatures = relationship("DoctorSignature", back_populates="doctor", cascade="all, delete-orphan")
+    doctor_diagnoses = relationship("DoctorDiagnosis", back_populates="doctor")
+    signed_diagnoses = relationship("ReportSignature", back_populates="doctor")
+    owned_cases = relationship("Case", back_populates="owner_obj")
 
 
 class LabAssistant(Base):
@@ -544,10 +554,12 @@ class Case(Base):
     bank_count = Column(Integer, default=0)
     cassette_count = Column(Integer, default=0)
     glass_count = Column(Integer, default=0)
-    grossing_status = Column(Enum(Grossing_status), default=Grossing_status.PROCESSING)
+    grossing_status = Column(Enum(Grossing_status), default=Grossing_status.CREATED)
     pathohistological_conclusion = Column(Text, nullable=True)
     microdescription = Column(Text, nullable=True)
     general_macrodescription = Column(Text, nullable=True)
+    case_owner = Column(String(36), ForeignKey("doctors.doctor_id"), nullable=True)
+    closing_date = Column(DateTime, nullable=True)
 
     samples = relationship(
         "Sample", back_populates="case", cascade="all, delete-orphan"
@@ -559,7 +571,12 @@ class Case(Base):
         back_populates="case",
         cascade="all, delete-orphan",
     )
-    report = relationship("Report", back_populates="case", uselist=False, cascade="all, delete-orphan") 
+    report = relationship("Report", back_populates="case", uselist=False, cascade="all, delete-orphan")
+    owner_obj = relationship(
+        "Doctor", 
+        back_populates="owned_cases", 
+        foreign_keys=[case_owner] 
+    ) 
 
 
 # Банка
@@ -652,6 +669,7 @@ class Referral(Base):
     medical_procedure = Column(String, nullable=True, comment="Медицинская процедура")
     final_report_delivery = Column(Text, nullable=True, comment="Финальный репорт отправить")
     issued_at = Column(DateTime, nullable=True, comment="Выдано (дата)")
+    biomaterial_date = Column(DateTime, nullable=True, comment="Дата забора биоматериала")
 
     case = relationship("Case", back_populates="referral") 
 
@@ -796,42 +814,101 @@ class DoctorSignature(Base):
     # Связи
     doctor = relationship("Doctor", back_populates="signatures")
 
-
-
 class ReportSignature(Base):
     __tablename__ = "report_signatures"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    report_id = Column(String(36), ForeignKey("reports.id"), nullable=False)
-    doctor_id = Column(String(36), ForeignKey("doctors.id"), nullable=False)
-    doctor_signature_id = Column(String(36), ForeignKey("doctor_signatures.id"), nullable=True) # <-- Ссылка на DoctorSignature
+    diagnosis_entry_id = Column(String(36), ForeignKey("doctor_diagnoses.id"), nullable=True, unique=True) 
+    doctor_id = Column(String(36), ForeignKey("doctors.id"), nullable=False) 
+    doctor_signature_id = Column(String(36), ForeignKey("doctor_signatures.id"), nullable=True)
     signed_at = Column(DateTime, default=func.now())
-    
 
-    # Связи
-    report = relationship("Report", back_populates="signatures")
-    doctor = relationship("Doctor") 
+    # Связи 
+    doctor_diagnosis_entry = relationship("DoctorDiagnosis", back_populates="signature") 
+    doctor = relationship("Doctor")
     doctor_signature = relationship("DoctorSignature")
 
 class Report(Base):
     __tablename__ = "reports"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    case_id = Column(String(36), ForeignKey("cases.id"), unique=True, nullable=False) 
+    case_id = Column(String(36), ForeignKey("cases.id"), unique=True, nullable=False)
+    attached_glass_ids = Column(ARRAY(String(36)), nullable=True, default=[]) 
+    # Связи
+    case = relationship("Case", back_populates="report")
+    doctor_diagnoses = relationship("DoctorDiagnosis", back_populates="report", order_by="DoctorDiagnosis.created_at") 
 
+
+class DoctorDiagnosis(Base):
+    __tablename__ = "doctor_diagnoses"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    report_id = Column(String(36), ForeignKey("reports.id"), nullable=False)
+    doctor_id = Column(String(36), ForeignKey("doctors.doctor_id"), nullable=False)
+    created_at = Column(DateTime, default=func.now())
 
     immunohistochemical_profile = Column(Text, nullable=True)
     molecular_genetic_profile = Column(Text, nullable=True)
     pathomorphological_diagnosis = Column(Text, nullable=True)
+
     icd_code = Column(String(50), nullable=True)
     comment = Column(Text, nullable=True)
+
+    report_macrodescription = Column(Text, nullable=True)
+    report_microdescription = Column(Text, nullable=True)
+
+    # Связи 
+    report = relationship("Report", back_populates="doctor_diagnoses")
+    doctor = relationship("Doctor")
+    signature = relationship("ReportSignature", uselist=False, back_populates="doctor_diagnosis_entry") 
+
+
+class BloodPressureMeasurement(Base):
+    __tablename__ = "blood_pressure_measurements"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     
-    # Список ID стёкол, прикрепленных к этому заключению
-    attached_glass_ids = Column(ARRAY(String(36)), nullable=True, default=[]) 
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+    
 
-    # Связи
-    case = relationship("Case", back_populates="report")
-    signatures = relationship("ReportSignature", back_populates="report") 
+    systolic_pressure = Column(Integer, nullable=False, comment="Систолическое (верхнее) артериальное давление")
+    diastolic_pressure = Column(Integer, nullable=False, comment="Диастолическое (нижнее) артериальное давление")
+    pulse = Column(Integer, nullable=False, comment="Частота сердечных сокращений (пульс)")
+    
+    measured_at = Column(DateTime, nullable=False, comment="Дата и время измерения, полученное с устройства")
+    created_at = Column(DateTime, nullable=False, default=func.now(), comment="Дата и время сохранения записи в БД")
+    user = relationship("User", back_populates="blood_pressure_measurements")
 
+
+    __table_args__ = (
+        Index("idx_bpm_user_id", "user_id"),
+        Index("idx_bpm_measured_at", "measured_at"),
+    )
+
+
+
+class CerboMeasurement(Base):
+    __tablename__ = "cerbo_measurements" 
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    created_at = Column(DateTime, nullable=False, default=func.now(), comment="Дата и время сохранения записи в БД")
+    measured_at = Column(DateTime, nullable=False, comment="Дата и время измерения, полученное с устройства")
+    object_name: Column[str] = Column(String, nullable=True, index=True) 
+
+    # Данные из battery_status
+    general_battery_power: Column[float] = Column(Float, nullable=False)
+
+    # Данные из inverter_power_status
+    inverter_total_ac_output: Column[float] = Column(Float, nullable=False)
+
+    # Данные из ess_ac_status
+    ess_total_input_power: Column[float] = Column(Float, nullable=False)
+
+    # Данные из solarchargers_status
+    solar_total_pv_power: Column[float] = Column(Float, nullable=False)
+
+    def __repr__(self):
+        return (f"<CerboMeasurement(id={self.id}, measured_at='{self.measured_at}', "
+                f"object_name='{self.object_name}', general_battery_power={self.general_battery_power})>")
 
 # Base.metadata.create_all(bind=engine)

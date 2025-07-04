@@ -56,7 +56,7 @@ from datetime import datetime, timedelta
 from cor_pass.services.websocket import send_websocket_message
 
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from jose import jwt, JWTError
 
 auth_attempts = defaultdict(list)
 blocked_ips = {}
@@ -253,12 +253,10 @@ async def login(
         db=db,
     )
 
-    # Логируем успешный вход
-    logger.info(
+    logger.debug(
         f"Успешный вход пользователя {user.email} с IP {client_ip} и устройства {device_information.get('device_info')}"
     )
 
-    # Возвращаем ответ
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -285,6 +283,7 @@ async def initiate_login(
     return {"session_token": session_token}
 
 
+# вызывается на стороне Кор-енерджи
 @router.post(
     "/v1/check_session_status",
     response_model=ConfirmCheckSessionResponse,
@@ -336,7 +335,6 @@ async def check_session_status(
         if user.email in settings.eternal_accounts
         else None
     )
-
     access_token, access_token_jti = await auth_service.create_access_token(
         data=token_data, expires_delta=expires_delta
     )
@@ -345,21 +343,31 @@ async def check_session_status(
     )
     # Создаём новую сессию
     device_information = di.get_device_info(request)
-    session_data = {
-        "user_id": user.cor_id,
-        "refresh_token": refresh_token,
-        "device_type": device_information["device_type"],  # Тип устройства
-        "device_info": device_information["device_info"],  # Информация об устройстве
-        "ip_address": device_information["ip_address"],  # IP-адрес
-        "device_os": device_information["device_os"],
-        "jti": access_token_jti,
-        "access_token": access_token
-    }
-    new_session = await repository_session.create_user_session(
-        body=UserSession(**session_data),  # Передаём данные для сессии
-        user=user,
-        db=db,
+    existing_sessions = await repository_session.get_user_sessions_by_device_info(
+        user.cor_id, device_information["device_info"], db
     )
+    if not existing_sessions:
+        session_data = {
+            "user_id": user.cor_id,
+            "refresh_token": refresh_token,
+            "device_type": "Mobile CorEnergy",  # Тип устройства
+            "device_info": device_information["device_info"],  # Информация об устройстве "iOS 18.5 MobileCorEnergy"
+            "ip_address": device_information["ip_address"],  # IP-адрес
+            "device_os": device_information["device_os"],
+            "jti": access_token_jti,
+            "access_token": access_token
+        }
+        new_session = await repository_session.create_user_session(
+            body=UserSession(**session_data),  # Передаём данные для сессии
+            user=user,
+            db=db,
+        )
+    else:
+        await repository_session.update_session_token(
+            user=user, token=refresh_token, device_info=device_information["device_info"], db=db, jti=access_token_jti, access_token=access_token
+        )
+        logger.debug(
+            f"{user.email}'s refresh token updated for device {device_information.get('device_info')}")
     response = ConfirmCheckSessionResponse(
         status="approved",
         access_token=access_token,
@@ -368,7 +376,7 @@ async def check_session_status(
     )
     return response
 
-
+# вызывается на стороне Кор-айди
 @router.post(
     "/v1/confirm-login",
     response_model=ConfirmLoginResponse,
@@ -447,7 +455,7 @@ async def confirm_login(
             if user.email in settings.eternal_accounts
             else None
         )
-
+        # Временно увеличиваем срок жизни токенов кор-енерджи
         access_token, access_token_jti = await auth_service.create_access_token(
             data=token_data, expires_delta=expires_delta
         )
@@ -460,8 +468,8 @@ async def confirm_login(
         session_data = {
             "user_id": user.cor_id,
             "refresh_token": refresh_token,
-            "device_type": "MobileCorEnergy",  # Тип устройства
-            "device_info": device_information["device_info"],  # Информация об устройстве
+            "device_type": "Mobile CorEnergy",  # Тип устройства
+            "device_info": device_information["device_info"] + " MobileCorEnergy",  # Информация об устройстве
             "ip_address": device_information["ip_address"],  # IP-адрес
             "device_os": device_information["device_os"],
             "jti": access_token_jti,
@@ -496,9 +504,38 @@ async def confirm_login(
         )
 
 
+async def get_user_device_rate_limit_key(request: Request) -> str:
+    """
+    Создает уникальный идентификатор для рейт-лимитера на основе user_id и device_info.
+    """
+    auth_header = request.headers.get("Authorization")
+    token = None
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, key=auth_service.SECRET_KEY, algorithms=auth_service.ALGORITHM, options={"verify_exp": False}) 
+        
+        user_id = payload.get("oid")
+    except JWTError as e:
+        logger.debug(f"Failed to decode token for rate limiter key (JWTError): {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error in get_user_id_from_token_sync: {e}")
+        return None
+    device_type = request.headers.get("X-Device-Type", "unknown")
+    device_info_str = request.headers.get("X-Device-Info", "unknown")
+    if user_id:
+        return f"user:{user_id}_device_type:{device_type}_device_info:{device_info_str}"
+    else:
+        user_agent = request.headers.get("User-Agent", "unknown-agent")
+        return f"ip:{request.client.host}_ua:{user_agent}"
+
 @router.get(
     "/refresh_token",
     response_model=TokenModel,
+    dependencies=[Depends(RateLimiter(times=1, seconds=5, identifier=get_user_device_rate_limit_key))]
 )
 async def refresh_token(
     request: Request,
@@ -533,9 +570,15 @@ async def refresh_token(
     existing_sessions = await repository_session.get_user_sessions_by_device_info(
         user.cor_id, device_information["device_info"], db
     )
+    logger.debug(f"Detected device type: {device_information['device_type']}")
+    logger.debug(f"Detected existing_sessions: {device_information["device_info"]} - {existing_sessions}")
     is_valid_session = False
     if device_information["device_type"] == "Mobile":
+        # logger.debug(">>> Entered Mobile validation block <<<")
         if not existing_sessions:
+            logger.debug(
+                f"existing_sessions for mobile device - {existing_sessions}, need master key"
+            )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Нужен ввод мастер-ключа",
@@ -546,69 +589,135 @@ async def refresh_token(
                     encrypted_data=session.refresh_token,
                     key=await decrypt_user_key(user.unique_cipher_key),
                 )
+                # logger.debug(f"Comparing tokens: received={token} vs decrypted_session={session_token}")
                 if session_token == token:
                     is_valid_session = True
-                    break
+                    logger.debug(
+                        f"Mobile session validation is {is_valid_session}"
+                    )
+                    break 
             except Exception:
                 logger.warning(
                     f"Failed to decrypt refresh token for session {session.id}"
                 )
-        if not is_valid_session:
+        
+        if not is_valid_session: 
+            logger.debug(
+                f"Invalid refresh token for this mobile device. Mobile session validation is {is_valid_session}"
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid refresh token for this device",
             )
-    elif existing_sessions:
+    elif device_information["device_type"] == "Mobile CorEnergy":
+        # logger.debug(">>> Entered Mobile CorEnergy validation block <<<")
+        if not existing_sessions:
+            logger.debug(
+                f"Session not found for this device for cor-energy app"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Session not found for this device",
+            )
         for session in existing_sessions:
             try:
                 session_token = await decrypt_data(
                     encrypted_data=session.refresh_token,
                     key=await decrypt_user_key(user.unique_cipher_key),
                 )
+                # logger.debug(f"Comparing tokens: received={token} vs decrypted_session={session_token}")
                 if session_token == token:
                     is_valid_session = True
-                    break
+                    logger.debug(
+                        f"Mobile cor-energy session validation is {is_valid_session}"
+                    )
+                    break 
             except Exception:
                 logger.warning(
-                    f"Failed to decrypt refresh token for session {session.id}"
-                )
-        if not is_valid_session:
+                    f"Failed to decrypt refresh token for cor-energy session {session.id}")        
+        if not is_valid_session: 
+            logger.debug(
+                f"Invalid refresh token for this cor-energy mobile device. Mobile session validation is {is_valid_session}"
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid refresh token for this device",
             )
-    is_valid_session = True
+    elif device_information["device_type"] == "MobileCorEnergy":
+        # logger.debug(">>> Entered Mobile CorEnergy validation block <<<")
+        if not existing_sessions:
+            logger.debug(
+                f"Session not found for this device for cor-energy app"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Session not found for this device",
+            )
+        for session in existing_sessions:
+            try:
+                session_token = await decrypt_data(
+                    encrypted_data=session.refresh_token,
+                    key=await decrypt_user_key(user.unique_cipher_key),
+                )
+                # logger.debug(f"Comparing tokens: received={token} vs decrypted_session={session_token}")
+                if session_token == token:
+                    is_valid_session = True
+                    logger.debug(
+                        f"Mobile cor-energy session validation is {is_valid_session}"
+                    )
+                    break 
+            except Exception:
+                logger.warning(
+                    f"Failed to decrypt refresh token for cor-energy session {session.id}")        
+        if not is_valid_session: 
+            logger.debug(
+                f"Invalid refresh token for this cor-energy mobile device. Mobile session validation is {is_valid_session}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token for this device",
+            )                                
+    elif device_information["device_type"] == "Desktop":
+        # logger.debug(">>> Entered Desktop validation block <<<")
+        is_valid_session = True
+    if is_valid_session:
+        # Проверка ролей
+        user_roles = await repository_person.get_user_roles(email=user.email, db=db)
 
-    # Проверка ролей
-    user_roles = await repository_person.get_user_roles(email=user.email, db=db)
+        # Получаем токены
+        token_data = {"oid": str(user.id), "corid": user.cor_id, "roles": user_roles}
+        expires_delta = (
+            settings.eternal_token_expiration
+            if user.email in settings.eternal_accounts
+            else None
+        )
 
-    # Получаем токены
-    token_data = {"oid": str(user.id), "corid": user.cor_id, "roles": user_roles}
-    expires_delta = (
-        settings.eternal_token_expiration
-        if user.email in settings.eternal_accounts
-        else None
-    )
+        access_token, access_token_jti = await auth_service.create_access_token(
+            data=token_data, expires_delta=expires_delta
+        )
+        refresh_token = await auth_service.create_refresh_token(
+            data=token_data, expires_delta=expires_delta
+        )
 
-    access_token, access_token_jti = await auth_service.create_access_token(
-        data=token_data, expires_delta=expires_delta
-    )
-    refresh_token = await auth_service.create_refresh_token(
-        data=token_data, expires_delta=expires_delta
-    )
-
-    await repository_session.update_session_token(
-        user=user, token=refresh_token, device_info=device_information["device_info"], db=db, jti=access_token_jti, access_token=access_token
-    )
-    logger.debug(
-        f"{user.email}'s refresh token updated for device {device_information.get('device_info')}"
-    )
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
-
+        await repository_session.update_session_token(
+            user=user, token=refresh_token, device_info=device_information["device_info"], db=db, jti=access_token_jti, access_token=access_token
+        )
+        logger.debug(
+            f"{user.email}'s refresh token updated for device {device_information.get('device_info')}"
+        )
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+        }
+    else:
+        logger.debug(
+                        f"Invalid refresh token for this device {device_information["device_type"]} {device_information["device_info"]}"
+                    )
+        raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid refresh token",
+            )
 
 @router.get("/verify")
 async def verify_access_token(

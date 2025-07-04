@@ -1,196 +1,23 @@
-from fastapi import APIRouter, HTTPException,Request
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Query,Request
 import logging
 import json
-import asyncio
-from pymodbus.client import AsyncModbusTcpClient
-from pymodbus.exceptions import ModbusException
-from pymodbus.pdu import ExceptionResponse
-
-from pydantic import BaseModel, Field
 from typing import Optional
 
-logger = logging.getLogger(__name__)
+from cor_pass.repository.cerbo_service import BATTERY_ID, ESS_UNIT_ID, INVERTER_ID, REGISTERS, decode_signed_16, decode_signed_32, get_device_measurements_paginated, get_modbus_client, register_modbus_error
+from cor_pass.schemas import CerboMeasurementResponse, EssAdvancedControl, GridLimitUpdate, PaginatedResponse, VebusSOCControl
+from sqlalchemy.ext.asyncio import AsyncSession
+from cor_pass.database.db import get_db
+from math import ceil
+from cor_pass.services.logger import logger
 
 ERROR_THRESHOLD = 9
 error_count = 0
 
-# Конфигурация Modbus
-MODBUS_IP = "91.203.25.12"
-MODBUS_PORT = 502
-BATTERY_ID = 225         # Основная батарея
-INVERTER_ID = 100     # Инвертор
-ESS_UNIT_ID = 227     # Система управления (ESS)
-
-# Определение регистров Modbus
-REGISTERS = {
-    "soc": 266,            # % SoC (0.1%)
-    "voltage": 259,        # Напряжение (x100)
-    "current": 261,        # Ток (x10)
-    "temperature": 262, 
-    "power": 258,          # Мощность (signed int16)
-    "soh": 304,            # Состояние здоровья (0.1%)
-}
-
-INVERTER_REGISTERS = {
-    "inverter_power": 870,      # Мощность инвертора/зарядного устройства (DC)
-    "output_power_l1": 878,     # Мощность на выходе инвертора (L1)
-    "output_power_l2": 880,     # Мощность на выходе инвертора (L2)
-    "output_power_l3": 882      # Мощность на выходе инвертора (L3)
-}
-
-ESS_REGISTERS = {
-    # Базовые регистры
-    "switch_position": 33,        # Положение переключателя
-    "temperature_alarm": 34,      # Температурная тревога
-    "low_battery_alarm": 35,      # Тревога низкого заряда
-    "overload_alarm": 36,         # Тревога перегрузки
-    "disable_charge": 38,         # Запрет на заряд (0/1)
-    "disable_feed": 39,           # Запрет на подачу в сеть (0/1)
-    
-    # 32-битные регистры мощности
-    "ess_power_setpoint_l1": 96,  # Установка мощности фаза 1 (int32)
-    "ess_power_setpoint_l2": 98,  # Установка мощности фаза 2 (int32)
-    "ess_power_setpoint_l3": 100, # Установка мощности фаза 3 (int32)
-    
-    # Дополнительные параметры
-    "disable_ov_feed": 65,        # Запрет фид-ина при перегрузке
-    "ov_feed_limit_l1": 66,       # Лимит мощности для L1
-    "ov_feed_limit_l2": 67,       # Лимит мощности для L2
-    "ov_feed_limit_l3": 68,       # Лимит мощности для L3
-    "setpoints_as_limit": 71,     # Использовать setpoints как лимит
-    "ov_offset_mode": 72          # Режим оффсета (0=1V, 1=100mV)
-}
-
-
-ESS_REGISTERS_MODE = {
-    "switch_position": 33,
-}
-
-ESS_REGISTERS_FLAGS = {
-    "disable_charge": 38,
-    "disable_feed": 39,
-    "disable_pv_inverter": 56,
-    "do_not_feed_in_ov": 65,
-    "setpoints_as_limit": 71,
-    "ov_offset_mode": 72,
-    "prefer_renewable": 102,
-}
-
-ESS_REGISTERS_POWER = {
-    "ess_power_setpoint_l1": 96,  # 32-bit
-    "ess_power_setpoint_l2": 98,
-    "ess_power_setpoint_l3": 100,
-    "max_feed_in_l1": 66,
-    "max_feed_in_l2": 67,
-    "max_feed_in_l3": 68,
-}
-
-ESS_REGISTERS_ALARMS = {
-    "temperature_alarm": 34,
-    "low_battery_alarm": 35,
-    "overload_alarm": 36,
-    "temp_sensor_alarm": 42,
-    "voltage_sensor_alarm": 43,
-    "grid_lost": 64,
-}
-# Модель данных для управления ESS
-
-class VebusSOCControl(BaseModel):
-    soc_threshold: int 
-
-class EssAdvancedControl(BaseModel):
-    ac_power_setpoint_fine: int = Field(..., ge=-100000, le=100000)
-
-class GridLimitUpdate(BaseModel):
-    enabled: bool  # True → 1, False → 0
-
-class EssModeControl(BaseModel):
-    switch_position: int = Field(..., ge=1, le=4)
-
-
-
-class EssPowerControl(BaseModel):
-    ess_power_setpoint_l1: Optional[int] = Field(None, ge=-32768, le=32767)
-    ess_power_setpoint_l2: Optional[int] = Field(None, ge=-32768, le=32767)
-    ess_power_setpoint_l3: Optional[int] = Field(None, ge=-32768, le=32767)
-
-class EssFeedInControl(BaseModel):
-    max_feed_in_l1: Optional[int] = None
-    max_feed_in_l2: Optional[int] = None
-    max_feed_in_l3: Optional[int] = None
 
 # Создание роутера FastAPI
 router = APIRouter(prefix="/modbus", tags=["Modbus"])
 
-async def create_modbus_client(app):
-    try:
-        if hasattr(app.state, "modbus_client") and app.state.modbus_client:
-            await app.state.modbus_client.close()
-            logging.info("🔌 Старый клиент Modbus закрыт")
-
-        app.state.modbus_client = AsyncModbusTcpClient(host=MODBUS_IP, port=MODBUS_PORT)
-        await app.state.modbus_client.connect()
-
-        if not app.state.modbus_client.connected:
-            logging.error("❌ Не удалось подключиться к Modbus серверу")
-        else:
-            logging.info("✅ Подключение к Modbus серверу установлено")
-
-    except Exception as e:
-        logging.exception("❗ Ошибка при создании Modbus клиента", exc_info=e)
-
-
-
-async def close_modbus_client(app):
-    client = getattr(app.state, "modbus_client", None)
-    if client and client.connected:
-        await client.close()
-        logging.info("🔌 Клиент Modbus отключён")
-
-# Получение клиента с реконнектом при ошибках
-async def get_modbus_client(app):
-    global error_count
-    client = getattr(app.state, "modbus_client", None)
-
-    # Если клиент не подключен — создаём новый
-    if client is None or not client.connected:
-        logging.warning(f"🔄 Переподключение Modbus клиента... (errors: {error_count})")
-
-        # Закрытие старого клиента, если есть
-        if client:
-            try:
-                await client.close()
-            except Exception as e:
-                logging.warning(f"⚠️ Ошибка при закрытии клиента: {e}")
-
-        # Новый клиент
-        new_client = AsyncModbusTcpClient(host=MODBUS_IP, port=MODBUS_PORT)
-        await new_client.connect()
-
-        if not new_client.connected:
-            logging.error("❌ Не удалось переподключиться к Modbus серверу")
-        else:
-            logging.info("✅ Новое подключение к Modbus успешно")
-        error_count = 0  # сброс после успешного подключения
-        app.state.modbus_client = new_client
-        
-        return new_client
-
-    return client
-
-def register_modbus_error():
-    global error_count
-    error_count += 1
-    logging.warning(f"❗ Modbus ошибка #{error_count}")
-
-
-# Функции декодирования
-def decode_signed_16(value: int) -> int:
-    return value - 0x10000 if value >= 0x8000 else value
-
-def decode_signed_32(high: int, low: int) -> int:
-    combined = (high << 16) | low
-    return combined - 0x100000000 if combined >= 0x80000000 else combined
 
 
 @router.get("/error_count")
@@ -382,6 +209,7 @@ async def get_ess_ac_status(request: Request):
             }
         }
 
+        # Логи отладки
       #  logging.info("ESS AC Status:")
       #  logging.info(f"Input Voltages: L1={response['input']['voltages']['l1']}V, L2={response['input']['voltages']['l2']}V, L3={response['input']['voltages']['l3']}V")
       #  logging.info(f"Input Currents: L1={response['input']['currents']['l1']}A, L2={response['input']['currents']['l2']}A, L3={response['input']['currents']['l3']}A")
@@ -618,7 +446,7 @@ async def get_ess_advanced_settings(request: Request):
             "ac_input_2_source": safe_main(2712),
         }
 
-        logging.info("✅ ESS Advanced Settings:\n%s", json.dumps(result_data, indent=2, ensure_ascii=False))
+        # logging.info("✅ ESS Advanced Settings:\n%s", json.dumps(result_data, indent=2, ensure_ascii=False))
         return result_data
 
     except Exception as e:
@@ -629,13 +457,14 @@ async def get_ess_advanced_settings(request: Request):
 @router.get("/solarchargers_status")
 async def get_solarchargers_status(request: Request):
     """
-    Быстрое чтение PV-напряжения и тока с MPPT по Modbus
+    Быстрое чтение PV-напряжения и тока с MPPT по Modbus + суммарная мощность
     """
     try:
         client = request.app.state.modbus_client
         slave_ids = list(range(1, 14)) + [100]
 
         results = {}
+        total_pv_power = 0  # Инициализация переменной для суммарной мощности
 
         for slave in slave_ids:
             charger_data = {}
@@ -673,20 +502,26 @@ async def get_solarchargers_status(request: Request):
                         raw = regs[idx]
                         value = decode_signed_16(raw) if is_signed else raw
                         charger_data[name] = round(value / scale, 2)
+                        
+                        # Суммируем только мощности (pv_power_*)
+                        if name.startswith("pv_power_"):
+                            total_pv_power += charger_data[name]
 
             except Exception as e:
                 charger_data["error"] = str(e)
                 logging.warning(f"⚠️ Исключение при чтении slave {slave}: {e}")
 
             results[f"charger_{slave}"] = charger_data
-        error_count = 0
+
+        # Добавляем суммарную мощность в результаты
+        results["total_pv_power"] = round(total_pv_power, 2)
+        
         return results
 
     except Exception as e:
         register_modbus_error()
-        logging.error("❗ Общая ошибка при опросе MPPT", exc_info=e)
+        logging.error("❗️ Общая ошибка при опросе MPPT", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
-
 
 
 @router.get("/dynamic_ess_settings")
@@ -734,7 +569,7 @@ async def get_dynamic_ess_settings(request: Request):
 async def test_dynamic_ess_registers(request: Request):
     client = request.app.state.modbus_client
     unit_id = 100
-    start = 5400
+    start = 5420
     end = 5429
 
     results = {}
@@ -753,3 +588,37 @@ async def test_dynamic_ess_registers(request: Request):
 
     return results
 
+
+@router.get(
+    "/measurements/",
+    response_model=PaginatedResponse[CerboMeasurementResponse], 
+    summary="Получить все измерения CerboMeasurement с пагинацией и фильтрацией",
+    description="Получает список всех измерений с поддержкой пагинации, фильтрации по имени объекта и диапазону дат.",
+    tags=["Measurements"]
+)
+async def read_measurements(
+    page: int = Query(1, ge=1, description="Номер страницы (начиная с 1)"),
+    page_size: int = Query(10, ge=1, le=100, description="Количество элементов на странице (от 1 до 100)"),
+    object_name: Optional[str] = Query(None, description="Фильтр по имени объекта"),
+    start_date: Optional[datetime] = Query(None, description="Начальная дата измерения (ISO 8601, например '2023-01-01T00:00:00')"),
+    end_date: Optional[datetime] = Query(None, description="Конечная дата измерения (ISO 8601, например '2023-12-31T23:59:59')"),
+    db: AsyncSession = Depends(get_db)
+):
+    measurements, total_count = await get_device_measurements_paginated(
+        db=db,
+        page=page,
+        page_size=page_size,
+        object_name=object_name,
+        start_date=start_date,
+        end_date=end_date
+    )
+
+    total_pages = ceil(total_count / page_size) if total_count > 0 else 0
+
+    return PaginatedResponse(
+        items=[CerboMeasurementResponse.model_validate(m) for m in measurements],
+        total_count=total_count,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages
+    )
