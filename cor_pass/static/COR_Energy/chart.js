@@ -142,7 +142,7 @@ async function updateChartData() {
     try {
         // Получаем свежие данные
         const measurements = await fetchMeasurements();
-        console.log('Fetched measurements:', measurements);
+      //  console.log('Fetched measurements:', measurements);
         // Если данных нет, ничего не делаем
         if (!measurements || measurements.length === 0) return;
         
