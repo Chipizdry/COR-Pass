@@ -69,7 +69,7 @@
 /* Стиль для контейнера графика */
 #chartContainer {
     width: 100%;
-    height: 400px;
+    height: 550px;
 }
 
 a {
@@ -283,4 +283,69 @@ footer {
 #gridInverterLine1Anim, 
 #gridInverterLine2Anim {
     transition: stroke 0.3s ease;
+}
+
+
+/* Стили для контролов графика */
+.chart-controls {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+}
+
+.time-range-slider-container {
+    width: 100%;
+    position: relative;
+}
+
+.time-range-slider {
+    width: 100%;
+    height: 10px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #ddd;
+    border-radius: 5px;
+    outline: none;
+    margin: 10px 0;
+    direction: rtl; /* Обратное направление ползунка */
+}
+
+.time-range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #2ccb32;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.time-range-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    background: #239c28;
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 12px;
+    color: #666;
+    margin-top: -5px;
+}
+
+.time-display {
+    text-align: center;
+    font-size: 14px;
+    color: #444;
+    font-weight: bold;
+}
+
+#loadingIndicator {
+    color: #2ccb32;
+    font-size: 14px;
+    font-style: italic;
 }

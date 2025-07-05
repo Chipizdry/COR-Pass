@@ -1,27 +1,64 @@
 
 
-
-
-
-
-
-async function fetchMeasurements() {
+async function fetchMeasurements(page = 1) {
     try {
-        const response = await fetch('/api/modbus/measurements/?page=1&page_size=60');
+        isLoading = true;
+        document.getElementById('loadingIndicator').style.display = 'inline';
+        
+        const response = await fetch(`/api/modbus/measurements/?page=${page}&page_size=100`);
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
         const data = await response.json();
-        return data.items;
+        
+        isLoading = false;
+        document.getElementById('loadingIndicator').style.display = 'none';
+        
+        return data.items || [];
     } catch (error) {
         console.error('Error fetching measurements:', error);
+        isLoading = false;
+        document.getElementById('loadingIndicator').style.display = 'none';
         return [];
     }
 }
 
 
-// Функция для обработки данных измерений и подготовки для графика
+   // Функция для загрузки и отображения конкретной страницы
+async function loadAndDisplayPage(page) {
+    if (isLoading || currentPage === page) return;
+    
+    currentPage = page;
+    document.getElementById('currentPageDisplay').textContent = `Текущая страница: ${currentPage}`;
+    
+    const newMeasurements = await fetchMeasurements(page);
+    if (newMeasurements.length > 0) {
+        allMeasurements[currentPage - 1] = newMeasurements;
+        updateChartData();
+    }
+}
+
+
+// Инициализация ползунка
+function initPageSlider() {
+    const slider = document.getElementById('pageSlider');
+    
+    slider.addEventListener('input', function() {
+        isSliderMoving = true;
+    });
+    
+    slider.addEventListener('change', async function() {
+        const page = parseInt(this.value);
+        await loadAndDisplayPage(page);
+        isSliderMoving = false;
+    });
+}
+
+
+// Функция для обработки данных измерений
 function processMeasurementsData(measurements) {
+    if (!measurements) return { labels: [], loadPower: [], solarPower: [], batteryPower: [], essTotalInputPower: [] };
+    
     const sortedMeasurements = [...measurements].sort((a, b) => 
         new Date(a.measured_at) - new Date(b.measured_at));
     
@@ -29,14 +66,25 @@ function processMeasurementsData(measurements) {
     const loadPower = [];
     const solarPower = [];
     const batteryPower = [];
-    const essTotalInputPower = []; 
+    const essTotalInputPower = [];
     
     sortedMeasurements.forEach(measurement => {
-        labels.push(new Date(measurement.measured_at).toLocaleTimeString());
+        // Предполагаем, что сервер присылает время в UTC
+        const date = new Date(measurement.measured_at + 'Z'); // UTC время
+
+        const timeStr = date.toLocaleTimeString('ru-RU', { 
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZone: 'Europe/Moscow' // Пусть браузер сам корректирует
+        });
+
+        labels.push(timeStr);
+        
         loadPower.push(Math.round(measurement.inverter_total_ac_output / 10) / 100);
         solarPower.push(Math.round(measurement.solar_total_pv_power / 10) / 100);
         batteryPower.push(Math.round(measurement.general_battery_power / 10) / 100);
-        essTotalInputPower.push(Math.round(measurement.ess_total_input_power / 10) / 100); 
+        essTotalInputPower.push(Math.round(measurement.ess_total_input_power / 10) / 100);
     });
 
     return { labels, loadPower, solarPower, batteryPower, essTotalInputPower };
@@ -48,7 +96,6 @@ function processMeasurementsData(measurements) {
 function initPowerChart() {
     const ctx = document.getElementById('powerChart').getContext('2d');
     
-    // Если график уже существует, сначала уничтожаем его
     if (powerChart) {
         powerChart.destroy();
     }
@@ -138,48 +185,57 @@ function initPowerChart() {
 }
 
 // Функция для обновления данных графика
-async function updateChartData() {
-    try {
-        // Получаем свежие данные
-        const measurements = await fetchMeasurements();
-      //  console.log('Fetched measurements:', measurements);
-        // Если данных нет, ничего не делаем
-        if (!measurements || measurements.length === 0) return;
-        
-        // Обрабатываем данные
-        const { labels, loadPower, solarPower, batteryPower, essTotalInputPower } = processMeasurementsData(measurements);
+function updateChartData() {
+    if (!allMeasurements[currentPage - 1]) return;
+    
+    const { labels, loadPower, solarPower, batteryPower, essTotalInputPower } = 
+        processMeasurementsData(allMeasurements[currentPage - 1]);
+    
+    if (!powerChart) return;
+    
+    powerChart.data.labels = labels;
+    powerChart.data.datasets[0].data = loadPower;
+    powerChart.data.datasets[1].data = solarPower;
+    powerChart.data.datasets[2].data = batteryPower;
+    powerChart.data.datasets[3].data = essTotalInputPower;
 
-        powerChart.data.labels = labels;
-        powerChart.data.datasets[0].data = loadPower;
-        powerChart.data.datasets[1].data = solarPower;
-        powerChart.data.datasets[2].data = batteryPower;
-        powerChart.data.datasets[3].data = essTotalInputPower;
-        
-        // Автоматически подстраиваем масштаб по Y
-        const allData = [...loadPower, ...solarPower, ...batteryPower, ...essTotalInputPower];
-        const maxPower = Math.max(...allData);
-        const minPower = Math.min(...allData);
-        
-        powerChart.options.scales.y.max = Math.ceil(maxPower / 10) * 10 + 5;
-        powerChart.options.scales.y.min = Math.floor(minPower / 10) * 10 - 5;
-        
-        powerChart.update();
-    } catch (error) {
-        console.error('Error updating chart:', error);
-    }
+     // Автоматически подстраиваем масштаб по Y
+     const allData = [...loadPower, ...solarPower, ...batteryPower, ...essTotalInputPower];
+     const maxPower = Math.max(...allData);
+     const minPower = Math.min(...allData);
+     
+     powerChart.options.scales.y.max = Math.ceil(maxPower / 10) * 10 + 5;
+     powerChart.options.scales.y.min = Math.floor(minPower / 10) * 10 - 5;
+    
+    powerChart.update();
 }
 
 
-function startChartUpdates() {
-    // Инициализируем график
+// Основная функция запуска
+async function startChartUpdates() {
     initPowerChart();
+    initPageSlider();
     
-    // Первое обновление данных
-    updateChartData();
+    // Инициализируем массив для хранения всех страниц
+    allMeasurements = new Array(60);
     
-    // Устанавливаем интервал обновления (например, каждые 5 секунд)
-    chartUpdateInterval = setInterval(updateChartData, 1000);
+    // Первоначальная загрузка первой страницы
+    await loadAndDisplayPage(1);
+    
+    // Периодическое обновление только первой страницы
+    chartUpdateInterval = setInterval(async () => {
+        if (!isSliderMoving) {
+            const newMeasurements = await fetchMeasurements(1);
+            if (newMeasurements.length > 0) {
+                allMeasurements[0] = newMeasurements;
+                if (currentPage === 1) {
+                    updateChartData();
+                }
+            }
+        }
+    }, 1000);
 }
+
 
 
 function stopChartUpdates() {
@@ -196,4 +252,9 @@ function stopChartUpdates() {
 // Останавливаем обновления при закрытии вкладки
 window.addEventListener('beforeunload', () => {
     stopChartUpdates();
+});
+
+// Запускаем при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    startChartUpdates();
 });

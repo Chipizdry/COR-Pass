@@ -362,6 +362,19 @@
             <div id="chartContainer">
                 <canvas id="powerChart"></canvas>
             </div>
+            <div class="chart-controls">
+                <div class="time-range-slider-container">
+                    <input type="range" id="pageSlider" min="1" max="60" value="1" class="time-range-slider">
+                    <div class="slider-labels">
+                        <span>Страница 1</span>
+                        <span>Страница 60</span>
+                    </div>
+                </div>
+                <div class="time-display">
+                    <span id="currentPageDisplay">Текущая страница: 1</span>
+                    <span id="loadingIndicator" style="display:none; margin-left:10px;">Загрузка...</span>
+                </div>
+            </div>
         </div>
 
         <div id="timetable" class="tabcontent">
@@ -622,8 +635,14 @@
 
            
             let lastPowerValue = 0;
+
+            let currentPage = 1;
+            let isLoading = false;
+            let allMeasurements = [];
+            let isSliderMoving = false;
             let powerChart = null;
             let chartUpdateInterval = null;
+
 
         const modeNames = {
             1: "Charger Only",
@@ -656,10 +675,6 @@
             document.getElementById("batteryModal").style.display = "none";
                 }
 
-                 //   document.addEventListener('DOMContentLoaded', fetchGridLimitingStatus);
-                 //   document.getElementById("ac_setpoint_fine_slider").addEventListener("input", function() {
-                 //   document.getElementById("ac_setpoint_fine_value").textContent = this.value;
-                 //   });       
                     document.getElementById('feedInPowerSlider').addEventListener('input', function() {
                         document.getElementById('feedInSliderValue').textContent = this.value;
                     });
