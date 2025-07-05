@@ -157,8 +157,8 @@ function initPowerChart() {
                         display: true,
                         text: 'Мощность (кВт)'
                     },
-                    min: -120,
-                    max: 120,
+                    min: -20,
+                    max: 20,
                     ticks: {
                         stepSize: 5
                     }
