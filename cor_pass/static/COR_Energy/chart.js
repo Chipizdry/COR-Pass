@@ -79,10 +79,10 @@ async function loadPages(startPage) {
         const pagePromises = [];
         for (let i = 0; i < pagesPerScreen; i++) {
             const page = startPage + i;
-            if (page <= 60) {
+            if (page <= 100) {
                 allMeasurements[page - 1] = undefined;
             }
-            if (page > 60) break; // Не превышаем максимальное количество страниц
+            if (page > 100) break; // Не превышаем максимальное количество страниц
             
             if (!allMeasurements[page - 1]) {
                 pagePromises.push(fetchMeasurements(page));
@@ -101,7 +101,7 @@ async function loadPages(startPage) {
         
         currentPage = startPage;
         document.getElementById('currentPageDisplay').textContent = 
-           `Страницы: ${currentPage}–${Math.min(currentPage + pagesPerScreen - 1, 60)}`
+           `Страницы: ${currentPage}–${Math.min(currentPage + pagesPerScreen - 1, 100)}`
             
         updateChartData();
     } catch (error) {
@@ -125,7 +125,7 @@ function initPageSlider() {
     slider.addEventListener('change', async function() {
         const page = parseInt(this.value);
         // Корректируем номер страницы с учетом количества страниц на экран
-        const startPage = Math.min(page, 60 - pagesPerScreen + 1);
+        const startPage = Math.min(page, 100 - pagesPerScreen + 1);
         await loadPages(startPage);
         isSliderMoving = false;
     });
@@ -273,7 +273,7 @@ function updateChartData() {
 
     for (let i = pagesPerScreen - 1; i >= 0; i--) {
         const page = currentPage + i;
-        if (page > 60) continue;
+        if (page > 100) continue;
 
         const measurements = allMeasurements[page - 1];
         if (measurements) {
@@ -335,7 +335,7 @@ async function startChartUpdates() {
     initPagesPerScreenControl();
     
     // Инициализируем массив для хранения всех страниц
-    allMeasurements = new Array(60);
+    allMeasurements = new Array(100);
     
     // Первоначальная загрузка
     await loadPages(1);
