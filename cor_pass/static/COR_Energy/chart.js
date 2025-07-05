@@ -79,6 +79,9 @@ async function loadPages(startPage) {
         const pagePromises = [];
         for (let i = 0; i < pagesPerScreen; i++) {
             const page = startPage + i;
+            if (page <= 60) {
+                allMeasurements[page - 1] = undefined;
+            }
             if (page > 60) break; // Не превышаем максимальное количество страниц
             
             if (!allMeasurements[page - 1]) {
