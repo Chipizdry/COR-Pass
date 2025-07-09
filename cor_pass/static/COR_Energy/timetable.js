@@ -237,7 +237,13 @@ function renderTimeline() {
         // Расположение от низа в зависимости от порядкового номера
         const bottomPosition = 5 + (periodIndex * heightStep);
         periodElem.style.bottom = `${bottomPosition}%`;
-        
+        periodElem.setAttribute('data-tooltip', 
+            `Период ${index + 1}\n` +
+            `Начало: ${period.startHour}:${period.startMinute.toString().padStart(2, '0')}\n` +
+            `Длительность: ${period.durationHour}ч ${period.durationMinute}м\n` +
+            `Мощность: ${period.feedIn} кВт\n` +
+            `Заряд: ${period.chargeEnabled ? 'Вкл' : 'Выкл'}`
+        );
         // Клик по периоду прокручивает к соответствующей строке в таблице
         periodElem.addEventListener('click', () => {
             const rows = document.querySelectorAll('#scheduleTableBody tr');
@@ -248,6 +254,8 @@ function renderTimeline() {
                 }, 2500);
                 rows[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
+
+           
         });
         
         container.appendChild(periodElem);

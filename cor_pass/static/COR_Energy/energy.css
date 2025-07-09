@@ -561,3 +561,26 @@ footer {
     width: calc(100% / 24);
     text-align: center;
 }
+
+
+.timeline-period::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: pre;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s;
+    z-index: 10;
+}
+
+.timeline-period:hover::after {
+    opacity: 1;
+}
