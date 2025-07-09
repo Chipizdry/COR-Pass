@@ -15,7 +15,7 @@
                 startChartUpdates();
 
                 makeModalDraggable('batteryModal');
-             //   makeModalDraggable('inverterModal');
+                makeModalDraggable('RegistersModal');
                 makeModalDraggable('loadSettingsModal');
                 makeModalDraggable('GridSettingsModal');
                 makeModalDraggable('SolarModal');
@@ -25,6 +25,7 @@
                 const loadModal = document.getElementById('loadSettingsModal');
                 const GridModal = document.getElementById('GridSettingsModal');
                 const SolarPanelModal = document.getElementById('SolarModal');
+                const TestRegistersModal = document.getElementById('RegistersModal');
                 
                 // Получаем иконки
                 const batteryIcon = document.getElementById('batteryIcon');
@@ -39,6 +40,7 @@
                 const closeLoad = document.getElementById('closeLoadSettings');
                 const closeGrid = document.getElementById('closeGridSettings');
                 const closeSolar = document.getElementById('closeSolarModal');
+                const closeRegistersModal = document.getElementById('closeRegistersModal');
                
                 // Открытие модального окна для батареи
                 batteryIcon.onclick = function() {
@@ -514,4 +516,33 @@ function updateConnectionIndicator(errorCount) {
 
 
 
-
+async function testRegisters() {
+    const slaveId = document.getElementById('slave_id').value;
+    const startReg = document.getElementById('start_reg').value;
+    const endReg = document.getElementById('end_reg').value;
+    
+    if (parseInt(startReg) > parseInt(endReg)) {
+        alert("Начальный регистр должен быть меньше или равен конечному");
+        return;
+    }
+    
+    // Показываем загрузку
+    const modal = document.getElementById('RegistersModal');
+    const output = document.getElementById('register_results_output');
+    output.textContent = "Тестирование...";
+    modal.style.display = "block";
+    
+    try {
+        const response = await fetch(`/api/modbus/test_dynamic_ess_registers?start=${startReg}&end=${endReg}&unit_id=${slaveId}`);
+        const data = await response.json();
+        
+        let resultText = "";
+        for (const [reg, value] of Object.entries(data)) {
+            resultText += `${reg}: ${value}\n`;
+        }
+        
+        output.textContent = resultText;
+    } catch (error) {
+        output.textContent = `Ошибка: ${error.message}`;
+    }
+}

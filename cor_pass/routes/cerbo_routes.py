@@ -566,12 +566,13 @@ async def get_dynamic_ess_settings(request: Request):
 
 
 @router.get("/test_dynamic_ess_registers")
-async def test_dynamic_ess_registers(request: Request):
+async def test_dynamic_ess_registers(
+    request: Request,
+    start: int = Query(..., description="Начальный регистр"),
+    end: int = Query(..., description="Конечный регистр"),
+    unit_id: int = Query(100, description="Slave UID устройства")
+):
     client = request.app.state.modbus_client
-    unit_id = 100
-    start = 5420
-    end = 5429
-
     results = {}
 
     for reg in range(start, end + 1):

@@ -349,3 +349,215 @@ footer {
     font-size: 14px;
     font-style: italic;
 }
+
+.modal-results {
+    white-space: pre;
+    font-family: monospace;
+    background-color: #f8f8f8;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 15px;
+    overflow-x: auto;
+}
+
+
+.schedule-controls {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.schedule-table-container {
+    overflow-x: auto;
+}
+
+.schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: monospace;
+}
+
+.schedule-table th {
+    background-color: #f2f2f2;
+    position: sticky;
+    top: 0;
+    font-size: 12px;
+    height: 30px;
+    width: auto;
+    white-space: normal; /* Разрешаем перенос слов */
+    word-wrap: break-word; /* Перенос длинных слов */
+    word-break: break-word; /* Альтернативный вариант переноса */
+    padding: 8px 4px; /* Уменьшаем боковые отступы */
+    line-height: 1.3; /* Улучшаем читаемость при переносе */
+}
+
+/* Для ячеек с кнопками сохраняем nowrap */
+.schedule-table td {
+    white-space: nowrap;
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+
+
+.schedule-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.schedule-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+.time-input {
+    width: 30px;
+    text-align: center;
+}
+
+.kw-input {
+    width: 70px;
+}
+
+.percent-input {
+    width: 50px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 0 5px;
+    padding: 5px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 15px;
+}
+
+/* Стиль при наведении */
+.action-btn:hover {
+    transform: translateY(-1px);
+    background-color: none;  
+}
+
+/* Стиль при нажатии */
+.action-btn:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
+
+/* Стиль для активной кнопки (например, если она нажата/выбрана) */
+.action-btn.active {
+    background-color: white; 
+  /*  box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); */
+}
+
+/* Стиль для неактивной кнопки */
+.action-btn:disabled,
+.action-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Специфичные стили для кнопки сохранения */
+.save-btn {
+    color: #28a745;
+    background-color:white;
+}
+
+.save-btn:hover {
+    background-color:white;
+    transform: translateY(1px);
+}
+
+.save-btn:active {
+    transform: translateY(2px);
+}
+
+/* Специфичные стили для кнопки удаления */
+.delete-btn {
+    color: #dc3545;
+    background-color: none; 
+}
+
+.delete-btn:hover {
+ 
+    background-color:white;
+    transform: translateY(1px);
+}
+
+.delete-btn:active {
+    background-color:white;
+    transform: translateY(2px);
+}
+
+
+
+
+/* Стили для временной шкалы */
+.timeline-container {
+    margin-bottom: 20px;
+    background: #f8f8f8;
+    padding: 10px;
+    border-radius: 4px;
+}
+.timeline {
+    position: relative;
+    height: 80px; 
+    background: #fff;
+    border: 1px solid #ddd;
+    margin-bottom: 5px;
+}
+
+
+.timeline-ruler {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+    background: repeating-linear-gradient(
+        to right,
+        #eee,
+        #eee 1px,
+        transparent 1px,
+        transparent calc(100% / 24)
+    );
+}
+
+.timeline-periods {
+    position: relative;
+    height: 100%;
+}
+
+.timeline-period {
+    position: absolute;
+    height: 8px; 
+    border-radius: 3px;
+    opacity: 0.7;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.timeline-period:hover {
+    opacity: 1;
+    z-index: 2;
+}
+
+.timeline-hours {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #666;
+}
+
+.timeline-hour {
+    width: calc(100% / 24);
+    text-align: center;
+}

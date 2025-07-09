@@ -49,7 +49,8 @@ function prepareUIBeforeUpload() {
     let fileCount = 0;
   
     for (const file of fileInput.files) {
-      const fileExt = file.name.split('.').pop().toLowerCase();
+      const fileParts = file.name.split('.');
+      const fileExt = fileParts.length > 1 ? fileParts.pop().toLowerCase() : '';
       if (['', 'dcm', 'zip', 'svs'].includes(fileExt)) {
         formData.append('files', file);
         totalSize += file.size;

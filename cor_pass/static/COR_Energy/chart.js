@@ -268,8 +268,8 @@ function updateChartData() {
     let combinedBatteryPower = [];
     let combinedEssTotalInputPower = [];
 
-    console.log(`==== Обновление графика ====`);
-    console.log(`Текущий диапазон: страницы ${currentPage}–${currentPage + pagesPerScreen - 1}`);
+  //  console.log(`==== Обновление графика ====`);
+  //  console.log(`Текущий диапазон: страницы ${currentPage}–${currentPage + pagesPerScreen - 1}`);
 
     for (let i = pagesPerScreen - 1; i >= 0; i--) {
         const page = currentPage + i;
@@ -285,7 +285,7 @@ function updateChartData() {
                 essTotalInputPower
             } = processMeasurementsData(measurements);
     
-            console.log(`Страница ${page}: от ${labels[0]} до ${labels[labels.length - 1]}`);
+       //     console.log(`Страница ${page}: от ${labels[0]} до ${labels[labels.length - 1]}`);
 
             // Вставляем в конец — чтобы сохранить хронологию
             combinedLabels.push(...labels);
@@ -319,8 +319,8 @@ function updateChartData() {
     powerChart.options.scales.y.max = Math.ceil(maxPower / 10) * 10 + 5;
     powerChart.options.scales.y.min = Math.floor(minPower / 10) * 10 - 5;
 
-    console.log(`Всего точек: ${combinedLabels.length}`);
-    console.log(`==== Конец обновления ====\n`);
+   // console.log(`Всего точек: ${combinedLabels.length}`);
+   // console.log(`==== Конец обновления ====\n`);
 
     powerChart.update();
 }

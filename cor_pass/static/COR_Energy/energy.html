@@ -18,6 +18,7 @@
     <script src="/static/COR_Energy/scripts.js"></script>
     <script src="/static/COR_Energy/power-settings.js"></script>
     <script src="/static/COR_Energy/chart.js"></script>
+    <script src="/static/COR_Energy/timetable.js"></script>
     <script src="/static/COR_ID_Js/general_fun.js"></script>
   
 
@@ -377,7 +378,41 @@
             </div>
         </div>
 
+        <!-- Контент вкладки Расписание -->
         <div id="timetable" class="tabcontent">
+            <div class="schedule-controls">
+                <button onclick="toggleSchedule()" id="toggleScheduleBtn" class="btn">Отключить расписание</button>
+                <button onclick="addSchedulePeriod()" class="btn">+ Добавить период</button>
+            </div>
+            
+            <div class="schedule-table-container">
+                <table id="scheduleTable" class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Начало</th>
+                            <th>Длительность</th>
+                            <th>Конец</th>
+                            <th>Отдача в сеть (кВт)</th>
+                            <th>Уровень батареи (%)</th>
+                            <th>Заряд батареи</th>
+                            <th>Активен</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduleTableBody">
+                        <!-- Строки будут добавляться динамически -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="timeline-container">
+                <div class="timeline">
+                    <div class="timeline-ruler"></div>
+                    <div class="timeline-periods" id="timelinePeriods"></div>
+                </div>
+                <div class="timeline-hours" id="timelineHours"></div>
+            </div>
             
 
         </div>
@@ -394,6 +429,29 @@
                     <label><input type="radio" name="mode" value="4" onchange="setMode(this)"> Off</label>
                 </div>
               </div>
+
+              <h3>Тестирование регистров Modbus</h3>
+                    <div class="register-test-form">
+                        <div class="control-group">
+                            <label for="slave_id">Slave UID:</label>
+                            <input type="number" id="slave_id" value="100" min="1" max="247">
+                        </div>
+                        <div class="control-group">
+                            <label for="start_reg">Начальный регистр:</label>
+                            <input type="number" id="start_reg" value="800" min="0" max="65535">
+                        </div>
+                        <div class="control-group">
+                            <label for="end_reg">Конечный регистр:</label>
+                            <input type="number" id="end_reg" value="830" min="0" max="65535">
+                        </div>
+                        <button onclick="testRegisters()" class="btn">Тестировать</button>
+                    </div>
+                    
+               <!--    <div class="register-results">
+                        <h4>Результаты:</h4>
+                        <div id="register_results_output" style="white-space: pre; font-family: monospace;"></div>
+                    </div>--> 
+
               <div style="margin: 12px 0;">
                 <label for="gridLimitingSwitch" style="font-weight: bold;">Ограничение отдачи в сеть</label>
                 <label class="switch">
@@ -622,6 +680,16 @@
                 </template>
             </div>
 
+          <!-- Модальное окно чтения регистров -->
+            <div id="RegistersModal" class="modal" style="display:none;">
+                <div class="modal-header">
+                    <div class="modal-buttons">
+                      <button class="modal-button close" data-action="close" id="closeRegistersModal">✖</button>
+                     </div>
+                     <h3 style="margin-top:30; color:#291161;font-size: 17px;">Результаты чтения регистров</h3>
+                 </div> 
+                 <div id="register_results_output" class="modal-results"></div>
+            </div>
 
         <script>
 // Глобальные переменные
@@ -644,6 +712,39 @@
             let powerChart = null;
             let chartUpdateInterval = null;
 
+
+            let scheduleEnabled = true;
+            let schedulePeriods = [
+                // Пример данных
+                {
+                    id: 1,
+                    startHour: 8,
+                    startMinute: 0,
+                    durationHour: 4,
+                    durationMinute: 0,
+                    feedIn: 2.5,
+                    batteryLevel: 70,
+                    chargeEnabled: true,
+                    active: true
+                },
+                {
+                    id: 2,
+                    startHour: 14,
+                    startMinute: 30,
+                    durationHour: 2,
+                    durationMinute: 30,
+                    feedIn: 1.0,
+                    batteryLevel: 50,
+                    chargeEnabled: false,
+                    active: true
+                }
+            ];
+
+            const periodColors = [
+                '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', 
+                '#E91E63', '#00BCD4', '#8BC34A', '#FF5722',
+                '#607D8B', '#795548'
+            ];
 
         const modeNames = {
             1: "Charger Only",
