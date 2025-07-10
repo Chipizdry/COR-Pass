@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query,Request
 import logging
 import json
 from typing import Optional
-
+from pydantic import BaseModel 
 from cor_pass.repository.cerbo_service import BATTERY_ID, ESS_UNIT_ID, INVERTER_ID, REGISTERS, decode_signed_16, decode_signed_32, get_device_measurements_paginated, get_modbus_client, register_modbus_error
 from cor_pass.schemas import CerboMeasurementResponse, EssAdvancedControl, GridLimitUpdate, PaginatedResponse, VebusSOCControl
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,6 +17,28 @@ error_count = 0
 
 # Создание роутера FastAPI
 router = APIRouter(prefix="/modbus", tags=["Modbus"])
+schedules_storage = {
+    "schedule_enabled": True,
+    "periods": []
+}
+
+
+
+class SchedulePeriod(BaseModel):
+    id: int
+    startHour: int
+    startMinute: int
+    durationHour: int
+    durationMinute: int
+    feedIn: float
+    batteryLevel: int
+    chargeEnabled: bool
+    active: bool
+
+class ScheduleData(BaseModel):
+    scheduleEnabled: bool
+    periods: list[SchedulePeriod]
+
 
 
 
@@ -623,3 +645,41 @@ async def read_measurements(
         page_size=page_size,
         total_pages=total_pages
     )
+
+
+
+
+
+@router.post("/schedule/save")
+async def save_schedule(schedule_data: ScheduleData):
+    """
+    Сохраняет расписание работы системы (может принимать один или несколько периодов).
+    """
+    try:
+        # Обновляем хранилище - добавляем/обновляем полученные периоды
+        schedules_storage["schedule_enabled"] = schedule_data.scheduleEnabled
+        
+        for period in schedule_data.periods:
+            # Находим индекс существующего периода с таким id
+            existing_index = next(
+                (i for i, p in enumerate(schedules_storage["periods"]) 
+                if p["id"] == period.id), 
+                None
+            )
+            
+            if existing_index is not None:
+                # Обновляем существующий период
+                schedules_storage["periods"][existing_index] = period.dict()
+            else:
+                # Добавляем новый период
+                schedules_storage["periods"].append(period.dict())
+        
+        logger.info(f"Период(ы) расписания сохранены. Активно: {schedule_data.scheduleEnabled}")
+        logger.info(f"Количество полученных периодов: {len(schedule_data.periods)}")
+        logger.debug("Детали периодов:", json.dumps([p.dict() for p in schedule_data.periods], indent=2))
+        
+        return {"status": "success", "message": "Период(ы) успешно сохранены"}
+    
+    except Exception as e:
+        logger.error(f"Ошибка сохранения периода(ов): {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Ошибка при сохранении периода(ов)")

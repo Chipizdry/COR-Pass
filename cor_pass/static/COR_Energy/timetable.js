@@ -53,13 +53,13 @@ function renderScheduleTable() {
                     onchange="updateSchedulePeriod(${period.id}, 'batteryLevel', this.value)">
             </td>
             <td>
-                <select class="toggle-active" onchange="updateSchedulePeriod(${period.id}, 'chargeEnabled', this.value === 'true')">
+                <select class="toggle-active" onchange="updateSchedulePeriod(${period.id}, 'chargeEnabled', this.value)">
                     <option value="true" ${period.chargeEnabled ? 'selected' : ''}>Вкл</option>
                     <option value="false" ${!period.chargeEnabled ? 'selected' : ''}>Выкл</option>
                 </select>
             </td>
             <td>
-                <select class="toggle-active" onchange="updateSchedulePeriod(${period.id}, 'active', this.value === 'true')">
+                <select class="toggle-active" onchange="updateSchedulePeriod(${period.id}, 'active', this.value)">
                     <option value="true" ${period.active ? 'selected' : ''}>Вкл</option>
                     <option value="false" ${!period.active ? 'selected' : ''}>Выкл</option>
                 </select>
@@ -75,7 +75,7 @@ function renderScheduleTable() {
     
     // Обновляем состояние кнопки включения/отключения расписания
     document.getElementById('toggleScheduleBtn').textContent = 
-        scheduleEnabled ? 'Отключить расписание' : 'Включить расписание';
+        scheduleEnabled ? 'Ручной' : 'Авто';
         renderTimeline(); 
 }
 
@@ -117,7 +117,7 @@ function addSchedulePeriod() {
         feedIn: 0,
         batteryLevel: 50,
         chargeEnabled: true,
-        active: true
+        active: false
     };
     
     schedulePeriods.push(newPeriod);
@@ -131,24 +131,29 @@ function updateSchedulePeriod(id, field, value) {
     
     // Преобразуем значение в нужный тип
     let convertedValue;
-    if (field === 'chargeEnabled' || field === 'active') {
-        convertedValue = value === 'true';
-    } else {
-        convertedValue = Number(value);
-    }
     
-    // Валидация значений
-    if (field === 'startHour' && (convertedValue < 0 || convertedValue > 23)) {
-        return;
-    }
-    if ((field === 'startMinute' || field === 'durationMinute') && (convertedValue < 0 || convertedValue > 59)) {
-        return;
-    }
-    if (field === 'durationHour' && convertedValue < 0) {
-        return;
-    }
-    if (field === 'batteryLevel' && (convertedValue < 0 || convertedValue > 100)) {
-        return;
+    // Для полей типа boolean (select)
+    if (field === 'chargeEnabled' || field === 'active') {
+        convertedValue = value === 'true' || value === true;
+    } 
+    // Для числовых полей
+    else {
+        convertedValue = Number(value);
+        
+        // Валидация значений
+        if (field === 'startHour' && (convertedValue < 0 || convertedValue > 23)) {
+            return;
+        }
+        if ((field === 'startMinute' || field === 'durationMinute') && 
+            (convertedValue < 0 || convertedValue > 59)) {
+            return;
+        }
+        if (field === 'durationHour' && convertedValue < 0) {
+            return;
+        }
+        if (field === 'batteryLevel' && (convertedValue < 0 || convertedValue > 100)) {
+            return;
+        }
     }
     
     period[field] = convertedValue;
@@ -159,12 +164,62 @@ function saveSchedulePeriod(id) {
     const period = schedulePeriods.find(p => p.id === id);
     if (!period) return;
     
-    // Здесь должна быть логика отправки данных на сервер
-    console.log('Сохранение периода:', period);
+    // Подготовка данных для отправки - только один период
+    const dataToSend = {
+        scheduleEnabled: scheduleEnabled,
+        periods: [{
+            id: period.id,
+            startHour: period.startHour,
+            startMinute: period.startMinute,
+            durationHour: period.durationHour,
+            durationMinute: period.durationMinute,
+            feedIn: period.feedIn,
+            batteryLevel: period.batteryLevel,
+            chargeEnabled: period.chargeEnabled,
+            active: period.active
+        }]
+    };
     
-    // После успешного сохранения можно обновить таблицу
-    renderScheduleTable();
-    alert('Период сохранен успешно!');
+    // Отправка данных на сервер
+    fetch('/api/modbus/schedule/save', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToSend)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Ошибка сети');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Успешно сохранено:', data);
+        renderScheduleTable();
+        showNotification('Период успешно сохранен', 'success');
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        showNotification('Ошибка при сохранении периода', 'error');
+    });
+}
+
+// Функция для показа уведомлений
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Автоматическое скрытие через 3 секунды
+    setTimeout(() => {
+        notification.classList.add('fade-out');
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 500);
+    }, 3000);
 }
 
 // Удаление периода
@@ -263,6 +318,3 @@ function renderTimeline() {
     });
 }
 
-
-
-    
