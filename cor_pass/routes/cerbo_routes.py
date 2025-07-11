@@ -17,11 +17,16 @@ error_count = 0
 
 # Создание роутера FastAPI
 router = APIRouter(prefix="/modbus", tags=["Modbus"])
+
 schedules_storage = {
     "schedule_enabled": True,
     "periods": []
 }
 
+class RegisterWriteRequest(BaseModel):
+    slave_id: int
+    register: int
+    value: int
 
 
 class SchedulePeriod(BaseModel):
@@ -610,6 +615,32 @@ async def test_dynamic_ess_registers(
             results[str(reg)] = f"💥 Exception: {str(e)}"
 
     return results
+
+
+@router.post("/write_register")
+async def write_register(request_data: RegisterWriteRequest, request: Request):
+    """
+    Записывает значение в указанный регистр Modbus.
+    """
+    try:
+        client = request.app.state.modbus_client
+        
+        # Записываем значение в регистр
+        result = await client.write_register(
+            address=request_data.register,
+            value=request_data.value,
+            slave=request_data.slave_id
+        )
+        
+        if result.isError():
+            raise HTTPException(status_code=500, detail="Ошибка записи регистра")
+            
+        return {"status": "success", "register": request_data.register, "value": request_data.value}
+        
+    except Exception as e:
+        register_modbus_error()
+        logging.error(f"❗ Ошибка записи регистра {request_data.register}", exc_info=e)
+        raise HTTPException(status_code=500, detail="Modbus ошибка")
 
 
 @router.get(

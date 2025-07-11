@@ -546,3 +546,45 @@ async function testRegisters() {
         output.textContent = `Ошибка: ${error.message}`;
     }
 }
+
+
+async function writeRegister() {
+    const slaveId = document.getElementById('slave_id').value;
+    const register = document.getElementById('register_to_write').value;
+    const value = document.getElementById('register_value').value;
+    
+    if (!slaveId || !register || !value) {
+        alert("Все поля должны быть заполнены");
+        return;
+    }
+    
+    // Показываем загрузку
+    const modal = document.getElementById('RegistersModal');
+    const output = document.getElementById('register_results_output');
+    output.textContent = "Запись регистра...";
+    modal.style.display = "block";
+    
+    try {
+        const response = await fetch(`/api/modbus/write_register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                slave_id: parseInt(slaveId),
+                register: parseInt(register),
+                value: parseInt(value)
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            output.textContent = `Успешно записано:\nРегистр ${register}: ${value}\nSlave ID: ${slaveId}`;
+        } else {
+            output.textContent = `Ошибка: ${data.detail || 'Неизвестная ошибка'}`;
+        }
+    } catch (error) {
+        output.textContent = `Ошибка: ${error.message}`;
+    }
+}

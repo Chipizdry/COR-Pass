@@ -1,0 +1,284 @@
+
+
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/styles.css">
+    <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/modal.css">
+    <link rel="stylesheet" type="text/css" href="/static/Printing/printers.css">
+    <title>Управление устройствами</title>
+    
+</head>
+<body>
+    <h1>Управление устройствами печати</h1>
+    
+    <div class="print-container">
+        <button id="devicesBtn">Устройства и принтеры стёкол</button>
+        <button id="testBtn">Тест</button>
+        <button id="addDeviceBtn">Добавить устройство</button>
+    </div>
+    
+    <div id="printerStatus" class="status-indicator">Статус принтера: проверка...</div>
+    
+    <!-- Модальное окно для устройств и принтеров -->
+    <div id="devicesModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Устройства и принтеры стёкол</h2>
+            <div id="devicesList">
+                <!-- Здесь будет список устройств -->
+                <p>Список устройств загружается...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно для теста -->
+    <div id="testModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Тест печати</h2>
+            <div class="form-group">
+                <label for="printerIp">IP принтера:</label>
+                <input type="text" id="printerIp" value="192.168.154.209">
+            </div>
+            <button id="sendLabelButton">Отправить тестовую метку</button>
+            <div id="testResult" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно для добавления устройства -->
+    <div id="addDeviceModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Добавить новое устройство</h2>
+            <div class="form-group">
+                <label for="deviceType">Тип устройства:</label>
+                <select id="deviceType" required>
+                    <option value="">Выберите тип</option>
+                    <option value="printer">Принтер</option>
+                    <option value="scanner">Сканер</option>
+                    <option value="other">Другое</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="deviceId">ID устройства (0-65535):</label>
+                <input type="number" id="deviceId" min="0" max="65535" required>
+            </div>
+            <div class="form-group">
+                <label for="deviceIp">IP-адрес:</label>
+                <input type="text" id="deviceIp" required>
+            </div>
+            <div class="form-group">
+                <label for="deviceLocation">Местоположение:</label>
+                <input type="text" id="deviceLocation">
+            </div>
+            <button onclick="addDevice()">Добавить устройство</button>
+            <div id="addDeviceResult" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+
+
+    <script>
+        const PRINTER_IP = "192.168.154.209"; // IP-адрес по умолчанию
+        
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Открытие модальных окон
+            document.getElementById('devicesBtn').onclick = function() {
+                document.getElementById('devicesModal').style.display = 'block';
+                // Здесь можно добавить загрузку списка устройств
+            }
+            
+            document.getElementById('testBtn').onclick = function() {
+                document.getElementById('testModal').style.display = 'block';
+            }
+            
+            document.getElementById('addDeviceBtn').onclick = function() {
+                document.getElementById('addDeviceModal').style.display = 'block';
+            }
+            
+            // Закрытие модальных окон при клике на крестик
+            const closeButtons = document.getElementsByClassName('close');
+            for (let i = 0; i < closeButtons.length; i++) {
+                closeButtons[i].onclick = function() {
+                    this.closest('.modal').style.display = 'none';
+                }
+            }
+            
+            // Закрытие модальных окон при клике вне окна
+            window.onclick = function(event) {
+                if (event.target.className === 'modal') {
+                    event.target.style.display = 'none';
+                }
+            }
+            
+            // Инициализация мониторинга принтера
+            startPrinterMonitoring();
+       // Обработчик кнопки печати тестовой метки
+       document.getElementById('sendLabelButton').addEventListener('click', async () => {
+                const testResult = document.getElementById('testResult');
+                testResult.textContent = 'Отправка задания на печать...';
+                testResult.style.color = 'black';
+                
+                const apiUrl = '/api/print_labels'; 
+                const printerIp = document.getElementById('printerIp').value.trim() || PRINTER_IP;
+                
+                const requestData = {
+                    labels: [
+                        {
+                            model_id: 8,
+                            content: "FF|S24B0460|A|1|L0|H&E|?|TDAJ92Z7-1983M",
+                            uuid: Date.now().toString()  
+                        }
+                    ]
+                };
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.detail || 'Unknown error');
+                    }
+
+                    const result = await response.json();
+                    console.log('Печать успешна:', result);
+                    testResult.textContent = 'Задание успешно отправлено на принтер';
+                    testResult.style.color = 'green';
+                } catch (error) {
+                    console.error('Ошибка:', error);
+                    testResult.textContent = 'Ошибка при печати: ' + error.message;
+                    testResult.style.color = 'red';
+                }
+            });
+        });
+        
+        // Функция проверки доступности принтера
+        async function checkPrinterAvailability(ip = PRINTER_IP) {
+            try {
+                console.log(`[checkPrinterAvailability] Проверка IP: ${ip}`);
+                const response = await fetch(`/api/check_printer?ip=${encodeURIComponent(ip)}`);
+                console.log(`[checkPrinterAvailability] HTTP статус: ${response.status}`);
+
+                const data = await response.json();
+                console.log(`[checkPrinterAvailability] Ответ от сервера:`, data);
+
+                return data.available;
+            } catch (error) {
+                console.error('[checkPrinterAvailability] Ошибка запроса:', error);
+                return false;
+            }
+        }
+        
+        // Функция мониторинга состояния принтера
+        function startPrinterMonitoring() {
+            const statusElement = document.getElementById('printerStatus');
+            const ipInput = document.getElementById('printerIp');
+
+            setInterval(async () => {
+                const ip = ipInput ? ipInput.value.trim() : PRINTER_IP;
+                console.log(`[startPrinterMonitoring] Текущий IP: ${ip}`);
+
+                const isAvailable = await checkPrinterAvailability(ip);
+
+                console.log(`[startPrinterMonitoring] Статус принтера: ${isAvailable ? 'доступен' : 'недоступен'}`);
+
+                statusElement.textContent = isAvailable ? 'Принтер доступен' : 'Принтер недоступен';
+                statusElement.style.color = isAvailable ? 'green' : 'red';
+            }, 2000);
+        }
+        
+        // Функция добавления нового устройства
+        async function addDevice() {
+            const resultElement = document.getElementById('addDeviceResult');
+            resultElement.textContent = '';
+            
+            // Получаем значения из полей формы
+            const deviceType = document.getElementById('deviceType').value;
+            const deviceId = document.getElementById('deviceId').value;
+            const deviceIp = document.getElementById('deviceIp').value;
+            const deviceLocation = document.getElementById('deviceLocation').value;
+
+            // Проверяем обязательные поля
+            if (!deviceType || !deviceId || !deviceIp) {
+                resultElement.textContent = 'Пожалуйста, заполните все обязательные поля';
+                resultElement.style.color = 'red';
+                return;
+            }
+
+            // Проверяем валидность ID устройства
+            const idNumber = parseInt(deviceId);
+            if (isNaN(idNumber) || idNumber < 0 || idNumber > 65535) {
+                resultElement.textContent = 'ID устройства должен быть числом от 0 до 65535';
+                resultElement.style.color = 'red';
+                return;
+            }
+
+            // Подготавливаем данные для отправки
+            const deviceData = {
+                device_class: deviceType,
+                device_identifier: deviceId,
+                ip_address: deviceIp,
+                subnet_mask: "255.255.255.0", // По умолчанию
+                gateway: "0.0.0.0", // По умолчанию
+                port: 0, // По умолчанию
+                comment: "", // Пока пустое
+                location: deviceLocation || "" // Если не указано - пустая строка
+            };
+
+            try {
+                resultElement.textContent = 'Добавление устройства...';
+                resultElement.style.color = 'black';
+                
+                // Отправляем запрос на сервер
+                const response = await fetch('/api/printing_devices/', {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    },
+                    body: JSON.stringify(deviceData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Ошибка HTTP: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Устройство успешно добавлено:', result);
+                resultElement.textContent = 'Устройство успешно добавлено!';
+                resultElement.style.color = 'green';
+                
+                // Очищаем форму
+                document.getElementById('deviceType').value = '';
+                document.getElementById('deviceId').value = '';
+                document.getElementById('deviceIp').value = '';
+                document.getElementById('deviceLocation').value = '';
+                
+                // Закрываем модальное окно через 2 секунды
+                setTimeout(() => {
+                    document.getElementById('addDeviceModal').style.display = 'none';
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Ошибка при добавлении устройства:', error);
+                resultElement.textContent = 'Произошла ошибка при добавлении устройства: ' + error.message;
+                resultElement.style.color = 'red';
+            }
+        }
+
+            </script>            
+
+</body>
+</html>

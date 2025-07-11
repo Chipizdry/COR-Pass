@@ -429,8 +429,8 @@
                     <label><input type="radio" name="mode" value="4" onchange="setMode(this)"> Off</label>
                 </div>
               </div>
-
-              <h3>Тестирование регистров Modbus</h3>
+                <div class="register-test-container">
+                 <h3>Тестирование регистров Modbus</h3>
                     <div class="register-test-form">
                         <div class="control-group">
                             <label for="slave_id">Slave UID:</label>
@@ -446,11 +446,19 @@
                         </div>
                         <button onclick="testRegisters()" class="btn">Тестировать</button>
                     </div>
-                    
-               <!--    <div class="register-results">
-                        <h4>Результаты:</h4>
-                        <div id="register_results_output" style="white-space: pre; font-family: monospace;"></div>
-                    </div>--> 
+
+                    <div class="register-test-form">
+                        <div class="control-group">
+                            <label for="register_to_write">Регистр:</label>
+                            <input type="number" id="register_to_write" min="0" max="65535">
+                        </div>
+                        <div class="control-group">
+                            <label for="register_value">Значение:</label>
+                            <input type="number" id="register_value" min="0" max="65535">
+                        </div>
+                        <button onclick="writeRegister()" class="btn">Записать</button>
+                    </div> 
+                </div>         
 
               <div style="margin: 12px 0;">
                 <label for="gridLimitingSwitch" style="font-weight: bold;">Ограничение отдачи в сеть</label>

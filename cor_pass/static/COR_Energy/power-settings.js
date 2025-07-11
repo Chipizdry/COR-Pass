@@ -321,7 +321,7 @@ function updateEssAdvancedDisplay(data) {
     document.getElementById("charge_voltage").textContent = data.max_charge_voltage + " В";
     document.getElementById("input1_src").textContent = formatInputSource(data.ac_input_1_source);
     document.getElementById("input2_src").textContent = formatInputSource(data.ac_input_2_source);
-
+   // console.log("Ограничение выдачи:",data.grid_limiting_status);
 }
 
 function formatInputSource(code) {
