@@ -4,9 +4,18 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
     testResult.textContent = 'Отправка задания на печать...';
     testResult.style.color = 'black';
     
-    const apiUrl = '/api/print_labels'; 
     const printerIp = document.getElementById('printerIp').value.trim();
     const templateId = document.getElementById('template').value;
+    
+    // Получаем значения всех полей
+    const clinicId = document.getElementById('clinicId').value.trim();
+    const caseCode = document.getElementById('caseCode').value.trim();
+    const sampleNumber = document.getElementById('sampleNumber').value.trim();
+    const cassetteNumber = document.getElementById('cassetteNumber').value.trim();
+    const glassNumber = document.getElementById('glassNumber').value.trim();
+    const staining = document.getElementById('staining').value.trim();
+    const hopperNumber = document.getElementById('hopperNumber').value.trim();
+    const patientCorId = document.getElementById('patientCorId').value.trim();
     
     // Проверка обязательных полей
     if (!printerIp) {
@@ -23,23 +32,35 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
         return;
     }
 
+    // Формируем строку content из всех параметров
+    const content = [
+        clinicId,
+        caseCode,
+        sampleNumber,
+        cassetteNumber,
+        glassNumber,
+        staining,
+        hopperNumber,
+        patientCorId
+    ].join('|');
+
     const requestData = {
-        printer_ip: printerIp, // IP передается для маршрутизации на сервере
+        printer_ip: printerIp,
         labels: [
             {
-                model_id: templateNumber, // Используем значение из поля ввода
-                content: "FF|S24B0460|A|1|L0|H&E|?|TDAJ92Z7-1983M",
+                model_id: templateNumber,
+                content: content,
                 uuid: Date.now().toString()  
             }
         ]
     };
 
     try {
-        const response = await fetch(apiUrl, {
+        const response = await fetch('/api/print_labels', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + getToken() // Если требуется авторизация
+                'Authorization': 'Bearer ' + getToken()
             },
             body: JSON.stringify(requestData)
         });
