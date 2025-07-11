@@ -1,5 +1,4 @@
 
-
 document.getElementById('sendLabelButton').addEventListener('click', async () => {
     const testResult = document.getElementById('testResult');
     testResult.textContent = 'Отправка задания на печать...';
@@ -7,18 +6,28 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
     
     const apiUrl = '/api/print_labels'; 
     const printerIp = document.getElementById('printerIp').value.trim();
+    const templateId = document.getElementById('template').value;
     
+    // Проверка обязательных полей
     if (!printerIp) {
         testResult.textContent = 'Ошибка: Не указан IP-адрес принтера';
         testResult.style.color = 'red';
         return;
     }
+    
+    // Проверка валидности номера шаблона
+    const templateNumber = parseInt(templateId);
+    if (isNaN(templateNumber) || templateNumber < 0 || templateNumber > 65535) {
+        testResult.textContent = 'Ошибка: Номер шаблона должен быть числом от 0 до 65535';
+        testResult.style.color = 'red';
+        return;
+    }
 
     const requestData = {
-        printer_ip: printerIp, // Добавляем IP в запрос
+        printer_ip: printerIp, // IP передается для маршрутизации на сервере
         labels: [
             {
-                model_id: 8,
+                model_id: templateNumber, // Используем значение из поля ввода
                 content: "FF|S24B0460|A|1|L0|H&E|?|TDAJ92Z7-1983M",
                 uuid: Date.now().toString()  
             }
@@ -30,6 +39,7 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + getToken() // Если требуется авторизация
             },
             body: JSON.stringify(requestData)
         });
@@ -41,7 +51,7 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
 
         const result = await response.json();
         console.log('Печать успешна:', result);
-        testResult.textContent = 'Задание успешно отправлено на принтер ' + printerIp;
+        testResult.textContent = `Задание отправлено (IP: ${printerIp}, Шаблон: ${templateNumber})`;
         testResult.style.color = 'green';
     } catch (error) {
         console.error('Ошибка:', error);
@@ -49,7 +59,6 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
         testResult.style.color = 'red';
     }
 });
-
 
 
     // Функция проверки доступности принтера
