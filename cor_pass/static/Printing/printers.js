@@ -1,5 +1,4 @@
 
-const PRINTER_IP = "192.168.154.209"; // Здесь вы можете задать или получить IP-адрес
 
 
 
@@ -41,101 +40,189 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
 
 
 
+    // Функция проверки доступности принтера
+    async function checkPrinterAvailability(ip = PRINTER_IP) {
+        try {
+            console.log(`[checkPrinterAvailability] Проверка IP: ${ip}`);
+            const response = await fetch(`/api/check_printer?ip=${encodeURIComponent(ip)}`);
+            console.log(`[checkPrinterAvailability] HTTP статус: ${response.status}`);
+
+            const data = await response.json();
+            console.log(`[checkPrinterAvailability] Ответ от сервера:`, data);
+
+            return data.available;
+        } catch (error) {
+            console.error('[checkPrinterAvailability] Ошибка запроса:', error);
+            return false;
+        }
+    }
+    
+    // Функция мониторинга состояния принтера
+    function startPrinterMonitoring() {
+        const statusElement = document.getElementById('printerStatus');
+        const ipInput = document.getElementById('printerIp');
+
+        setInterval(async () => {
+            const ip = ipInput ? ipInput.value.trim() : PRINTER_IP;
+            console.log(`[startPrinterMonitoring] Текущий IP: ${ip}`);
+
+            const isAvailable = await checkPrinterAvailability(ip);
+
+            console.log(`[startPrinterMonitoring] Статус принтера: ${isAvailable ? 'доступен' : 'недоступен'}`);
+
+            statusElement.textContent = isAvailable ? 'Принтер доступен' : 'Принтер недоступен';
+            statusElement.style.color = isAvailable ? 'green' : 'red';
+        }, 2000);
+    }
+    
+
+    // Функция добавления нового устройства
+    async function addDevice() {
+        const resultElement = document.getElementById('addDeviceResult');
+        resultElement.textContent = '';
+        
+        // Получаем значения из полей формы
+        const deviceType = document.getElementById('deviceType').value;
+        const deviceId = document.getElementById('deviceId').value;
+        const deviceIp = document.getElementById('deviceIp').value;
+        const deviceLocation = document.getElementById('deviceLocation').value;
+
+        // Проверяем обязательные поля
+        if (!deviceType || !deviceId || !deviceIp) {
+            resultElement.textContent = 'Пожалуйста, заполните все обязательные поля';
+            resultElement.style.color = 'red';
+            return;
+        }
+
+        // Проверяем валидность ID устройства
+        const idNumber = parseInt(deviceId);
+        if (isNaN(idNumber) || idNumber < 0 || idNumber > 65535) {
+            resultElement.textContent = 'ID устройства должен быть числом от 0 до 65535';
+            resultElement.style.color = 'red';
+            return;
+        }
+
+        // Подготавливаем данные для отправки
+        const deviceData = {
+            device_class: deviceType,
+            device_identifier: deviceId,
+            ip_address: deviceIp,
+            subnet_mask: "255.255.255.0", // По умолчанию
+            gateway: "0.0.0.0", // По умолчанию
+            port: 0, // По умолчанию
+            comment: "", // Пока пустое
+            location: deviceLocation || "" // Если не указано - пустая строка
+        };
+
+        try {
+            resultElement.textContent = 'Добавление устройства...';
+            resultElement.style.color = 'black';
+            
+            // Отправляем запрос на сервер
+            const response = await fetch('/api/printing_devices/', {
+                method: 'POST',
+                headers: {
+                    'accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
+                body: JSON.stringify(deviceData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Ошибка HTTP: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log('Устройство успешно добавлено:', result);
+            resultElement.textContent = 'Устройство успешно добавлено!';
+            resultElement.style.color = 'green';
+            
+            // Очищаем форму
+            document.getElementById('deviceType').value = '';
+            document.getElementById('deviceId').value = '';
+            document.getElementById('deviceIp').value = '';
+            document.getElementById('deviceLocation').value = '';
+            
+            // Закрываем модальное окно через 2 секунды
+            setTimeout(() => {
+                document.getElementById('addDeviceModal').style.display = 'none';
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Ошибка при добавлении устройства:', error);
+            resultElement.textContent = 'Произошла ошибка при добавлении устройства: ' + error.message;
+            resultElement.style.color = 'red';
+        }
+    }
 
 
-async function checkPrinterAvailability(ip = PRINTER_IP) {
+
+
+ // Функция для получения списка устройств и отображения в таблице
+async function loadDevicesList() {
+    const devicesListElement = document.getElementById('devicesList');
+    devicesListElement.innerHTML = '<p>Загрузка списка устройств...</p>';
+    
     try {
-        console.log(`[checkPrinterAvailability] Проверка IP: ${ip}`);
-        const response = await fetch(`/api/check_printer?ip=${encodeURIComponent(ip)}`);
-        console.log(`[checkPrinterAvailability] HTTP статус: ${response.status}`);
-
-        const data = await response.json();
-        console.log(`[checkPrinterAvailability] Ответ от сервера:`, data);
-
-        return data.available;
-    } catch (error) {
-        console.error('[checkPrinterAvailability] Ошибка запроса:', error);
-        return false;
-    }
-}
-
-function startPrinterMonitoring() {
-    const statusElement = document.getElementById('printerStatus');
-    const ipInput = document.getElementById('printerIp');
-
-    setInterval(async () => {
-        const ip = ipInput ? ipInput.value.trim() : PRINTER_IP;
-        console.log(`[startPrinterMonitoring] Текущий IP: ${ip}`);
-
-        const isAvailable = await checkPrinterAvailability(ip);
-
-        console.log(`[startPrinterMonitoring] Статус принтера: ${isAvailable ? 'доступен' : 'недоступен'}`);
-
-        statusElement.textContent = isAvailable ? 'Принтер доступен' : 'Принтер недоступен';
-        statusElement.style.color = isAvailable ? 'green' : 'red';
-    }, 2000);
-}
-
-
-async function addDevice() {
-    // Получаем значения из полей формы
-    const deviceType = document.getElementById('deviceType').value;
-    const deviceId = document.getElementById('deviceId').value;
-    const deviceIp = document.getElementById('deviceIp').value;
-    const deviceLocation = document.getElementById('deviceLocation').value;
-
-    // Проверяем обязательные поля
-    if (!deviceType || !deviceId || !deviceIp) {
-        alert('Пожалуйста, заполните все обязательные поля');
-        return;
-    }
-
-    // Проверяем валидность ID устройства
-    const idNumber = parseInt(deviceId);
-    if (isNaN(idNumber) || idNumber < 0 || idNumber > 65535) {
-        alert('ID устройства должен быть числом от 0 до 65535');
-        return;
-    }
-
-    // Подготавливаем данные для отправки
-    const deviceData = {
-        device_class: deviceType,
-        device_identifier: deviceId,
-        ip_address: deviceIp,
-        subnet_mask: "255.255.255.0", // По умолчанию
-        gateway: "0.0.0.0", // По умолчанию
-        port: 0, // По умолчанию
-        comment: "", // Пока пустое
-        location: deviceLocation || "" // Если не указано - пустая строка
-    };
-
-    try {
-        // Отправляем запрос на сервер
-        const response = await fetch('/api/printing_devices/', {
-            method: 'POST',
+       
+        const response = await fetch('/api/printing_devices/all', {
+            method: 'GET',
             headers: {
-                'accept': 'application/json',
                 'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-            },
-            body: JSON.stringify(deviceData)
+                'Authorization': 'Bearer ' + getToken()
+            }
         });
-
         if (!response.ok) {
             throw new Error(`Ошибка HTTP: ${response.status}`);
         }
-
-        const result = await response.json();
-        console.log('Устройство успешно добавлено:', result);
-        alert('Устройство успешно добавлено!');
         
-        // Закрываем модальное окно и обновляем список устройств
-        document.getElementById('addDeviceModal').style.display = 'none';
-        // Здесь можно вызвать функцию для обновления списка устройств
-        // например: refreshDevicesList();
+        const devices = await response.json();
+        
+        if (devices.length === 0) {
+            devicesListElement.innerHTML = '<p>Устройства не найдены</p>';
+            return;
+        }
+        
+        // Создаем HTML для таблицы
+        let tableHTML = `
+            <table class="devices-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Тип</th>
+                        <th>Идентификатор</th>
+                        <th>IP-адрес</th>
+                        <th>Местоположение</th>
+                        <th>Комментарий</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        // Добавляем строки для каждого устройства
+        devices.forEach(device => {
+            tableHTML += `
+                <tr>
+                    <td>${device.id}</td>
+                    <td>${device.device_class}</td>
+                    <td>${device.device_identifier}</td>
+                    <td>${device.ip_address}</td>
+                    <td>${device.location || '-'}</td>
+                    <td>${device.comment || '-'}</td>
+                </tr>
+            `;
+        });
+        
+        tableHTML += `
+                </tbody>
+            </table>
+        `;
+        
+        devicesListElement.innerHTML = tableHTML;
         
     } catch (error) {
-        console.error('Ошибка при добавлении устройства:', error);
-        alert('Произошла ошибка при добавлении устройства: ' + error.message);
+        console.error('Ошибка при загрузке списка устройств:', error);
+        devicesListElement.innerHTML = `<p style="color: red;">Ошибка при загрузке: ${error.message}</p>`;
     }
-}
+}   

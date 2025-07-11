@@ -1,16 +1,27 @@
 
 
-.close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
+.main-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-.close:hover {
-    color: black;
+
+.print-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 250px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #f8f9fa;
+    justify-content: center;
+    align-items: center;
+    border-radius: 30px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+
 
 .form-group {
     margin-bottom: 15px;
@@ -35,4 +46,38 @@ input, select {
     padding: 10px;
     border-radius: 4px;
     text-align: center;
+}
+
+.devices-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.devices-table th, .devices-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.devices-table th {
+    background-color: #f2f2f2;
+    position: sticky;
+    top: 0;
+}
+
+.devices-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.devices-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Стили для контейнера таблицы */
+#devicesList {
+    max-height: 70vh;
+    overflow-y: auto;
+    margin-top: 10px;
 }
