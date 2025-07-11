@@ -1,49 +1,10 @@
 
-document.getElementById('sendLabelButton').addEventListener('click', async () => {
-    const testResult = document.getElementById('testResult');
-    testResult.textContent = 'Отправка задания на печать...';
-    testResult.style.color = 'black';
-    
-    const printerIp = document.getElementById('printerIp').value.trim();
-    const templateId = document.getElementById('template').value;
-    
-    // Получаем значения всех полей
-    const clinicId = document.getElementById('clinicId').value.trim();
-    const caseCode = document.getElementById('caseCode').value.trim();
-    const sampleNumber = document.getElementById('sampleNumber').value.trim();
-    const cassetteNumber = document.getElementById('cassetteNumber').value.trim();
-    const glassNumber = document.getElementById('glassNumber').value.trim();
-    const staining = document.getElementById('staining').value.trim();
-    const hopperNumber = document.getElementById('hopperNumber').value.trim();
-    const patientCorId = document.getElementById('patientCorId').value.trim();
-    
-    // Проверка обязательных полей
-    if (!printerIp) {
-        testResult.textContent = 'Ошибка: Не указан IP-адрес принтера';
-        testResult.style.color = 'red';
-        return;
+async function printLabel(printerIp, templateNumber, content, resultElement = null) {
+    if (resultElement) {
+        resultElement.textContent = 'Отправка задания на печать...';
+        resultElement.style.color = 'black';
     }
     
-    // Проверка валидности номера шаблона
-    const templateNumber = parseInt(templateId);
-    if (isNaN(templateNumber) || templateNumber < 0 || templateNumber > 65535) {
-        testResult.textContent = 'Ошибка: Номер шаблона должен быть числом от 0 до 65535';
-        testResult.style.color = 'red';
-        return;
-    }
-
-    // Формируем строку content из всех параметров
-    const content = [
-        clinicId,
-        caseCode,
-        sampleNumber,
-        cassetteNumber,
-        glassNumber,
-        staining,
-        hopperNumber,
-        patientCorId
-    ].join('|');
-
     const requestData = {
         printer_ip: printerIp,
         labels: [
@@ -72,14 +33,25 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
 
         const result = await response.json();
         console.log('Печать успешна:', result);
-        testResult.textContent = `Задание отправлено (IP: ${printerIp}, Шаблон: ${templateNumber})`;
-        testResult.style.color = 'green';
+        
+        if (resultElement) {
+            resultElement.textContent = `Задание отправлено (IP: ${printerIp}, Шаблон: ${templateNumber})`;
+            resultElement.style.color = 'green';
+        }
+        
+        return result;
     } catch (error) {
         console.error('Ошибка:', error);
-        testResult.textContent = 'Ошибка при печати: ' + error.message;
-        testResult.style.color = 'red';
+        
+        if (resultElement) {
+            resultElement.textContent = 'Ошибка при печати: ' + error.message;
+            resultElement.style.color = 'red';
+        }
+        
+        throw error;
     }
-});
+}
+
 
 
     // Функция проверки доступности принтера
@@ -114,7 +86,7 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
 
             statusElement.textContent = isAvailable ? 'Принтер доступен' : 'Принтер недоступен';
             statusElement.style.color = isAvailable ? 'green' : 'red';
-        }, 2000);
+        }, 3000);
     }
     
 
@@ -128,6 +100,8 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
         const deviceId = document.getElementById('deviceId').value;
         const deviceIp = document.getElementById('deviceIp').value;
         const deviceLocation = document.getElementById('deviceLocation').value;
+        const deviceInfo = document.getElementById('deviceInformation').value;
+
 
         // Проверяем обязательные поля
         if (!deviceType || !deviceId || !deviceIp) {
@@ -152,7 +126,7 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
             subnet_mask: "255.255.255.0", // По умолчанию
             gateway: "0.0.0.0", // По умолчанию
             port: 0, // По умолчанию
-            comment: "", // Пока пустое
+            comment: deviceInfo || "", 
             location: deviceLocation || "" // Если не указано - пустая строка
         };
 
@@ -266,3 +240,51 @@ async function loadDevicesList() {
         devicesListElement.innerHTML = `<p style="color: red;">Ошибка при загрузке: ${error.message}</p>`;
     }
 }   
+
+
+// Обработчик для модального окна теста
+document.getElementById('sendLabelButton').addEventListener('click', async () => {
+    const testResult = document.getElementById('testResult');
+    
+    // Получаем значения из полей формы
+    const printerIp = document.getElementById('printerIp').value.trim();
+    const templateId = document.getElementById('template').value;
+    const clinicId = document.getElementById('clinicId').value.trim();
+    const caseCode = document.getElementById('caseCode').value.trim();
+    const sampleNumber = document.getElementById('sampleNumber').value.trim();
+    const cassetteNumber = document.getElementById('cassetteNumber').value.trim();
+    const glassNumber = document.getElementById('glassNumber').value.trim();
+    const staining = document.getElementById('staining').value.trim();
+    const hopperNumber = document.getElementById('hopperNumber').value.trim();
+    const patientCorId = document.getElementById('patientCorId').value.trim();
+    
+    // Проверка обязательных полей
+    if (!printerIp) {
+        testResult.textContent = 'Ошибка: Не указан IP-адрес принтера';
+        testResult.style.color = 'red';
+        return;
+    }
+    
+    // Проверка валидности номера шаблона
+    const templateNumber = parseInt(templateId);
+    if (isNaN(templateNumber) || templateNumber < 0 || templateNumber > 65535) {
+        testResult.textContent = 'Ошибка: Номер шаблона должен быть числом от 0 до 65535';
+        testResult.style.color = 'red';
+        return;
+    }
+
+    // Формируем строку content из всех параметров
+    const content = [
+        clinicId,
+        caseCode,
+        sampleNumber,
+        cassetteNumber,
+        glassNumber,
+        staining,
+        hopperNumber,
+        patientCorId
+    ].join('|');
+
+    // Используем универсальную функцию печати
+    await printLabel(printerIp, templateNumber, content, testResult);
+});

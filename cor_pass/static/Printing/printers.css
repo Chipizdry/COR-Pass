@@ -81,3 +81,34 @@ input, select {
     overflow-y: auto;
     margin: 20px;
 }
+
+
+.field-group {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    align-items: flex-end;
+}
+
+.field-group .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.field-group .form-group label {
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+
+.field-group .form-group input {
+    width: 100%;
+    padding: 6px;
+    font-size: 13px;
+}
+
+.divider {
+    width: 1px;
+    background-color: #ddd;
+    margin: 0 10px;
+    align-self: stretch;
+}

@@ -61,37 +61,44 @@
                 <input type="number" id="template" min="0" max="65535" required>
             </div>
 
-            <div class="form-group">
-                <label for="clinicId">Clinic ID:</label>
-                <input type="text" id="clinicId" value="FF">
+            <div class="field-group">
+                <div class="form-group">
+                    <label for="clinicId">Clinic ID:</label>
+                    <input type="text" id="clinicId" value="FF">
+                </div>
+                <div class="form-group">
+                    <label for="caseCode">Case Code:</label>
+                    <input type="text" id="caseCode" value="S24B0460">
+                </div>
+                <div class="form-group">
+                    <label for="sampleNumber">Sample:</label>
+                    <input type="text" id="sampleNumber" value="A">
+                </div>
+                <div class="divider"></div>
+                <div class="form-group">
+                    <label for="cassetteNumber">Cassette:</label>
+                    <input type="text" id="cassetteNumber" value="1">
+                </div>
+                <div class="form-group">
+                    <label for="glassNumber">Glass:</label>
+                    <input type="text" id="glassNumber" value="L0">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="caseCode">Case Code:</label>
-                <input type="text" id="caseCode" value="S24B0460">
-            </div>
-            <div class="form-group">
-                <label for="sampleNumber">Sample Number:</label>
-                <input type="text" id="sampleNumber" value="A">
-            </div>
-            <div class="form-group">
-                <label for="cassetteNumber">Cassette Number:</label>
-                <input type="text" id="cassetteNumber" value="1">
-            </div>
-            <div class="form-group">
-                <label for="glassNumber">Glass Number:</label>
-                <input type="text" id="glassNumber" value="L0">
-            </div>
-            <div class="form-group">
-                <label for="staining">Staining:</label>
-                <input type="text" id="staining" value="H&E">
-            </div>
-            <div class="form-group">
-                <label for="hopperNumber">Hopper Number:</label>
-                <input type="text" id="hopperNumber" value="?">
-            </div>
-            <div class="form-group">
-                <label for="patientCorId">Patient COR ID:</label>
-                <input type="text" id="patientCorId" value="TDAJ92Z7-1983M">
+        
+            <div class="field-group">
+                <div class="form-group">
+                    <label for="staining">Staining:</label>
+                    <input type="text" id="staining" value="H&E">
+                </div>
+                <div class="form-group">
+                    <label for="hopperNumber">Hopper:</label>
+                    <input type="text" id="hopperNumber" value="?">
+                </div>
+                <div class="divider"></div>
+                <div class="form-group" style="flex: 2;">
+                    <label for="patientCorId">Patient COR ID:</label>
+                    <input type="text" id="patientCorId" value="TDAJ92Z7-1983M">
+                </div>
             </div>
             <button id="sendLabelButton">Отправить тестовую метку</button>
             <div id="testResult" style="margin-top: 15px;"></div>
@@ -127,6 +134,10 @@
             <div class="form-group">
                 <label for="deviceLocation">Местоположение:</label>
                 <input type="text" id="deviceLocation">
+            </div>
+            <div class="form-group">
+                <label for="deviceLocation">Комментарий:</label>
+                <input type="text" id="deviceInformation">
             </div>
             <button onclick="addDevice()">Добавить устройство</button>
             <div id="addDeviceResult" style="margin-top: 15px;"></div>
