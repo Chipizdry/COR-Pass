@@ -79,5 +79,5 @@ input, select {
 #devicesList {
     max-height: 70vh;
     overflow-y: auto;
-    margin-top: 10px;
+    margin: 20px;
 }

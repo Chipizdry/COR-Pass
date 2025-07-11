@@ -2,7 +2,7 @@ import asyncio
 import platform
 from fastapi import APIRouter, HTTPException, Query
 import httpx
-
+from pydantic import BaseModel
 import logging
 
 from cor_pass.schemas import PrintRequest
@@ -14,14 +14,23 @@ router = APIRouter(tags=["Printer"])
 
 
 PRINTER_IP = "192.168.154.209"
+class LabelData(BaseModel):
+    model_id: int
+    content: str
+    uuid: str
+
+class PrintRequest(BaseModel):
+    printer_ip: str
+    labels: list[LabelData]
 
 
 @router.post("/print_labels")
 async def print_labels(data: PrintRequest):
-    printer_url = "http://192.168.154.209:8080/task/new"
+    printer_url = f"http://{data.printer_ip}:8080/task/new"
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(printer_url, json=data.dict())
+            # Отправляем только данные меток без IP
+            response = await client.post(printer_url, json={"labels": [label.dict() for label in data.labels]})
             if response.status_code == 200:
                 return {"success": True, "printer_response": response.text}
             else:

@@ -1,11 +1,21 @@
 
 
-
-
 document.getElementById('sendLabelButton').addEventListener('click', async () => {
-    const apiUrl = '/api/print_labels'; 
+    const testResult = document.getElementById('testResult');
+    testResult.textContent = 'Отправка задания на печать...';
+    testResult.style.color = 'black';
     
+    const apiUrl = '/api/print_labels'; 
+    const printerIp = document.getElementById('printerIp').value.trim();
+    
+    if (!printerIp) {
+        testResult.textContent = 'Ошибка: Не указан IP-адрес принтера';
+        testResult.style.color = 'red';
+        return;
+    }
+
     const requestData = {
+        printer_ip: printerIp, // Добавляем IP в запрос
         labels: [
             {
                 model_id: 8,
@@ -31,10 +41,12 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
 
         const result = await response.json();
         console.log('Печать успешна:', result);
-        alert('Задание отправлено на принтер');
+        testResult.textContent = 'Задание успешно отправлено на принтер ' + printerIp;
+        testResult.style.color = 'green';
     } catch (error) {
         console.error('Ошибка:', error);
-        alert('Ошибка при печати: ' + error.message);
+        testResult.textContent = 'Ошибка при печати: ' + error.message;
+        testResult.style.color = 'red';
     }
 });
 
@@ -189,7 +201,6 @@ async function loadDevicesList() {
             <table class="devices-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Тип</th>
                         <th>Идентификатор</th>
                         <th>IP-адрес</th>
@@ -204,7 +215,6 @@ async function loadDevicesList() {
         devices.forEach(device => {
             tableHTML += `
                 <tr>
-                    <td>${device.id}</td>
                     <td>${device.device_class}</td>
                     <td>${device.device_identifier}</td>
                     <td>${device.ip_address}</td>

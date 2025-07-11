@@ -54,7 +54,7 @@
            
             <div class="form-group">
                 <label for="printerIp">IP принтера:</label>
-                <input type="text" id="printerIp" value="192.168.154.209">
+                <input type="text" id="printerIp" value="192.168.154.192">
             </div>
             <button id="sendLabelButton">Отправить тестовую метку</button>
             <div id="testResult" style="margin-top: 15px;"></div>
@@ -100,7 +100,7 @@
     <script src="/static/COR_ID_Js/translation.js"></script>   
     <script src="/static/COR_ID_Js/general_fun.js"></script>  
     <script>
-        const PRINTER_IP = "192.168.154.209"; // IP-адрес по умолчанию
+        const PRINTER_IP = "192.168.154.192"; // IP-адрес по умолчанию
         
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
@@ -138,49 +138,8 @@
                 makeModalDraggable('testModal');
             // Инициализация мониторинга принтера
             startPrinterMonitoring();
-       // Обработчик кнопки печати тестовой метки
-       document.getElementById('sendLabelButton').addEventListener('click', async () => {
-                const testResult = document.getElementById('testResult');
-                testResult.textContent = 'Отправка задания на печать...';
-                testResult.style.color = 'black';
-                
-                const apiUrl = '/api/print_labels'; 
-                const printerIp = document.getElementById('printerIp').value.trim() || PRINTER_IP;
-                
-                const requestData = {
-                    labels: [
-                        {
-                            model_id: 8,
-                            content: "FF|S24B0460|A|1|L0|H&E|?|TDAJ92Z7-1983M",
-                            uuid: Date.now().toString()  
-                        }
-                    ]
-                };
+      
 
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(requestData)
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.detail || 'Unknown error');
-                    }
-
-                    const result = await response.json();
-                    console.log('Печать успешна:', result);
-                    testResult.textContent = 'Задание успешно отправлено на принтер';
-                    testResult.style.color = 'green';
-                } catch (error) {
-                    console.error('Ошибка:', error);
-                    testResult.textContent = 'Ошибка при печати: ' + error.message;
-                    testResult.style.color = 'red';
-                }
-            });
         });
         
     
