@@ -634,10 +634,21 @@
 
           <!--Модальное окно инвертора --> 
         <div id="inverterModal" class="modal" style="display:none;">
-            <div class="modal-content">
-                <span class="close" id="closeInverter">&times;</span>
-                <p>Информация о инверторе</p>
+            <div class="modal-header">
+                <div class="modal-buttons">
+                  <button class="modal-button close" data-action="close" id="closeInverterModal">✖</button>
+                 </div>
+                 <h3 style="margin-top:30; color:#291161;font-size: 17px;">Информация о инверторе</h3>
+            </div> 
+
+            <label for="InverterPowerSlider" style="font-weight: bold;">Мощность инвертора (Вт)</label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="range" id="InverterPowerSlider" min="-100000" max="100000" step="100" value="0" style="width: 250px;">
+                <span id="InverterSliderValue">0</span>
             </div>
+            <button id="saveInverterPower" onclick="saveInverterPower()" disabled>Сохранить</button>
+            <div id="InverterConfirmationMessage" style="margin-top: 10px; color: rgb(11, 226, 11); display: none;"></div>
+           
         </div>
 
         <!-- Модальное окно Солнечных панелей -->
@@ -709,7 +720,10 @@
             let feedInChangeTimeout = null;
             let isFeedInSliderChanged = false;
 
-           
+            let initialInverterPowerValue = 0;
+            let inverterChangeTimeout = null;
+            let inverterPowerChanged = false;
+            
             let lastPowerValue = 0;
 
             let currentPage = 1;
@@ -831,6 +845,29 @@ document.getElementById('feedInPowerSlider').addEventListener('input', function(
         showFeedInConfirmationMessage("Изменения не сохранены!!!", false);
     }, 4000);
 });
+
+
+
+document.getElementById('InverterPowerSlider').addEventListener('input', function () {
+    const newValue = this.value;
+    const saveButton = document.getElementById('saveInverterPower');
+    document.getElementById('InverterSliderValue').textContent = newValue;
+
+    isInverterSliderChanged = true;
+    saveButton.disabled = false;
+
+    if (inverterChangeTimeout) {
+        clearTimeout(inverterChangeTimeout);
+    }
+
+    inverterChangeTimeout = setTimeout(() => {
+        resetInverterSlider();
+        showInverterConfirmationMessage("Изменения не сохранены!!!", false);
+    }, 4000);
+});
+
+
+
 
 
         </script>

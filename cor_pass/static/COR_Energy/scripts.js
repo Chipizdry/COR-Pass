@@ -2,91 +2,92 @@
 
 
 
-            document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function() {
 
-                fetchEss().then(() => {
-                    document.getElementById('State_Of_Сharge').value = initialSocValue;
-                    document.getElementById('socSliderValue').textContent = initialSocValue;
-                });
+        fetchEss().then(() => {
+            document.getElementById('State_Of_Сharge').value = initialSocValue;
+            document.getElementById('socSliderValue').textContent = initialSocValue;
+        });
 
-                  // Инициализация графика мощности
-                initPowerChart();
-                
-                startChartUpdates();
+            // Инициализация графика мощности
+        initPowerChart();
+        
+        startChartUpdates();
 
-                makeModalDraggable('batteryModal');
-                makeModalDraggable('RegistersModal');
-                makeModalDraggable('loadSettingsModal');
-                makeModalDraggable('GridSettingsModal');
-                makeModalDraggable('SolarModal');
-            // Получаем элементы модальных окон
-                const batteryModal = document.getElementById('batteryModal');
-                const inverterModal = document.getElementById('inverterModal');
-                const loadModal = document.getElementById('loadSettingsModal');
-                const GridModal = document.getElementById('GridSettingsModal');
-                const SolarPanelModal = document.getElementById('SolarModal');
-                const TestRegistersModal = document.getElementById('RegistersModal');
-                
-                // Получаем иконки
-                const batteryIcon = document.getElementById('batteryIcon');
-                const inverterIcon = document.getElementById('inverterIcon');
-                const loadIcon = document.getElementById('loadIcon'); 
-                const gridIcon = document.getElementById('power-grid-icon');
-                const solarIcon = document.getElementById('SolarBatteryIcon');
-              
-                // Получаем кнопки закрытия модальных окон 
-                const closeBattery = document.getElementById('closeBattery');
-                const closeInverter = document.getElementById('closeInverter');
-                const closeLoad = document.getElementById('closeLoadSettings');
-                const closeGrid = document.getElementById('closeGridSettings');
-                const closeSolar = document.getElementById('closeSolarModal');
-                const closeRegistersModal = document.getElementById('closeRegistersModal');
-               
-                // Открытие модального окна для батареи
-                batteryIcon.onclick = function() {
-                    batteryModal.style.display = 'flex';
-                }
-                
-                // Открытие модального окна для инвертора
-                inverterIcon.onclick = function() {
-                    inverterModal.style.display = 'flex';
-                    
-                }
-                  // Открытие модального окна для нагрузки
-                loadIcon.onclick = function() {
-                    loadModal.style.display = 'flex';
-                }
+        makeModalDraggable('batteryModal');
+        makeModalDraggable('RegistersModal');
+        makeModalDraggable('loadSettingsModal');
+        makeModalDraggable('GridSettingsModal');
+        makeModalDraggable('SolarModal');
+        makeModalDraggable('inverterModal');
+    // Получаем элементы модальных окон
+        const batteryModal = document.getElementById('batteryModal');
+        const inverterModal = document.getElementById('inverterModal');
+        const loadModal = document.getElementById('loadSettingsModal');
+        const GridModal = document.getElementById('GridSettingsModal');
+        const SolarPanelModal = document.getElementById('SolarModal');
+        const TestRegistersModal = document.getElementById('RegistersModal');
+        
+        // Получаем иконки
+        const batteryIcon = document.getElementById('batteryIcon');
+        const inverterIcon = document.getElementById('inverterIcon');
+        const loadIcon = document.getElementById('loadIcon'); 
+        const gridIcon = document.getElementById('power-grid-icon');
+        const solarIcon = document.getElementById('SolarBatteryIcon');
+        
+        // Получаем кнопки закрытия модальных окон 
+        const closeBattery = document.getElementById('closeBattery');
+        const closeInverter = document.getElementById('closeInverterModal');
+        const closeLoad = document.getElementById('closeLoadSettings');
+        const closeGrid = document.getElementById('closeGridSettings');
+        const closeSolar = document.getElementById('closeSolarModal');
+        const closeRegistersModal = document.getElementById('closeRegistersModal');
+        
+        // Открытие модального окна для батареи
+        batteryIcon.onclick = function() {
+            batteryModal.style.display = 'flex';
+        }
+        
+        // Открытие модального окна для инвертора
+        inverterIcon.onclick = function() {
+            inverterModal.style.display = 'flex';
+            
+        }
+            // Открытие модального окна для нагрузки
+        loadIcon.onclick = function() {
+            loadModal.style.display = 'flex';
+        }
 
-                 // Открытие модального окна для сети
-                 gridIcon.onclick = function() {
-                    GridModal.style.display = 'flex';
-                }
-                
-                // Открытие модального окна для солнечных панелей
-                solarIcon.onclick = function() {
-                    SolarPanelModal.style.display = 'flex';
-                }
-                
-                // Закрытие модальных окон
-                closeBattery.onclick = function() {
-                    resetSocSlider();
-                    batteryModal.style.display = 'none';
-                }
-                closeInverter.onclick = function() {
-                    inverterModal.style.display = 'none';
-                }
-                closeLoad.onclick = function() {
-                    loadModal.style.display = 'none'; 
-                }
+            // Открытие модального окна для сети
+            gridIcon.onclick = function() {
+            GridModal.style.display = 'flex';
+        }
+        
+        // Открытие модального окна для солнечных панелей
+        solarIcon.onclick = function() {
+            SolarPanelModal.style.display = 'flex';
+        }
+        
+        // Закрытие модальных окон
+        closeBattery.onclick = function() {
+            resetSocSlider();
+            batteryModal.style.display = 'none';
+        }
+        closeInverter.onclick = function() {
+            inverterModal.style.display = 'none';
+        }
+        closeLoad.onclick = function() {
+            loadModal.style.display = 'none'; 
+        }
 
-                closeGrid.onclick = function() {
-                    GridModal.style.display = 'none'; 
-                }
+        closeGrid.onclick = function() {
+            GridModal.style.display = 'none'; 
+        }
 
-                closeSolar.onclick = function() {
-                    SolarPanelModal.style.display = 'none'; 
-                }
-            });
+        closeSolar.onclick = function() {
+            SolarPanelModal.style.display = 'none'; 
+        }
+    });
     
 
 
@@ -436,23 +437,50 @@
         }
     }
 
-    // Функция показа сообщения
-    function showConfirmationMessage(message, isSuccess) {
-        const element = document.getElementById('confirmationMessage');
-        const saveButton = document.getElementById('saveBatteryButton');
-        element.textContent = message;
-        element.style.color = isSuccess ? "rgb(11, 226, 11)" : "red";
-        element.style.display = "block";
-        saveButton.disabled = true; 
-        setTimeout(() => {
-            element.style.display = "none";
-        }, 4000);
+
+    function resetInverterSlider() {
+        const slider = document.getElementById('InverterPowerSlider');
+        slider.value = initialInverterPowerValue;
+        document.getElementById('InverterSliderValue').textContent = initialInverterPowerValue;
+        const saveButton = document.getElementById('saveInverterPower');
+        isInverterSliderChanged = false;
+        saveButton.disabled = true;
+        // Очищаем таймер
+        if (inverterChangeTimeout) {
+            clearTimeout(inverterChangeTimeout);
+            inverterChangeTimeout = null;
+        }
     }
+
+// Функция показа сообщения
+function showConfirmationMessage(message, isSuccess) {
+    const element = document.getElementById('confirmationMessage');
+    const saveButton = document.getElementById('saveBatteryButton');
+    element.textContent = message;
+    element.style.color = isSuccess ? "rgb(11, 226, 11)" : "red";
+    element.style.display = "block";
+    saveButton.disabled = true; 
+    setTimeout(() => {
+        element.style.display = "none";
+    }, 4000);
+}
 
 // Функция показа сообщения для отдачи в сеть
 function showFeedInConfirmationMessage(message, isSuccess) {
     const element = document.getElementById('feedInConfirmationMessage');
     const saveButton = document.getElementById('saveFeedInButton');
+    element.textContent = message;
+    element.style.color = isSuccess ? "rgb(11, 226, 11)" : "red";
+    element.style.display = "block";
+    saveButton.disabled = true;
+    setTimeout(() => {
+        element.style.display = "none";
+    }, 4000);
+}
+
+function showInverterConfirmationMessage(message, isSuccess) {
+    const element = document.getElementById('InverterConfirmationMessage');
+    const saveButton = document.getElementById('saveInverterPower');
     element.textContent = message;
     element.style.color = isSuccess ? "rgb(11, 226, 11)" : "red";
     element.style.display = "block";

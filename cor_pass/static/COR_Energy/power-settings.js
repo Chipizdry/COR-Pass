@@ -378,6 +378,34 @@ async function saveAcSetpoint() {
     }
 }
 
+
+async function saveInverterPower() {
+    const value = parseInt(document.getElementById('InverterPowerSlider').value, 10);
+
+    try {
+        const res = await fetch('/api/modbus/inverter_setpoint', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ setpoint: value })
+        });
+
+        if (!res.ok) throw new Error((await res.json()).detail || "Ошибка записи регистра 2704");
+
+        initialInverterPowerValue = value;
+        isInverterSliderChanged = false;
+        document.getElementById('saveInverterPower').disabled = true;
+
+        if (inverterChangeTimeout) {
+            clearTimeout(inverterChangeTimeout);
+            inverterChangeTimeout = null;
+        }
+
+        showInverterConfirmationMessage("✅ Успешно сохранено", true);
+    } catch (err) {
+        showInverterConfirmationMessage("❌ Ошибка: " + err.message, false);
+    }
+}
+
 async function toggleGridLimitingStatus(enabled) {
     try {
         const res = await fetch('/api/modbus/ess/grid_limiting_status', {
