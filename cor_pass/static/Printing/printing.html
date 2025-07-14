@@ -52,50 +52,51 @@
         </div> 
         <div class="modal-content">
            
-            <div class="form-group">
+            <div class="form">
                 <label for="printerIp">IP принтера:</label>
                 <input type="text" id="printerIp" value="192.168.154.192">
             </div>
-            <div class="form-group">
+            <div class="form">
                 <label for="deviceId">Шаблон № (0-65535):</label>
                 <input type="number" id="template" min="0" max="65535" required>
             </div>
 
             <div class="field-group">
-                <div class="form-group">
+                <div class="form-group-test">
                     <label for="clinicId">Clinic ID:</label>
                     <input type="text" id="clinicId" value="FF">
                 </div>
-                <div class="form-group">
+                <div class="form-group-test">
                     <label for="caseCode">Case Code:</label>
                     <input type="text" id="caseCode" value="S24B0460">
                 </div>
-                <div class="form-group">
-                    <label for="sampleNumber">Sample:</label>
-                    <input type="text" id="sampleNumber" value="A">
-                </div>
-                <div class="divider"></div>
-                <div class="form-group">
-                    <label for="cassetteNumber">Cassette:</label>
-                    <input type="text" id="cassetteNumber" value="1">
-                </div>
-                <div class="form-group">
-                    <label for="glassNumber">Glass:</label>
-                    <input type="text" id="glassNumber" value="L0">
-                </div>
+             
             </div>
         
             <div class="field-group">
-                <div class="form-group">
-                    <label for="staining">Staining:</label>
-                    <input type="text" id="staining" value="H&E">
+                <div class="form-group-test">
+                    <label for="sampleNumber">Sample:</label>
+                    <input type="text" id="sampleNumber" value="A">
                 </div>
-                <div class="form-group">
+                <div class="form-group-test">
+                    <label for="cassetteNumber">Cassette:</label>
+                    <input type="text" id="cassetteNumber" value="1">
+                </div>
+                <div class="form-group-test">
+                    <label for="glassNumber">Glass:</label>
+                    <input type="text" id="glassNumber" value="L0">
+                </div>
+            </div>    
+            <div class="field-group">    
+                <div class="form-group-test" style="width:45px;">
+                    <label for="staining">Staining:</label>
+                    <input type="text" id="staining" value="H&amp;E">
+                </div>
+                <div class="form-group-test" style="width:40px;">
                     <label for="hopperNumber">Hopper:</label>
                     <input type="text" id="hopperNumber" value="?">
                 </div>
-                <div class="divider"></div>
-                <div class="form-group" style="flex: 2;">
+                <div class="form-group-test" style="flex: 2;">
                     <label for="patientCorId">Patient COR ID:</label>
                     <input type="text" id="patientCorId" value="TDAJ92Z7-1983M">
                 </div>
@@ -114,7 +115,7 @@
              <h3 style="margin-top:30; color:#291161;font-size: 17px;">Добавить новое устройство</h3>
         </div> 
         <div class="modal-content">      
-            <div class="form-group">
+            <div class="form">
                 <label for="deviceType">Тип устройства:</label>
                 <select id="deviceType" required>
                     <option value="">Выберите тип</option>
@@ -124,19 +125,19 @@
                     <option value="other">Другое</option>
                 </select>
             </div>
-            <div class="form-group">
+            <div class="form">
                 <label for="deviceId">ID устройства (0-65535):</label>
                 <input type="number" id="deviceId" min="0" max="65535" required>
             </div>
-            <div class="form-group">
+            <div class="form">
                 <label for="deviceIp">IP-адрес:</label>
                 <input type="text" id="deviceIp" required>
             </div>
-            <div class="form-group">
+            <div class="form">
                 <label for="deviceLocation">Местоположение:</label>
                 <input type="text" id="deviceLocation">
             </div>
-            <div class="form-group">
+            <div class="form">
                 <label for="deviceLocation">Комментарий:</label>
                 <input type="text" id="deviceInformation">
             </div>

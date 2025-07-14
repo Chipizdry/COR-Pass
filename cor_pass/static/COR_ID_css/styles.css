@@ -73,7 +73,8 @@ form {
 
 input[type="email"],
 input[type="password"],
-input[type="text"] {
+input[type="text"],
+input[type="number"]{
     padding: 10px;
     margin-bottom: 10px;
     border: 1px solid #f0f0f0;
@@ -567,7 +568,8 @@ a:hover {
 
 /* Стили для выпадающих списков */
 select#birth,
-select#user_sex {
+select#user_sex ,
+select#deviceType{
     width: 200px;
     padding: 10px;         /* Внутренние отступы */
     font-size: 14px;
@@ -582,7 +584,9 @@ select#user_sex {
 
 /* Стили для фокуса на выпадающих списках */
 select#birth:focus,
-select#user_sex:focus {
+select#user_sex:focus,
+select#deviceType:focus
+ {
     outline: none;         /* Убираем обводку при фокусе */
     border-color: #7527B2; /* Цвет рамки при фокусе, как у кнопок */
     background-color: #ffffff; /* Фон при фокусе, как у кнопок */
@@ -592,7 +596,8 @@ select#user_sex:focus {
 
 /* Стили для выбранной опции в выпадающем списке */
 select#birth option:checked,
-select#user_sex option:checked {
+select#user_sex option:checked,
+select#deviceType:checked {
     background-color: #5B4296; /* Цвет фона выбранной опции */
     color: white;              /* Цвет текста выбранной опции */
 }

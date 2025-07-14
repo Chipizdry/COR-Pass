@@ -21,25 +21,34 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-
-
-.form-group {
-    margin-bottom: 15px;
+.field-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
+    align-items: start;
 }
 
+
+.form-group-test {
+    width: 100%;
+    box-sizing: border-box;
+ 
+}
 label {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
+    font-size: 12px;
 }
 
+/*
 input, select {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
     box-sizing: border-box;
-}
+}  */
 
 .status-indicator {
     margin-top: 20px;
@@ -82,33 +91,62 @@ input, select {
     margin: 20px;
 }
 
+#testModal .modal-content {
+    padding: 15px;
+    width: 100%;
+    box-sizing: border-box;
+}
 
-.field-group {
+/* Стили для field-group в модальном окне */
+#testModal .form-group_clinicId {
     display: flex;
-    gap: 15px;
-    margin-bottom: 15px;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
     align-items: flex-end;
 }
 
-.field-group .form-group {
+#testModal .field-group {
     flex: 1;
+    min-width: 40px;
     margin-bottom: 0;
+    display: flex;
+    gap: 10px;
 }
 
-.field-group .form-group label {
-    font-size: 12px;
-    margin-bottom: 3px;
+#testModal .field-group .form-group label {
+    font-size: 11px;
+    margin-bottom: 2px;
+    display: block;
+    color: #555;
 }
 
-.field-group .form-group input {
+#testModal .field-group .form-group-test input {
     width: 100%;
-    padding: 6px;
-    font-size: 13px;
+    padding: 5px 8px;
+    font-size: 12px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    box-sizing: border-box;
 }
 
-.divider {
+#testModal .field-group .divider {
     width: 1px;
-    background-color: #ddd;
-    margin: 0 10px;
-    align-self: stretch;
+    background-color: #eee;
+    margin: 0 5px;
+    height: 40px;
+}
+
+/* Особый стиль для поля с flex: 2 */
+#testModal .field-group .form-group[style*="flex: 2"] {
+    flex: 2 !important;
+    min-width: 120px;
+}
+
+/* Область результата */
+#testModal #testResult {
+    font-size: 13px;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: #f8f8f8;
 }
