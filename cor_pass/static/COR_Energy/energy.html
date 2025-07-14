@@ -641,9 +641,15 @@
                  <h3 style="margin-top:30; color:#291161;font-size: 17px;">Информация о инверторе</h3>
             </div> 
 
+            <label for="ChargingCurrent" style="font-weight: bold;">Ток заряда MAX (A)</label>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <input type="range" id="ChargingCurrentSlider" min="0" max="30000" step="100" value="0" style="width: 250px;">
+                <span id="ChargingSliderValue">0</span>
+            </div>
+
             <label for="InverterPowerSlider" style="font-weight: bold;">Мощность инвертора (Вт)</label>
             <div style="display: flex; align-items: center; gap: 10px;">
-                <input type="range" id="InverterPowerSlider" min="-100000" max="100000" step="100" value="0" style="width: 250px;">
+                <input type="range" id="InverterPowerSlider" min="0" max="300000" step="100" value="0" style="width: 250px;">
                 <span id="InverterSliderValue">0</span>
             </div>
             <button id="saveInverterPower" onclick="saveInverterPower()" disabled>Сохранить</button>
@@ -853,7 +859,7 @@ document.getElementById('InverterPowerSlider').addEventListener('input', functio
     const saveButton = document.getElementById('saveInverterPower');
     document.getElementById('InverterSliderValue').textContent = newValue;
 
-    isInverterSliderChanged = true;
+    inverterPowerChanged = true;
     saveButton.disabled = false;
 
     if (inverterChangeTimeout) {

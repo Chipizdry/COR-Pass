@@ -296,12 +296,20 @@ async function fetchEssAdvancedSettings() {
 
             // Устанавливаем начальное значение для ползунка отдачи в сеть
             const feedInValue = data.ac_power_setpoint_fine || 0;
+            const InverterPowerValue = data.max_discharge_power || 0;
             // Обновляем исходное значение только если ползунок не был изменен пользователем
             if (!isFeedInSliderChanged) {
                 initialFeedInValue = feedInValue;
                 document.getElementById('feedInPowerSlider').value = feedInValue;
                 document.getElementById('feedInSliderValue').textContent = feedInValue;
             }
+            if (!inverterPowerChanged) {
+                initialInverterPowerValue = InverterPowerValue;
+                document.getElementById('InverterPowerSlider').value = InverterPowerValue;
+                document.getElementById('InverterSliderValue').textContent = InverterPowerValue;
+            }
+
+
     } catch (err) {
         console.error("❗ Ошибка получения ESS расширенных настроек:", err);
     }
@@ -383,10 +391,10 @@ async function saveInverterPower() {
     const value = parseInt(document.getElementById('InverterPowerSlider').value, 10);
 
     try {
-        const res = await fetch('/api/modbus/inverter_setpoint', {
+        const res = await fetch('/api/modbus/ess_advanced_settings/inverter_power', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ setpoint: value })
+            body: JSON.stringify({ inverter_power: value })
         });
 
         if (!res.ok) throw new Error((await res.json()).detail || "Ошибка записи регистра 2704");

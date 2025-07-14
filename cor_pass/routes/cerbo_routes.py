@@ -44,7 +44,8 @@ class ScheduleData(BaseModel):
     scheduleEnabled: bool
     periods: list[SchedulePeriod]
 
-
+class InverterPowerPayload(BaseModel):
+    inverter_power: float
 
 
 @router.get("/error_count")
@@ -369,6 +370,37 @@ async def set_ess_advanced_setpoint_fine(control: EssAdvancedControl, request: R
     except Exception as e:
         register_modbus_error() 
         logging.error("❗ Ошибка записи AC Power Setpoint Fine", exc_info=e)
+        raise HTTPException(status_code=500, detail="Modbus ошибка")
+
+
+@router.post("/ess_advanced_settings/inverter_power")
+async def set_inverter_power_setpoint(payload: InverterPowerPayload, request: Request):
+    try:
+        client = request.app.state.modbus_client
+        slave = INVERTER_ID
+
+        raw_value = payload.inverter_power
+        if raw_value is None:
+            raise HTTPException(status_code=400, detail="Не передано значение inverter_power")
+
+        # Масштабируем и проверяем на допустимые границы int16
+        scaled_value = int(float(raw_value/10))
+        if not -32768 <= scaled_value <= 32767:
+            raise HTTPException(status_code=400, detail="Значение выходит за пределы int16")
+
+        # Преобразуем в формат Modbus (uint16, если отрицательное — в дополнительный код)
+        if scaled_value < 0:
+            register_value = (1 << 16) + scaled_value
+        else:
+            register_value = scaled_value
+
+        await client.write_register(address=2704, value=register_value, slave=slave)
+
+        logging.info(f"✅ Установлено значение инвертора: {raw_value} W (регистр 2704 = {register_value})")
+        return {"status": "ok", "value": raw_value}
+
+    except Exception as e:
+        logging.error("❗ Ошибка записи регистра 2704", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
 
