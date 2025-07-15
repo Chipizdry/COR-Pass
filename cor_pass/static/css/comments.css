@@ -10,7 +10,8 @@
     background: rgba(255, 255, 255, 0.60);
     border: none;
     padding: 16px;
-    outline: none   ;
+    outline: none;
+    border-bottom-right-radius: 20px;
 }
 
 .commentsWrapperTop{

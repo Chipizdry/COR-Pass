@@ -1,276 +1,295 @@
 <!DOCTYPE html>
 <html lang="ru" class="layout-page">
 <head>
-  <link rel="icon" type="image/png" href="./favicon.png">
-  <meta charset="UTF-8" />
-  <title>Кор Lab — Пациенты</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" type="text/css" href="./css/doctor-patient.css">
-  <link rel="stylesheet" type="text/css" href="./COR_ID_css/modal.css">
-  
+    <link rel="icon" type="image/png" href="./favicon.png">
+    <meta charset="UTF-8"/>
+    <title>Кор Lab — Пациенты</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" type="text/css" href="./css/reset.css">
+    <link rel="stylesheet" type="text/css" href="./css/general.css">
+    <link rel="stylesheet" type="text/css" href="./css/doctor-patient.css">
+    <link rel="stylesheet" type="text/css" href="./css/header.css">
+    <link rel="stylesheet" type="text/css" href="./COR_ID_css/modal.css">
+
 
 </head>
 <body class="layout-page">
 
 <div class="layout">
-  <!-- ОСНОВНОЕ СОДЕРЖИМОЕ -->
-  <main class="main">
+    <main class="main">
 
-    <!-- Блок с поиском и кнопкой «Добавить пациента» -->
-    <div class="actions">
+        <div class="header-container">
+            <div class="header-row top">
+                <div class="search-container">
+                    <input type="text" placeholder="Search" id="searchInput">
+                    <svg class="search-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                              d="M11.2 5.60001C8.10722 5.60001 5.60001 8.10722 5.60001 11.2C5.60001 14.2928 8.10722 16.8001 11.2 16.8001C12.7087 16.8001 14.0781 16.2035 15.085 15.2333C15.1061 15.2058 15.1292 15.1794 15.1544 15.1543C15.1795 15.1291 15.2059 15.106 15.2334 15.0849C16.2035 14.078 16.8 12.7087 16.8 11.2C16.8 8.10722 14.2928 5.60001 11.2 5.60001ZM16.8256 15.6942C17.8109 14.4624 18.4001 12.9 18.4001 11.2C18.4001 7.22357 15.1765 4 11.2 4C7.22356 4 4 7.22357 4 11.2C4 15.1765 7.22356 18.4001 11.2 18.4001C12.9001 18.4001 14.4625 17.8109 15.6942 16.8255L18.6344 19.7657C18.9468 20.0781 19.4533 20.0781 19.7658 19.7657C20.0782 19.4533 20.0782 18.9467 19.7658 18.6343L16.8256 15.6942Z"
+                              fill="#B1A1DA"/>
+                    </svg>
+                </div>
+                <div class="role-container">
+                    <button class="role-icon active" id="goToCases" aria-label="User roles">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="icon-group">
+                            <path d="M14.2666 11.1279C16.17 11.1279 17.7138 12.6709 17.7139 14.5742V20.4512C17.7136 20.8634 17.379 21.198 16.9668 21.1982H7.03418C6.62172 21.1982 6.28733 20.8636 6.28711 20.4512V14.5742C6.2872 12.6709 7.83011 11.128 9.7334 11.1279H14.2666ZM5.53516 13.1729C5.38658 13.616 5.28714 14.0817 5.28711 14.5742V20.4512C5.28717 20.7191 5.35262 20.9701 5.46094 21.1973H0.74707C0.334473 21.1973 0 20.8628 0 20.4502V16.6191C0 14.7158 1.54293 13.173 3.44629 13.1729H5.53516ZM20.5537 13.1729C22.457 13.173 24 14.7158 24 16.6191V20.4502C24 20.8628 23.6655 21.1972 23.2529 21.1973H18.5391C18.6475 20.97 18.7129 20.7183 18.7129 20.4502V14.5742C18.7129 14.0817 18.6134 13.616 18.4648 13.1729H20.5537ZM4.55273 6.53711C6.13952 6.53711 7.42567 7.8234 7.42578 9.41016C7.42578 10.997 6.13959 12.2832 4.55273 12.2832C2.96597 12.2831 1.67969 10.9969 1.67969 9.41016C1.6798 7.82347 2.96604 6.53722 4.55273 6.53711ZM19.4473 6.53711C21.0339 6.53726 22.3202 7.82349 22.3203 9.41016C22.3203 10.9969 21.034 12.2831 19.4473 12.2832C17.8604 12.2832 16.5742 10.997 16.5742 9.41016C16.5743 7.8234 17.8605 6.53711 19.4473 6.53711ZM12 2.80273C13.991 2.80283 15.6053 4.41628 15.6055 6.40723C15.6055 8.39831 13.9911 10.0126 12 10.0127C10.0089 10.0127 8.39453 8.39837 8.39453 6.40723C8.3947 4.41622 10.009 2.80273 12 2.80273Z"
+                                  fill="white"/>
+                        </svg>
 
-      <!-- Поисковое поле -->
-      <div class="search">
-        <input type="text" placeholder="Search" id="searchInput"/>
-        <!-- Иконка‑лупа внутри поля -->
-        <svg viewBox="0 0 24 24">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="M21 21l-4.35-4.35"/>
-        </svg>
-      </div>
-      <!-- Фиолетовая квадратная кнопка-->
-      <button class="btn-square" id="peopleBtn" title="Пациенты">
-          <img src="assets/people.png" alt="Люди" />
-      </button>
-      <!-- Фиолетовая кнопка добавления -->
-      <button class="add-button" id="addPatientBtn">
-        <span class="icon-circle"><span>+</span></span>
-        <span class="button-text">Добавить пациента</span>
-      </button>
-    </div>
+                    </button>
+                    <div class="role-toggle">
+                        <button class="role-btn active aic jcc df" style="min-width: 270px;" id="addPatientBtn">
+                            <svg width="24" height="25" viewBox="0 0 24 25" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                <rect x="0.625" y="1.125" width="22.75" height="22.75" rx="11.375" stroke="white"
+                                      stroke-width="1.25"/>
+                                <path d="M7.01695 13.5C6.4553 13.5 6 13.0523 6 12.5C6 11.9477 6.4553 11.5 7.01695 11.5L16.9831 11.5C17.5447 11.5 18 11.9477 18 12.5C18 13.0523 17.5447 13.5 16.9831 13.5L7.01695 13.5Z"
+                                      fill="white"/>
+                                <path d="M13 17.4831C13 18.0447 12.5523 18.5 12 18.5C11.4477 18.5 11 18.0447 11 17.4831L11 7.51695C11 6.9553 11.4477 6.5 12 6.5C12.5523 6.5 13 6.9553 13 7.51695V17.4831Z"
+                                      fill="white"/>
+                            </svg>
+                            Добавить пациента
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-    <!-- Панель фильтра и сортировки -->
-    <div class="filters-bar">
-
-      <!-- Кнопка‑заглушка: фильтр -->
-      <div class="filter" id="filterBtn">
-        <img src="assets/filter.png" alt="Фильтр" class="icon">Фильтр
-      </div>
-
-      <!-- Выпадающий список сортировки -->
-      <div style="position:relative">
-        <div class="sort" id="sortBtn">
-          <img src="assets/sort.png" alt="Сортировка" class="icon">
-          <span>Сортировка:</span>&nbsp;
-          <span id="sortLabel">Дата изменения (новые→старые)</span>
         </div>
 
-        <!-- Сам dropdown с вариантами сортировки -->
-        <div class="dropdown" id="sortDropdown">
-          <!-- каждая кнопка задаёт field и dir -->
-          <button data-field="date" data-dir="desc">Дата изменения (новые→старые)</button>
-          <button data-field="date" data-dir="asc">Дата изменения (старые→новые)</button>
-          <button data-field="name" data-dir="asc">Фамилия А→Я</button>
-          <button data-field="name" data-dir="desc">Фамилия Я→А</button>
-          <button data-field="id" data-dir="asc">COR ID ↑</button>
-          <button data-field="id" data-dir="desc">COR ID ↓</button>
-          <button data-field="age" data-dir="asc">Возраст ↑</button>
-          <button data-field="age" data-dir="desc">Возраст ↓</button>
-          <button data-field="gender" data-dir="asc">Пол A→Я</button>
-          <button data-field="gender" data-dir="desc">Пол Я→A</button>
-          <button data-field="status" data-dir="asc">Статус A→Я</button>
-          <button data-field="status" data-dir="desc">Статус Я→A</button>
+        <!--      <div class="search">-->
+        <!--        <input type="text" placeholder="Search" id="searchInput"/>-->
+        <!--        <svg viewBox="0 0 24 24">-->
+        <!--          <circle cx="11" cy="11" r="8"/>-->
+        <!--          <path d="M21 21l-4.35-4.35"/>-->
+        <!--        </svg>-->
+        <!--      </div>-->
+        <!--      <button class="btn-square" id="peopleBtn" title="Пациенты">-->
+        <!--          <img src="assets/people.png" alt="Люди" />-->
+        <!--      </button>-->
+        <!--      <button class="add-button" >-->
+        <!--        <span class="icon-circle"><span>+</span></span>-->
+        <!--        <span class="button-text">Добавить пациента</span>-->
+        <!--      </button>-->
+
+        <div class="filters-bar">
+
+            <div class="filter" id="filterBtn">
+                <img src="./assets/filter.svg" alt="Фильтр" class="icon">Фильтр
+            </div>
+
+            <div style="position:relative">
+                <div class="sort" id="sortBtn">
+                    <img src="./assets/sort.svg" alt="Сортировка" class="icon">
+                    <span>Сортировка:</span>&nbsp;
+                    <span id="sortLabel">
+            <span>Дата зміни: від нових до старих</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12.7241 16.0865L12.7269 16.0834L18.7453 9.65889L18.7499 9.65396L18.7511 9.65252C19.1032 9.25733 19.0719 8.66929 18.7194 8.30513L18.7167 8.30066L18.7158 8.29968L18.7122 8.29599L18.7114 8.29678C18.3519 7.90305 17.7346 7.90088 17.3434 8.29665L17.3412 8.29895L17.3399 8.30027L17.3377 8.30263L12.0041 13.964L6.66231 8.29402L6.66086 8.2954C6.49594 8.09985 6.23847 8 5.97981 8C5.45224 8 5 8.43581 5 8.99434C5 9.25792 5.09722 9.48996 5.26063 9.65679L5.26438 9.66067L11.3137 16.0847L11.3169 16.0882L11.342 16.1139L11.3527 16.1241L11.3555 16.1268C11.7488 16.488 12.3668 16.4838 12.7241 16.0865Z"
+                    fill="#5B4296"/>
+            </svg>
+          </span>
+
+                </div>
+                <div class="dropdown" id="sortDropdown">
+                    <button data-field="date" data-dir="desc">Дата зміни: від нових до старих</button>
+                    <button data-field="date" data-dir="asc">Дата зміни: від старих до нових</button>
+                    <button data-field="name" data-dir="asc">Призвищє: від А до Я</button>
+                    <button data-field="name" data-dir="desc">Призвищє: від Я до А</button>
+                    <button data-field="id" data-dir="asc">COR ID: ↑</button>
+                    <button data-field="id" data-dir="desc">COR ID: ↓</button>
+                    <button data-field="age" data-dir="asc">Вік: ↑</button>
+                    <button data-field="age" data-dir="desc">Вік: ↓</button>
+                    <button data-field="gender" data-dir="asc">Стать: від А до Я</button>
+                    <button data-field="gender" data-dir="desc">Стать: від Я до А</button>
+                    <button data-field="status" data-dir="asc">Статус: від А до Я</button>
+                    <button data-field="status" data-dir="desc">Статус: від Я до А</button>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
 
 
-    <!-- Карточка‑контейнер с таблицей пациентов -->
-    <section class="patients_card">
+        <section class="patients_card">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                    <tr>
+                        <th data-field="name">Фамилия, имя, отчество</th>
+                        <th data-field="id">COR ID</th>
+                        <th data-field="age">Возраст</th>
+                        <th data-field="gender">Пол</th>
+                        <th data-field="date">Дата изменения</th>
+                        <th data-field="status">Статус</th>
+                        <th style="width:32px"></th>
+                    </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
 
-      <div class="table-wrapper">
-        <table>
-          <thead>
-          <tr>
-            <th style="width:40px">
-              <input type="checkbox" id="selectAll">
-            </th>
-            <th data-field="name">Фамилия, имя, отчество</th>
-            <th data-field="id">COR ID</th>
-            <th data-field="age">Возраст</th>
-            <th data-field="gender">Пол</th>
-            <th data-field="date">Дата изменения</th>
-            <th data-field="status">Статус</th>
-            <th style="width:32px"></th>
-          </tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-      </div>
-
-      <div class="footer" id="footerInfo"></div>
-    </section>
-  </main>
-  <!-- КОНЕЦ основного контента -->
+            <div class="footer" id="footerInfo"></div>
+        </section>
+    </main>
+    <!-- КОНЕЦ основного контента -->
 </div>
 
 <!-- Модальное окно добавления пациента -->
 <div id="addPatientModal" class="modal" style="display: none;">
-  <div class="modal-header">
-    <div class="modal-buttons">
-      <button class="modal-button close" data-action="close" id="cancelPatientBtn">✖</button>
-    </div>
-    <h1>Новый пациент</h1>
-  </div>
-
-  <div class="tab-buttons">
-    <button class="tab-button active" data-tab="byCorIdTab">Добавить по COR-ID</button>
-    <button class="tab-button" data-tab="registerPatientTab">Регистрация пациента</button>
-  </div>
-
-  <div class="tab-content active" id="byCorIdTab">
-    <div class="form-group-width">
-      <label for="corIdInput">Введите COR-ID:</label>
-      <input type="text" id="corIdInput" name="corIdInput" required maxlength="15">
-    </div>
-  </div>
-
-  <div class="tab-content" id="registerPatientTab">
-    <div class="form-group-width">
-      <label for="surname">Фамилия</label>
-      <input type="text" id="surname" name="surname" required>
+    <div class="modal-header">
+        <div class="modal-buttons">
+            <button class="modal-button close" data-action="close" id="cancelPatientBtn">✖</button>
+        </div>
+        <h1>Новый пациент</h1>
     </div>
 
-    <div class="form-group-width">
-      <label for="firstName">Имя</label>
-      <input type="text" id="firstName" name="firstName" required>
+    <div class="tab-buttons">
+        <button class="tab-button active" data-tab="byCorIdTab">Добавить по COR-ID</button>
+        <button class="tab-button" data-tab="registerPatientTab">Регистрация пациента</button>
     </div>
 
-    <div class="form-group-width">
-      <label for="middleName">Отчество</label>
-      <input type="text" id="middleName" name="middleName" required>
+    <div class="tab-content active" id="byCorIdTab">
+        <div class="form-group-width">
+            <label for="corIdInput">Введите COR-ID:</label>
+            <input type="text" id="corIdInput" name="corIdInput" required maxlength="15">
+        </div>
     </div>
 
-    <div class="form-group-width">
-      <label for="birthDate">Дата рождения</label>
-      <input type="date" id="birthDate" name="birthDate" required>
+    <div class="tab-content" id="registerPatientTab">
+        <div class="form-group-width">
+            <label for="surname">Фамилия</label>
+            <input type="text" id="surname" name="surname" required>
+        </div>
+
+        <div class="form-group-width">
+            <label for="firstName">Имя</label>
+            <input type="text" id="firstName" name="firstName" required>
+        </div>
+
+        <div class="form-group-width">
+            <label for="middleName">Отчество</label>
+            <input type="text" id="middleName" name="middleName" required>
+        </div>
+
+        <div class="form-group-width">
+            <label for="birthDate">Дата рождения</label>
+            <input type="date" id="birthDate" name="birthDate" required>
+        </div>
+
+        <div class="form-group-width">
+            <label>Пол:</label>
+        </div>
+        <div class="additional-fields">
+            <label class="storage-option">
+                <input type="radio" name="gender" value="M">
+                <span class="custom-radio"></span>
+                <span>Мужской</span>
+            </label>
+
+            <label class="storage-option">
+                <input type="radio" name="gender" value="F">
+                <span class="custom-radio"></span>
+                <span>Женский</span>
+            </label>
+        </div>
+
+
+        <div class="additional-fields">
+            <div class="input-wrapper">
+                <label for="patientEmail">Имейл</label>
+                <input type="text" id="patientEmail" name="patientEmail" required>
+            </div>
+            <div class="input-wrapper">
+                <label for="patientPhone">Телефон</label>
+                <input type="text" id="patientPhone" name="patientPhone" required>
+            </div>
+        </div>
+
+        <div class="form-group-width">
+            <label for="address">Адрес</label>
+            <input type="text" id="address" name="address" required>
+        </div>
     </div>
 
-    <div class="form-group-width">
-      <label>Пол:</label>
-    </div>
-    <div class="additional-fields">
-      <label class="storage-option">
-        <input type="radio" name="gender" value="M">
-        <span class="custom-radio"></span>
-        <span>Мужской</span>
-      </label>
-
-      <label class="storage-option">
-        <input type="radio" name="gender" value="F">
-        <span class="custom-radio"></span>
-        <span>Женский</span>
-      </label>
-    </div>
-
-
-    <div class="additional-fields">
-      <div class="input-wrapper">
-        <label for="patientEmail">Имейл</label>
-        <input type="text" id="patientEmail" name="patientEmail" required>
-      </div>
-      <div class="input-wrapper">
-        <label for="patientPhone">Телефон</label>
-        <input type="text" id="patientPhone" name="patientPhone" required>
-      </div>
-    </div>
-
-    <div class="form-group-width">
-      <label for="address">Адрес</label>
-      <input type="text" id="address" name="address" required>
-    </div>
-  </div>
-
-  <button class="button" id="Add_Patient" data-translate="Add_Patient">Добавить пациента</button>
+    <button class="button" id="Add_Patient" data-translate="Add_Patient">Добавить пациента</button>
 </div>
 
 
 <!-- Модалка: Добавить устройство -->
 <div id="addDeviceModal" class="modal" style="display:none;">
-  <div class="modal-content">
-    <div class="modal-header">
-      <div class="modal-buttons">
-        <button class="modal-button close" data-action="close" id="closeAddDeviceModal">✖</button>
-      </div>
-      <h3 style="margin-top:30; color:#291161;font-size: 17px;">Новое устройство</h3>
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-buttons">
+                <button class="modal-button close" data-action="close" id="closeAddDeviceModal">✖</button>
+            </div>
+            <h3 style="margin-top:30; color:#291161;font-size: 17px;">Новое устройство</h3>
+
+        </div>
+
+        <label>Тип устройства:</label>
+        <select id="deviceType" class="select">
+            <option value="Принтер">Принтер кассет</option>
+            <option value="Сканер">Принтер стёкол</option>
+            <option value="Камера">Сканер</option>
+            <option value="Другое">Другое</option>
+        </select>
+
+        <label>ID устройства (0–65535):</label>
+        <input type="text" class="select" id="deviceId" min="0" max="65535"/>
+
+        <label>IP-адрес:</label>
+        <input type="text" id="deviceIp" placeholder="000.000.000.000"/>
+
+        <!--    <label>Маска подсети:</label>
+            <input type="text" id="deviceMask" placeholder="000.000.000.000" />
+
+            <label>Шлюз:</label>
+            <input type="text" id="deviceGateway" placeholder="000.000.000.000" /> -->
+
+        <label>Статус / Локация:</label>
+        <input type="text" id="deviceLocation" maxlength="20" placeholder="Серверная, этаж 2"/>
+
+        <button onclick="testDevice()" class="button" id="testDevice">Тест</button>
+        <button onclick="addDevice()" class="button" id="addDevice">Сохранить</button>
 
     </div>
-
-    <label>Тип устройства:</label>
-    <select id="deviceType" class="select">
-      <option value="Принтер">Принтер кассет</option>
-      <option value="Сканер">Принтер стёкол</option>
-      <option value="Камера">Сканер</option>
-      <option value="Другое">Другое</option>
-    </select>
-
-    <label>ID устройства (0–65535):</label>
-    <input type="text" class="select" id="deviceId" min="0" max="65535" />
-
-    <label>IP-адрес:</label>
-    <input type="text" id="deviceIp" placeholder="000.000.000.000" />
-
-    <!--    <label>Маска подсети:</label>
-        <input type="text" id="deviceMask" placeholder="000.000.000.000" />
-
-        <label>Шлюз:</label>
-        <input type="text" id="deviceGateway" placeholder="000.000.000.000" /> -->
-
-    <label>Статус / Локация:</label>
-    <input type="text" id="deviceLocation" maxlength="20" placeholder="Серверная, этаж 2" />
-
-    <button onclick="testDevice()" class="button" id="testDevice">Тест</button>
-    <button onclick="addDevice()"  class="button" id="addDevice" >Сохранить</button>
-
-  </div>
 </div>
 
 <!-- ─── ЛОГИКА (сортировка, поиск, обработчики) ─── -->
 <script src="./COR_ID_Js/translation.js"></script>
 <script src="./COR_ID_Js/general_fun.js"></script>
+<script src="./js/general.js"></script>
 <script src="./printers.js"></script>
 <script>
-  let searchParams = new URLSearchParams(document.location.search);
-  const accessToken = searchParams.get("access_token")
+    let searchParams = new URLSearchParams(document.location.search);
+    const accessToken = searchParams.get("access_token")
 
-  if(accessToken){
-    localStorage.setItem('access_token', accessToken)
-  }
+    if (accessToken) {
+        localStorage.setItem('access_token', accessToken)
+    }
+
+
 </script>
 <script>
-  /* Массив‑заглушка с трёмя пациентами */
-  let sampleRows=[];
 
-  /* Текущее состояние таблицы */
-  let filteredRows=[...sampleRows];
-  let currentSort={field:"date",dir:"desc"};
+</script>
+<script>
+    /* Массив‑заглушка с трёмя пациентами */
+    let patientList = [];
+    let filtredPatientList = [];
+    let currentSort = {
+        field: "date",
+        dir: "desc"
+    };
 
-  /* DOM‑ссылки */
-  const tbody=document.getElementById("tableBody");
-  const footerInfo=document.getElementById("footerInfo");
+    /* DOM‑ссылки */
+    const tbody = document.getElementById("tableBody");
+    const footerInfo = document.getElementById("footerInfo");
 
-  /* Утилита: превращаем "дд.мм.гггг" в Date */
-  function parseDate(str){
-    const[d,m,y]=str.split(".").map(Number);
-    return new Date(y,m-1,d);
-  }
-
-  /* Компаратор для сортировки по полю */
-  function compare(a,b,field){
-    if(field==="date") return parseDate(a.change_date)-parseDate(b.change_date);
-    if(field==="age")  return a.age-b.age;
-    return a[field].toString().localeCompare(b[field].toString(),"ru",{sensitivity:"base"});
-  }
-
-  /* Рендерим строки таблицы */
-  function render(rows) {
-    const {roles} = decodeToken(getToken())
-    tbody.innerHTML = "";
-    rows.forEach(r => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-            <td><input type="checkbox" class="rowChk"></td>
+    const renderTableData = ( patientsData ) => {
+        const roles = decodeToken(getToken())?.roles
+        tbody.innerHTML = "";
+        patientsData.forEach(r => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
             <td style="display:flex;align-items:center;background:var(--clr-surface-alt);">
               ${r.avatar ? `<img class="avatar" src="${r.avatar}" alt="">` : ""}${r.name}
             </td>
@@ -280,390 +299,403 @@
             <td>${new Date(r.change_date).toLocaleDateString()}</td>
             <td><span class="status">${r.status ? `<span class="status-dot"></span>${r.status}</span>` : ""}</td>
             <td class="ellipsis">⋮</td>`;
-      tr.onclick = () => {
-        const page = roles.includes('doctor') ? "glass" : "lab";
-        window.location.href = `/static/${page}.html?userCorId=${r.patient_cor_id}`
-      }
-      tbody.appendChild(tr);
-    });
-    footerInfo.textContent = `Всего: ${rows.length} пациентов`;
-  }
-
-  /* Сортируем и перерисовываем */
-  function sortRows(field,dir){
-    filteredRows.sort((a,b)=>dir==="asc" ? compare(a,b,field) : -compare(a,b,field));
-    render(filteredRows);
-  }
-
-  const getFulName = (lastName, firstName, middleName) => {
-    let result = []
-
-    if(lastName){
-      result.push(lastName)
-    }
-    if(firstName){
-      result.push(firstName)
-    }
-    if(middleName){
-      result.push(middleName)
+            tr.onclick = () => {
+                const page = roles.includes('doctor') ? "direction" : "lab";
+                window.location.href = `/static/${page}.html?userCorId=${r.patient_cor_id}`
+            }
+            tbody.appendChild(tr);
+        });
+        footerInfo.textContent = `Всего: ${patientsData.length} пациентов`;
     }
 
-    return result.join(' ');
-  }
+    const sortTableRows = (field, dir) =>{
+        filtredPatientList.sort((a, b) => dir === "asc" ? compare(a, b, field) : -compare(a, b, field));
 
-  const getAge = (birthDate) => {
-    const today = new Date();
-    const birth = new Date(birthDate); // Can accept string like '2000-01-01'
-
-    let age = today.getFullYear() - birth.getFullYear();
-
-    // Check if the birthday has occurred this year
-    const hasHadBirthdayThisYear =
-            today.getMonth() > birth.getMonth() ||
-            (today.getMonth() === birth.getMonth() && today.getDate() >= birth.getDate());
-
-    if (!hasHadBirthdayThisYear) {
-      age--;
+        renderTableData(filtredPatientList);
     }
-
-    return age;
-  }
-
-  fetch(`https://dev-corid.cor-medical.ua/api/doctor/patients`, {
-    method: "GET",
-    headers: {
-      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-      "Content-Type": "application/json"
-    },
-  })
-          .then(res => res.json())
-          .then(userList => {
-            const {patients} = userList;
-            console.log(patients, "patients")
-            const formattedUserList = patients.map( patient => {
-              return {
-                ...patient,
-                change_date: "2025-05-09T07:19:51.498743",
-                name: getFulName(patient.surname, patient.first_name, patient.middle_name),
-                age: patient.birth_date ? getAge(patient.birth_date) : null, // добавить
-                status: patient?.status,
-              }
+    const getPatients = () => {
+        if(checkToken()){
+            fetch(`${API_BASE_URL}/api/doctor/patients`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
             })
+                .then(res => res.json())
+                .then(userList => {
+                    const {patients} = userList;
+                    const formattedUserList = patients.map(patient => {
+                        return {
+                            ...patient,
+                            change_date: "2025-05-09T07:19:51.498743",
+                            name: getFulName(patient.surname, patient.first_name, patient.middle_name),
+                            age: patient.birth_date ? getAge(patient.birth_date) : null, // добавить
+                            status: patient?.status,
+                        }
+                    })
 
+                    patientList = formattedUserList;
+                    filtredPatientList = [...patientList];
 
-            sampleRows = formattedUserList;
-            filteredRows = [...sampleRows];
-
-            /* Стартовый рендер */
-            sortRows(currentSort.field,currentSort.dir);
-          })
-
-
-
-  /* === Поиск по таблице === */
-  document.getElementById("searchInput").addEventListener("input",e=>{
-    const q=e.target.value.toLowerCase();
-    filteredRows=sampleRows.filter(r=>
-            Object.values(r).some(val=>val.toString().toLowerCase().includes(q))
-    );
-    sortRows(currentSort.field,currentSort.dir);
-  });
-
-  /* Чек‑бокс «выбрать всё» */
-  const selectAll=document.getElementById("selectAll");
-  if(selectAll){
-    selectAll.addEventListener("change",e=>{
-      document.querySelectorAll(".rowChk").forEach(chk=>chk.checked=e.target.checked);
-    });
-  }
-
-  /* Dropdown с вариантами сортировки */
-  const sortBtn=document.getElementById("sortBtn");
-  const sortDropdown=document.getElementById("sortDropdown");
-  const sortLabel=document.getElementById("sortLabel");
-
-  sortBtn.addEventListener("click",e=>{
-    e.stopPropagation();
-    sortDropdown.classList.toggle("visible");
-  });
-  window.addEventListener("click",()=>sortDropdown.classList.remove("visible"));
-
-  sortDropdown.addEventListener("click",e=>{
-    if(e.target.matches("button")){
-      const {field,dir}=e.target.dataset;
-      currentSort={field,dir};
-      sortLabel.textContent=e.target.textContent;
-      sortDropdown.classList.remove("visible");
-      sortRows(field,dir);
-    }
-  });
-
-  /* Клик по шапке таблицы = быстрая сортировка */
-  document.querySelectorAll("thead th[data-field]").forEach(th=>{
-    th.addEventListener("click",()=>{
-      const field=th.dataset.field;
-      if(field==="select") return;
-      const dir=currentSort.field===field && currentSort.dir==="asc" ? "desc":"asc";
-      currentSort={field,dir};
-      sortLabel.textContent=`Сортировка: ${th.textContent.trim()} ${dir==="asc"?"↑":"↓"}`;
-      sortRows(field,dir);
-    });
-  });
-
-  /* Заглушки */
-  document.getElementById("filterBtn").addEventListener("click",()=>alert("Здесь будет фильтр по полям"));
-  document.getElementById("addPatientBtn").addEventListener("click", function() {
-    if( checkToken()){
-      const modal = document.getElementById('addPatientModal');
-      if (modal) {
-        modal.style.display = 'block';
-        // Инициализируем модальное окно (если нужно)
-        initModalControls('addPatientModal');
-        // Делаем окно перетаскиваемым
-        makeModalDraggable('addPatientModal');
-
-      }
-    }});
-
-  async function addPatientByCorId() {
-    const corId = document.getElementById('corIdInput').value;
-    const token = localStorage.getItem('access_token'); // Предполагаю, что токен лежит в localStorage
-
-    if (!corId) {
-      alert('Пожалуйста, введите COR-ID');
-      return;
+                    /* Стартовый рендер */
+                    sortTableRows(currentSort.field, currentSort.dir);
+                })
+        }
     }
 
-    try {
-      const response = await fetch('/api/doctor/patients/add-existing', {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-        },
-        body: JSON.stringify({
-          cor_id: corId,
-          status: 'registered'
+
+    const goToCasesHanlder = () => {
+        const roles = decodeToken(getToken())?.roles
+
+        document.querySelector('#goToCases').addEventListener('click', () => {
+            const page = roles.includes('doctor') ? "direction" : "lab";
+            window.location.href = `/static/${page}.html`
         })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Пациент успешно добавлен:', result);
-        alert('Пациент успешно добавлен!');
-        // Можно тут закрыть модалку и сбросить поле
-      } else {
-        const error = await response.json();
-        console.error('Ошибка при добавлении пациента:', error);
-        alert('Ошибка: ' + (error.detail || 'Неизвестная ошибка'));
-      }
-    } catch (error) {
-      console.error('Ошибка сети:', error);
-      alert('Ошибка сети: ' + error.message);
-    }
-  }
-
-  function registerNewPatient() {
-    // Собираем поля по правильным ID
-    const surnameField = document.getElementById('surname');
-    const firstNameField = document.getElementById('firstName');
-    const middleNameField = document.getElementById('middleName');
-    const birthDateField = document.getElementById('birthDate');
-    const emailField = document.getElementById('patientEmail');
-    const phoneNumberField = document.getElementById('patientPhone');
-    const addressField = document.getElementById('address');
-
-    const fields = [surnameField, firstNameField, middleNameField, birthDateField, emailField, phoneNumberField, addressField];
-
-    let isValid = true;
-
-    // Сначала убираем старую подсветку
-    fields.forEach(field => {
-      field.style.borderColor = '#f0f0f0';
-    });
-
-    // Проверяем заполненность текстовых полей
-    fields.forEach(field => {
-      if (!field.value.trim()) {
-        field.style.borderColor = 'red';
-        isValid = false;
-      }
-    });
-
-    // Проверяем выбор пола
-    const genderSelected = document.querySelector('input[name="gender"]:checked');
-    const genderOptions = document.querySelectorAll('input[name="gender"]');
-    genderOptions.forEach(option => {
-      option.parentElement.style.border = 'none';
-    });
-
-    if (!genderSelected) {
-      isValid = false;
-      genderOptions.forEach(option => {
-        option.parentElement.style.border = '1px solid red';
-      });
     }
 
-    if (!isValid) {
-      alert('Пожалуйста, заполните все обязательные поля и выберите пол пациента.');
-      return;
-    }
-
-    // Собираем данные
-    const patientData = {
-      email: emailField.value.trim(),
-      surname: surnameField.value.trim(),
-      first_name: firstNameField.value.trim(),
-      middle_name: middleNameField.value.trim(),
-      birth_date: birthDateField.value,
-      sex: genderSelected.value,
-      phone_number: phoneNumberField.value.trim(),
-      address: addressField.value.trim(),
-      photo: "",
-      status: "registered"
-    };
-
-    fetch('/api/doctor/patients/register-new', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-      },
-      body: JSON.stringify(patientData)
+    document.addEventListener('DOMContentLoaded', function () {
+        goToCasesHanlder()
+        getPatients()
     })
 
-            .then(response => {
-              if (response.ok) {
-                return response.json();
-              } else {
-                return response.json().then(err => Promise.reject(err));
-              }
-            })
-            .then(data => {
-              console.log('Пациент успешно добавлен:', data);
-              alert('Пациент успешно добавлен!');
-              document.getElementById('addPatientModal').style.display = 'none';
-            })
-            .catch(error => {
-              console.error('Ошибка при добавлении пациента:', error);
-              alert('Ошибка при добавлении пациента. Проверьте введённые данные.');
-            });
-  }
 
-  document.getElementById('Add_Patient').addEventListener('click', function() {
-    if( checkToken()){
-      const activeTab = document.querySelector('.tab-content.active');
+    /* Утилита: превращаем "дд.мм.гггг" в Date */
+    function parseDate(str) {
+        const [d, m, y] = str.split(".").map(Number);
+        return new Date(y, m - 1, d);
+    }
 
-      if (activeTab && activeTab.id === 'byCorIdTab') {
-        // Если выбрана вкладка "по COR-ID"
-        addPatientByCorId();
-      } else {
-        // Если выбрана вкладка "регистрация пациента" - там будет другая функция
-        registerNewPatient(); // (если хочешь, напишем её тоже)
-      }
-    }});
+    /* Компаратор для сортировки по полю */
+    function compare(a, b, field) {
+        if (field === "date") return parseDate(a.change_date) - parseDate(b.change_date);
+        if (field === "age") return a.age - b.age;
+        return a[field].toString().localeCompare(b[field].toString(), "ru", {sensitivity: "base"});
+    }
 
 
-  document.querySelectorAll('.tab-button').forEach(button => {
-    button.addEventListener('click', () => {
-      // Убираем активные классы со всех кнопок и табов
-      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    const getFulName = (lastName, firstName, middleName) => {
+        let result = []
 
-      // Активируем выбранную кнопку и таб
-      button.classList.add('active');
-      document.getElementById(button.dataset.tab).classList.add('active');
+        if (lastName) {
+            result.push(lastName)
+        }
+        if (firstName) {
+            result.push(firstName)
+        }
+        if (middleName) {
+            result.push(middleName)
+        }
+
+        return result.join(' ');
+    }
+
+    /* === Поиск по таблице === */
+    document.getElementById("searchInput").addEventListener("input", e => {
+        const q = e.target.value.toLowerCase();
+        filtredPatientList = patientList.filter(r =>
+            Object.values(r).some(val => val.toString().toLowerCase().includes(q))
+        );
+        sortTableRows(currentSort.field, currentSort.dir);
     });
-  });
+
+    /* Чек‑бокс «выбрать всё» */
+    const selectAll = document.getElementById("selectAll");
+    if (selectAll) {
+        selectAll.addEventListener("change", e => {
+            document.querySelectorAll(".rowChk").forEach(chk => chk.checked = e.target.checked);
+        });
+    }
+
+    /* Dropdown с вариантами сортировки */
+    const sortBtn = document.getElementById("sortBtn");
+    const sortDropdown = document.getElementById("sortDropdown");
+    const sortLabel = document.getElementById("sortLabel");
+
+    sortBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        sortDropdown.classList.toggle("visible");
+    });
+    window.addEventListener("click", () => sortDropdown.classList.remove("visible"));
+
+    sortDropdown.addEventListener("click", e => {
+        if (e.target.matches("button")) {
+            const {field, dir} = e.target.dataset;
+            currentSort = {field, dir};
+            sortLabel.querySelector('span').textContent = e.target.textContent;
+            sortDropdown.classList.remove("visible");
+            sortTableRows(field, dir);
+        }
+    });
+
+    /* Клик по шапке таблицы = быстрая сортировка */
+    document.querySelectorAll("thead th[data-field]").forEach(th => {
+        th.addEventListener("click", () => {
+            const field = th.dataset.field;
+            if (field === "select") return;
+            const dir = currentSort.field === field && currentSort.dir === "asc" ? "desc" : "asc";
+            currentSort = {field, dir};
+            sortLabel.textContent = `Сортировка: ${th.textContent.trim()} ${dir === "asc" ? "↑" : "↓"}`;
+            sortTableRows(field, dir);
+        });
+    });
+
+    /* Заглушки */
+    document.getElementById("filterBtn").addEventListener("click", () => alert("Здесь будет фильтр по полям"));
+    document.getElementById("addPatientBtn").addEventListener("click", function () {
+        if (checkToken()) {
+            const modal = document.getElementById('addPatientModal');
+            if (modal) {
+                modal.style.display = 'block';
+                // Инициализируем модальное окно (если нужно)
+                initModalControls('addPatientModal');
+                // Делаем окно перетаскиваемым
+                makeModalDraggable('addPatientModal');
+
+            }
+        }
+    });
+
+    async function addPatientByCorId() {
+        const corId = document.getElementById('corIdInput').value;
+        const token = localStorage.getItem('access_token'); // Предполагаю, что токен лежит в localStorage
+
+        if (!corId) {
+            alert('Пожалуйста, введите COR-ID');
+            return;
+        }
+
+        try {
+            if(checkToken()){
+                const response = await fetch('/api/doctor/patients/add-existing', {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    },
+                    body: JSON.stringify({
+                        cor_id: corId,
+                        status: 'registered'
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('Пациент успешно добавлен:', result);
+                    alert('Пациент успешно добавлен!');
+                    // Можно тут закрыть модалку и сбросить поле
+                } else {
+                    const error = await response.json();
+                    console.error('Ошибка при добавлении пациента:', error);
+                    alert('Ошибка: ' + (error.detail || 'Неизвестная ошибка'));
+                }
+            }
+        } catch (error) {
+            console.error('Ошибка сети:', error);
+            alert('Ошибка сети: ' + error.message);
+        }
+    }
+
+    function registerNewPatient() {
+        // Собираем поля по правильным ID
+        const surnameField = document.getElementById('surname');
+        const firstNameField = document.getElementById('firstName');
+        const middleNameField = document.getElementById('middleName');
+        const birthDateField = document.getElementById('birthDate');
+        const emailField = document.getElementById('patientEmail');
+        const phoneNumberField = document.getElementById('patientPhone');
+        const addressField = document.getElementById('address');
+
+        const fields = [surnameField, firstNameField, middleNameField, birthDateField, emailField, phoneNumberField, addressField];
+        const requiredFields = [surnameField, firstNameField, birthDateField, emailField];
+
+        let isValid = true;
+
+        // Сначала убираем старую подсветку
+        fields.forEach(field => {
+            field.style.borderColor = '#f0f0f0';
+        });
+
+        // Проверяем заполненность текстовых полей
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.style.borderColor = 'red';
+                isValid = false;
+            }
+        });
+
+        // Проверяем выбор пола
+        const genderSelected = document.querySelector('input[name="gender"]:checked');
+        const genderOptions = document.querySelectorAll('input[name="gender"]');
+        genderOptions.forEach(option => {
+            option.parentElement.style.border = 'none';
+        });
+
+        if (!genderSelected) {
+            isValid = false;
+            genderOptions.forEach(option => {
+                option.parentElement.style.border = '1px solid red';
+            });
+        }
+
+        if (!isValid) {
+            alert('Пожалуйста, заполните все обязательные поля и выберите пол пациента.');
+            return;
+        }
+
+        // Собираем данные
+        const patientData = {
+            email: emailField.value.trim(),
+            surname: surnameField.value.trim(),
+            first_name: firstNameField.value.trim(),
+            middle_name: middleNameField.value.trim(),
+            birth_date: birthDateField.value,
+            sex: genderSelected.value,
+            phone_number: phoneNumberField.value.trim(),
+            address: addressField.value.trim(),
+            photo: "",
+            status: "registered"
+        };
+
+        if(checkToken()){
+            fetch('https://dev-corid.cor-medical.ua/api/doctor/patients/register-new', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                },
+                body: JSON.stringify(patientData)
+            })
+
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return response.json().then(err => Promise.reject(err));
+                    }
+                })
+                .then(data => {
+                    console.log('Пациент успешно добавлен:', data);
+                    alert('Пациент успешно добавлен!');
+                    document.getElementById('addPatientModal').style.display = 'none';
+
+                    window.location.reload()
+                })
+                .catch(error => {
+                    console.error('Ошибка при добавлении пациента:', error);
+                    alert('Ошибка при добавлении пациента. Проверьте введённые данные.');
+                });
+        }
+    }
+
+    document.getElementById('Add_Patient').addEventListener('click', function () {
+        if (checkToken()) {
+            const activeTab = document.querySelector('.tab-content.active');
+
+            if (activeTab && activeTab.id === 'byCorIdTab') {
+                // Если выбрана вкладка "по COR-ID"
+                addPatientByCorId();
+            } else {
+                // Если выбрана вкладка "регистрация пациента" - там будет другая функция
+                registerNewPatient(); // (если хочешь, напишем её тоже)
+            }
+        }
+    });
+
+
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', () => {
+            // Убираем активные классы со всех кнопок и табов
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+
+            // Активируем выбранную кнопку и таб
+            button.classList.add('active');
+            document.getElementById(button.dataset.tab).classList.add('active');
+        });
+    });
 </script>
 
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
+        // Инициализация модального окна
+        const modal = document.getElementById('addPatientModal');
+        const addPatientBtn = document.getElementById('addPatientBtn');
+        const cancelPatientBtn = document.getElementById('cancelPatientBtn');
+        const savePatientBtn = document.getElementById('savePatientBtn');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const importFileInput = document.getElementById('importFile');
+        const importFileName = document.getElementById('importFileName');
 
 
+        // Обработчик закрытия модального окна
+        cancelPatientBtn?.addEventListener('click', function () {
+            modal.style.display = 'none';
+        });
 
-    // Инициализация модального окна
-    const modal = document.getElementById('addPatientModal');
-    const addPatientBtn = document.getElementById('addPatientBtn');
-    const cancelPatientBtn = document.getElementById('cancelPatientBtn');
-    const savePatientBtn = document.getElementById('savePatientBtn');
-    const tabs = document.querySelectorAll('.tab');
-    const tabContents = document.querySelectorAll('.tab-content');
-    const importFileInput = document.getElementById('importFile');
-    const importFileName = document.getElementById('importFileName');
+        // Переключение между вкладками
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function () {
+                // Удаляем активный класс у всех вкладок
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
 
+                // Добавляем активный класс текущей вкладке
+                this.classList.add('active');
+                const tabId = this.dataset.tab + 'Tab';
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
 
-    // Обработчик закрытия модального окна
-    cancelPatientBtn.addEventListener('click', function() {
-      modal.style.display = 'none';
+        // Функция для форматирования и проверки COR-ID
+        function formatCorIdInput() {
+            const inputField = document.getElementById('corIdInput');
+            let value = inputField.value;
+
+            // Удаляем все символы, кроме разрешенных
+            value = value.replace(/[^A-Z0-9M-]/g, '').toUpperCase();
+
+            // Вставляем дефис между частями
+            if (value.length > 9) {
+                value = value.slice(0, 9) + value.slice(9, 15);
+            }
+
+            // Обновляем значение в поле ввода
+            inputField.value = value;
+        }
     });
 
-    // Переключение между вкладками
-    tabs.forEach(tab => {
-      tab.addEventListener('click', function() {
-        // Удаляем активный класс у всех вкладок
-        tabs.forEach(t => t.classList.remove('active'));
-        tabContents.forEach(c => c.classList.remove('active'));
 
-        // Добавляем активный класс текущей вкладке
-        this.classList.add('active');
-        const tabId = this.dataset.tab + 'Tab';
-        document.getElementById(tabId).classList.add('active');
-      });
+    document.getElementById("AddDevice")?.addEventListener("click", function () {
+        document.getElementById("addDeviceModal").style.display = "block";
+        makeModalDraggable('addDeviceModal');
     });
 
-    // Функция для форматирования и проверки COR-ID
-    function formatCorIdInput() {
-      const inputField = document.getElementById('corIdInput');
-      let value = inputField.value;
-
-      // Удаляем все символы, кроме разрешенных
-      value = value.replace(/[^A-Z0-9M-]/g, '').toUpperCase();
-
-      // Вставляем дефис между частями
-      if (value.length > 9) {
-        value = value.slice(0, 9) + value.slice(9, 15);
-      }
-
-      // Обновляем значение в поле ввода
-      inputField.value = value;
-    }
-
-
-
-  });
-
-
-
-  document.getElementById("AddDevice").addEventListener("click", function () {
-    document.getElementById("addDeviceModal").style.display = "block";
-    makeModalDraggable('addDeviceModal');
-  });
-
-  // Функция закрытия модалки
-  document.getElementById("closeAddDeviceModal").addEventListener("click", function () {
-    document.getElementById("addDeviceModal").style.display = "none";
-  });
-
-
-  document.addEventListener('DOMContentLoaded', () => {
-    startPrinterMonitoring();
-
-    document.getElementById('sendLabelButton')?.addEventListener('click', async () => {
-      const ip = document.getElementById('printerIp')?.value.trim() || PRINTER_IP;
-      const isAvailable = await checkPrinterAvailability(ip);
-
-      if (!isAvailable) {
-        alert('Принтер недоступен. Проверьте соединение.');
-        return;
-      }
-
-      await sendPrintRequest(ip);
+    // Функция закрытия модалки
+    document.getElementById("closeAddDeviceModal").addEventListener("click", function () {
+        document.getElementById("addDeviceModal").style.display = "none";
     });
-  });
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+        startPrinterMonitoring();
+
+        document.getElementById('sendLabelButton')?.addEventListener('click', async () => {
+            const ip = document.getElementById('printerIp')?.value.trim() || PRINTER_IP;
+            const isAvailable = await checkPrinterAvailability(ip);
+
+            if (!isAvailable) {
+                alert('Принтер недоступен. Проверьте соединение.');
+                return;
+            }
+
+            await sendPrintRequest(ip);
+        });
+    });
 </script>
 </body>
 </html>

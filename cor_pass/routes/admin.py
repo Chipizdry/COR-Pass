@@ -33,7 +33,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
 from cor_pass.services.cipher import decrypt_data
-from cor_pass.services.logger import logger
+from loguru import logger
 from cor_pass.config.config import settings
 
 router = APIRouter(prefix="/admin", tags=["Admin"])

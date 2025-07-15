@@ -12,7 +12,7 @@ from cor_pass.services.recovery_file import generate_recovery_file
 from cor_pass.services.email import send_email_code_with_qr
 from cor_pass.database.models import User
 from cor_pass.services.access import user_access
-from cor_pass.services.logger import logger
+from loguru import logger
 from cor_pass.schemas import (
     DeleteMyAccount,
     PasswordStorageSettings,

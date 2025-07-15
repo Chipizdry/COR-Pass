@@ -217,7 +217,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     }
     const openCaseSettingsModal = () => {
         const caseSettingsModal = document.querySelector('#caseSettingsModal');
-        const caseSettingsContent = caseSettingsModal.querySelector('.caseSettingsContent');
+        const caseSettingsContent = caseSettingsModal?.querySelector('.caseSettingsContent');
         caseSettingsContent.innerHTML = ""
 
 
@@ -237,15 +237,15 @@ document.addEventListener("DOMContentLoaded", (event) => {
             })
     }
     const openCaseSettingsModalHandler = () => {
-        document.querySelector('#caseSettingsModalBtn').addEventListener('click', () => {
+        document.querySelector('#caseSettingsModalBtn')?.addEventListener('click', () => {
             openCaseSettingsModal()
         })
     }
     const saveCaseSettings = () => {
         const caseSettingsModal = document.querySelector('#caseSettingsModal');
-        const caseSettingsModalButton = caseSettingsModal.querySelector('.modalButton');
+        const caseSettingsModalButton = caseSettingsModal?.querySelector('.modalButton');
 
-        caseSettingsModalButton.addEventListener('click', () => {
+        caseSettingsModalButton?.addEventListener('click', () => {
             fetch(`${API_BASE_URL}/api/cases/case_parameters`, {
                 method: "PATCH",
                 headers: {

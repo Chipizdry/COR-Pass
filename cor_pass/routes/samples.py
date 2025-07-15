@@ -104,3 +104,52 @@ async def delete_samples(
         db=db, samples_ids=request_body.sample_ids
     )
     return result
+
+
+
+@router.patch(
+    "/{sample_id}/print_glasses",
+    response_model=Sample,
+    dependencies=[Depends(doctor_access)],
+)
+async def print_all_sample_glasses(
+    sample_id: str,
+    printing: bool=False,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Печатает все стёкла семпла
+
+    """
+    db_sample = await sample_service.print_all_sample_glasses(
+        db=db, sample_id=sample_id, printing=printing
+    )
+    if db_sample is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Sample not found"
+        )
+    return db_sample
+
+
+@router.patch(
+    "/{sample_id}/print_cassettes",
+    response_model=Sample,
+    dependencies=[Depends(doctor_access)],
+)
+async def print_all_sample_cassettes(
+    sample_id: str,
+    printing: bool=False,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Печатает все кассеты семпла
+
+    """
+    db_sample = await sample_service.print_all_sample_cassettes(
+        db=db, sample_id=sample_id, printing=printing
+    )
+    if db_sample is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Sample not found"
+        )
+    return db_sample

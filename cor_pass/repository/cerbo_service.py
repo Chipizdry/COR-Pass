@@ -1,16 +1,17 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import uuid4
 from fastapi import FastAPI
-from sqlalchemy import UUID, func, select
+from sqlalchemy import UUID, delete, func, select, update
 from typing import Any, Dict, List, Optional, Tuple
 
 from cor_pass.database.models import (
-    CerboMeasurement
+    CerboMeasurement,
+    EnergeticSchedule
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from cor_pass.schemas import FullDeviceMeasurementCreate, FullDeviceMeasurementResponse
-from cor_pass.services.logger import logger
+from cor_pass.schemas import EnergeticScheduleBase, EnergeticScheduleCreate, FullDeviceMeasurementCreate, FullDeviceMeasurementResponse
+from loguru import logger
 from pymodbus.client import AsyncModbusTcpClient
 from cor_pass.database.db import async_session_maker
 
@@ -520,3 +521,228 @@ async def get_device_measurements_paginated(
     total_count = total_count_result.scalar_one()
 
     return measurements, total_count
+
+
+
+async def create_schedule(db: AsyncSession, schedule_data: EnergeticScheduleCreate) -> EnergeticSchedule:
+    """
+    Создает новое расписание в базе данных.
+    """
+    duration_delta = timedelta(
+        hours=schedule_data.duration_hours,
+        minutes=schedule_data.duration_minutes
+    )
+    
+    temp_start_datetime = datetime.combine(datetime.min.date(), schedule_data.start_time)
+    calculated_end_time = (temp_start_datetime + duration_delta).time()
+
+
+    db_schedule = EnergeticSchedule(
+        start_time=schedule_data.start_time,
+        duration=duration_delta,
+        end_time=calculated_end_time,
+        grid_feed_w=schedule_data.grid_feed_w,
+        battery_level_percent=schedule_data.battery_level_percent,
+        charge_battery=schedule_data.charge_battery,
+        is_manual_mode=schedule_data.is_manual_mode
+    )
+    db.add(db_schedule)
+    await db.commit()
+    await db.refresh(db_schedule)
+    return db_schedule
+
+
+
+async def get_schedule_by_id(db: AsyncSession, schedule_id: str) -> Optional[EnergeticSchedule]:
+    """
+    Получает расписание по его ID.
+    """
+    result = await db.execute(
+        select(EnergeticSchedule).where(EnergeticSchedule.id == schedule_id)
+    )
+    return result.scalars().first()
+
+# async def get_all_schedules(db: AsyncSession) -> List[EnergeticSchedule]:
+#     """
+#     Получает все активные расписания, отсортированные по времени начала.
+#     """
+#     result = await db.execute(
+#         select(EnergeticSchedule)
+#         .order_by(EnergeticSchedule.start_time)
+#     )
+#     return result.scalars().all()
+
+async def get_all_schedules(db: AsyncSession) -> List[EnergeticSchedule]:
+    """
+    Получает все расписания (активные и неактивные), отсортированные по времени начала.
+    """
+    result = await db.execute(
+        select(EnergeticSchedule)
+        .order_by(EnergeticSchedule.start_time)
+    )
+    return result.scalars().all()
+
+async def update_schedule(
+    db: AsyncSession, schedule_id: str, schedule_data: EnergeticScheduleBase
+) -> Optional[EnergeticSchedule]:
+    """
+    Обновляет существующее расписание по ID.
+    """
+    db_schedule = await get_schedule_by_id(db, schedule_id)
+    if not db_schedule:
+        return None
+
+    duration_delta = timedelta(
+        hours=schedule_data.duration_hours,
+        minutes=schedule_data.duration_minutes
+    )
+    
+
+    temp_start_datetime = datetime.combine(datetime.min.date(), schedule_data.start_time)
+    calculated_end_time = (temp_start_datetime + duration_delta).time()
+
+
+    db_schedule.start_time = schedule_data.start_time
+    db_schedule.duration = duration_delta
+    db_schedule.end_time = calculated_end_time 
+    db_schedule.grid_feed_w = schedule_data.grid_feed_w
+    db_schedule.battery_level_percent = schedule_data.battery_level_percent
+    db_schedule.charge_battery = schedule_data.charge_battery
+    db_schedule.is_manual_mode = schedule_data.is_manual_mode
+
+    await db.commit()
+    await db.refresh(db_schedule)
+    return db_schedule
+
+async def delete_schedule(db: AsyncSession, schedule_id: str) -> bool:
+    """
+    Удаляет расписание по ID.
+    """
+    result = await db.execute(
+        delete(EnergeticSchedule).where(EnergeticSchedule.id == schedule_id)
+    )
+    await db.commit()
+    return result.rowcount > 0
+
+
+async def update_schedule_is_active_status(db: AsyncSession, schedule_id: str, is_active_status: bool):
+
+    stmt = update(EnergeticSchedule).where(EnergeticSchedule.id == schedule_id).values(is_active=is_active_status)
+    await db.execute(stmt)
+    await db.commit()
+
+
+
+
+
+async def set_inverter_parameters(
+    grid_feed_w: int,
+    battery_level_percent: int,
+    charge_battery: bool
+):
+    logger.debug(f"\n--- Тестовая отправка параметров на инвертор ---")
+    logger.debug(f"Отдача в сеть: {grid_feed_w} Вт")
+    logger.debug(f"Целевой уровень батареи: {battery_level_percent}%")
+    logger.debug(f"Зарядка батареи: {charge_battery}")
+    logger.debug("--------------------------------------")
+
+
+current_active_schedule_id: Optional[str] = None
+
+
+SCHEDULE_CHECK_INTERVAL_SECONDS = 3
+DEFAULT_grid_feed_kw = 70000
+DEFAULT_battery_level_percent = 30
+DEFAULT_charge_battery = True
+
+async def energetic_schedule_task(async_session_maker):
+    """
+    Фоновая задача для проверки и применения энергетического расписания.
+    """
+    global current_active_schedule_id
+    
+    while True:
+        try:
+            current_check_time = datetime.now() 
+            # logger.debug(f"[{current_check_time.strftime('%H:%M:%S')}] Проверка расписания...")
+            
+            async with async_session_maker() as db_session:
+                all_schedules = await get_all_schedules(db_session)
+                
+                operational_schedules = [s for s in all_schedules if not s.is_manual_mode]
+
+                current_time = current_check_time.time()
+
+                if not operational_schedules:
+                    # logger.debug("Нет расписаний для применения.")
+                    if current_active_schedule_id is not None:
+                        await set_inverter_parameters(grid_feed_w=DEFAULT_grid_feed_kw, battery_level_percent=DEFAULT_battery_level_percent, charge_battery=DEFAULT_charge_battery)
+                        await update_schedule_is_active_status(db=db_session, schedule_id=current_active_schedule_id, is_active_status=False)
+                        current_active_schedule_id = None
+                    else:
+                        pass
+                        # logger.debug("Инвертор уже в дефолтных параметрах (расписание отсутствует).")
+                    
+                    for schedule in operational_schedules:
+                        if schedule.is_active:
+                            await update_schedule_is_active_status(db=db_session, schedule_id=schedule.id, is_active_status=False)
+                    
+                    await asyncio.sleep(SCHEDULE_CHECK_INTERVAL_SECONDS)
+                    continue 
+                
+
+                active_auto_schedule_for_now: Optional[EnergeticSchedule] = None
+
+
+                for schedule in operational_schedules:
+                    if schedule.start_time <= schedule.end_time:
+                        if schedule.start_time <= current_time < schedule.end_time:
+                            active_auto_schedule_for_now = schedule
+                            break
+                    else: 
+                        if current_time >= schedule.start_time or current_time < schedule.end_time:
+                            active_auto_schedule_for_now = schedule
+                            break
+                
+
+                if active_auto_schedule_for_now:
+                    if active_auto_schedule_for_now.id != current_active_schedule_id:
+                        # logger.debug(f"Найдено активное расписание: ID {active_auto_schedule_for_now.id} (Время: {active_auto_schedule_for_now.start_time}-{active_auto_schedule_for_now.end_time}). Активация.")
+                        
+
+                        if current_active_schedule_id is not None:
+                            await update_schedule_is_active_status(db=db_session, schedule_id=current_active_schedule_id, is_active_status=False)
+                            
+                        await set_inverter_parameters(
+                            grid_feed_w=active_auto_schedule_for_now.grid_feed_w, 
+                            battery_level_percent=active_auto_schedule_for_now.battery_level_percent,
+                            charge_battery=active_auto_schedule_for_now.charge_battery
+                        )
+                        await update_schedule_is_active_status(db=db_session, schedule_id=active_auto_schedule_for_now.id, is_active_status=True)
+                        current_active_schedule_id = active_auto_schedule_for_now.id
+                    else:
+                        # logger.debug(f"Автоматическое расписание {active_auto_schedule_for_now.id} уже активно. Параметры не меняются.")
+
+                        if not active_auto_schedule_for_now.is_active: 
+                             await update_schedule_is_active_status(db=db_session, schedule_id=active_auto_schedule_for_now.id, is_active_status=True)
+                else:
+                   
+                    if current_active_schedule_id is not None:
+                        # logger.debug("Текущее время вне любого расписания. Возврат к дефолтным параметрам.")
+                        await set_inverter_parameters(grid_feed_w=DEFAULT_grid_feed_kw, battery_level_percent=DEFAULT_battery_level_percent, charge_battery=DEFAULT_charge_battery)
+                        await update_schedule_is_active_status(db=db_session, schedule_id=current_active_schedule_id, is_active_status=False)
+                        current_active_schedule_id = None
+                    else:
+                        pass
+                        # logger.debug("Текущее время вне любого расписания. Инвертор уже в дефолтных параметрах.")
+                    
+                for schedule in all_schedules:
+                    if (not schedule.is_manual_mode and 
+                        schedule.id != current_active_schedule_id and 
+                        schedule.is_active):
+                        await update_schedule_is_active_status(db=db_session, schedule_id=schedule.id, is_active_status=False)
+
+        except Exception as e:
+            logger.error(f"Ошибка в фоновой задаче energetic_schedule_task: {e}", exc_info=True) 
+        
+        await asyncio.sleep(SCHEDULE_CHECK_INTERVAL_SECONDS)

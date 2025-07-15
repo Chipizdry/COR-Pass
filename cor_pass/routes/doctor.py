@@ -34,14 +34,16 @@ from cor_pass.repository.doctor import (
     upload_reserv_data_service,
 )
 from cor_pass.repository.lawyer import get_doctor
-from cor_pass.repository.patient import add_existing_patient, register_new_patient
+from cor_pass.repository.patient import add_existing_patient, create_patient_and_user_by_email, create_patient_linked_to_user, create_standalone_patient, register_new_patient
 from cor_pass.schemas import (
     CaseCloseResponse,
     CaseCreate,
     CaseFinalReportPageResponse,
     CaseIDReportPageResponse,
+    ExistingPatientRegistration,
     FinalReportResponseSchema,
     GetAllPatientsResponce,
+    PatientCreationResponse,
     PatientFinalReportPageResponse,
     PatientTestReportPageResponse,
     ReportAndDiagnosisUpdateSchema,
@@ -79,7 +81,7 @@ from cor_pass.services.image_validation import validate_image_file
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 router = APIRouter(prefix="/doctor", tags=["Doctor"])
 
@@ -278,9 +280,10 @@ async def get_single_patient(
 
     return patient
 
-
+# изменить
 @router.post(
     "/patients/register-new",
+    response_model=PatientCreationResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(doctor_access)],
 )
@@ -297,44 +300,40 @@ async def add_new_patient_to_doctor(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Doctor not found"
         )
-
     if current_user.cor_id != doctor.doctor_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to add patients to this doctor",
         )
-
-    if body:
-        new_patient_info = body
+    new_patient_info = body
+    if new_patient_info.email:
         exist_user = await repository_person.get_user_by_email(
-            new_patient_info.email, db
-        )
+        new_patient_info.email, db
+    )
         if exist_user:
-            logger.debug(f"{new_patient_info.email} user already exists")
+            logger.debug(f"{new_patient_info.email} user already exists, please create patient by cor-id")
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail="Account already exists"
             )
-        new_patient = await register_new_patient(db, new_patient_info, doctor)
-        
-        case_body = CaseCreate(    
-            patient_cor_id = new_patient.patient_cor_id,
-            num_cases= 1,
-            urgency = UrgencyType.S,
-            material_type = MaterialType.R,
-            num_samples=1)
-    
-        case = await case_service.create_cases_with_initial_data(db=db, body=case_body)
-        return {
-            "message": f"Новый пациент {new_patient_info.first_name} {new_patient_info.surname} успешно зарегистрирован и добавлен к врачу."
-        }
+        try:
+            return await create_patient_and_user_by_email(db=db, patient_data=body, doctor=doctor)
+        except HTTPException as e:
+            raise e 
+        except Exception as e:
+
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create new user and patient: {e}")
     else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Некорректные данные для добавления пациента.",
-        )
+        try:
+            return await create_standalone_patient(db=db, patient_data=body, doctor=doctor)
+        except HTTPException as e:
+            raise e
+        except Exception as e:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create standalone patient: {e}")
 
 
-@router.post("/patients/add-existing", dependencies=[Depends(doctor_access)])
+
+
+@router.post("/patients/add-existing",response_model=PatientCreationResponse, dependencies=[Depends(doctor_access)])
 async def add_existing_patient_to_doctor(
     patient_data: ExistingPatientAdd,
     db: AsyncSession = Depends(get_db),
@@ -348,25 +347,19 @@ async def add_existing_patient_to_doctor(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Doctor not found"
         )
-
-    existing_patient = await add_existing_patient(
-        db=db, doctor=doctor, cor_id=patient_data.cor_id
+    user = await repository_person.get_user_by_corid(cor_id = patient_data.cor_id, db=db)
+    new_patient_data = ExistingPatientRegistration(
+        email = user.email,
+        birth_date = user.birth,
+        sex = user.user_sex, 
     )
-    if not existing_patient:
+    patient = await create_patient_linked_to_user(db=db, doctor=doctor, user_cor_id = patient_data.cor_id, patient_data = new_patient_data)
+    if not patient:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found"
         )
     
-    case_body = CaseCreate(    
-    patient_cor_id = existing_patient.patient_cor_id,
-    num_cases= 1,
-    urgency = UrgencyType.S,
-    material_type = MaterialType.R,
-    num_samples=1)
-
-    case = await case_service.create_cases_with_initial_data(db=db, body=case_body)
-
-    return existing_patient
+    return patient
 
 
 

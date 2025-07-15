@@ -5,7 +5,7 @@ from cor_pass.database.models import CorIdAuthSession, AuthSessionStatus
 from datetime import datetime, timedelta
 
 from cor_pass.database.db import async_session_maker
-
+from loguru import logger
 # Словарь для хранения активных WebSocket-соединений (session_token -> WebSocket)
 active_connections: dict[str, WebSocket] = {}
 
@@ -21,7 +21,7 @@ async def close_websocket_connection(session_token: str):
     if session_token in active_connections:
         await active_connections[session_token].close()
         del active_connections[session_token]
-        print(f"WebSocket соединение для {session_token} закрыто из-за таймаута.")
+        logger.debug(f"WebSocket соединение для {session_token} закрыто из-за таймаута.")
 
 
 async def check_session_timeouts():
@@ -49,7 +49,7 @@ async def check_session_timeouts():
                     )  # Закрываем соединение
 
             except Exception as e:
-                print(f"Ошибка в асинхронной фоновой задаче проверки таймаутов: {e}")
+                logger.error(f"Ошибка в асинхронной фоновой задаче проверки таймаутов: {e}")
                 await db.rollback()
             finally:
                 await asyncio.sleep(60)  # Проверять каждую минуту
@@ -83,11 +83,8 @@ async def cleanup_auth_sessions():
                 completed_count = completed_result.rowcount
 
                 await db.commit()
-                print(
-                    f"Удалено {expired_count} просроченых сессий и {completed_count} завершенных сессий."
-                )
             except Exception as e:
-                print(f"Ошибка при асинхронной очистке сессий авторизации: {e}")
+                logger.error(f"Ошибка при асинхронной очистке сессий авторизации: {e}")
                 await db.rollback()
             finally:
                 await asyncio.sleep(900)  # запуск каждые 15 минут

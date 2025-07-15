@@ -22,7 +22,7 @@ from cor_pass.repository import lawyer as repository_lawyer
 from cor_pass.repository import person as repository_person
 import base64
 from sqlalchemy.ext.asyncio import AsyncSession
-from cor_pass.services.logger import logger
+from loguru import logger
 
 router = APIRouter(prefix="/lawyer", tags=["Lawyer"])
 

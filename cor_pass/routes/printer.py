@@ -3,12 +3,9 @@ import platform
 from fastapi import APIRouter, HTTPException, Query
 import httpx
 from pydantic import BaseModel
-import logging
-
+from loguru import logger
 from cor_pass.schemas import PrintRequest
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Printer"])
 

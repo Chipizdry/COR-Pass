@@ -1,15 +1,15 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query,Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 import logging
 import json
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel 
-from cor_pass.repository.cerbo_service import BATTERY_ID, ESS_UNIT_ID, INVERTER_ID, REGISTERS, decode_signed_16, decode_signed_32, get_device_measurements_paginated, get_modbus_client, register_modbus_error
-from cor_pass.schemas import CerboMeasurementResponse, EssAdvancedControl, GridLimitUpdate, PaginatedResponse, VebusSOCControl
+from cor_pass.repository.cerbo_service import BATTERY_ID, ESS_UNIT_ID, INVERTER_ID, REGISTERS, create_schedule, decode_signed_16, decode_signed_32, delete_schedule, get_all_schedules, get_device_measurements_paginated, get_modbus_client, get_schedule_by_id, register_modbus_error, update_schedule
+from cor_pass.schemas import CerboMeasurementResponse, EnergeticScheduleBase, EnergeticScheduleCreate, EnergeticScheduleResponse, EssAdvancedControl, GridLimitUpdate, PaginatedResponse, VebusSOCControl
 from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.database.db import get_db
 from math import ceil
-from cor_pass.services.logger import logger
+from loguru import logger
 
 ERROR_THRESHOLD = 9
 error_count = 0
@@ -17,16 +17,10 @@ error_count = 0
 
 # Создание роутера FastAPI
 router = APIRouter(prefix="/modbus", tags=["Modbus"])
-
 schedules_storage = {
     "schedule_enabled": True,
     "periods": []
 }
-
-class RegisterWriteRequest(BaseModel):
-    slave_id: int
-    register: int
-    value: int
 
 
 class SchedulePeriod(BaseModel):
@@ -44,8 +38,7 @@ class ScheduleData(BaseModel):
     scheduleEnabled: bool
     periods: list[SchedulePeriod]
 
-class InverterPowerPayload(BaseModel):
-    inverter_power: float
+
 
 
 @router.get("/error_count")
@@ -373,37 +366,6 @@ async def set_ess_advanced_setpoint_fine(control: EssAdvancedControl, request: R
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
 
-@router.post("/ess_advanced_settings/inverter_power")
-async def set_inverter_power_setpoint(payload: InverterPowerPayload, request: Request):
-    try:
-        client = request.app.state.modbus_client
-        slave = INVERTER_ID
-
-        raw_value = payload.inverter_power
-        if raw_value is None:
-            raise HTTPException(status_code=400, detail="Не передано значение inverter_power")
-
-        # Масштабируем и проверяем на допустимые границы int16
-        scaled_value = int(float(raw_value/10))
-        if not -32768 <= scaled_value <= 32767:
-            raise HTTPException(status_code=400, detail="Значение выходит за пределы int16")
-
-        # Преобразуем в формат Modbus (uint16, если отрицательное — в дополнительный код)
-        if scaled_value < 0:
-            register_value = (1 << 16) + scaled_value
-        else:
-            register_value = scaled_value
-
-        await client.write_register(address=2704, value=register_value, slave=slave)
-
-        logging.info(f"✅ Установлено значение инвертора: {raw_value} W (регистр 2704 = {register_value})")
-        return {"status": "ok", "value": raw_value}
-
-    except Exception as e:
-        logging.error("❗ Ошибка записи регистра 2704", exc_info=e)
-        raise HTTPException(status_code=500, detail="Modbus ошибка")
-
-
 @router.post("/ess/grid_limiting_status")
 async def set_grid_limiting_status(data: GridLimitUpdate, request: Request):
     """
@@ -649,32 +611,6 @@ async def test_dynamic_ess_registers(
     return results
 
 
-@router.post("/write_register")
-async def write_register(request_data: RegisterWriteRequest, request: Request):
-    """
-    Записывает значение в указанный регистр Modbus.
-    """
-    try:
-        client = request.app.state.modbus_client
-        
-        # Записываем значение в регистр
-        result = await client.write_register(
-            address=request_data.register,
-            value=request_data.value,
-            slave=request_data.slave_id
-        )
-        
-        if result.isError():
-            raise HTTPException(status_code=500, detail="Ошибка записи регистра")
-            
-        return {"status": "success", "register": request_data.register, "value": request_data.value}
-        
-    except Exception as e:
-        register_modbus_error()
-        logging.error(f"❗ Ошибка записи регистра {request_data.register}", exc_info=e)
-        raise HTTPException(status_code=500, detail="Modbus ошибка")
-
-
 @router.get(
     "/measurements/",
     response_model=PaginatedResponse[CerboMeasurementResponse], 
@@ -709,10 +645,6 @@ async def read_measurements(
         total_pages=total_pages
     )
 
-
-
-
-
 @router.post("/schedule/save")
 async def save_schedule(schedule_data: ScheduleData):
     """
@@ -746,3 +678,80 @@ async def save_schedule(schedule_data: ScheduleData):
     except Exception as e:
         logger.error(f"Ошибка сохранения периода(ов): {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Ошибка при сохранении периода(ов)")
+    
+
+
+
+@router.post("/schedules/create", 
+             response_model=EnergeticScheduleResponse, 
+             status_code=status.HTTP_201_CREATED,
+             tags=["Energetic Shedule CRUD"])
+async def create_energetic_schedule(
+    schedule_data: EnergeticScheduleCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    new_schedule = await create_schedule(db, schedule_data)
+    return new_schedule
+
+
+
+@router.get("/schedules/{schedule_id}", 
+            response_model=EnergeticScheduleResponse,
+            tags=["Energetic Shedule CRUD"])
+async def get_energetic_schedule(
+    schedule_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    schedule = await get_schedule_by_id(db, schedule_id)
+    if not schedule:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule not found")
+    return schedule
+
+@router.get("/schedules/", 
+            response_model=List[EnergeticScheduleResponse],
+            tags=["Energetic Shedule CRUD"])
+async def get_all_energetic_schedules_api(
+    db: AsyncSession = Depends(get_db)
+):
+    schedules = await get_all_schedules(db)
+    response = []
+    for schedule in schedules:
+        schedule = EnergeticScheduleResponse(
+            id=schedule.id,
+            start_time=schedule.start_time,
+            duration=schedule.duration,
+            grid_feed_w=schedule.grid_feed_w,
+            battery_level_percent=schedule.battery_level_percent,
+            charge_battery=schedule.charge_battery,
+            is_active=schedule.is_active,
+            is_manual_mode=schedule.is_manual_mode,
+            end_time=schedule.end_time
+        )
+        response.append(schedule)
+    return response
+
+@router.put("/schedules/{schedule_id}", 
+            response_model=EnergeticScheduleResponse,
+            tags=["Energetic Shedule CRUD"])
+async def update_energetic_schedule_api(
+    schedule_id: str,
+    schedule_data: EnergeticScheduleBase,
+    db: AsyncSession = Depends(get_db)
+):
+    updated_schedule = await update_schedule(db, schedule_id, schedule_data)
+    if not updated_schedule:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule not found")
+    return updated_schedule
+
+@router.delete("/schedules/{schedule_id}", 
+               status_code=status.HTTP_204_NO_CONTENT,
+               tags=["Energetic Shedule CRUD"])
+async def delete_energetic_schedule_api(
+    schedule_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    deleted = await delete_schedule(db, schedule_id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Schedule not found")
+    return
+

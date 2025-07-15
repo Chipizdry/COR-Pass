@@ -7,7 +7,7 @@ import json
 
 from fastapi.websockets import WebSocketState
 
-from cor_pass.services.logger import logger
+from loguru import logger
 
 def get_websocket_client_ip(websocket: WebSocket) -> str:
     """

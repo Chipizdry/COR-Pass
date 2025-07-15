@@ -27,11 +27,11 @@ const modalConfigs = {
     inverterModal: { width: '350px', height: 'auto', top: '50px', left: 'auto' },
 };
 
-//Функция получения токена 
+//Функция получения токена
 function getToken() {
     return localStorage.getItem('access_token') || getTokenFromURL();
 }
-  
+
 
 function makeModalDraggable(modalId) {
     const modal = document.getElementById(modalId);
@@ -67,7 +67,7 @@ const modalStates = {};
 
 // Универсальная функция для закрытия модального окна
 function closeModal(modalId) {
-    console.log(`Закрытие модального окна: ${modalId}`); 
+    console.log(`Закрытие модального окна: ${modalId}`);
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'none';
@@ -236,7 +236,7 @@ function togglePassword(inputId, iconId) {
 
 // Функция установки иконки (по умолчанию закрытый глаз)
 function updateEyeIcon(eyeIcon, isPasswordHidden) {
-    
+
     eyeIcon.innerHTML = ''; // Очистка
     const svgIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svgIcon.setAttribute('width', '25');
@@ -244,7 +244,7 @@ function updateEyeIcon(eyeIcon, isPasswordHidden) {
     svgIcon.setAttribute('viewBox', '0 0 25 24');
     svgIcon.setAttribute('fill', 'none');
     svgIcon.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-   
+
     if (isPasswordHidden) {
         // Открытый глаз
         svgIcon.innerHTML = `
@@ -329,6 +329,10 @@ function isTokenExpired(token) {
 
 // Функция для декодирования токена
 function decodeToken(token) {
+    if(!token){
+        return null
+    }
+
     try {
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -427,7 +431,7 @@ function showTokenExpiredModal() {
 `;
     document.body.style.display = "none";
     document.body.innerHTML = modalHTML;
-    document.body.style.display = "block"; 
+    document.body.style.display = "block";
 
 
       // Удаление токенов из localStorage
@@ -447,7 +451,7 @@ function showTokenExpiredModal() {
 
     // Добавляем обработчик кнопки для перехода на страницу логина
     document.getElementById('loginRedirectButton').addEventListener('click', () => {
-        window.location.href = "/"; 
+        window.location.href = "/";
     });
 
 }
@@ -498,7 +502,7 @@ function checkToken() {
     })
     .catch(error => {
         console.error("Auth check failed:", error);
-       
+
          showTokenExpiredModal();
     });
 */
@@ -572,10 +576,10 @@ function goBack(url) {
     if (checkToken()) {
         const token = getToken();
         window.location.href = `${url}`;
-    } 
+    }
 }
 
-//Отображение прогресс-бара паролей 
+//Отображение прогресс-бара паролей
 function updatePasswordStrength(password, targetId) {
     const strengthBar = document.getElementById(targetId);
     if (!strengthBar) {
@@ -626,10 +630,10 @@ function updatePasswordStrength(password, targetId) {
 
 // Обработчик генерации пароля
 function generatePassword(event) {
-    if( checkToken()){ 
+    if( checkToken()){
         console.log('Кнопка "Сгенерировать пароль" нажата');
         event.preventDefault();
-        
+
         let passwordField, targetId;
         if (event.target.id === 'generatePasswordBtnCreate') {
             passwordField = document.getElementById('generatedPassword');
@@ -708,14 +712,14 @@ async function encryptAndSaveRecords(records, recoveryPassword) {
 
         // 2. Преобразуем данные в строку JSON
         const dataString = JSON.stringify(dataToEncrypt);
-        
+
         // 3. Генерируем ключ шифрования из супер-пароля
         const encoder = new TextEncoder();
         const passwordBuffer = encoder.encode(recoveryPassword);
-        
+
         // Генерируем случайную соль
         const salt = window.crypto.getRandomValues(new Uint8Array(16));
-        
+
         // Создаем ключевой материал из пароля
         const keyMaterial = await window.crypto.subtle.importKey(
             'raw',
@@ -724,7 +728,7 @@ async function encryptAndSaveRecords(records, recoveryPassword) {
             false,
             ['deriveKey']
         );
-        
+
         // Производим ключ с помощью PBKDF2
         const key = await window.crypto.subtle.deriveKey(
             {
@@ -738,11 +742,11 @@ async function encryptAndSaveRecords(records, recoveryPassword) {
             false,
             ['encrypt']
         );
-        
+
         // 4. Шифруем данные
         const iv = window.crypto.getRandomValues(new Uint8Array(12)); // Генерируем IV
         const dataBuffer = encoder.encode(dataString);
-        
+
         const encryptedData = await window.crypto.subtle.encrypt(
             {
                 name: 'AES-GCM',
@@ -753,7 +757,7 @@ async function encryptAndSaveRecords(records, recoveryPassword) {
             key,
             dataBuffer
         );
-        
+
         // 5. Формируем итоговый файл:
         // Формат: [соль (16 байт)][IV (12 байт)][зашифрованные данные][тег аутентификации (16 байт)]
         const combined = new Uint8Array(salt.length + iv.length + encryptedData.byteLength);
@@ -761,10 +765,10 @@ async function encryptAndSaveRecords(records, recoveryPassword) {
         combined.set(iv, salt.length); // Добавляем IV
         // Добавляем зашифрованные данные (включая тег аутентификации)
         combined.set(new Uint8Array(encryptedData), salt.length + iv.length);
-        
+
         // 6. Создаем Blob для скачивания
         return new Blob([combined], { type: 'text/plain' });
-        
+
     } catch (error) {
         console.error('Ошибка при шифровании данных:', error);
         throw new Error('Не удалось зашифровать данные. Пожалуйста, попробуйте снова.');
@@ -785,17 +789,17 @@ async function downloadEncryptedRecords(records) {
                 'Authorization': 'Bearer ' + localStorage.getItem('access_token')
             }
         });
-        
+
         if (!response.ok) {
             throw new Error('Ошибка получения супер-пароля');
         }
-        
+
         const data = await response.json();
         const recoveryPassword = data['users recovery code'];
-        
+
         // Шифруем данные
         const encryptedBlob = await encryptAndSaveRecords(records, recoveryPassword);
-        
+
         // Создаем ссылку для скачивания
         const url = window.URL.createObjectURL(encryptedBlob);
         const a = document.createElement('a');
@@ -803,11 +807,11 @@ async function downloadEncryptedRecords(records) {
         a.download = 'account_records.cor';
         document.body.appendChild(a);
         a.click();
-        
+
         // Очищаем
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
     } catch (error) {
         console.error('Ошибка при создании файла:', error);
         alert('Не удалось создать файл с зашифрованными данными');
@@ -824,7 +828,7 @@ async function downloadEncryptedRecords(records) {
 async function decryptRecordsFromFile(file, recoveryPassword) {
     try {
         console.log('Начало дешифровки файла...');
-        
+
         // 1. Читаем файл как ArrayBuffer
         const fileBuffer = await file.arrayBuffer();
         const fileBytes = new Uint8Array(fileBuffer);
@@ -834,7 +838,7 @@ async function decryptRecordsFromFile(file, recoveryPassword) {
         const salt = fileBytes.slice(0, 16);
         const iv = fileBytes.slice(16, 28); // 16 + 12 = 28 (IV)
         const encryptedData = fileBytes.slice(28); // Остальное - зашифрованные данные + тег
-        
+
         console.log('Извлечены компоненты:',
             '\nСоль (16 байт):', salt,
             '\nIV (12 байт):', iv,
@@ -843,7 +847,7 @@ async function decryptRecordsFromFile(file, recoveryPassword) {
         // 3. Генерируем ключ из супер-пароля
         const encoder = new TextEncoder();
         const passwordBuffer = encoder.encode(recoveryPassword);
-        
+
         console.log('Генерация ключа из пароля...');
         const keyMaterial = await window.crypto.subtle.importKey(
             'raw',
@@ -852,7 +856,7 @@ async function decryptRecordsFromFile(file, recoveryPassword) {
             false,
             ['deriveKey']
         );
-        
+
         const key = await window.crypto.subtle.deriveKey(
             {
                 name: 'PBKDF2',
@@ -885,12 +889,12 @@ async function decryptRecordsFromFile(file, recoveryPassword) {
         const decoder = new TextDecoder();
         const decryptedString = decoder.decode(decryptedData);
         console.log('Дешифрованная строка:', decryptedString);
-        
+
         const records = JSON.parse(decryptedString);
         console.log('Дешифрованные записи:', records);
 
         return records;
-        
+
     } catch (error) {
         console.error('Полная ошибка дешифровки:', {
             name: error.name,
@@ -907,22 +911,22 @@ async function decryptRecordsFromFile(file, recoveryPassword) {
 async function uploadAndDecryptRecords() {
     try {
         console.log('Инициализация процесса загрузки файла...');
-        
+
         // Создаем input для выбора файла
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.accept = '.cor,.txt';
         fileInput.style.display = 'none';
-        
+
         fileInput.onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) {
                 console.log('Файл не выбран');
                 return;
             }
-            
+
             console.log('Выбран файл:', file.name, 'размер:', file.size, 'байт');
-            
+
             try {
                 // Запрашиваем супер-пароль восстановления
                 const recoveryPassword = prompt('Введите супер-пароль восстановления:');
@@ -933,23 +937,23 @@ async function uploadAndDecryptRecords() {
 
                 console.log('Начало дешифровки файла...');
                 const records = await decryptRecordsFromFile(file, recoveryPassword);
-                
+
                 console.log('Успешно дешифровано записей:', records.length);
                 alert(`Успешно дешифровано ${records.length} записей!`);
-                
+
                 // Отображаем записи в интерфейсе
                 populateTable(records, true);
-                
+
             } catch (error) {
                 console.error('Ошибка при обработке файла:', error);
                 alert(error.message);
             }
         };
-        
+
         document.body.appendChild(fileInput);
         fileInput.click();
         document.body.removeChild(fileInput);
-        
+
     } catch (error) {
         console.error('Ошибка в uploadAndDecryptRecords:', error);
         alert('Произошла ошибка при загрузке файла. Пожалуйста, попробуйте снова.');
@@ -964,7 +968,7 @@ async function deleteAccount() {
         if (!confirmDelete) return;
 
         try {
-            const token =getToken(); 
+            const token =getToken();
 
             const response = await fetch('/api/user/delete_my_account', {
                 method: 'DELETE',
@@ -976,8 +980,8 @@ async function deleteAccount() {
             if (response.ok) {
                 alert('Аккаунт успешно удалён.');
                 // Например, выйти на главную страницу или форму входа
-                window.location.href = "/"; 
-               
+                window.location.href = "/";
+
             } else {
                 const errorData = await response.json();
                 alert('Ошибка при удалении аккаунта: ' + (errorData.message || response.status));

@@ -20,7 +20,7 @@ from cor_pass.services.access import doctor_access, lab_assistant_or_doctor_acce
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 router = APIRouter(prefix="/lab_assistant", tags=["LabAssistant"])
 

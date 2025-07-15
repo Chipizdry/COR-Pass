@@ -7,9 +7,7 @@ from io import BytesIO
 from cor_pass.services.auth import auth_service
 from cor_pass.database.models import User
 from PIL import Image
-
-logger = logging.getLogger("svs_logger")
-logging.basicConfig(level=logging.INFO)
+from loguru import logger
 
 router = APIRouter(prefix="/svs", tags=["SVS"])
 

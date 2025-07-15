@@ -1,23 +1,50 @@
-from loguru import logger
+import logging
 import sys
-from cor_pass.config.config import settings
+from loguru import logger
+from cor_pass.config.config import settings 
 
-logger_level = "DEBUG" if settings.debug else "INFO"
+class InterceptHandler(logging.Handler):
+    def emit(self, record):
+        try:
+            level = logger.level(record.levelname).name
+        except ValueError:
+            level = record.levelno
+        logger.opt(depth=6, exception=record.exc_info).log(level, record.getMessage())
 
-logger.remove()
+def setup_logging():
+    logger.remove()
 
-logger.add(
-    "logs/application.log",  # Путь к файлу логов
-    rotation="500 MB",  # Размер файла перед ротацией
-    retention="10 days",  # Хранение логов в течение 10 дней
-    compression="zip",  # Сжатие старых логов
-    level=logger_level,  # Уровень логирования
-    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
-)
+    log_level = "DEBUG" if settings.debug else "INFO"
+
+    logger.add(
+        sys.stdout,
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
+        level=log_level
+    )
+
+    logging.basicConfig(handlers=[InterceptHandler()], level=0)
 
 
-logger.add(
-    sys.stdout,  # Вывод в консоль
-    level=logger_level,  # Уровень логирования
-    format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
-)
+    logging.getLogger("gunicorn").handlers = [InterceptHandler()]
+    logging.getLogger("gunicorn").propagate = False
+    logging.getLogger("gunicorn").setLevel(log_level)
+
+    logging.getLogger("gunicorn.access").handlers = [InterceptHandler()]
+    logging.getLogger("gunicorn.access").propagate = False
+    logging.getLogger("gunicorn.access").setLevel(log_level)
+
+    logging.getLogger("gunicorn.error").handlers = [InterceptHandler()]
+    logging.getLogger("gunicorn.error").propagate = False
+    logging.getLogger("gunicorn.error").setLevel(log_level)
+
+    logging.getLogger("uvicorn.access").handlers = [InterceptHandler()]
+    logging.getLogger("uvicorn.access").propagate = False
+    logging.getLogger("uvicorn.access").setLevel(log_level)
+
+    logging.getLogger("uvicorn.error").handlers = [InterceptHandler()]
+    logging.getLogger("uvicorn.error").propagate = False
+    logging.getLogger("uvicorn.error").setLevel(log_level)
+    
+    logging.getLogger("pymodbus.logging").setLevel(logging.INFO)
+
+    logging.getLogger("passlib.handlers.bcrypt").setLevel(logging.ERROR) 

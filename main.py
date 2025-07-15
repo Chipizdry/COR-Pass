@@ -1,12 +1,9 @@
 import asyncio
 import time
-
-
 import uvicorn
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from fastapi import FastAPI, Request, Depends, HTTPException, status, Request
+from fastapi import FastAPI, Request, Depends, HTTPException, Response, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -20,9 +17,9 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from fastapi_limiter import FastAPILimiter
 
 
-from cor_pass.repository.cerbo_service import cerbo_collection_task, close_modbus_client, create_modbus_client
+from cor_pass.repository.cerbo_service import cerbo_collection_task, close_modbus_client, create_modbus_client, energetic_schedule_task
 from cor_pass.routes import auth, person
-from cor_pass.database.db import get_db
+from cor_pass.database.db import get_db, async_session_maker
 from cor_pass.database.redis_db import redis_client
 
 from cor_pass.routes import (
@@ -53,31 +50,19 @@ from cor_pass.routes import (
 )
 from cor_pass.config.config import settings
 from cor_pass.services.ip2_location import initialize_ip2location
-from cor_pass.services.logger import logger
+from loguru import logger
 from cor_pass.services.auth import auth_service
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from collections import defaultdict
 from jose import JWTError, jwt
 
-import logging
-
 from cor_pass.services.websocket import check_session_timeouts, cleanup_auth_sessions
 
+from cor_pass.services.logger import setup_logging 
 
-# Создание обработчика для логирования с временными метками
-class CustomFormatter(logging.Formatter):
-    def format(self, record):
-        record.asctime = self.formatTime(record, self.datefmt)
-        return super().format(record)
+setup_logging()
 
-
-# Настройка логирования
-log_formatter = CustomFormatter("%(asctime)s - %(levelname)s - %(message)s")
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(log_formatter)
-
-logging.basicConfig(handlers=[console_handler], level=logging.INFO)
 
 
 all_licenses_info = [
@@ -192,7 +177,7 @@ async def exception_handler(request: Request, exc: Exception):
 @app.exception_handler(ValueError)
 async def validation_exception_handler(request: Request, exc: ValueError):
     return JSONResponse(
-        logger.error("Произошла ошибка валидации", exc_info=exc),
+        # logger.error(f"Произошла ошибка валидации: {str(exc)}"),
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={"detail": "Произошла ошибка валидации", "error": str(exc)} 
     )
@@ -265,6 +250,36 @@ async def track_active_users(request: Request, call_next):
     return response
 
 
+
+"""
+@app.middleware("http")
+async def track_active_users(request: Request, call_next):
+    response = None 
+    user_token = request.headers.get("Authorization")
+    if user_token:
+        token_parts = user_token.split(" ")
+        if len(token_parts) >= 2:
+            try:
+                decoded_token = jwt.decode(
+                    token_parts[1],
+                    options={"verify_signature": False},
+                    key=auth_service.SECRET_KEY,
+                    algorithms=[auth_service.ALGORITHM],
+                )
+                oid = decoded_token.get("oid")
+                if oid: 
+                    await redis_client.set(oid, time.time())
+                # await redis_client.set(oid, time.time())
+            except JWTError as e:
+                print(f"JWTError in track_active_users: {e}") 
+                return Response("Unauthorized: Invalid token", status_code=status.HTTP_401_UNAUTHORIZED)
+            except Exception as e:
+                print(f"An unexpected error in track_active_users: {e}")
+                return Response("Internal Server Error in middleware", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    if response is None: 
+        response = await call_next(request)
+    return response
+"""
 async def custom_identifier(request: Request) -> str:
     return request.client.host
 
@@ -281,6 +296,7 @@ async def startup():
     await create_modbus_client(app)
     asyncio.create_task(cleanup_auth_sessions())
     asyncio.create_task(cerbo_collection_task(app))
+    asyncio.create_task(energetic_schedule_task(async_session_maker))
     # asyncio.create_task(cerbo_GX.read_modbus_and_cache())
 
 @app.on_event("shutdown")
@@ -294,7 +310,6 @@ blocked_ips = {}
 app.include_router(auth.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 app.include_router(records.router, prefix="/api")
-# app.include_router(tags.router, prefix="/api")
 app.include_router(password_generator.router, prefix="/api")
 app.include_router(person.router, prefix="/api")
 app.include_router(cor_id.router, prefix="/api")
@@ -315,7 +330,6 @@ app.include_router(websocket_events.router, prefix="/api")
 app.include_router(lab_assistants.router, prefix="/api")
 app.include_router(cerbo_routes.router, prefix="/api")
 app.include_router(energy_managers.router, prefix="/api")
-# app.include_router(cerbo_router, prefix="/api") # Change router
 app.include_router(blood_pressures.router, prefix="/api")
 
 if __name__ == "__main__":

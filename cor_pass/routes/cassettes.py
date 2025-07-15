@@ -23,6 +23,7 @@ router = APIRouter(prefix="/cassettes", tags=["Cassette"])
 )
 async def create_cassette_for_sample(
     body: CassetteCreate,
+    printing: bool = False,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -32,6 +33,7 @@ async def create_cassette_for_sample(
         db=db,
         sample_id=body.sample_id,
         num_cassettes=body.num_cassettes,
+        printing=printing
     )
 
 
@@ -85,3 +87,22 @@ async def delete_cassettes(
         db=db, cassettes_ids=request_body.cassette_ids
     )
     return result
+
+
+@router.patch(
+    "/{cassette_id}/printed",
+    response_model=CassetteModelScheema,
+    dependencies=[Depends(doctor_access)],
+)
+async def update_cassette_printing_status(
+    cassette_id: str,
+    printed: bool,
+    db: AsyncSession = Depends(get_db),
+):
+    """Обновляет статус печати кассеты"""
+    updated_cassette = await cassette_service.change_printing_status(
+        db=db, cassette_id=cassette_id, printing=printed
+    )
+    if not updated_cassette:
+        raise HTTPException(status_code=404, detail="Cassette not found")
+    return updated_cassette

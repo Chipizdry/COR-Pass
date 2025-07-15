@@ -1,105 +1,104 @@
-html.layout-page, body.layout-page {
-  display: block !important;
-  height: auto !important;
-  justify-content: flex-start !important;
-  align-items: flex-start !important;
-  background: var(--clr-bg);
-  background-image: none !important;
-}
-
-:root{
-  --sidebar-w:72px;
-  --radius-xl:24px;
-  --radius-lg:20px;
-  --radius-md:14px;
-  --clr-bg:#EFECF8;
-  --clr-surface:#ffffff;
-  --clr-surface-alt:#fafbff;
-  --clr-primary:#7a3cff;
-  --clr-primary-hover:#6934e8;
-  --clr-text:#5B4296;
-  --clr-text-light:#5B4296;
-  --clr-border:#e4e6f0;
-  --clr-success:#51d07c;
-}
-
-html, body {
-  margin: 0;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 16px;
-  overflow: hidden;
-}
-
-
-
-* {
-  box-sizing: border-box;
-}
-
 .layout {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  gap: 24px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    gap: 24px;
+    background: #EFECF8;
 }
 
 .sidebar {
-  position: fixed;           /* Заставляем сайдбар всегда быть фиксированным */
-  top: 0;
-  left: 0;
-  height: 100vh;              /* Занимать всю высоту экрана */
-  width: var(--sidebar-w);    /* Ширина — как у тебя задано */
-  
-  background: #fff;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.04);
-  
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 40px;
-  padding-top: 24px;
-  
-  z-index: 1000; /* чтобы быть поверх контента если надо */
+    position: fixed; /* Заставляем сайдбар всегда быть фиксированным */
+    top: 0;
+    left: 0;
+    height: 100vh; /* Занимать всю высоту экрана */
+    width: 72px; /* Ширина — как у тебя задано */
+
+    background: #fff;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    padding-top: 24px;
+
+    z-index: 1000; /* чтобы быть поверх контента если надо */
 }
 
-.nav{
-  display:flex;flex-direction:column;gap:32px;flex:1 1 auto
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    flex: 1 1 auto
 }
 
-.nav-item{display:flex;flex-direction:column;align-items:center;gap:6px}
-
-.nav-btn{
-  all:unset;cursor:pointer;width:48px;height:48px;border-radius:50%;
-  background:var(--clr-primary);display:grid;place-items:center;transition:background .2s
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px
 }
 
-.nav-btn:hover{background:var(--clr-primary-hover)}
-
-.nav-btn svg{width:22px;height:22px;stroke:#fff;stroke-width:2;fill:none}
-
-.nav-label{
-  font-size:11px;color:var(--clr-text-light);text-align:center;width:72px;line-height:1.2;font-weight:500
+.nav-btn {
+    all: unset;
+    cursor: pointer;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #7a3cff;
+    display: grid;
+    place-items: center;
+    transition: background .2s
 }
 
-.profile-wrapper{margin-bottom:24px;display:flex;flex-direction:column;align-items:center;gap:6px}
-
-.profile{
-  width:44px;height:44px;border-radius:50%;
-  background:url("https://randomuser.me/api/portraits/men/32.jpg") center/cover no-repeat
+.nav-btn:hover {
+    background: #6934e8
 }
 
-.main{
-  height: auto;
-  padding:20px 20px;
-  display:flex;
-  flex-direction:column;
-  gap:24px;
-  overflow: visible;
+.nav-btn svg {
+    width: 22px;
+    height: 22px;
+    stroke: #fff;
+    stroke-width: 2;
+    fill: none
+}
+
+.nav-label {
+    font-size: 11px;
+    color: #5B4296;
+    text-align: center;
+    width: 72px;
+    line-height: 1.2;
+    font-weight: 500
+}
+
+.profile-wrapper {
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px
+}
+
+.profile {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: url("https://randomuser.me/api/portraits/men/32.jpg") center/cover no-repeat
+}
+
+.main {
+    height: 100vh;
+    padding: 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow: visible;
 }
 
 .actions {
     background: #F7F7FA;
-    border-radius: var(--radius-lg);
+    border-radius: 20px;
     padding: 16px 20px;
     display: flex;
     align-items: center;
@@ -107,18 +106,16 @@ html, body {
 }
 
 
-
 /* Инпут на всю ширину контейнера */
 .actions .search input {
-    width: 100%;       
-    height: 52px;     
-    padding: 0 52px; 
-    border: none;    
-    border-radius: var(--radius-md);
-    background: var(--clr-surface);
+    width: 100%;
+    height: 52px;
+    padding: 0 52px;
+    border: none;
+    border-radius: 14px;
+    background: #ffffff;
     font-size: 16px;
 }
-
 
 
 /* Убираю внешние отступы у кнопок */
@@ -128,230 +125,316 @@ html, body {
 }
 
 
-
-.search{flex:1;position:relative}
-
-.search input{
-  width:100%;height:52px;padding:0 52px;border-radius:8px;border:1px solid var(--clr-border);
-  background:var(--clr-surface);font-size:15px
+.search {
+    flex: 1;
+    position: relative
 }
 
-.search svg{
-  position:absolute;left:20px;top:50%;transform:translateY(-50%);
-  pointer-events:none;stroke:var(--clr-text-light);stroke-width:2;fill:none;width:20px;height:20px
+.search input {
+    width: 100%;
+    height: 52px;
+    padding: 0 52px;
+    border-radius: 8px;
+    border: 1px solid #e4e6f0;
+    background: #ffffff;
+    font-size: 15px
 }
 
-.btn-primary{
-  display:inline-flex;align-items:center;gap:12px;height:52px;
-  padding:0 30px 0 18px;background:var(--clr-primary);
-  border:none;border-radius:var(--radius-lg);color:#fff;font-size:15px;cursor:pointer;transition:background .2s
+.search svg {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    stroke: #5B4296;
+    stroke-width: 2;
+    fill: none;
+    width: 20px;
+    height: 20px
 }
 
-.btn-primary:hover{background:var(--clr-primary-hover)}
-
-
-.icon-circle span{display:block;transform:translateY(-1px)}
-
-.filters-bar{
-  background:#F7F7FA;;border:none;
-  border-radius:var(--radius-lg);padding:16px 20px;
-  display:flex;align-items:center;min-height:52px
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    height: 52px;
+    padding: 0 30px 0 18px;
+    background: #7a3cff;
+    border: none;
+    border-radius: 20px;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background .2s
 }
+
+.btn-primary:hover {
+    background: #6934e8
+}
+
+
+.icon-circle span {
+    display: block;
+    transform: translateY(-1px)
+}
+
+.filters-bar {
+    background: #F7F7FA;;
+    border: 1px solid white;
+    border-radius: 20px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    min-height: 52px
+}
+
 .filters-bar .filter {
-  background: var(--clr-surface);
-  border-radius: var(--radius-lg);
-  padding: 6px 12px;
-  display: inline-flex;
-  min-height: 35px;
-  align-items: center;
-  gap: 8px;
-  margin-right: 16px; 
-  margin-left: 0; 
-  cursor: pointer;
-  font-size: 18px;
-  color: var(--clr-text);
+    background: #ffffff;
+    padding: 12px 18px;
+    display: inline-flex;
+    min-height: 35px;
+    align-items: center;
+    gap: 8px;
+    margin-right: 16px;
+    margin-left: 0;
+    cursor: pointer;
+    font-size: 18px;
+    color: #5B4296;
+    border-radius: 40px;
 }
 
-.filter,.sort{
-  display:inline-flex;align-items:center;gap:8px;
-  cursor:pointer;font-size:18px;color:var(--clr-text);
-  margin-left:auto;background:transparent;padding:0;
+.filter, .sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    color: #5B4296;
+    margin-left: auto;
+    background: transparent;
+    padding: 0;
 }
 
-/* Белый пилл вокруг текста текущей сортировки */
 #sortLabel {
-  background: var(--clr-surface);
-  border-radius: var(--radius-lg);
-  padding: 6px 12px;
-  min-height: 35px;
-  display: inline-flex;
-  align-items: center;
-  font-size: 18px;
-  color: var(--clr-text);
+    background: rgba(255, 255, 255, 0.60);
+    border: 1px solid #FFF;
+    padding: 12px 18px;
+    min-height: 35px;
+    font-size: 18px;
+    border-radius: 52px;
+    color: #5B4296;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 /* у меня сортировка не уезжало вправо , поэтому сделал через второго ребенка */
 .filters-bar > div:nth-child(2) {
-  margin-left: auto;
+    margin-left: auto;
 }
 
 
-.filter svg,.sort svg{
-  stroke:var(--clr-primary);stroke-width:2;fill:none;width:18px;height:18px
+.filter svg, .sort svg {
+    width: 24px;
+    height: 24px;
 }
 
-.dropdown{
-  position:absolute;top:calc(100% + 8px);right:0;
-  background:var(--clr-surface);border:1px solid var(--clr-border);border-radius:var(--radius-md);
-  box-shadow:0 4px 12px rgba(0,0,0,.06);min-width:220px;
-  display:none;flex-direction:column;z-index:10
+.dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e4e6f0;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .06);
+    min-width: 220px;
+    display: none;
+    flex-direction: column;
+    z-index: 10
 }
 
-.dropdown.visible{display:flex}
+.dropdown.visible {
+    display: flex
+}
 
-.dropdown button{all:unset;padding:12px 16px;cursor:pointer;font-size:14px}
+.dropdown button {
+    all: unset;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 14px
+}
 
-.dropdown button:hover{background:rgba(0,0,0,.04)}
+.dropdown button:hover {
+    background: rgba(0, 0, 0, .04)
+}
 
-.patients_card{
-  background:var(--clr-surface);border:1px solid var(--clr-border);
-  border-radius:24px;
-  padding:0;box-shadow:0 6px 12px rgba(0,0,0,.03);
-  display: flex;
-  flex-direction: column;
-  overflow: auto; 
-  flex: none;          
-  overflow-y: auto;
-  max-height: 80vh;
-  overflow-y: auto;
+.patients_card {
+    border: 1px solid #FFF;
+    background: rgba(255, 255, 255, 0.40);
+    border-radius: 24px;
+    padding: 0;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, .03);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
 }
 
 
-
-.table-wrapper{overflow-x:auto; flex: none; overflow-y: visible; position: relative;}
-
-.patients_card table thead tr {
-  position: sticky;
-  top: 0;
-  z-index: 2;         
+.table-wrapper {
+    position: relative;
+    overflow: auto;
 }
 
 .patients_card table tbody td:nth-child(2) {
-  background: transparent !important;
+    background: transparent !important;
 }
 
 
-table{width:100%;border-collapse:separate;font-size:16px;
-  width: 100%;
-  border-radius: 24px 24px 0 0;
-  overflow: hidden;
-  background: #F7F7FA;}
-
-thead th{
-  background:var(--clr-surface);text-align:left;font-weight:600;color:var(--clr-text-light);
-  padding:14px 8px;border-bottom:1px solid var(--clr-border);
-  position:sticky;top:0;z-index:1;cursor:pointer
+.table-wrapper table {
+    width: 100%;
+    border-collapse: separate;
+    font-size: 16px;
+    border-radius: 24px 24px 0 0;
+    height: 100%;
+    color:#291161;
+}
+.table-wrapper table tbody tr td:nth-child(1){
+   font-weight: 800;
+}
+.table-wrapper table thead{
+    position: sticky;
+    top: 0;
 }
 
-.patients_card table th,
-.patients_card table td {
-  color: #291161 !important;
+.table-wrapper thead th {
+    background: rgba(255, 255, 255, 0.60);
+    text-align: left;
+    color: #5B4296;
+    padding: 14px 16px;
+    cursor: pointer
 }
 
-.patients_card table th:nth-child(2),
-.patients_card table td:nth-child(2) {
-  font-weight: bold !important;
+tbody tr {
+    border-bottom: 1px solid #e4e6f0;
+    cursor: pointer;
 }
 
-tbody tr{border-bottom:1px solid var(--clr-border);  cursor: pointer;}
+tbody tr:hover {
+    background: rgba(0, 0, 0, .02)
+}
 
-tbody tr:hover{background:rgba(0,0,0,.02)}
+tbody td {
+    padding: 18px 16px;
+    vertical-align: middle;
+    background: transparent;
+}
 
-tbody td{padding:18px 8px;vertical-align:middle;background:transparent;}
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 12px
+}
 
-.avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;margin-right:12px}
+.status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px
+}
 
-.status{display:inline-flex;align-items:center;gap:6px}
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #51d07c
+}
 
-.status-dot{width:8px;height:8px;border-radius:50%;background:var(--clr-success)}
+.ellipsis {
+    cursor: pointer;
+    font-size: 20px;
+    color: #5B4296
+}
 
-.ellipsis{cursor:pointer;font-size:20px;color:var(--clr-text-light)}
-
-.footer{padding:12px 20px;font-size:14px;color:var(--clr-text-light)}
-
-
+.footer {
+    padding: 12px 16px;
+    font-size: 18px;
+    color: #5B4296;
+    font-weight: 700;
+    background: #f5f4fb;
+}
 
 
 #Add_Patient {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #7B43F2; 
-  color: white;
-  padding: 10px 20px;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  font-size: 16px;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #7B43F2;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
 }
+
 #Add_Patient:hover {
-  background-color: #5e32c5;
+    background-color: #5e32c5;
 }
 
 #Add_Patient:active {
-  background-color: #5F41B2;
-  transform: translateX(-50%) translateY(2px);
+    background-color: #5F41B2;
+    transform: translateX(-50%) translateY(2px);
 }
 
 #corIdInput {
-  text-align: center; /* Центрирование текста */
-  font-family: monospace; /* Для лучшего отображения символов */
-  width: 100%; /* Чтобы поле занимало всю доступную ширину */
+    text-align: center; /* Центрирование текста */
+    width: 100%; /* Чтобы поле занимало всю доступную ширину */
 }
 
 /* Закргулить верхние края таблицы */
 .patients_card table {
-  border-collapse: separate;
-  border-radius: 24px 24px 0 0;
-  overflow: hidden;
+    border-collapse: separate;
+    border-radius: 24px 24px 0 0;
 }
 
 /* Иконки */
 .filter .icon,
 .sort .icon {
-  width: 24px;
-  height: 24px;
-  vertical-align: middle;
-  margin-right: 8px;
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
 }
 
 .filter,
 .sort,
-#sortLabel
- {
-  font-family: 'Mont', sans-serif;
-  font-size: 18px;
+#sortLabel {
+    font-size: 18px;
 }
+
 /* Квадратная кнопка*/
 .btn-square {
     width: 52px;
     height: 52px;
     background-color: #7527B2;
     border: none;
-    border-radius: var(--radius-lg);
+    border-radius: 20px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: background-color 0.3s, transform 0.2s;
 }
+
 .btn-square img {
     width: 24px;
     height: 24px;
 }
+
 .btn-square:hover {
-    background: var(--clr-primary-hover);
+    background: #6934e8;
 }
 
 /* Фиолетовая кнопка «Добавить пациента» */
@@ -374,6 +457,7 @@ tbody td{padding:18px 8px;vertical-align:middle;background:transparent;}
     transition: background-color 0.3s, transform 0.2s;
     text-decoration: none;
 }
+
 .add-button:hover {
     background-color: #5f1b91;
 }

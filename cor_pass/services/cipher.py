@@ -9,7 +9,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 import os
 from Crypto.Util.Padding import pad as crypto_pad
-
+from functools import partial
 from cor_pass.config.config import settings
 
 
@@ -45,32 +45,30 @@ async def encrypt_data(data: bytes, key: bytes) -> bytes:
     return encoded_data
 
 
-async def decrypt_data(encrypted_data: bytes, key: bytes) -> str:
-    """
-    Эта асинхронная функция дешифрует данные, зашифрованные функцией encrypt_data.
 
-    Параметры:
-    encrypted_data: зашифрованные данные (в байтах).
-    key: ключ шифрования (в байтах).
-    Процесс:
-    Данные декодируются из Base64.
-    Извлекается IV и зашифрованные данные.
-    Данные дешифруются и возвращаются в виде строки.
-    """
-
+def _sync_decrypt_data_impl(encrypted_data: bytes, key: bytes) -> str:
     if len(key) not in [16, 24, 32]:
         raise ValueError("Key must be 16, 24, or 32 bytes long.")
 
-    try:
-        decoded_data = base64.b64decode(encrypted_data)
-        iv = decoded_data[: AES.block_size]
-        ciphertext = decoded_data[AES.block_size :]
+    decoded_data = base64.b64decode(encrypted_data)
+    iv = decoded_data[: AES.block_size]
+    ciphertext = decoded_data[AES.block_size :]
 
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        decrypted_data = unpad(cipher.decrypt(ciphertext), AES.block_size)
-        return decrypted_data.decode("utf-8")
-    except (ValueError, KeyError):
-        raise ValueError("Decryption failed. Invalid key or corrupted data.")
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    decrypted_data = unpad(cipher.decrypt(ciphertext), AES.block_size)
+    return decrypted_data.decode("utf-8")
+
+async def decrypt_data(encrypted_data: bytes, key: bytes) -> str:
+    """
+    Эта асинхронная функция дешифрует данные, зашифрованные функцией encrypt_data.
+    CPU-интенсивные части выполняются в отдельном потоке.
+    """
+    try:
+        result = await asyncio.to_thread(_sync_decrypt_data_impl, encrypted_data, key)
+        return result
+    except (ValueError, KeyError) as e:
+        
+        raise ValueError("Decryption failed. Invalid key or corrupted data.") from e
 
 
 async def generate_aes_key(key_size: int = 16) -> bytes:
@@ -108,10 +106,7 @@ async def encrypt_user_key(key: bytes) -> str:
     return base64.urlsafe_b64encode(salt + encrypted_key).decode()
 
 
-async def decrypt_user_key(encrypted_key: str) -> bytes:
-    """
-    Дешифрует зашифрованный пользовательский ключ.
-    """
+def _sync_decrypt_user_key_impl(encrypted_key: str, aes_key_setting: str) -> bytes:
     encrypted_data = base64.urlsafe_b64decode(encrypted_key)
     salt = encrypted_data[:16]
     ciphertext = encrypted_data[16:]
@@ -123,10 +118,20 @@ async def decrypt_user_key(encrypted_key: str) -> bytes:
         iterations=100000,
         backend=default_backend(),
     )
-    aes_key = await asyncio.to_thread(kdf.derive, settings.aes_key.encode())
+    aes_key_derived = kdf.derive(aes_key_setting.encode())
 
-    cipher = Fernet(base64.urlsafe_b64encode(aes_key))
+    cipher = Fernet(base64.urlsafe_b64encode(aes_key_derived))
+    return cipher.decrypt(ciphertext)
+
+async def decrypt_user_key(encrypted_key: str) -> bytes:
+    """
+    Дешифрует зашифрованный пользовательский ключ.
+    CPU-интенсивные части выполняются в отдельном потоке.
+    """
     try:
-        return cipher.decrypt(ciphertext)
+        result = await asyncio.to_thread(
+            partial(_sync_decrypt_user_key_impl, encrypted_key, settings.aes_key)
+        )
+        return result
     except Exception as e:
         raise ValueError("Decryption failed. Invalid key or corrupted data.") from e

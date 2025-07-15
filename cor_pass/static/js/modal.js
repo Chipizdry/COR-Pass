@@ -1,10 +1,13 @@
 document.addEventListener("DOMContentLoaded", (event) => {
     //CREATE CASSETTE
-    document.querySelectorAll('.modal').forEach(elem => {
+    document.querySelectorAll('.modalCustom').forEach(elem => {
+        console.log(elem, '1')
         elem.addEventListener( "click", (e) => {
             const element = e.target;
-            if(element.classList.contains("modal")){
-                element.classList.remove('open')
+            const modalWrapper = e.currentTarget;
+
+            if(element.classList.contains("modalCustom")){
+                modalWrapper.classList.remove('open')
             }
         })
     })

@@ -1,57 +1,84 @@
-#version: '3'
+# build
+#    docker compose --env-file corid_env build --with-dependencies 
+# run
+#    docker compose --env-file corid_env up 
+
+
+name: $CORID_ENV-cor-id_v2
+
 
 services:
   fastapi:
+    privileged: true
+#    security_opt:
+#      - apparmor:unconfined
     build:
       context: .
       dockerfile: Dockerfile
     image: massivecapybara/corid_api:latest
+    container_name: $CORID_ENV-fastapi
     ports:
-      - "8000:8000"
-    # volumes:
-    #   - .:/app
+      - "$CORID_API_PORT:8000"
     depends_on:
       - prometheus
-      - postgres  
+      - postgres
     env_file:
-      - development.env
-    mem_limit: 10g
-    restart: always
+      - $CORID_ENV-corid.cor-medical.ua.env
+#    volumes:
+#      - dicom-storage:/$SCAN_DIR
+    logging:
+      driver: json-file
+      options:
+        tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+        max-size: "10m"
+        max-file: "3"
+    command: gunicorn main:app --workers 5 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --log-level info --error-logfile - --access-logfile -
+
   redis:
     image: redis:alpine
+    container_name: $CORID_ENV-redis
     ports:
-      - "6379:6379"
+      - $CORID_REDIS_PORT:6379
 
 
   postgres:
     image: postgres:latest
+    container_name: $CORID_ENV-postgres
     env_file:
-      - development.env
+      - $CORID_ENV-corid.cor-medical.ua.env
     ports:
-      - "5432:5432"
+      - $CORID_POSTGRES_PORT:5432
     volumes:
-      - postgres_data:/var/lib/postgresql/data  
+      - postgres_data:/var/lib/postgresql/data
+    command: postgres -c max_connections=300
 
   prometheus:
     image: prom/prometheus:latest
+    container_name: $CORID_ENV-prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheusdata:/prometheus
     ports:
-      - "9090:9090"
+      - $CORID_PROMETEUS_PORT:9090
 
   grafana:
     image: grafana/grafana:latest
+    container_name: $CORID_ENV-grafana
     ports:
-      - "3000:3000"
+      - $CORID_GRAFANA_PORT:3000
+    volumes:
+      - ${PWD}/grafana.ini.$CORID_ENV:/etc/grafana/grafana.ini
+      - grafana-storage:/var/lib/grafana 
     depends_on:
       - loki
 
   loki:
     image: grafana/loki:latest
+    container_name: $CORID_ENV-loki
     ports:
-      - "3100:3100"
+      - $CORID_LOKI_PORT:3100
     command: -config.file=/etc/loki/local-config.yaml
-    user: "0:0" 
+    user: "0:0"
     volumes:
       - ./loki-config.yaml:/etc/loki/loki-config.yaml
       - ./:/app
@@ -60,7 +87,12 @@ services:
 
   promtail:
     image: grafana/promtail:latest
+    container_name: $CORID_ENV-promtail
+    ports:
+      - $CORID_PROMTAIL_PORT:9080
     volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro 
+      - /var/run/docker.sock:/var/run/docker.sock:ro 
       - /var/log:/var/log
       - ./:/app
       - ./promtail-config.yaml:/etc/promtail/config.yaml
@@ -73,3 +105,10 @@ volumes:
   grafana-storage:
   loki-data:
   compactor-data:
+  prometheusdata:
+#  dicom-storage:
+#    driver: local
+#    driver_opts:
+#      type: cifs
+#      device: "$SCAN_UNC/$SCAN_UNC_DIR"
+#      o: "username=$SCAN_USER,password=$SCAN_USER"

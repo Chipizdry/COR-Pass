@@ -1,21 +1,22 @@
 auth_enabled: false
-
 server:
   http_listen_port: 3100
-
-ingester:
-  lifecycler:
-    ring:
-      kvstore:
-        store: inmemory
-      replication_factor: 1
-  chunk_idle_period: 5m
-  chunk_retain_period: 30s
-  max_chunk_age: 1h
-
+common:
+  path_prefix: /tmp/loki
+  replication_factor: 1
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: inmemory
+  storage_config:
+    boltdb_shipper:
+      active_index_directory: /tmp/loki/boltdb-shipper-active
+      shared_store: filesystem
+    filesystem:
+      directory: /tmp/loki/chunks
 schema_config:
   configs:
-    - from: 2020-10-24
+    - from: 2020-10-27
       store: boltdb-shipper
       object_store: filesystem
       schema: v11

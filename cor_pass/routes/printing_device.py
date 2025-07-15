@@ -17,7 +17,7 @@ from cor_pass.repository.printing_device import (
     delete_printing_device_by_id,
     get_printing_device_by_device_identifier,
 )
-from cor_pass.services.logger import logger
+from loguru import logger
 from cor_pass.services.access import admin_access
 
 

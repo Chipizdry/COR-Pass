@@ -100,17 +100,14 @@
     border-bottom-left-radius: 0;
 }
 
-.contentCassette{
-    height: calc(100% - 187px);
-}
 
 .content{
     height: 100%;
     width: calc(100% - 160px - 112px);
 }
 .header{
-    min-height: 187px;
-    height: 187px;
+    min-height: 190px;
+    height: 190px;
     background: #7527B2;
 }
 img{
@@ -118,6 +115,9 @@ img{
 }
 .pathomorphology{
     height: calc(100vh - 60px);
+    border: 1px solid #FFF;
+    background: rgba(255, 255, 255, 0.40);
+    border-radius: 20px;
 }
 .arrows{
     background: white;
@@ -132,6 +132,7 @@ img{
     justify-content: space-around;
     gap: 5px;
     padding: 3px;
+    border: 1px solid #eeecf8;
 }
 .arrows.right{
     left: initial;

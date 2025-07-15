@@ -1,8 +1,7 @@
 import os
 import IP2Location
 import logging
-
-logger = logging.getLogger(__name__)
+from loguru import logger
 
 # Путь к файлу базы данных IP2Location
 # Убедись, что этот файл (например, IP2LOCATION-LITE-DB3.BIN) находится в указанной директории

@@ -1,17 +1,26 @@
 .header-container {
-    padding: 24px;
+    padding: 20px;
+    border-radius: 20px;
+    border: 1px solid #FFF;
+    background: rgba(255, 255, 255, 0.40);
+    width: 100%;
 }
-
+.header-container.empty{
+    border: none;
+    background: none;
+}
 .header-row {
     display: flex;
     align-items: center;
     width: 100%;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 .header-row.top {
     justify-content: space-between;
-    margin-bottom: 16px;
 }
 .header-row.bottom {
+    margin-top: 16px;
     justify-content: space-between;
 }
 
@@ -22,13 +31,18 @@
 }
 .search-container input {
     width: 100%;
-    height: 56px;
+    height: 64px;
     padding: 14px 16px 14px 48px;
-    border: 1px solid #E7E4F7;
-    border-radius: 12px;
+    border: 1px solid white;
+    border-radius: 20px;
     font-size: 16px;
-    color: #23155B;
+    color: #B1A1DA;
     background: #FFFFFF;
+    outline: none !important;
+}
+.search-container input::placeholder {
+    font-size: 16px;
+    color: #B1A1DA;
 }
 .search-container .search-icon {
     position: absolute;
@@ -36,9 +50,6 @@
     top: 50%;
     width: 20px;
     height: 20px;
-    stroke: #6F66B1;
-    stroke-width: 2;
-    fill: none;
     transform: translateY(-50%);
 }
 
@@ -48,29 +59,30 @@
     gap: 16px;
 }
 .role-icon {
-    width: 48px;
-    height: 48px;
-    background: #FFFFFF;
-    border: 1px solid #E7E4F7;
-    border-radius: 12px;
+    width: 64px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.60);
+    border: 1px solid #7527B2;
+    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
 }
+.role-icon.active{
+    background: #7527B2;
+}
 .role-icon .icon-group {
     width: 24px;
     height: 24px;
-    stroke: #6F66B1;
     stroke-width: 2;
     fill: none;
 }
 
 .role-toggle {
     display: flex;
-    background: #FFFFFF;
-    border: 1px solid #E7E4F7;
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.30);
+    border-radius: 20px;
 }
 .role-toggle .role-btn {
     padding: 12px 24px;
@@ -80,11 +92,20 @@
     color: #6F66B1;
     cursor: pointer;
     transition: background .2s, color .2s;
+    height: 64px;
+    border-radius: 20px;
+}
+.role-toggle .role-btn svg {
+    margin-right: 10px;
 }
 .role-toggle .role-btn.active {
-    background: #6C00FF;
+    background: #7527B2;
     color: #FFFFFF;
-    border-radius: 8px;
+}
+.role-toggle .role-btn.doc.active, .role-toggle .role-btn.lab.active  {
+    background: white;
+    font-weight: 800;
+    color: #291161;
 }
 
 .tabs {
@@ -148,8 +169,11 @@
     color: #291161;
     font-size: 16px;
     font-weight: 400;
-    max-width: 500px;
-    min-width: 300px;
+    max-width: 400px;
+    flex: 1;
+}
+#infoText{
+    min-width: 150px;
 }
 .infoHeaderIcon{
     width: 20px;

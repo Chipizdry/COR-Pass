@@ -47,7 +47,7 @@ from cor_pass.services.email import (
 from cor_pass.services.cipher import decrypt_data, decrypt_user_key, encrypt_data
 from cor_pass.config.config import settings
 from cor_pass.services.access import user_access
-from cor_pass.services.logger import logger
+from loguru import logger
 from fastapi import UploadFile
 
 from collections import defaultdict
@@ -57,9 +57,17 @@ from cor_pass.services.websocket import send_websocket_message
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from jose import jwt, JWTError
+from cor_pass.database.redis_db import redis_client
+import time
 
-auth_attempts = defaultdict(list)
-blocked_ips = {}
+# auth_attempts = defaultdict(list)
+# blocked_ips = {}
+
+# Константы для Redis ключей и порогов
+IP_ATTEMPTS_PREFIX = "login:ip_attempts:"
+IP_BLOCKED_PREFIX = "login:ip_blocked:"
+MAX_ATTEMPTS_PER_IP = 15
+BLOCK_DURATION_SECONDS = 15 * 60 # 15 минут в секундах
 
 
 router = APIRouter(prefix="/auth", tags=["Authorization"])
@@ -69,7 +77,7 @@ ALGORITHM = settings.algorithm
 
 
 @router.post(
-    "/signup", response_model=ResponseUser, status_code=status.HTTP_201_CREATED
+    "/signup", response_model=ResponseUser, status_code=status.HTTP_201_CREATED, dependencies=[Depends(RateLimiter(times=10, seconds=60))]
 )
 async def signup(
     body: UserModel,
@@ -138,6 +146,7 @@ async def signup(
 @router.post(
     "/login",
     response_model=LoginResponseModel,
+    dependencies=[Depends(RateLimiter(times=10, seconds=60))]
 )
 async def login(
     request: Request,
@@ -153,56 +162,55 @@ async def login(
     :return: A dictionary with the access_token, refresh_token, token type, is_admin and session_id
     """
     client_ip = request.client.host
-    if client_ip not in auth_attempts:
-        auth_attempts[client_ip] = []
 
-    # Получаем пользователя по email
+    blocked_until_str = await redis_client.get(f"{IP_BLOCKED_PREFIX}{client_ip}")
+    if blocked_until_str:
+        blocked_until_timestamp = float(blocked_until_str)
+        if blocked_until_timestamp > time.time():
+            block_dt = datetime.fromtimestamp(blocked_until_timestamp)
+            logger.warning(
+                f"IP-адрес {client_ip} заблокирован до {block_dt} (Redis)."
+            )
+            raise HTTPException(
+                status_code=429,
+                detail=f"IP-адрес заблокирован до {block_dt}",
+            )
+        else:
+            await redis_client.delete(f"{IP_BLOCKED_PREFIX}{client_ip}")
+
     user = await repository_person.get_user_by_email(body.username, db)
-    if user is None:
-        logger.warning(
-            f"Неудачная попытка входа для пользователя {body.username} с IP {client_ip}: Пользователь не найден"
+    
+    if user is None or not auth_service.verify_password(body.password, user.password):
+        log_message = (
+            f"Неудачная попытка входа для пользователя {body.username} с IP {client_ip}: "
+            f"{'Пользователь не найден' if user is None else 'Неверный пароль'}"
         )
-        auth_attempts[client_ip].append(datetime.now())
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found / invalid email",
-        )
+        logger.warning(log_message)
 
-    # Проверяем пароль
-    if not auth_service.verify_password(body.password, user.password):
-        logger.warning(
-            f"Неудачная попытка входа для пользователя {body.username} с IP {client_ip}: Неверный пароль"
-        )
-        auth_attempts[client_ip].append(datetime.now())
+        current_attempts = await redis_client.incr(f"{IP_ATTEMPTS_PREFIX}{client_ip}")
+        if current_attempts == 1:
+            await redis_client.expire(f"{IP_ATTEMPTS_PREFIX}{client_ip}", BLOCK_DURATION_SECONDS)
 
-        if client_ip in blocked_ips and blocked_ips[client_ip] > datetime.now():
+        if current_attempts >= MAX_ATTEMPTS_PER_IP:
+            block_until_timestamp = time.time() + BLOCK_DURATION_SECONDS
+            await redis_client.set(f"{IP_BLOCKED_PREFIX}{client_ip}", str(block_until_timestamp), ex=BLOCK_DURATION_SECONDS)
+            block_dt = datetime.fromtimestamp(block_until_timestamp)
             logger.warning(
-                f"IP-адрес {client_ip} заблокирован до {blocked_ips[client_ip]}"
+                f"Слишком много попыток авторизации с IP-адреса {client_ip}. Блокировка до {block_dt} (Redis)."
             )
             raise HTTPException(
                 status_code=429,
-                detail=f"IP-адрес заблокирован до {blocked_ips[client_ip]}",
+                detail=f"Слишком много попыток авторизации. IP-адрес заблокирован до {block_dt}",
             )
-
-        if len(auth_attempts[client_ip]) >= 15 and auth_attempts[client_ip][
-            -1
-        ] - auth_attempts[client_ip][0] <= timedelta(minutes=15):
-            block_until = datetime.now() + timedelta(minutes=15)
-            blocked_ips[client_ip] = block_until
-            logger.warning(
-                f"Слишком много попыток авторизации с IP-адреса {client_ip}. Блокировка до {block_until}"
-            )
-            raise HTTPException(
-                status_code=429,
-                detail=f"Слишком много попыток авторизации. IP-адрес заблокирован до {block_until}",
-            )
+        
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password"
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="User not found / invalid email or password" 
         )
     else:
-        # Успешная авторизация, сбрасываем счетчик попыток
-        if client_ip in auth_attempts:
-            del auth_attempts[client_ip]
+        await redis_client.delete(f"{IP_ATTEMPTS_PREFIX}{client_ip}")
+        await redis_client.delete(f"{IP_BLOCKED_PREFIX}{client_ip}")
+
 
     # Получаем информацию об устройстве
     device_information = di.get_device_info(request)
@@ -777,7 +785,7 @@ async def send_verification_code(
     return {"message": "Check your email for verification code."}
 
 
-@router.post("/confirm_email")
+@router.post("/confirm_email", dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def confirm_email(body: VerificationModel, db: AsyncSession = Depends(get_db)):
     """
     **Проверка кода верификации почты** \n
@@ -845,7 +853,7 @@ async def forgot_password_send_verification_code(
     return {"message": "Check your email for verification code."}
 
 
-@router.post("/restore_account_by_text")
+@router.post("/restore_account_by_text", dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def restore_account_by_text(
     body: RecoveryCodeModel,
     request: Request,
@@ -940,7 +948,7 @@ async def restore_account_by_text(
     }
 
 
-@router.post("/restore_account_by_recovery_file")
+@router.post("/restore_account_by_recovery_file", dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def upload_recovery_file(
     request: Request,
     file: UploadFile = File(...),

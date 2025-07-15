@@ -4,7 +4,6 @@ import os
 import numpy as np
 import pydicom
 import pydicom.config
-import logging
 from openslide import OpenSlide, OpenSlideUnsupportedFormatError
 from skimage.transform import resize
 from PIL import Image
@@ -21,10 +20,11 @@ from collections import Counter
 from cor_pass.services.auth import auth_service
 from cor_pass.database.models import User
 from pydicom import config
+from loguru import logger
 
 pydicom.config.settings.reading_validation_mode = pydicom.config.RAISE
-logger = logging.getLogger("svs_logger")
-logging.basicConfig(level=logging.INFO)
+# logger = logging.getLogger("svs_logger")
+# logging.basicConfig(level=logging.INFO)
 
 
 SUPPORTED_TRANSFER_SYNTAXES = {
@@ -45,22 +45,22 @@ os.makedirs(DICOM_ROOT_DIR, exist_ok=True)
 
 # Проверка доступных декомпрессоров
 def check_dicom_support():
-    print("\n[INFO] Проверка поддержки DICOM:")
-    print(f"GDCM доступен: {'gdcm' in pydicom.config.pixel_data_handlers}")
-    print(f"Pylibjpeg доступен: {'pylibjpeg' in pydicom.config.pixel_data_handlers}")
-    print(f"OpenJPEG доступен: {'openjpeg' in pydicom.config.pixel_data_handlers}")
+    logger.debug("\n[INFO] Проверка поддержки DICOM:")
+    logger.debug(f"GDCM доступен: {'gdcm' in pydicom.config.pixel_data_handlers}")
+    logger.debug(f"Pylibjpeg доступен: {'pylibjpeg' in pydicom.config.pixel_data_handlers}")
+    logger.debug(f"OpenJPEG доступен: {'openjpeg' in pydicom.config.pixel_data_handlers}")
     
     # Вывод информации о Transfer Syntax
-    print("\nПоддерживаемые Transfer Syntax:")
+    logger.debug("\nПоддерживаемые Transfer Syntax:")
     for uid, name in SUPPORTED_TRANSFER_SYNTAXES.items():
         handler = pydicom.uid.UID(uid).is_supported
-        print(f"{name} ({uid}): {'✓' if handler else '✗'}")
+        logger.debug(f"{name} ({uid}): {'✓' if handler else '✗'}")
 
 
 
 @lru_cache(maxsize=16)
 def load_volume(user_cor_id: str):
-    print("[INFO] Загружаем том из DICOM-файлов...")
+    logger.debug("[INFO] Загружаем том из DICOM-файлов...")
 
     # Чтение всех файлов
     user_dicom_dir = os.path.join(DICOM_ROOT_DIR, user_cor_id)
@@ -92,7 +92,7 @@ def load_volume(user_cor_id: str):
                     continue
 
             if ds is None:
-                print(f"[WARN] Не удалось прочитать файл {path}")
+                logger.debug(f"[WARN] Не удалось прочитать файл {path}")
                 continue
 
             # Попытка декомпрессии если файл сжат
@@ -109,11 +109,11 @@ def load_volume(user_cor_id: str):
             if all(hasattr(ds, attr) for attr in required_attrs):
                 datasets.append((ds, path))
             else:
-                print(f"[WARN] Файл {path} не содержит необходимых DICOM-тегов. Пропущен.")
-                print(f"       Найдены теги: {[attr for attr in required_attrs if hasattr(ds, attr)]}")
+                logger.debug(f"[WARN] Файл {path} не содержит необходимых DICOM-тегов. Пропущен.")
+                logger.debug(f"       Найдены теги: {[attr for attr in required_attrs if hasattr(ds, attr)]}")
                 
         except Exception as e:
-            print(f"[WARN] Пропущен файл {path} из-за ошибки чтения: {str(e)}")
+            logger.debug(f"[WARN] Пропущен файл {path} из-за ошибки чтения: {str(e)}")
             continue
 
     if not datasets:
@@ -134,7 +134,7 @@ def load_volume(user_cor_id: str):
         try:
             # Получаем pixel_array с обработкой возможных ошибок
             if not hasattr(ds, 'pixel_array'):
-                print(f"[WARN] Файл {path} не содержит pixel_array после декомпрессии")
+                logger.debug(f"[WARN] Файл {path} не содержит pixel_array после декомпрессии")
                 continue
 
             arr = ds.pixel_array.astype(np.float32)
@@ -155,7 +155,7 @@ def load_volume(user_cor_id: str):
                 example_ds = ds
                 
         except Exception as e:
-            print(f"[ERROR] Ошибка обработки {os.path.basename(path)}: {e}")
+            logger.debug(f"[ERROR] Ошибка обработки {os.path.basename(path)}: {e}")
             continue
 
     if not slices:
@@ -164,7 +164,7 @@ def load_volume(user_cor_id: str):
     # Приведение всех к одной форме
     shape_counter = Counter(shapes)
     target_shape = shape_counter.most_common(1)[0][0]
-    print(f"[INFO] Приведение всех срезов к форме {target_shape}")
+    logger.debug(f"[INFO] Приведение всех срезов к форме {target_shape}")
 
     resized_slices = [
         resize(slice_, target_shape, preserve_range=True).astype(np.float32)
@@ -173,7 +173,7 @@ def load_volume(user_cor_id: str):
     ]
 
     volume = np.stack(resized_slices)
-    print(f"[INFO] Загружено срезов: {len(volume)}")
+    logger.debug(f"[INFO] Загружено срезов: {len(volume)}")
 
     return volume, example_ds
 
@@ -192,7 +192,7 @@ def apply_window(img, ds):
         img = ((img - img_min) / (img_max - img_min + 1e-5)) * 255
         return img.astype(np.uint8)
     except Exception as e:
-        print(f"[WARN] Ошибка применения Window Center/Width: {e}")
+        logger.debug(f"[WARN] Ошибка применения Window Center/Width: {e}")
         return img.astype(np.uint8)
 
 
@@ -328,18 +328,15 @@ async def upload_dicom_files(
         dicom_paths = [
             os.path.join(user_dicom_dir, f)
             for f in os.listdir(user_dicom_dir)
-            if not f.startswith('.') and os.path.isfile(os.path.join(user_dicom_dir, f))
-            and not f.lower().endswith('.svs')
+            if not f.startswith('.') and os.path.isfile(os.path.join(user_dicom_dir, f)) and
+               f.lower().endswith(('.dcm', '')) and not f.lower().endswith('.svs')
         ]
 
         for file_path in dicom_paths:
             try:
-                #pydicom.dcmread(file_path, stop_before_pixels=True)
-                pydicom.dcmread(file_path, force=True, stop_before_pixels=True)
+                pydicom.dcmread(file_path, stop_before_pixels=True)
                 valid_dicom += 1
-                print(f"Valid DICOM: {file_path}")
             except:
-                print(f"Invalid DICOM (removing): {file_path}, error: {str(e)}")
                 os.remove(file_path)
 
         if valid_dicom == 0 and valid_svs == 0:

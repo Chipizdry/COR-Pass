@@ -2,7 +2,7 @@ import json
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status, HTTPException
 from cor_pass.services.websocket_events_manager import websocket_events_manager
 
-from cor_pass.services.logger import logger
+from loguru import logger
 
 router = APIRouter()
 

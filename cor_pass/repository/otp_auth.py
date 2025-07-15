@@ -6,7 +6,7 @@ from cor_pass.database.models import User, OTP
 from cor_pass.schemas import CreateOTPRecordModel, UpdateOTPRecordModel
 from cor_pass.services.cipher import encrypt_data, decrypt_user_key
 from cor_pass.services import cor_otp
-from cor_pass.services.logger import logger
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

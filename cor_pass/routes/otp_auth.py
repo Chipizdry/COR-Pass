@@ -11,7 +11,7 @@ from cor_pass.schemas import (
 from cor_pass.database.models import User
 from cor_pass.config.config import settings
 from cor_pass.services.auth import auth_service
-from cor_pass.services.logger import logger
+from loguru import logger
 from cor_pass.services.access import user_access
 from cor_pass.services import cor_otp
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -8,7 +8,7 @@ from io import BytesIO
 from fastapi import UploadFile
 
 from cor_pass.config.config import settings
-from cor_pass.services.logger import logger
+from loguru import logger
 from cor_pass.services.qr_code import generate_qr_code
 from cor_pass.services.recovery_file import generate_recovery_file
 

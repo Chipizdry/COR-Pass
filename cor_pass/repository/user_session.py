@@ -16,7 +16,7 @@ from cor_pass.schemas import (
     UserSessionModel,
 )
 
-from cor_pass.services.logger import logger
+from loguru import logger
 from cor_pass.services.cipher import (
     encrypt_data,
     decrypt_user_key,

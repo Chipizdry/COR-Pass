@@ -17,7 +17,7 @@ from cor_pass.schemas import (
 from cor_pass.repository import person as repository_person
 from cor_pass.services.access import admin_access
 from sqlalchemy.ext.asyncio import AsyncSession
-from cor_pass.services.logger import logger
+from loguru import logger
 
 
 router = APIRouter(prefix="/energy_managers", tags=["EnergyManager"])

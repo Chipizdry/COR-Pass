@@ -2,13 +2,14 @@ import re
 from string import ascii_uppercase
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from cor_pass.repository.case import _update_ancestor_statuses_from_cassette, _update_ancestor_statuses_from_glass
 from cor_pass.schemas import (
     Sample as SampleModelScheema,
     Cassette as CassetteModelScheema,
     Glass as GlassModelScheema,
     UpdateSampleMacrodescription,
 )
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import selectinload
 from cor_pass.database import models as db_models
@@ -176,7 +177,7 @@ async def create_sample(
 
     created_samples_db: List[db_models.Sample] = []
 
-    # 1. Получаем все семплы текущего кейса для определения начального номера
+    
     samples_result = await db.execute(
         select(db_models.Sample.sample_number)
         .where(db_models.Sample.case_id == db_case.id)
@@ -192,17 +193,17 @@ async def create_sample(
             if last_index < len(ascii_uppercase) - 1:
                 next_sample_char = ascii_uppercase[last_index + 1]
             else:
-                # Обработка ситуации, когда закончились буквы
+
                 next_sample_char = (
                     f"Z{len(existing_sample_numbers) + 1 - len(ascii_uppercase)}"
                 )
         except ValueError:
-            # Обработка некорректного формата номера семпла
-            next_sample_char = "A"  # Начинаем с начала
+
+            next_sample_char = "A"  
 
     first_created_sample_id = None
 
-    # 2. Создаем указанное количество семплов
+
     for i in range(num_samples):
         sample_number = next_sample_char
         db_sample = db_models.Sample(case_id=db_case.id, sample_number=sample_number)
@@ -216,7 +217,7 @@ async def create_sample(
         if i == 0:
             first_created_sample_id = db_sample.id
 
-        # 3. Автоматически создаем одну кассету для каждого семпла
+        
         db_cassette = db_models.Cassette(
             sample_id=db_sample.id, cassette_number=f"{sample_number}1"
         )
@@ -228,7 +229,7 @@ async def create_sample(
         await db.refresh(db_case)
         await db.refresh(db_cassette)
 
-        # 4. Автоматически создаем одно стекло для каждой кассеты
+        
         db_glass = db_models.Glass(
             cassette_id=db_cassette.id,
             glass_number=0,
@@ -244,7 +245,10 @@ async def create_sample(
         await db.refresh(db_glass)
         await db.refresh(db_case)
 
-        # Определяем номер следующего семпла
+        await _update_ancestor_statuses_from_cassette(db=db, cassette=db_cassette)
+        await _update_ancestor_statuses_from_glass(db=db, glass=db_glass)
+
+
         try:
             last_index = ascii_uppercase.index(next_sample_char)
             if last_index < len(ascii_uppercase) - 1:
@@ -252,7 +256,7 @@ async def create_sample(
             else:
                 next_sample_char = f"Z{len(existing_sample_numbers) + 1 + i + 1 - len(ascii_uppercase)}"
         except ValueError:
-            next_sample_char = f"A{i + 2}"  # Если формат не буква, продолжаем нумерацию
+            next_sample_char = f"A{i + 2}" 
 
     created_samples = [
         SampleModelScheema.model_validate(sample).model_dump()
@@ -281,7 +285,7 @@ async def create_sample(
                 return (
                     cassette.cassette_number,
                     0,
-                )  # Для случаев, если формат не совпадает
+                )  
 
             sorted_cassettes = sorted(
                 first_sample_details_db.cassette, key=sort_cassettes
@@ -360,72 +364,114 @@ async def delete_samples(db: AsyncSession, samples_ids: List[str]) -> Dict[str, 
 
 
 
-async def _create_single_sample_with_dependencies(
-    db: AsyncSession, case_id: str, sample_char: str
-):
+async def print_all_sample_cassettes(
+    db: AsyncSession, sample_id: str, printing: bool
+) -> Optional[SampleModelScheema]:
     """
-    Создает один семпл, одну кассету и одно стекло.
-    Возвращает созданный семпл.
+    Устанавливает статус 'is_printed' для всех кассет данного образца
+    и для флага 'is_printed_cassette' образца.
+    Возвращает обновленные данные образца в виде Pydantic-схемы.
     """
-    db_case = await db.get(db_models.Case, case_id)
-
-    # 1. Создаем семпл
-    db_sample = db_models.Sample(case_id=db_case.id, sample_number=sample_char)
-    db.add(db_sample)
-    db_case.bank_count += 1
-    await db.flush()  # Используем flush вместо commit, чтобы получить ID
-    await db.refresh(db_sample)
-    await db.refresh(db_case)
-
-    # 2. Создаем кассету
-    db_cassette = db_models.Cassette(
-        sample_id=db_sample.id, cassette_number=f"{sample_char}1"
+    sample_result = await db.execute(
+        select(db_models.Sample)
+        .where(db_models.Sample.id == sample_id)
+        .options(
+            selectinload(db_models.Sample.cassette).selectinload(
+                db_models.Cassette.glass
+            )
+        )
     )
-    db.add(db_cassette)
-    db_case.cassette_count += 1
-    db_sample.cassette_count += 1
-    await db.flush() # Используем flush
-    await db.refresh(db_cassette)
-    await db.refresh(db_case)
-    await db.refresh(db_sample)
+    sample_db = sample_result.scalar_one_or_none()
 
-    # 3. Создаем стекло
-    db_glass = db_models.Glass(
-        cassette_id=db_cassette.id,
-        glass_number=0,
-        staining=db_models.StainingType.HE,
+    if not sample_db:
+        return None 
+    sample_db.is_printed_cassette = printing
+    cassettes_to_update = list(sample_db.cassette) if sample_db.cassette else []
+
+    for cassette_db in cassettes_to_update:
+        cassette_db.is_printed = printing
+
+    def sort_cassettes(cassette):
+        match = re.match(r"([A-Z]+)(\d+)", cassette.cassette_number)
+        if match:
+            letter_part = match.group(1)
+            number_part = int(match.group(2))
+            return (letter_part, number_part)
+        return (cassette.cassette_number, 0) 
+
+
+    sorted_cassettes_db = sorted(sample_db.cassette, key=sort_cassettes)
+
+
+    sample_schema = SampleModelScheema.model_validate(sample_db)
+    sample_schema.cassettes = [] 
+
+    for cassette_db in sorted_cassettes_db:
+        cassette_schema = CassetteModelScheema.model_validate(cassette_db)
+        cassette_schema.glasses = sorted(
+            [GlassModelScheema.model_validate(glass_db) for glass_db in cassette_db.glass],
+            key=lambda glass_s: glass_s.glass_number
+        )
+        await _update_ancestor_statuses_from_cassette(db=db, cassette=cassette_db)
+        for glass_db in cassette_db.glass:
+            await _update_ancestor_statuses_from_glass(db=db, glass=glass_db)
+        sample_schema.cassettes.append(cassette_schema)
+
+    await db.commit()
+    await db.refresh(sample_db) 
+    return sample_schema
+
+
+
+async def print_all_sample_glasses(
+    db: AsyncSession, sample_id: str, printing: bool
+) -> Optional[SampleModelScheema]:
+    sample_result = await db.execute(
+        select(db_models.Sample)
+        .where(db_models.Sample.id == sample_id)
+        .options(
+            selectinload(db_models.Sample.cassette).selectinload(
+                db_models.Cassette.glass
+            )
+        )
     )
-    db.add(db_glass)
-    db_case.glass_count += 1
-    db_sample.glass_count += 1
-    db_cassette.glass_count += 1
-    await db.flush() # Используем flush
-    await db.refresh(db_glass)
-    await db.refresh(db_case)
-    await db.refresh(db_sample)
-    await db.refresh(db_cassette)
+    sample_db = sample_result.scalar_one_or_none()
 
-    return db_sample
+    if not sample_db:
+        return None
 
-async def _get_next_sample_char(db: AsyncSession, case_id: str):
-    """Определяет следующий доступный буквенный номер семпла."""
-    samples_result = await db.execute(
-        select(db_models.Sample.sample_number)
-        .where(db_models.Sample.case_id == case_id)
-        .order_by(db_models.Sample.sample_number)
-    )
-    existing_sample_numbers = samples_result.scalars().all()
+    sample_db.is_printed_glass = printing
 
-    if not existing_sample_numbers:
-        return "A"
+    glasses_to_update: List[db_models.Glass] = []
+    for cassette_db in sample_db.cassette:
+        glasses_to_update.extend(cassette_db.glass)
 
-    last_sample_number = existing_sample_numbers[-1]
-    # Упрощенная логика:
-    if last_sample_number in ascii_uppercase:
-        last_index = ascii_uppercase.index(last_sample_number)
-        if last_index < len(ascii_uppercase) - 1:
-            return ascii_uppercase[last_index + 1]
+    for glass_db in glasses_to_update:
+        glass_db.is_printed = printing
+
+    def sort_cassettes(cassette):
+        match = re.match(r"([A-Z]+)(\d+)", cassette.cassette_number)
+        if match:
+            letter_part = match.group(1)
+            number_part = int(match.group(2))
+            return (letter_part, number_part)
+        return (cassette.cassette_number, 0)
+
+    sample_schema = SampleModelScheema.model_validate(sample_db)
     
-    # Если формат не буква или буквы закончились, используем более сложную нумерацию.
-    # Ваш код для 'Z1', 'A1' и т.д.
-    return f"Z{len(existing_sample_numbers) + 1}"
+    sorted_cassettes_db = sorted(sample_db.cassette, key=sort_cassettes)
+    sample_schema.cassettes = [] 
+
+    for cassette_db in sorted_cassettes_db:
+        cassette_schema = CassetteModelScheema.model_validate(cassette_db)
+        
+        cassette_schema.glasses = sorted(
+            [GlassModelScheema.model_validate(glass_db) for glass_db in cassette_db.glass],
+            key=lambda glass_s: glass_s.glass_number
+        )
+        sample_schema.cassettes.append(cassette_schema)
+
+    await db.commit()
+    await db.refresh(sample_db) 
+
+    return sample_schema

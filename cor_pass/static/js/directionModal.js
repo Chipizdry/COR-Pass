@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", (event) => {
     const pad=n=>n.toString().padStart(2,'0');
-    document.getElementById('todayMeta').textContent=`${pad(new Date().getDate())}.${pad(new Date().getMonth()+1)}.${new Date().getFullYear()}`;
+
+    if(document.getElementById('todayMeta')){
+        document.getElementById('todayMeta').textContent=`${pad(new Date().getDate())}.${pad(new Date().getMonth()+1)}.${new Date().getFullYear()}`;
+    }
 
 
     const uploadBox = document.getElementById('uploadBox');
@@ -324,7 +327,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
         });
     }
     const submitCaseDirection = (e) => {
-        document.querySelector('#caseDirectionSubmit').addEventListener('click', (e) => {
+        document.querySelector('#caseDirectionSubmit')?.addEventListener('click', (e) => {
             e.preventDefault(e);
             let ok= true;
 
@@ -384,34 +387,34 @@ document.addEventListener("DOMContentLoaded", (event) => {
 
     }
     const dropBoxEventsHandler = () => {
-        uploadBox.addEventListener('click', () => {
+        uploadBox?.addEventListener('click', () => {
             fileInput.click()
         });
-        uploadBox.addEventListener('dragover', e => {
+        uploadBox?.addEventListener('dragover', e => {
             e.preventDefault();
             uploadBox.classList.add('hover');
         });
-        uploadBox.addEventListener('dragenter', e => {
+        uploadBox?.addEventListener('dragenter', e => {
             e.preventDefault();
             uploadBox.classList.add('hover');
         });
-        uploadBox.addEventListener('dragleave', e => {
+        uploadBox?.addEventListener('dragleave', e => {
             e.preventDefault();
             uploadBox.classList.remove('hover');
         });
-        uploadBox.addEventListener('drop', e => {
+        uploadBox?.addEventListener('drop', e => {
             e.preventDefault();
             uploadBox.classList.remove('hover');
             showFiles(e.dataTransfer.files)
             uploadedFiles = [...uploadedFiles, ...e.dataTransfer.files]
         });
-        fileInput.addEventListener('change',e => {
+        fileInput?.addEventListener('change',e => {
             showFiles(e.target.files)
             uploadedFiles = [...uploadedFiles, ...e.target.files]
         });
     }
     const openDirectionModal = () => {
-        document.querySelector('#directionModalBtn').addEventListener('click', e => {
+        document.querySelector('#directionModalBtn')?.addEventListener('click', e => {
             uploadedFiles = []
             currentReferralId = null
             document.querySelector('#caseDirection').classList.add('open')

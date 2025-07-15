@@ -5,12 +5,14 @@ from sqlalchemy import (
     Column,
     Float,
     Integer,
+    Interval,
     String,
     ForeignKey,
     Enum,
     Text,
     Date,
     Index,
+    Time,
     UniqueConstraint,
     func,
     Boolean,
@@ -380,7 +382,8 @@ class UserSession(Base):
     user = relationship("User", back_populates="user_sessions")
 
     # Индексы
-    __table_args__ = (Index("idx_user_sessions_user_id", "user_id"),)
+    __table_args__ = (Index("idx_user_sessions_user_id", "user_id"),
+                      UniqueConstraint('user_id', 'device_info', name='uq_user_device_session'))
 
 
 class CorIdAuthSession(Base):
@@ -489,9 +492,10 @@ class OTP(Base):
 class Patient(Base):
     __tablename__ = "patients"
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    patient_cor_id = Column(
-        String(36), ForeignKey("users.cor_id"), unique=True, nullable=False
-    )
+
+    patient_cor_id = Column(String(250), unique=True, nullable=False) # Теперь пациентский кор айди просто строковое поле
+    user_id = Column(String(36), ForeignKey("users.id"), unique=True, nullable=True) # новый необязательный внешний ключ для юзера
+
     encrypted_surname = Column(LargeBinary, nullable=True)  # Зашифрована фамилия
     encrypted_first_name = Column(LargeBinary, nullable=True)  # Зашифрованное имя
     encrypted_middle_name = Column(
@@ -560,6 +564,9 @@ class Case(Base):
     general_macrodescription = Column(Text, nullable=True)
     case_owner = Column(String(36), ForeignKey("doctors.doctor_id"), nullable=True)
     closing_date = Column(DateTime, nullable=True)
+    is_printed_cassette = Column(Boolean, nullable=True, default=False)
+    is_printed_glass = Column(Boolean, nullable=True, default=False)
+    is_printed_qr = Column(Boolean, nullable=True, default=False)
 
     samples = relationship(
         "Sample", back_populates="case", cascade="all, delete-orphan"
@@ -590,6 +597,8 @@ class Sample(Base):
     glass_count = Column(Integer, default=0)
     archive = Column(Boolean, default=False)
     macro_description = Column(Text, nullable=True)
+    is_printed_cassette = Column(Boolean, nullable=True, default=False)
+    is_printed_glass = Column(Boolean, nullable=True, default=False)
 
     case = relationship("Case", back_populates="samples")
     cassette = relationship(
@@ -608,6 +617,7 @@ class Cassette(Base):
     )  # Порядковый номер кассеты в рамках конкретной банки
     comment = Column(String(500), nullable=True)
     glass_count = Column(Integer, default=0)
+    is_printed = Column(Boolean, nullable=True, default=False)
     glass = relationship(
         "Glass", back_populates="cassette", cascade="all, delete-orphan"
     )
@@ -623,6 +633,7 @@ class Glass(Base):
     glass_number = Column(Integer)  # Порядковый номер стекла
     staining = Column(Enum(StainingType), nullable=True)
     glass_data = Column(LargeBinary, nullable=True)
+    is_printed = Column(Boolean, nullable=True, default=False)
     cassette = relationship("Cassette", back_populates="glass")
 
 
@@ -910,5 +921,36 @@ class CerboMeasurement(Base):
     def __repr__(self):
         return (f"<CerboMeasurement(id={self.id}, measured_at='{self.measured_at}', "
                 f"object_name='{self.object_name}', general_battery_power={self.general_battery_power})>")
+
+
+class EnergeticSchedule(Base):
+    __tablename__ = "energetic_schedule"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    
+    # Параметры времени
+    start_time = Column(Time, nullable=False, comment="Время начала работы режима (ЧЧ:ММ)")
+    duration = Column(Interval, nullable=False, comment="Продолжительность режима (например, 2 часа 30 минут)")
+    end_time = Column(Time, nullable=False, comment="Время окончания работы режима (ЧЧ:ММ)") 
+
+    # Параметры работы инвертора
+    grid_feed_w = Column(Integer, nullable=False, comment="Параметр отдачи в сеть (Вт)")
+    battery_level_percent = Column(Integer, nullable=False, comment="Целевой уровень батареи (%)")
+    charge_battery = Column(Boolean, nullable=False, default=False, comment="Флаг: заряжать батарею в этом режиме")
+
+    # Статусы расписания
+    is_active = Column(Boolean, nullable=False, default=False, comment="Флаг: активно ли это расписание")
+    is_manual_mode = Column(Boolean, nullable=False, default=False, comment="Флаг: находится ли инвертор в ручном режиме")
+
+    def __repr__(self):
+        return (
+            f"<EnergeticSchedule(id='{self.id}', "
+            f"start_time={self.start_time}, duration={self.duration}, end_time={self.end_time}, "
+            f"grid_feed_kw={self.grid_feed_w}, battery_level_percent={self.battery_level_percent}, "
+            f"charge_battery={self.charge_battery}, is_active={self.is_active}, "
+            f"is_manual_mode={self.is_manual_mode})>"
+        )
+
+
 
 # Base.metadata.create_all(bind=engine)

@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from cor_pass.repository.lawyer import get_doctor
 from cor_pass.repository.patient import get_patient_by_corid
-from cor_pass.repository.sample import _create_single_sample_with_dependencies
 from cor_pass.schemas import (
     Case as CaseModelScheema,
     CaseCloseResponse,
@@ -60,7 +59,7 @@ from cor_pass.database import models as db_models
 import uuid
 from datetime import date, datetime
 from cor_pass.services.cipher import decrypt_data
-from cor_pass.services.logger import logger
+from loguru import logger
 from cor_pass.config.config import settings
 from string import ascii_uppercase
 
@@ -72,6 +71,76 @@ class ErrorCode(str, Enum):
     NO_DIAGNOSES_FOR_REPORT = "NO_DIAGNOSES_FOR_REPORT"
     DIAGNOSIS_NOT_SIGNED_BY_DOCTOR_NAME = "DIAGNOSIS_NOT_SIGNED_BY_DOCTOR_NAME: {doctor_full_name}"
     SIGNATURE_MISMATCH = "SIGNATURE_MISMATCH: Diagnosis by {diagnosis_doctor}, signed by {signature_doctor}" 
+
+async def _create_single_sample_with_dependencies(
+    db: AsyncSession, case_id: str, sample_char: str
+):
+    """
+    Создает один семпл, одну кассету и одно стекло.
+    Возвращает созданный семпл.
+    """
+    db_case = await db.get(db_models.Case, case_id)
+
+
+    db_sample = db_models.Sample(case_id=db_case.id, sample_number=sample_char)
+    db.add(db_sample)
+    db_case.bank_count += 1
+    await db.flush()  
+    await db.refresh(db_sample)
+    await db.refresh(db_case)
+
+
+    db_cassette = db_models.Cassette(
+        sample_id=db_sample.id, cassette_number=f"{sample_char}1"
+    )
+    db.add(db_cassette)
+    db_case.cassette_count += 1
+    db_sample.cassette_count += 1
+    await db.flush() 
+    await db.refresh(db_cassette)
+    await db.refresh(db_case)
+    await db.refresh(db_sample)
+
+
+    db_glass = db_models.Glass(
+        cassette_id=db_cassette.id,
+        glass_number=0,
+        staining=db_models.StainingType.HE,
+    )
+    db.add(db_glass)
+    db_case.glass_count += 1
+    db_sample.glass_count += 1
+    db_cassette.glass_count += 1
+    await db.flush() 
+    await db.refresh(db_glass)
+    await db.refresh(db_case)
+    await db.refresh(db_sample)
+    await db.refresh(db_cassette)
+    await _update_ancestor_statuses_from_cassette(db=db, cassette=db_cassette)
+    await _update_ancestor_statuses_from_glass(db=db, glass=db_glass)
+
+    return db_sample
+
+async def _get_next_sample_char(db: AsyncSession, case_id: str):
+    """Определяет следующий доступный буквенный номер семпла."""
+    samples_result = await db.execute(
+        select(db_models.Sample.sample_number)
+        .where(db_models.Sample.case_id == case_id)
+        .order_by(db_models.Sample.sample_number)
+    )
+    existing_sample_numbers = samples_result.scalars().all()
+
+    if not existing_sample_numbers:
+        return "A"
+
+    last_sample_number = existing_sample_numbers[-1]
+    if last_sample_number in ascii_uppercase:
+        last_index = ascii_uppercase.index(last_sample_number)
+        if last_index < len(ascii_uppercase) - 1:
+            return ascii_uppercase[last_index + 1]
+    
+    return f"Z{len(existing_sample_numbers) + 1}"
+
 
 async def generate_case_code(
     urgency_char: str, year_short: str, sample_type_char: str, next_number: int
@@ -143,6 +212,7 @@ async def create_cases_with_initial_data(
         await db.refresh(db_case)
 
         created_cases_db.append(db_case)
+
             
     if created_cases_db:
         first_case_with_relations = await db.execute(
@@ -196,7 +266,11 @@ async def create_cases_with_initial_data(
             "bank_count": first_case_db.bank_count,
             "cassette_count": first_case_db.cassette_count,
             "glass_count": first_case_db.glass_count,
-            "grossing_status":first_case_db.grossing_status
+            "grossing_status":first_case_db.grossing_status,
+            "is_printed_cassette": first_case_db.is_printed_cassette,
+            "is_printed_glass": first_case_db.is_printed_glass,
+            "is_printed_qr": first_case_db.is_printed_qr,
+
         }
 
     return {"all_cases": all_cases, "first_case_details": first_case_details}
@@ -211,13 +285,13 @@ async def get_case(db: AsyncSession, case_id: str) -> Optional[Dict[str, Any]]:
     if not case_db:
         return None
 
-    # 2. Получаем семплы первого кейса и связанные с ними кассеты и стекла с сортировкой
+    
     samples_result = await db.execute(
         select(db_models.Sample)
         .where(db_models.Sample.case_id == case_db.id)
         .options(
             selectinload(db_models.Sample.cassette)
-        )  # Предварительно загружаем кассеты
+        ) 
         .order_by(db_models.Sample.sample_number)
     )
     first_case_samples_db = samples_result.scalars().all()
@@ -227,7 +301,7 @@ async def get_case(db: AsyncSession, case_id: str) -> Optional[Dict[str, Any]]:
         sample = SampleModelScheema.model_validate(sample_db).model_dump()
         sample["cassettes"] = []
 
-        # Если это первый семпл, загружаем связанные кассеты и стекла с сортировкой
+       
         if i == 0 and sample_db:
             await db.refresh(sample_db, attribute_names=["cassette"])
 
@@ -264,10 +338,12 @@ async def get_case(db: AsyncSession, case_id: str) -> Optional[Dict[str, Any]]:
         "bank_count": case_db.bank_count,
         "cassette_count": case_db.cassette_count,
         "glass_count": case_db.glass_count,
+        "is_printed_cassette": case_db.is_printed_cassette,
+        "is_printed_glass": case_db.is_printed_glass,
+        "is_printed_qr": case_db.is_printed_qr,
         "samples": first_case_samples,
         "grossing_status":case_db.grossing_status
     }
-
     return case_details
 
 
@@ -473,13 +549,13 @@ async def get_patient_first_case_details(
     if all_cases_db:
         first_case_db = all_cases_db[0]
 
-        # 2. Получаем все семплы первого кейса, отсортированные по номеру
+        
         samples_result = await db.execute(
             select(db_models.Sample)
             .where(db_models.Sample.case_id == first_case_db.id)
             .options(
                 selectinload(db_models.Sample.cassette)
-            )  # Предварительно загружаем кассеты
+            )  
             .order_by(db_models.Sample.sample_number)
         )
         first_case_samples_db = samples_result.scalars().all()
@@ -489,7 +565,7 @@ async def get_patient_first_case_details(
             sample = SampleModelScheema.model_validate(sample_db).model_dump()
             sample["cassettes"] = []
 
-            # Если это первый семпл, загружаем связанные кассеты и стекла с сортировкой
+            
             if i == 0 and sample_db:
                 await db.refresh(sample_db, attribute_names=["cassette"])
 
@@ -502,7 +578,7 @@ async def get_patient_first_case_details(
                     return (
                         cassette.cassette_number,
                         0,
-                    )  # Для случаев, если формат не совпадает
+                    )  
 
                 sorted_cassettes_db = sorted(sample_db.cassette, key=sort_cassettes)
 
@@ -526,6 +602,9 @@ async def get_patient_first_case_details(
             "case_code": first_case_db.case_code,
             "creation_date": first_case_db.creation_date,
             "grossing_status":first_case_db.grossing_status,
+            "is_printed_cassette": first_case_db.is_printed_cassette,
+            "is_printed_glass": first_case_db.is_printed_glass,
+            "is_printed_qr": first_case_db.is_printed_qr,
             "samples": first_case_samples,
         }
 
@@ -926,7 +1005,10 @@ async def get_patient_case_details_for_glass_page(
             microdescription=last_case_with_relations.microdescription,
             samples=first_case_samples_schematized,
             grossing_status=last_case_with_relations.grossing_status,
-            patient_cor_id=last_case_with_relations.patient_id
+            patient_cor_id=last_case_with_relations.patient_id,
+            is_printed_cassette=last_case_with_relations.is_printed_cassette,
+            is_printed_glass=last_case_with_relations.is_printed_glass,
+            is_printed_qr=last_case_with_relations.is_printed_qr,
         )
     if last_case_with_relations:    
         case_owner = await get_case_owner(db=db, case_id=last_case_with_relations.id, doctor_id=current_doctor_id)
@@ -971,6 +1053,9 @@ async def get_current_cases_glass_details(
             db_models.Case.glass_count,
             db_models.Case.pathohistological_conclusion,
             db_models.Case.microdescription,
+            db_models.Case.is_printed_cassette,
+            db_models.Case.is_printed_glass,
+            db_models.Case.is_printed_qr,
             literal_column("1").label("sort_priority")
         )
         .where( 
@@ -1004,6 +1089,9 @@ async def get_current_cases_glass_details(
             db_models.Case.glass_count,
             db_models.Case.pathohistological_conclusion,
             db_models.Case.microdescription,
+            db_models.Case.is_printed_cassette,
+            db_models.Case.is_printed_glass,
+            db_models.Case.is_printed_qr,
             literal_column("2").label("sort_priority")
         )
         .where( 
@@ -1028,7 +1116,10 @@ async def get_current_cases_glass_details(
             cases_fu_subquery.c.glass_count,
             cases_fu_subquery.c.pathohistological_conclusion,
             cases_fu_subquery.c.microdescription,
-            cases_fu_subquery.c.sort_priority
+            cases_fu_subquery.c.sort_priority,
+            cases_fu_subquery.c.is_printed_cassette,
+            cases_fu_subquery.c.is_printed_glass,
+            cases_fu_subquery.c.is_printed_qr,
         )
         .union_all(
             select(
@@ -1042,7 +1133,10 @@ async def get_current_cases_glass_details(
                 cases_s_subquery.c.glass_count,
                 cases_s_subquery.c.pathohistological_conclusion,
                 cases_s_subquery.c.microdescription,
-                cases_s_subquery.c.sort_priority
+                cases_s_subquery.c.sort_priority,
+                cases_s_subquery.c.is_printed_cassette,
+                cases_s_subquery.c.is_printed_glass,
+                cases_s_subquery.c.is_printed_qr,
             )
         )
     )
@@ -1074,6 +1168,9 @@ async def get_current_cases_glass_details(
         grossing_status = db_models.Grossing_status(row.grossing_status)
         pathohistological_conclusion = row.pathohistological_conclusion
         microdescription = row.microdescription
+        is_printed_cassette = row.is_printed_cassette
+        is_printed_glass = row.is_printed_glass
+        is_printed_qr = row.is_printed_qr
         current_cases_list.append(
             CaseModelScheema(
                 id=case_id,
@@ -1085,7 +1182,10 @@ async def get_current_cases_glass_details(
                 cassette_count=cassette_count,
                 glass_count=glass_count,
                 pathohistological_conclusion = pathohistological_conclusion,
-                microdescription = microdescription
+                microdescription = microdescription,
+                is_printed_cassette = is_printed_cassette,
+                is_printed_glass = is_printed_glass,
+                is_printed_qr =is_printed_qr,
             )
         )
 
@@ -1179,7 +1279,11 @@ async def get_current_cases_glass_details(
             microdescription=last_case_with_relations.microdescription,
             samples=first_case_samples_schematized,
             grossing_status=last_case_with_relations.grossing_status,
-            patient_cor_id=last_case_with_relations.patient_id
+            patient_cor_id=last_case_with_relations.patient_id,
+            is_printed_cassette=last_case_with_relations.is_printed_cassette,
+            is_printed_glass=last_case_with_relations.is_printed_glass,
+            is_printed_qr=last_case_with_relations.is_printed_qr,
+
         )
     if last_case_with_relations:    
         case_owner = await get_case_owner(db=db, case_id=last_case_with_relations.id, doctor_id=current_doctor_id)
@@ -1300,7 +1404,10 @@ async def get_single_case_details_for_glass_page(
             samples=first_case_samples_schematized,
             grossing_status=case_db.grossing_status,
             patient_cor_id = case_db.patient_id,
-            microdescription = case_db.microdescription
+            microdescription = case_db.microdescription,
+            is_printed_cassette=case_db.is_printed_cassette,
+            is_printed_glass=case_db.is_printed_glass,
+            is_printed_qr=case_db.is_printed_qr,
         )
     if case_db:
         case_owner = await get_case_owner(db=db, case_id=case_db.id, doctor_id=current_doctor_id)
@@ -1361,10 +1468,6 @@ async def update_case_microdescription(db: AsyncSession, case_id: str, body: Upd
     
 
 
-
-
-
-# case id
 async def get_patient_case_details_for_excision_page(
     db: AsyncSession, patient_id: str, current_doctor_id: str, case_id = Optional[str]
 ) -> PatientExcisionPageResponse: #
@@ -1442,7 +1545,11 @@ async def get_patient_case_details_for_excision_page(
                 case_parameters=case_parameters_schematized,
                 samples=samples_for_excision_page,
                 grossing_status=last_case_with_relations.grossing_status,
-                patient_cor_id=last_case_with_relations.patient_id
+                patient_cor_id=last_case_with_relations.patient_id,
+                is_printed_cassette=last_case_with_relations.is_printed_cassette,
+                is_printed_glass=last_case_with_relations.is_printed_glass,
+                is_printed_qr=last_case_with_relations.is_printed_qr
+
             )
     if last_case_details_for_excision:
         case_owner = await get_case_owner(db=db, case_id=last_case_details_for_excision.id, doctor_id=current_doctor_id)
@@ -1451,8 +1558,6 @@ async def get_patient_case_details_for_excision_page(
         last_case_details_for_excision=last_case_details_for_excision,
         case_owner=case_owner
     )
-
-
 
 
 
@@ -1506,7 +1611,11 @@ async def get_single_case_details_for_excision_page(
             case_parameters=case_parameters_schematized,
             samples=samples_for_excision_page,
             grossing_status=last_case_with_relations.grossing_status,
-            patient_cor_id = last_case_with_relations.patient_id
+            patient_cor_id = last_case_with_relations.patient_id,
+            is_printed_cassette=last_case_with_relations.is_printed_cassette,
+            is_printed_glass=last_case_with_relations.is_printed_glass,
+            is_printed_qr=last_case_with_relations.is_printed_qr
+
         )
     if last_case_details_for_excision:    
         case_owner = await get_case_owner(db=db, case_id=last_case_details_for_excision.id, doctor_id=current_doctor_id)
@@ -1709,7 +1818,7 @@ async def get_report_by_case_id(
     )
     return general_response
 
-# case id
+
 async def get_patient_report_page_data(
     db: AsyncSession, patient_id: str, router: APIRouter, current_doctor_id: str, case_id = Optional[str]
 ) -> PatientTestReportPageResponse:
@@ -1940,8 +2049,6 @@ async def create_or_update_report_and_diagnosis(
     return await _format_report_response(db=db, db_report=db_report, router=router, case_db=case_db)
 
 
-
-
 async def add_diagnosis_signature( 
     db: AsyncSession, 
     diagnosis_entry_id: str, 
@@ -2016,9 +2123,6 @@ async def add_diagnosis_signature(
 
 
 
-
-
-# case id
 async def get_patient_final_report_page_data(
     db: AsyncSession, patient_id: str, router: APIRouter, current_doctor_id: str, case_id = Optional[str]
 ) -> PatientFinalReportPageResponse:
@@ -2098,8 +2202,6 @@ async def get_patient_final_report_page_data(
         case_owner=case_owner,
         report_details=report_details
     )
-
-
 
 
 async def _format_final_report_response(
@@ -2225,7 +2327,7 @@ async def _format_final_report_response(
         case_id=case_db.id,
         case_code=case_db.case_code,
         biopsy_date=biomaterial_date if referral_db else None,
-        arrival_date=referral_db.issued_at if referral_db else None,
+        arrival_date=case_db.creation_date.date() if case_db else None,
         report_date=case_db.closing_date.date() if case_db.closing_date else None,
 
         patient_cor_id=patient_db.patient_cor_id,
@@ -2345,6 +2447,9 @@ async def get_current_case_details_for_excision_page(
             db_models.Case.glass_count,
             db_models.Case.pathohistological_conclusion,
             db_models.Case.microdescription,
+            db_models.Case.is_printed_cassette,
+            db_models.Case.is_printed_glass,
+            db_models.Case.is_printed_qr,
             literal_column("1").label("sort_priority")
         )
         .where( 
@@ -2378,6 +2483,9 @@ async def get_current_case_details_for_excision_page(
             db_models.Case.glass_count,
             db_models.Case.pathohistological_conclusion,
             db_models.Case.microdescription,
+            db_models.Case.is_printed_cassette,
+            db_models.Case.is_printed_glass,
+            db_models.Case.is_printed_qr,
             literal_column("2").label("sort_priority")
         )
         .where( 
@@ -2402,6 +2510,9 @@ async def get_current_case_details_for_excision_page(
             cases_fu_subquery.c.glass_count,
             cases_fu_subquery.c.pathohistological_conclusion,
             cases_fu_subquery.c.microdescription,
+            cases_fu_subquery.c.is_printed_cassette,
+            cases_fu_subquery.c.is_printed_glass,
+            cases_fu_subquery.c.is_printed_qr,
             cases_fu_subquery.c.sort_priority
         )
         .union_all(
@@ -2416,6 +2527,9 @@ async def get_current_case_details_for_excision_page(
                 cases_s_subquery.c.glass_count,
                 cases_s_subquery.c.pathohistological_conclusion,
                 cases_s_subquery.c.microdescription,
+                cases_s_subquery.c.is_printed_cassette,
+                cases_s_subquery.c.is_printed_glass,
+                cases_s_subquery.c.is_printed_qr,
                 cases_s_subquery.c.sort_priority
             )
         )
@@ -2445,6 +2559,9 @@ async def get_current_case_details_for_excision_page(
         grossing_status = db_models.Grossing_status(row.grossing_status)
         pathohistological_conclusion = row.pathohistological_conclusion
         microdescription = row.microdescription
+        is_printed_cassette = row.is_printed_cassette
+        is_printed_glass = row.is_printed_glass
+        is_printed_qr = row.is_printed_qr
 
         current_cases_list.append(
             CaseModelScheema(
@@ -2457,7 +2574,10 @@ async def get_current_case_details_for_excision_page(
                 cassette_count=cassette_count,
                 glass_count=glass_count,
                 pathohistological_conclusion = pathohistological_conclusion,
-                microdescription = microdescription
+                microdescription = microdescription,
+                is_printed_cassette = is_printed_cassette,
+                is_printed_glass = is_printed_glass,
+                is_printed_qr =is_printed_qr,
             )
         )
 
@@ -2518,7 +2638,11 @@ async def get_current_case_details_for_excision_page(
                 case_parameters=case_parameters_schematized,
                 samples=samples_for_excision_page,
                 grossing_status=last_case_with_relations.grossing_status,
-                patient_cor_id=last_case_with_relations.patient_id
+                patient_cor_id=last_case_with_relations.patient_id,
+                is_printed_cassette=last_case_with_relations.is_printed_cassette,
+                is_printed_glass=last_case_with_relations.is_printed_glass,
+                is_printed_qr=last_case_with_relations.is_printed_qr
+
             )
     if last_case_with_relations:
         case_owner = await get_case_owner(db=db, case_id=last_case_with_relations.id, doctor_id=current_doctor_id)
@@ -2558,6 +2682,9 @@ async def get_current_cases_report_page_data(
             db_models.Case.pathohistological_conclusion,
             db_models.Case.microdescription,
             db_models.Case.case_owner,
+            db_models.Case.is_printed_cassette,
+            db_models.Case.is_printed_glass,
+            db_models.Case.is_printed_qr,
             literal_column("1").label("sort_priority")
         )
         .where(
@@ -2592,6 +2719,9 @@ async def get_current_cases_report_page_data(
             db_models.Case.pathohistological_conclusion,
             db_models.Case.microdescription,
             db_models.Case.case_owner,
+            db_models.Case.is_printed_cassette,
+            db_models.Case.is_printed_glass,
+            db_models.Case.is_printed_qr,
             literal_column("2").label("sort_priority")
         )
         .where(
@@ -2617,6 +2747,9 @@ async def get_current_cases_report_page_data(
             cases_fu_subquery.c.microdescription,
             cases_fu_subquery.c.sort_priority,
             cases_fu_subquery.c.case_owner,
+            cases_fu_subquery.c.is_printed_cassette,
+            cases_fu_subquery.c.is_printed_glass,
+            cases_fu_subquery.c.is_printed_qr,
 
         )
         .union_all(
@@ -2632,7 +2765,10 @@ async def get_current_cases_report_page_data(
                 cases_s_subquery.c.pathohistological_conclusion,
                 cases_s_subquery.c.microdescription,
                 cases_s_subquery.c.sort_priority,
-                cases_s_subquery.c.case_owner
+                cases_s_subquery.c.case_owner,
+                cases_s_subquery.c.is_printed_cassette,
+                cases_s_subquery.c.is_printed_glass,
+                cases_s_subquery.c.is_printed_qr,
             )
         )
     )
@@ -2661,6 +2797,10 @@ async def get_current_cases_report_page_data(
         grossing_status = db_models.Grossing_status(row.grossing_status)
         pathohistological_conclusion = row.pathohistological_conclusion
         microdescription = row.microdescription
+        is_printed_cassette = row.is_printed_cassette
+        is_printed_glass = row.is_printed_glass
+        is_printed_qr = row.is_printed_qr
+
         current_cases_list.append(
             CaseModelScheema(
                 id=case_id,
@@ -2672,7 +2812,10 @@ async def get_current_cases_report_page_data(
                 cassette_count=cassette_count,
                 glass_count=glass_count,
                 pathohistological_conclusion = pathohistological_conclusion,
-                microdescription =microdescription
+                microdescription =microdescription,
+                is_printed_cassette = is_printed_cassette,
+                is_printed_glass = is_printed_glass,
+                is_printed_qr =is_printed_qr,
             )
         )
 
@@ -2807,6 +2950,9 @@ async def get_current_cases_with_directions(
             db_models.Case.glass_count,
             db_models.Case.pathohistological_conclusion,
             db_models.Case.microdescription,
+            db_models.Case.is_printed_cassette,
+            db_models.Case.is_printed_glass,
+            db_models.Case.is_printed_qr,
             literal_column("1").label("sort_priority")
         )
         .where( 
@@ -2840,6 +2986,9 @@ async def get_current_cases_with_directions(
             db_models.Case.glass_count,
             db_models.Case.pathohistological_conclusion,
             db_models.Case.microdescription,
+            db_models.Case.is_printed_cassette,
+            db_models.Case.is_printed_glass,
+            db_models.Case.is_printed_qr,
             literal_column("2").label("sort_priority")
         )
         .where( 
@@ -2864,7 +3013,10 @@ async def get_current_cases_with_directions(
             cases_fu_subquery.c.glass_count,
             cases_fu_subquery.c.pathohistological_conclusion,
             cases_fu_subquery.c.microdescription,
-            cases_fu_subquery.c.sort_priority
+            cases_fu_subquery.c.sort_priority,
+            cases_fu_subquery.c.is_printed_cassette,
+            cases_fu_subquery.c.is_printed_glass,
+            cases_fu_subquery.c.is_printed_qr,
         )
         .union_all(
             select(
@@ -2878,7 +3030,10 @@ async def get_current_cases_with_directions(
                 cases_s_subquery.c.glass_count,
                 cases_s_subquery.c.pathohistological_conclusion,
                 cases_s_subquery.c.microdescription,
-                cases_s_subquery.c.sort_priority
+                cases_s_subquery.c.sort_priority,
+                cases_s_subquery.c.is_printed_cassette,
+                cases_s_subquery.c.is_printed_glass,
+                cases_s_subquery.c.is_printed_qr,
             )
         )
     )
@@ -2907,6 +3062,9 @@ async def get_current_cases_with_directions(
         grossing_status = db_models.Grossing_status(row.grossing_status)
         pathohistological_conclusion = row.pathohistological_conclusion
         microdescription = row.microdescription
+        is_printed_cassette = row.is_printed_cassette
+        is_printed_glass = row.is_printed_glass
+        is_printed_qr = row.is_printed_qr
         current_cases_list.append(
             CaseModelScheema(
                 id=case_id,
@@ -2918,7 +3076,10 @@ async def get_current_cases_with_directions(
                 cassette_count=cassette_count,
                 glass_count=glass_count,
                 pathohistological_conclusion = pathohistological_conclusion,
-                microdescription = microdescription
+                microdescription = microdescription,
+                is_printed_cassette = is_printed_cassette,
+                is_printed_glass = is_printed_glass,
+                is_printed_qr =is_printed_qr,
             )
         )
 
@@ -2995,8 +3156,6 @@ async def get_current_cases_with_directions(
     )
 
 
-
-
 async def get_current_cases_final_report_page_data(
     db: AsyncSession,
     router: APIRouter,
@@ -3024,6 +3183,9 @@ async def get_current_cases_final_report_page_data(
             db_models.Case.glass_count,
             db_models.Case.pathohistological_conclusion,
             db_models.Case.microdescription,
+            db_models.Case.is_printed_cassette,
+            db_models.Case.is_printed_glass,
+            db_models.Case.is_printed_qr,
             literal_column("1").label("sort_priority")
         )
         .where(
@@ -3057,6 +3219,9 @@ async def get_current_cases_final_report_page_data(
             db_models.Case.glass_count,
             db_models.Case.pathohistological_conclusion,
             db_models.Case.microdescription,
+            db_models.Case.is_printed_cassette,
+            db_models.Case.is_printed_glass,
+            db_models.Case.is_printed_qr,
             literal_column("2").label("sort_priority")
         )
         .where(
@@ -3080,6 +3245,9 @@ async def get_current_cases_final_report_page_data(
             cases_fu_subquery.c.glass_count,
             cases_fu_subquery.c.pathohistological_conclusion,
             cases_fu_subquery.c.microdescription,
+            cases_fu_subquery.c.is_printed_cassette,
+            cases_fu_subquery.c.is_printed_glass,
+            cases_fu_subquery.c.is_printed_qr,
             cases_fu_subquery.c.sort_priority
         )
         .union_all(
@@ -3094,6 +3262,9 @@ async def get_current_cases_final_report_page_data(
                 cases_s_subquery.c.glass_count,
                 cases_s_subquery.c.pathohistological_conclusion,
                 cases_s_subquery.c.microdescription,
+                cases_s_subquery.c.is_printed_cassette,
+                cases_s_subquery.c.is_printed_glass,
+                cases_s_subquery.c.is_printed_qr,
                 cases_s_subquery.c.sort_priority
             )
         )
@@ -3127,7 +3298,10 @@ async def get_current_cases_final_report_page_data(
                 cassette_count=row.cassette_count,
                 glass_count=row.glass_count,
                 pathohistological_conclusion = row.pathohistological_conclusion,
-                microdescription = row.microdescription
+                microdescription = row.microdescription,
+                is_printed_cassette = row.is_printed_cassette,
+                is_printed_glass = row.is_printed_glass,
+                is_printed_qr = row.is_printed_qr
             )
         )
 
@@ -3389,7 +3563,6 @@ async def release_case_ownership(db: AsyncSession, case_id: str, doctor_id: str)
     return general_response
 
 
-
 async def close_case_service(
     db: AsyncSession,
     case_id: str,
@@ -3464,9 +3637,6 @@ async def close_case_service(
         new_status=case_to_close.grossing_status.value
     )
 
-
-
-
 async def get_case_owner(db: AsyncSession, case_id: str, doctor_id: str) -> CaseOwnerResponse:
     """
     Позволяет доктору взять на себя владение кейсом.
@@ -3498,3 +3668,272 @@ async def get_case_owner(db: AsyncSession, case_id: str, doctor_id: str) -> Case
 
         )
     return response
+
+
+
+async def print_all_case_glasses(
+    db: AsyncSession, case_id: str, printing: bool
+) -> Optional[Dict[str, Any]]: 
+    """
+    Печатает все стёкла кейса, используя жадную загрузку для всех уровней.
+    Возвращает полную информацию о кейсе в виде Pydantic-схемы.
+    """
+    case_result = await db.execute(
+        select(db_models.Case)
+        .where(db_models.Case.id == case_id)
+        .options(
+            selectinload(db_models.Case.samples) 
+            .selectinload(db_models.Sample.cassette) 
+            .selectinload(db_models.Cassette.glass) 
+        )
+    )
+    case_db = case_result.scalar_one_or_none()
+    if not case_db:
+        return None
+    case_db.is_printed_glass = printing
+
+    glasses_to_update: List[db_models.Glass] = []
+
+    for sample_db in case_db.samples: 
+
+        sample_db.is_printed_glass = printing
+        
+        for cassette_db in sample_db.cassette: 
+            for glass_db in cassette_db.glass: 
+                glasses_to_update.append(glass_db)
+
+    for glass_db in glasses_to_update:
+        glass_db.is_printed = printing
+
+    # def sort_cassettes(cassette: db_models.Cassette):
+    #     match = re.match(r"([A-Z]+)(\d+)", cassette.cassette_number)
+    #     if match:
+    #         letter_part = match.group(1)
+    #         number_part = int(match.group(2))
+    #         return (letter_part, number_part)
+    #     return (cassette.cassette_number, 0)
+
+    # case_schema = CaseDetailsResponse.model_validate(case_db)
+
+    # for sample_schema in case_schema.samples:
+    #     sorted_cassettes_schemas = sorted(sample_schema.cassettes, key=sort_cassettes)
+    #     sample_schema.cassettes = sorted_cassettes_schemas
+
+    #     for cassette_schema in sample_schema.cassettes:
+    #         cassette_schema.glasses.sort(key=lambda glass_s: glass_s.glass_number)
+
+    await db.commit()
+    await db.refresh(case_db) 
+
+    case_response = await get_case(db=db, case_id=case_id)
+    return case_response
+
+
+async def print_all_case_cassette(
+    db: AsyncSession, case_id: str, printing: bool
+) -> Optional[Dict[str, Any]]: 
+    """
+    Печатает все кассеты кейса, используя жадную загрузку для всех уровней.
+    Возвращает полную информацию о кейсе в виде Pydantic-схемы.
+    """
+    case_result = await db.execute(
+        select(db_models.Case)
+        .where(db_models.Case.id == case_id)
+        .options(
+            selectinload(db_models.Case.samples) 
+            .selectinload(db_models.Sample.cassette) 
+            .selectinload(db_models.Cassette.glass) 
+        )
+    )
+    case_db = case_result.scalar_one_or_none()
+    if not case_db:
+        return None
+    case_db.is_printed_cassette = printing
+    cassettes_to_update = []
+    for sample_db in case_db.samples: 
+        sample_db.is_printed_cassette = printing
+        cassettes_to_update = list(sample_db.cassette) if sample_db.cassette else []
+
+        for cassette_db in cassettes_to_update:
+            cassette_db.is_printed = printing
+
+    await db.commit()
+    await db.refresh(case_db) 
+
+    case_response = await get_case(db=db, case_id=case_id)
+    return case_response
+
+
+async def print_case_qr(
+    db: AsyncSession, case_id: str, printing: bool
+) -> Optional[Dict[str, Any]]: 
+    """
+    Печатает куар кейса
+    """
+    case_result = await db.execute(
+        select(db_models.Case)
+        .where(db_models.Case.id == case_id)
+        .options(
+            selectinload(db_models.Case.samples) 
+            .selectinload(db_models.Sample.cassette) 
+            .selectinload(db_models.Cassette.glass) 
+        )
+    )
+    case_db = case_result.scalar_one_or_none()
+    if not case_db:
+        return None
+    case_db.is_printed_qr = printing
+
+    await db.commit()
+    await db.refresh(case_db) 
+
+    case_response = await get_case(db=db, case_id=case_id)
+    return case_response
+
+
+# --- Вспомогательные функции для обновления статусов ---
+
+async def _update_sample_glass_status(db: AsyncSession, sample: db_models.Sample):
+    """
+    Обновляет is_printed_glass для Sample на основе статусов всех его Glass.
+    Статус True, если ВСЕ стекла напечатаны. False, если хотя бы одно не напечатано.
+    """
+    all_glasses_in_sample_result = await db.execute(
+        select(db_models.Glass).where(db_models.Glass.cassette.has(db_models.Cassette.sample_id == sample.id)) 
+    )
+    all_glasses_in_sample = all_glasses_in_sample_result.scalars().all()
+
+    
+    new_sample_glass_status = all(g.is_printed for g in all_glasses_in_sample) if all_glasses_in_sample else True
+
+    if sample.is_printed_glass != new_sample_glass_status:
+        sample.is_printed_glass = new_sample_glass_status
+        db.add(sample)
+
+
+
+async def _update_sample_cassette_status(db: AsyncSession, sample: db_models.Sample):
+    """
+    Обновляет is_printed_cassette для Sample на основе статусов всех его Cassette.
+    Статус True, если ВСЕ кассеты напечатаны. False, если хотя бы одна не напечатана.
+    """
+    all_cassettes_in_sample_result = await db.execute(
+        select(db_models.Cassette).where(db_models.Cassette.sample_id == sample.id)
+    )
+    all_cassettes_in_sample = all_cassettes_in_sample_result.scalars().all()
+
+    
+    new_sample_cassette_status = all(c.is_printed for c in all_cassettes_in_sample) if all_cassettes_in_sample else True
+
+    if sample.is_printed_cassette != new_sample_cassette_status:
+        sample.is_printed_cassette = new_sample_cassette_status
+        db.add(sample)
+
+
+
+async def _update_case_glass_status(db: AsyncSession, case: db_models.Case):
+    """
+    Обновляет is_printed_glass для Case на основе is_printed_glass статусов всех его Sample.
+    Статус True, если is_printed_glass всех семплов True. False, если хотя бы у одного False.
+    """
+    all_samples_in_case_result = await db.execute(
+        select(db_models.Sample).where(db_models.Sample.case_id == case.id)
+    )
+    all_samples_in_case = all_samples_in_case_result.scalars().all()
+
+    new_case_glass_status = all(s.is_printed_glass for s in all_samples_in_case) if all_samples_in_case else True
+
+    if case.is_printed_glass != new_case_glass_status:
+        case.is_printed_glass = new_case_glass_status
+        db.add(case)
+        
+
+
+async def _update_case_cassette_status(db: AsyncSession, case: db_models.Case):
+    """
+    Обновляет is_printed_cassette для Case на основе is_printed_cassette статусов всех его Sample.
+    Статус True, если is_printed_cassette всех семплов True. False, если хотя бы у одного False.
+    """
+    all_samples_in_case_result = await db.execute(
+        select(db_models.Sample).where(db_models.Sample.case_id == case.id)
+    )
+    all_samples_in_case = all_samples_in_case_result.scalars().all()
+
+   
+    new_case_cassette_status = all(s.is_printed_cassette for s in all_samples_in_case) if all_samples_in_case else True
+
+    if case.is_printed_cassette != new_case_cassette_status:
+        case.is_printed_cassette = new_case_cassette_status
+        db.add(case)
+
+
+
+async def _update_ancestor_statuses_from_glass(db: AsyncSession, glass: db_models.Glass):
+    """
+    Основная функция, вызываемая при изменении статуса `is_printed` у Glass.
+    Запускает цепочку обновлений вверх по иерархии: Glass -> Cassette -> Sample -> Case.
+    """
+
+    cassette = await db.get(db_models.Cassette, glass.cassette_id)
+    if not cassette:
+        return
+
+
+    all_glasses_in_cassette_result = await db.execute(
+        select(db_models.Glass).where(db_models.Glass.cassette_id == cassette.id)
+    )
+    all_glasses_in_cassette = all_glasses_in_cassette_result.scalars().all()
+
+    new_cassette_is_printed_status = all(g.is_printed for g in all_glasses_in_cassette) if all_glasses_in_cassette else True
+
+    if cassette.is_printed != new_cassette_is_printed_status:
+        cassette.is_printed = new_cassette_is_printed_status
+        db.add(cassette)
+
+    sample = await db.get(db_models.Sample, cassette.sample_id)
+    if not sample:
+        return
+
+
+    await _update_sample_glass_status(db, sample)
+    
+    await _update_sample_cassette_status(db, sample)
+
+    case = await db.get(db_models.Case, sample.case_id)
+    if not case:
+        return
+
+    await _update_case_glass_status(db, case)
+    
+    await _update_case_cassette_status(db, case)
+
+    await db.commit() 
+    await db.refresh(glass)
+    await db.refresh(cassette)
+    await db.refresh(sample)
+    await db.refresh(case)
+
+async def _update_ancestor_statuses_from_cassette(db: AsyncSession, cassette: db_models.Cassette):
+    """
+    Основная функция, вызываемая при изменении статуса `is_printed` у Cassette.
+    Запускает цепочку обновлений вверх по иерархии: Cassette -> Sample -> Case.
+    """
+    
+    sample = await db.get(db_models.Sample, cassette.sample_id)
+    if not sample:
+        return
+    
+
+    await _update_sample_cassette_status(db, sample)
+
+    case = await db.get(db_models.Case, sample.case_id)
+    if not case:
+       
+        return
+
+    await _update_case_cassette_status(db, case)
+
+    await db.commit() 
+    await db.refresh(cassette)
+    await db.refresh(sample)
+    await db.refresh(case)

@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 import datetime
 from datetime import datetime
 from cor_pass.database.models import User
-from cor_pass.services.logger import logger
+from loguru import logger
 from cor_pass.database.redis_db import redis_client
 from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.config.config import settings
@@ -112,6 +112,25 @@ async def create_new_corid(user: User, db: AsyncSession):
     except Exception as e:
         await db.rollback()
         raise e
+
+async def create_only_corid(birth: int, user_sex: str, db: AsyncSession):
+    birth_year_gender = f"{birth}{user_sex}"
+    jan_first_2024 = datetime(2024, 1, 1).date()
+    today = datetime.now().date()
+    n_days_since_first_jan_2024 = (today - jan_first_2024).days
+    term1 = (
+        version
+        * (2 ** (days_since_bit + facility_bit + patient_bit))
+        * (1 if version_bit > 0 else 0)
+    )
+    term2 = n_days_since_first_jan_2024 * (2 ** (patient_bit + facility_bit))
+    term3 = n_facility * (2**patient_bit)
+    term4 = await get_register_per_day(n_facility)
+
+    new_corid_decimal = term1 + term2 + term3 + term4
+    new_corid_encoded = custom_base32_encode(new_corid_decimal, charset)
+    new_corid = new_corid_encoded + "-" + birth_year_gender
+    return new_corid
 
 
 async def get_register_per_day(facility_number):

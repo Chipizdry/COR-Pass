@@ -41,6 +41,11 @@ ip2location = "^8.10.5"
 pip = "^25.1.1"
 pymodbus = "^3.9.2"
 prometheus-fastapi-instrumentator = "^7.1.0"
+gdcm = "^1.1"
+pylibjpeg = "^2.0.1"
+pylibjpeg-libjpeg = "^2.3.0"
+pylibjpeg-openjpeg = "^2.4.0"
+gunicorn = "^23.0.0"
 
 
 [build-system]

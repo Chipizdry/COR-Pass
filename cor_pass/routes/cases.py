@@ -303,3 +303,49 @@ async def release_case(
         return response
     except HTTPException as e:
         raise e
+
+
+@router.patch(
+    "/{case_id}/print_glasses",
+    dependencies=[Depends(doctor_access)],
+    response_model=CaseDetailsResponse,
+)
+async def print_all_case_glasses(case_id: str, printing: bool = False, db: AsyncSession = Depends(get_db)):
+    """
+    Печатает все стёкла кейса
+    """
+    db_case = await case_service.print_all_case_glasses(db=db, case_id=case_id, printing=printing)
+    if db_case is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    return db_case
+
+
+@router.patch(
+    "/{case_id}/print_cassettes",
+    dependencies=[Depends(doctor_access)],
+    response_model=CaseDetailsResponse,
+)
+async def print_all_case_cassettes(case_id: str, printing: bool = False, db: AsyncSession = Depends(get_db)):
+    """
+    Печатает все кассеты кейса
+    """
+    db_case = await case_service.print_all_case_cassette(db=db, case_id=case_id, printing=printing)
+    if db_case is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    return db_case
+
+
+@router.patch(
+    "/{case_id}/print_qr",
+    dependencies=[Depends(doctor_access)],
+    response_model=CaseDetailsResponse,
+)
+
+async def print_case_qr(case_id: str, printing: bool = False, db: AsyncSession = Depends(get_db)):
+    """
+    Печатает все кассеты кейса
+    """
+    db_case = await case_service.print_case_qr(db=db, case_id=case_id, printing=printing)
+    if db_case is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    return db_case

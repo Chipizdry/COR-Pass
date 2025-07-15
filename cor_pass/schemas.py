@@ -6,11 +6,12 @@ from pydantic import (
     EmailStr,
     PositiveInt,
     ValidationInfo,
+    computed_field,
     field_validator,
     model_validator,
 )
 from typing import Generic, List, Optional, TypeVar, Union, Tuple
-from datetime import datetime
+from datetime import datetime, time, timedelta
 
 from sqlalchemy import UUID
 from cor_pass.database import models
@@ -634,11 +635,28 @@ class PaginatedPatientsResponse(BaseModel):
     items: List[PatientResponce]
     total: int
 
-
+class ExistingPatientRegistration(BaseModel):
+    email: Optional[EmailStr] = Field(
+        None, description="Email пациента (будет использован для создания пользователя)"
+    )
+    birth_date: int = Field(..., description="Дата рождения пациента")
+    sex: str = Field(
+        ...,
+        max_length=1,
+        description="Пол пациента, может быть 'M'(мужской) или 'F'(женский)",
+    )
+    
+    @field_validator("sex")
+    @classmethod 
+    def validate_sex_and_normalize(cls, v: str) -> str: 
+        normalized_v = v.upper() 
+        if normalized_v not in ["M", "F"]:
+            raise ValueError('Пол пациента должен быть "M" или "F".')
+        return normalized_v 
 
 class NewPatientRegistration(BaseModel):
-    email: EmailStr = Field(
-        ..., description="Email пациента (будет использован для создания пользователя)"
+    email: Optional[EmailStr] = Field(
+        None, description="Email пациента (будет использован для создания пользователя)"
     )
     surname: str = Field(..., min_length=1, description="Фамилия пациента")
     first_name: str = Field(..., min_length=1, description="Имя пациента")
@@ -652,6 +670,13 @@ class NewPatientRegistration(BaseModel):
     phone_number: Optional[str] = Field(None, description="Номер телефона пациента")
     address: Optional[str] = Field(None, description="Адрес пациента")
 
+    @field_validator("email", mode="before")
+    @classmethod
+    def clean_email(cls, v: Optional[str]) -> Optional[str]:
+        if v == "":
+            return None
+        return v
+    
     @field_validator("birth_date")
     @classmethod
     def validate_birth_date(cls, v: Optional[date]) -> Optional[date]:
@@ -669,9 +694,6 @@ class NewPatientRegistration(BaseModel):
 
         return v
     
-    # photo: Optional[str] = Field(None, description="Фото пациента (base64 или blob)")
-    # status: Optional[str] = Field("registered", description="Начальный статус пациента")
-
     @field_validator("sex")
     @classmethod 
     def validate_sex_and_normalize(cls, v: str) -> str: 
@@ -684,6 +706,21 @@ class NewPatientRegistration(BaseModel):
 class ExistingPatientAdd(BaseModel):
     cor_id: str = Field(..., min_length=10, max_length=18, description="Cor ID существующего пользователя")
 
+class PatientCreationResponse(BaseModel):
+    id: str
+    patient_cor_id: str
+    user_id: Optional[str] = None
+    encrypted_surname: Optional[bytes]
+    encrypted_first_name: Optional[bytes]
+    encrypted_middle_name: Optional[bytes]
+    birth_date: Optional[date]
+    sex: Optional[str]
+    email: Optional[EmailStr]
+    phone_number: Optional[str]
+    address: Optional[str]
+
+    class Config:
+        from_attributes = True # Для совместимости с SQLAlchemy
 
 # Модели для лабораторных исследований
 
@@ -711,10 +748,17 @@ class GlassCreate(BaseModel):
     )
     num_glasses: int = Field(default=1, description="Количество создаваемых стекол")
 
+class ChangeGlassStaining(BaseModel):
+    staining_type: StainingType = Field(
+        ...,
+        description="Тип окрашивания для стекла",
+        example=StainingType.HE,
+    )
 
 class Glass(GlassBase):
     id: str
     cassette_id: str
+    is_printed: Optional[bool]
 
     class Config:
         from_attributes = True
@@ -779,6 +823,7 @@ class Cassette(CassetteBase):
 class Cassette(CassetteBase):
     id: str
     sample_id: str
+    is_printed: Optional[bool]
     glasses: List[Glass] = []
 
     class Config:
@@ -807,6 +852,8 @@ class Sample(SampleBase):
     id: str
     case_id: str
     macro_description: Optional[str] = None
+    is_printed_cassette: Optional[bool]
+    is_printed_glass: Optional[bool]
     cassettes: List[Cassette] = []
 
     class Config:
@@ -900,6 +947,9 @@ class Case(BaseModel):
     pathohistological_conclusion: Optional[str] = None
     microdescription: Optional[str] = None
     grossing_status: Optional[str] = None
+    is_printed_cassette: Optional[bool] 
+    is_printed_glass: Optional[bool] 
+    is_printed_qr: Optional[bool] 
 
     class Config:
         from_attributes = True
@@ -922,6 +972,9 @@ class FirstCaseDetailsSchema(BaseModel):
     id: str
     case_code: str
     creation_date: datetime
+    is_printed_cassette: Optional[bool] 
+    is_printed_glass: Optional[bool] 
+    is_printed_qr: Optional[bool] 
     samples: List[Sample]
 
 
@@ -964,8 +1017,14 @@ class CaseDetailsResponse(BaseModel):
     glass_count: int
     pathohistological_conclusion: Optional[str] = None
     microdescription: Optional[str] = None
+    is_printed_cassette: Optional[bool] 
+    is_printed_glass: Optional[bool] 
+    is_printed_qr: Optional[bool] 
     samples: List[SampleWithoutCassettesSchema | Sample]
     # case_owner: Optional[DoctorResponseForSignature] = None
+
+    class Config:
+        from_attributes = True
 
 
 
@@ -1380,6 +1439,9 @@ class FirstCaseGlassDetailsSchema(BaseModel):
     general_macrodescription: Optional[str] = None
     grossing_status: Optional[str] = None
     patient_cor_id: Optional[str] = None
+    is_printed_cassette: Optional[bool] 
+    is_printed_glass: Optional[bool] 
+    is_printed_qr: Optional[bool]
 
     samples: List[SampleForGlassPage] 
 
@@ -1439,6 +1501,10 @@ class LastCaseExcisionDetailsSchema(BaseModel):
     case_parameters: Optional[CaseParametersScheema] = None
     grossing_status: Optional[str] = None
     patient_cor_id: Optional[str] = None
+    is_printed_cassette: Optional[bool] 
+    is_printed_glass: Optional[bool] 
+    is_printed_qr: Optional[bool] 
+
 
     samples: List[SampleForExcisionPage]
 
@@ -1698,10 +1764,6 @@ class CaseOwnershipResponse(BaseModel):
 #             raise ValueError("Диастолическое давление не может быть выше или равно систолическому.")
 #         return self 
 
-
-
-
-
 # class BloodPressureMeasures(BaseModel):
 #     sistolic: Optional[int] = Field(None, alias="sistolic") 
 #     diastolic: Optional[int] = Field(None, alias="diastolic")
@@ -1736,25 +1798,22 @@ class BloodPressureMeasurementCreate(BaseModel):
     @field_validator('systolic_pressure')
     @classmethod
     def validate_systolic_range(cls, v):
-        if v is not None and not (50 <= v <= 250): # Проверка на None
+        if v is not None and not (50 <= v <= 250):
             raise ValueError("Систолическое давление должно быть в диапазоне от 50 до 250.")
         return v
 
     @field_validator('diastolic_pressure')
     @classmethod
     def validate_diastolic_range(cls, v):
-        if v is not None and not (30 <= v <= 150): # Проверка на None
+        if v is not None and not (30 <= v <= 150): 
             raise ValueError("Диастолическое давление должно быть в диапазоне от 30 до 150.")
         return v
 
     @model_validator(mode='after')
     def check_diastolic_less_than_systolic(self):
-        # Проверяем, что оба значения не None, прежде чем сравнивать
         if self.diastolic_pressure is not None and self.systolic_pressure is not None:
             if self.diastolic_pressure >= self.systolic_pressure:
                 raise ValueError("Диастолическое давление не может быть выше или равно систолическому.")
-        # Если одно или оба значения None, валидация пропускается,
-        # так как это опциональные поля, и их отсутствие не является ошибкой для этого валидатора.
         return self
 
 class BloodPressureMeasurementResponse(BloodPressureMeasurementCreate):
@@ -1792,29 +1851,18 @@ class BloodPressureMeasures(BaseModel):
             raise ValueError("Диастолическое давление не может быть выше или равно систолическому.")
         return self
 
-MeasuresValue = Union[BloodPressureMeasures, str]
+MeasuresValue = str 
 
 class IndividualResult(BaseModel):
-    # 'measures' теперь может быть объектом или строкой
-    measures: MeasuresValue
-    # 'member' здесь - это список UUID-подобных строк, связанных с этим конкретным результатом
+    measures: MeasuresValue  
     member: List[str]
-
-# --- 3. Основная модель для входящего запроса ---
 
 class TonometrIncomingData(BaseModel):
-    # 'created_at' - дата и время измерения
     created_at: datetime
-    
-    # 'member' - список UUID-подобных строк, кто делал измерение на верхнем уровне
     member: List[str]
-    
-    # 'result' - список IndividualResult
-    results: List[IndividualResult]
-    
-    # Поле 'id' отсутствует в вашем новом запросе, поэтому его можно удалить,
-    # или, если оно потенциально может появиться позже, оставить Optional[str] = None
-    # id: Optional[str] = None
+    results_list: List[IndividualResult] = Field(..., alias="results")
+
+
 
 # Модели для опроса инвертора 
 
@@ -1885,3 +1933,57 @@ class EssFeedInControl(BaseModel):
     max_feed_in_l1: Optional[int] = None
     max_feed_in_l2: Optional[int] = None
     max_feed_in_l3: Optional[int] = None
+
+
+
+
+"""
+Модели для расписания
+"""
+class EnergeticScheduleBase(BaseModel):
+    start_time: time = Field(..., description="Время начала работы режима (ЧЧ:ММ)")
+    duration_hours: int = Field(..., ge=0, description="Продолжительность режима в часах")
+    duration_minutes: int = Field(..., ge=0, lt=60, description="Продолжительность режима в минутах (0-59)")
+    grid_feed_w: int = Field(..., ge=0, description="Параметр отдачи в сеть (Вт)")
+    battery_level_percent: int = Field(..., ge=0, le=100, description="Целевой уровень батареи (%)")
+    charge_battery: bool = Field(False, description="Флаг: заряжать батарею в этом режиме")
+    is_manual_mode: bool = Field(False, description="Флаг: находится ли инвертор в ручном режиме")
+    
+    class Config:
+        from_attributes = True
+
+class EnergeticScheduleCreate(EnergeticScheduleBase):
+    pass
+
+class EnergeticScheduleResponse(BaseModel):
+
+    id: str = Field(..., description="Уникальный идентификатор расписания")
+    start_time: time = Field(..., description="Время начала работы режима (ЧЧ:ММ)")
+    grid_feed_w: float = Field(..., ge=0.0, description="Параметр отдачи в сеть (Вт)")
+    battery_level_percent: int = Field(..., ge=0, le=100, description="Целевой уровень батареи (%)")
+    charge_battery: bool = Field(False, description="Флаг: заряжать батарею в этом режиме")
+    is_active: bool = Field(True, description="Флаг: активно ли это расписание")
+    is_manual_mode: bool = Field(False, description="Флаг: находится ли инвертор в ручном режиме")
+    duration: Optional[timedelta] = None 
+    
+    @computed_field
+    @property
+    def formatted_duration(self) -> str:
+        if isinstance(self.duration, timedelta):
+            total_seconds = int(self.duration.total_seconds())
+            hours, remainder = divmod(total_seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            
+            parts = []
+            if hours > 0:
+                parts.append(f"{hours}h")
+            if minutes > 0:
+                parts.append(f"{minutes}m")
+            if seconds > 0 or not parts: 
+                parts.append(f"{seconds}s")
+            
+            return " ".join(parts)
+        return "N/A" 
+
+    class Config:
+        from_attributes = True

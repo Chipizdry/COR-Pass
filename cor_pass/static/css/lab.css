@@ -1,14 +1,20 @@
+.lab-header-wrapper{
+    min-height: 190px;
+}
+
+
 .specimenWrapper{
     width: 112px;
     min-width: 112px;
-    border-right:1px solid #B2AFBA;
+    border-right:1px solid #eeecf8;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 .specimenPlaceholder{
     padding: 16px 12px;
     background: #FFF;
-    height: 187px;
-    border-right:1px solid #B2AFBA;
+    height: 190px;
 }
 
 .specimenItem{
@@ -17,7 +23,7 @@
     padding: 12px 10px;
     width: 112px;
     border: 2px solid #EFECF8;
-    border-bottom:1px solid #B2AFBA;
+    border-bottom:1px solid #eeecf8;
 }
 .specimenItem.active{
     border: 2px solid #7527B2;
@@ -27,8 +33,9 @@
     margin-top: 10px;
 }
 .specimenItems{
-    height: calc(100% - 187px - 58px);     /*187 height of placeholder | 58 height of scroll button*/
     overflow: hidden;
+    flex: 1;
+    padding-bottom: 58px;
 }
 
 
@@ -41,7 +48,7 @@
     padding: 12px 8px;
     background: #FFF;
     height: 124px;
-    border-bottom: 1px solid #B2AFBA;
+    border-bottom: 1px solid #eeecf8;
 }
 .glassItem{
     border: 1px solid #FFFFFF;
@@ -68,10 +75,10 @@
     padding: 12px 6px;
     height: 159px;
     font-weight: 400;
-    border-bottom: 1px solid #B2AFBA;
+    border-bottom: 1px solid #eeecf8;
 }
 .cassetteColumn{
-    border-left: 1px solid #B2AFBA;
+    border-left: 1px solid #eeecf8;
 }
 .cassetteItemImg{
     position: relative;
@@ -131,8 +138,9 @@
     min-height: 159px;
     width: 159px;
     border: 2px solid #EFECF8;
-    border-bottom:1px solid #B2AFBA;
+    border-bottom:1px solid #eeecf8;
 }
+
 .caseItem.active{
     border: 2px solid #7527B2;
 }
@@ -172,18 +180,22 @@
     width: 160px;
     min-width: 160px;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .casePlaceholder{
     padding: 16px 12px;
     background: #FFF;
-    height: 187px;
-    border-right:1px solid #B2AFBA;
+    height: 190px;
+    border-right:1px solid #eeecf8;
+    border-top-left-radius: 20px;
 }
 .caseItems{
-    height: calc(100% - 187px - 58px);     /*187 height of placeholder | 58 height of scroll button*/
+    flex: 1;
     overflow: hidden;
-    border-right:1px solid #B2AFBA;
+    border-right:1px solid #eeecf8;
+    padding-bottom: 58px;
 }
 .cassetteCommentsArea{
     padding: 16px;
@@ -198,6 +210,13 @@
     font-weight: 400;
     outline: none;
 }
+
+.contentCassette{
+    flex: 1;
+    overflow: hidden;
+    border-top: 1px solid #eeecf8;
+}
+
 .cassetteCommentsArea::placeholder{
     color: #B1A1DA;
 }

@@ -25,7 +25,7 @@ from cor_pass.schemas import (
 )
 from cor_pass.services.auth import auth_service
 from cor_pass.services import roles as role_check
-from cor_pass.services.logger import logger
+from loguru import logger
 from cor_pass.services.cipher import (
     generate_aes_key,
     encrypt_user_key,

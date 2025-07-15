@@ -2,7 +2,7 @@ import pyotp
 import time
 from cor_pass.services.cipher import decrypt_data, decrypt_user_key
 from cor_pass.database.models import User
-from cor_pass.services.logger import logger
+from loguru import logger
 from fastapi import HTTPException, status
 
 
