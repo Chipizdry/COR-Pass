@@ -45,11 +45,11 @@ function renderScheduleTable() {
             </td>
             <td>${endTime.hour}:${endTime.minute.toString().padStart(2, '0')}</td>
             <td>
-                <input type="number" class="kw-input" min="0" max="100" step="0.1" value="${period.feedIn}" 
+                <input type="number" class="integer-input" min="0" max="100" step="0.1" value="${period.feedIn}" 
                     onchange="updateSchedulePeriod(${period.id}, 'feedIn', this.value)">
             </td>
             <td>
-                <input type="number" class="percent-input" min="0" max="100" value="${period.batteryLevel}" 
+                <input type="number" class="integer-input" min="0" max="100" value="${period.batteryLevel}" 
                     onchange="updateSchedulePeriod(${period.id}, 'batteryLevel', this.value)">
             </td>
             <td>

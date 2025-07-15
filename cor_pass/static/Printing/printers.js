@@ -176,12 +176,11 @@ async function printLabel(printerIp, templateNumber, content, resultElement = nu
 
 
  // Функция для получения списка устройств и отображения в таблице
-async function loadDevicesList() {
+ async function loadDevicesList() {
     const devicesListElement = document.getElementById('devicesList');
     devicesListElement.innerHTML = '<p>Загрузка списка устройств...</p>';
     
     try {
-       
         const response = await fetch('/api/printing_devices/all', {
             method: 'GET',
             headers: {
@@ -189,18 +188,23 @@ async function loadDevicesList() {
                 'Authorization': 'Bearer ' + getToken()
             }
         });
+        
         if (!response.ok) {
             throw new Error(`Ошибка HTTP: ${response.status}`);
         }
         
         const devices = await response.json();
+        availablePrinters = devices.filter(device => device.device_class === 'printer');
         
+        // Обновляем выпадающий список принтеров
+        updatePrinterDropdown();
+        
+        // Отображаем таблицу (ваш существующий код)
         if (devices.length === 0) {
             devicesListElement.innerHTML = '<p>Устройства не найдены</p>';
             return;
         }
         
-        // Создаем HTML для таблицы
         let tableHTML = `
             <table class="devices-table">
                 <thead>
@@ -215,7 +219,6 @@ async function loadDevicesList() {
                 <tbody>
         `;
         
-        // Добавляем строки для каждого устройства
         devices.forEach(device => {
             tableHTML += `
                 <tr>
@@ -239,8 +242,39 @@ async function loadDevicesList() {
         console.error('Ошибка при загрузке списка устройств:', error);
         devicesListElement.innerHTML = `<p style="color: red;">Ошибка при загрузке: ${error.message}</p>`;
     }
-}   
+}
 
+
+
+function updatePrinterDropdown() {
+    const printerDropdown = document.getElementById('printerIp');
+    if (!printerDropdown) return;
+
+    // Сохраняем текущее значение
+    const currentValue = printerDropdown.value;
+    
+    // Очищаем и заполняем заново
+    printerDropdown.innerHTML = '';
+    
+    // Добавляем опцию по умолчанию
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = '-- Выберите принтер --';
+    printerDropdown.appendChild(defaultOption);
+    
+    // Добавляем все принтеры
+    availablePrinters.forEach(printer => {
+        const option = document.createElement('option');
+        option.value = printer.ip_address;
+        option.textContent = `${printer.ip_address}${printer.location ? ` (${printer.location})` : ''}`;
+        printerDropdown.appendChild(option);
+    });
+    
+    // Восстанавливаем выбранное значение, если оно есть в списке
+    if (currentValue && availablePrinters.some(p => p.ip_address === currentValue)) {
+        printerDropdown.value = currentValue;
+    }
+}
 
 // Обработчик для модального окна теста
 document.getElementById('sendLabelButton').addEventListener('click', async () => {
