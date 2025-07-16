@@ -39,6 +39,15 @@ class ScheduleData(BaseModel):
     periods: list[SchedulePeriod]
 
 
+class RegisterWriteRequest(BaseModel):
+    slave_id: int
+    register: int
+    value: int
+
+
+class InverterPowerPayload(BaseModel):
+    inverter_power: float
+
 
 
 @router.get("/error_count")
@@ -366,6 +375,42 @@ async def set_ess_advanced_setpoint_fine(control: EssAdvancedControl, request: R
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
 
+
+@router.post("/ess_advanced_settings/inverter_power")
+async def set_inverter_power_setpoint(payload: InverterPowerPayload, request: Request):
+    try:
+        client = request.app.state.modbus_client
+        slave = INVERTER_ID
+
+        raw_value = payload.inverter_power
+        if raw_value is None:
+            raise HTTPException(status_code=400, detail="Не передано значение inverter_power")
+
+        # Масштабируем и проверяем на допустимые границы int16
+        scaled_value = int(float(raw_value/10))
+        if not -32768 <= scaled_value <= 32767:
+            raise HTTPException(status_code=400, detail="Значение выходит за пределы int16")
+
+        # Преобразуем в формат Modbus (uint16, если отрицательное — в дополнительный код)
+        if scaled_value < 0:
+            register_value = (1 << 16) + scaled_value
+        else:
+            register_value = scaled_value
+
+        await client.write_register(address=2704, value=register_value, slave=slave)
+
+        logging.info(f"✅ Установлено значение инвертора: {raw_value} W (регистр 2704 = {register_value})")
+        return {"status": "ok", "value": raw_value}
+
+    except Exception as e:
+        logging.error("❗ Ошибка записи регистра 2704", exc_info=e)
+        raise HTTPException(status_code=500, detail="Modbus ошибка")
+
+
+
+
+
+
 @router.post("/ess/grid_limiting_status")
 async def set_grid_limiting_status(data: GridLimitUpdate, request: Request):
     """
@@ -585,7 +630,6 @@ async def get_dynamic_ess_settings(request: Request):
         raise HTTPException(status_code=500, detail=f"Ошибка чтения Dynamic ESS: {e}")
 
 
-
 @router.get("/test_dynamic_ess_registers")
 async def test_dynamic_ess_registers(
     request: Request,
@@ -609,6 +653,33 @@ async def test_dynamic_ess_registers(
             results[str(reg)] = f"💥 Exception: {str(e)}"
 
     return results
+
+
+@router.post("/write_register")
+async def write_register(request_data: RegisterWriteRequest, request: Request):
+    """
+    Записывает значение в указанный регистр Modbus.
+    """
+    try:
+        client = request.app.state.modbus_client
+        
+        # Записываем значение в регистр
+        result = await client.write_register(
+            address=request_data.register,
+            value=request_data.value,
+            slave=request_data.slave_id
+        )
+        
+        if result.isError():
+            raise HTTPException(status_code=500, detail="Ошибка записи регистра")
+            
+        return {"status": "success", "register": request_data.register, "value": request_data.value}
+        
+    except Exception as e:
+        register_modbus_error()
+        logging.error(f"❗ Ошибка записи регистра {request_data.register}", exc_info=e)
+        raise HTTPException(status_code=500, detail="Modbus ошибка")
+
 
 
 @router.get(
