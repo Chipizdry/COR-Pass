@@ -54,10 +54,8 @@ function renderScheduleTable() {
                     onchange="updateSchedulePeriod('${period.id}', 'batteryLevel', this.value)">
             </td>
             <td>
-                <select class="toggle-active" name="chargeEnabled" onchange="updateSchedulePeriod('${period.id}', 'chargeEnabled', this.value)">
-                    <option value="true" ${period.chargeEnabled ? 'selected' : ''}>Вкл</option>
-                    <option value="false" ${!period.chargeEnabled ? 'selected' : ''}>Выкл</option>
-                </select>
+                <input type="number" class="integer-input" min="0" max="32767" value="${period.chargeEnabled}" 
+                    onchange="updateSchedulePeriod('${period.id}', 'chargeEnabled', this.value)">
             </td>
             <td>
                 <select class="toggle-active" name="active" onchange="updateSchedulePeriod('${period.id}', 'active', this.value)">
@@ -147,7 +145,7 @@ async function addSchedulePeriod() {
         duration_minutes: 0,
         grid_feed_w: 0,
         battery_level_percent: 50,
-        charge_battery: true,
+        charge_battery: 500,
         is_manual_mode: false
     };
 
@@ -221,19 +219,11 @@ function updateSchedulePeriod(id, field, value) {
         convertedValue = Number(value);
         
         // Валидация значений
-        if (field === 'startHour' && (convertedValue < 0 || convertedValue > 23)) {
-            return;
-        }
-        if ((field === 'startMinute' || field === 'durationMinute') && 
-            (convertedValue < 0 || convertedValue > 59)) {
-            return;
-        }
-        if (field === 'durationHour' && convertedValue < 0) {
-            return;
-        }
-        if (field === 'batteryLevel' && (convertedValue < 0 || convertedValue > 100)) {
-            return;
-        }
+        if (field === 'startHour' && (convertedValue < 0 || convertedValue > 23)) return;
+        if ((field === 'startMinute' || field === 'durationMinute') && (convertedValue < 0 || convertedValue > 59)) return;
+        if (field === 'durationHour' && convertedValue < 0) return;
+        if (field === 'batteryLevel' && (convertedValue < 0 || convertedValue > 100)) return;
+        if (field === 'chargeEnabled' && (convertedValue < 0 || convertedValue > 32767)) return;
     }
     
     period[field] = convertedValue;
@@ -254,7 +244,7 @@ async function saveSchedulePeriod(buttonElement) {
     const durationMinute = parseInt(row.querySelector('input[onchange*="durationMinute"]').value);
     const feedIn = parseFloat(row.querySelector('input[onchange*="feedIn"]').value);
     const batteryLevel = parseInt(row.querySelector('input[onchange*="batteryLevel"]').value);
-    const chargeEnabled = row.querySelector('select[name="chargeEnabled"]').value === 'true';
+    const chargeEnabled = parseInt(row.querySelector('input[onchange*="chargeEnabled"]').value);
     const active = row.querySelector('select[name="active"]').value === 'true';
     const isManualMode = active; 
 
@@ -453,7 +443,7 @@ function renderTimeline() {
             `Начало: ${period.startHour}:${period.startMinute.toString().padStart(2, '0')}\n` +
             `Длительность: ${period.durationHour}ч ${period.durationMinute}м\n` +
             `Мощность: ${period.feedIn} кВт\n` +
-            `Заряд: ${period.chargeEnabled ? 'Вкл' : 'Выкл'}`;
+            `Заряд: ${period.chargeEnabled}`;
     
         if (endMinutes <= 1440) {
             // Не пересекает полночь
