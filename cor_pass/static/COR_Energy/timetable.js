@@ -75,7 +75,7 @@ function renderScheduleTable() {
     });
     
     document.getElementById('toggleScheduleBtn').textContent = 
-        scheduleEnabled ? 'Ручной' : 'Авто';
+        scheduleEnabled ? 'Авто' : 'Ручной';
     renderTimeline(); 
 }
 
@@ -315,13 +315,48 @@ async function deleteSchedulePeriod(buttonElement) {
 }
 
 // Включение/отключение всего расписания
-function toggleSchedule() {
+async function toggleSchedule() {
     scheduleEnabled = !scheduleEnabled;
-    renderScheduleTable();
+
+    const updatePromises = schedulePeriods.map(async period => {
+        const dataToSend = {
+            start_time: formatIsoTime(period.startHour, period.startMinute),
+            duration_hours: period.durationHour,
+            duration_minutes: period.durationMinute,
+            grid_feed_w: period.feedIn,
+            battery_level_percent: period.batteryLevel,
+            charge_battery: period.chargeEnabled,
+            is_manual_mode: scheduleEnabled // 👈 массово устанавливаем
+        };
+
+        try {
+            const response = await fetch(`/api/modbus/schedules/${period.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataToSend)
+            });
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => null);
+                throw new Error(err?.message || `HTTP ${response.status}`);
+            }
+
+            // Обновим в локальном массиве
+            period.active = scheduleEnabled;
+        } catch (error) {
+            console.error(`Ошибка обновления периода ${period.id}:`, error);
+        }
+    });
+
+    await Promise.all(updatePromises);
     
-    // Здесь может быть вызов API для сохранения состояния
-    console.log('Расписание', scheduleEnabled ? 'включено' : 'отключено');
+    renderScheduleTable();
+    showNotification(
+        scheduleEnabled ? 'Авто режим активирован' : 'Ручное управление',
+        'success'
+    );
 }
+
 
 // Инициализация таблицы при загрузке страницы
 document.addEventListener('DOMContentLoaded', initScheduleTable);
