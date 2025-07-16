@@ -645,40 +645,6 @@ async def read_measurements(
         total_pages=total_pages
     )
 
-@router.post("/schedule/save")
-async def save_schedule(schedule_data: ScheduleData):
-    """
-    Сохраняет расписание работы системы (может принимать один или несколько периодов).
-    """
-    try:
-        # Обновляем хранилище - добавляем/обновляем полученные периоды
-        schedules_storage["schedule_enabled"] = schedule_data.scheduleEnabled
-        
-        for period in schedule_data.periods:
-            # Находим индекс существующего периода с таким id
-            existing_index = next(
-                (i for i, p in enumerate(schedules_storage["periods"]) 
-                if p["id"] == period.id), 
-                None
-            )
-            
-            if existing_index is not None:
-                # Обновляем существующий период
-                schedules_storage["periods"][existing_index] = period.dict()
-            else:
-                # Добавляем новый период
-                schedules_storage["periods"].append(period.dict())
-        
-        logger.info(f"Период(ы) расписания сохранены. Активно: {schedule_data.scheduleEnabled}")
-        logger.info(f"Количество полученных периодов: {len(schedule_data.periods)}")
-        logger.debug("Детали периодов:", json.dumps([p.dict() for p in schedule_data.periods], indent=2))
-        
-        return {"status": "success", "message": "Период(ы) успешно сохранены"}
-    
-    except Exception as e:
-        logger.error(f"Ошибка сохранения периода(ов): {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Ошибка при сохранении периода(ов)")
-    
 
 
 
