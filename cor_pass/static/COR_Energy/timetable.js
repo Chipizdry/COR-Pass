@@ -46,7 +46,7 @@ function renderScheduleTable() {
             </td>
             <td>${endTime.hour}:${endTime.minute.toString().padStart(2, '0')}</td>
             <td>
-                <input type="number" class="integer-input" min="0" max="100" step="0.1" value="${period.feedIn}" 
+                <input type="number" class="integer-input" min="0" max="100000" step="10" value="${period.feedIn}" 
                     onchange="updateSchedulePeriod('${period.id}', 'feedIn', this.value)">
             </td>
             <td>
@@ -105,23 +105,56 @@ async function addSchedulePeriod() {
         return;
     }
 
-    // Подготовка данных для отправки на бэкенд
+    // Собираем занятые интервалы (в минутах)
+    const occupied = Array(1440).fill(false);
+    schedulePeriods.forEach(p => {
+        let start = p.startHour * 60 + p.startMinute;
+        let duration = p.durationHour * 60 + p.durationMinute;
+        for (let i = 0; i < duration; i++) {
+            occupied[(start + i) % 1440] = true; // учитывать переход за полночь
+        }
+    });
+
+    // Ищем первый свободный 60-минутный интервал
+    let found = false;
+    let nextStartHour = 0;
+    for (let hour = 0; hour < 24; hour++) {
+        const start = hour * 60;
+        let free = true;
+        for (let i = 0; i < 60; i++) {
+            if (occupied[(start + i) % 1440]) {
+                free = false;
+                break;
+            }
+        }
+        if (free) {
+            nextStartHour = hour;
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        alert('Нет свободного одностороннего часового интервала для добавления нового периода.');
+        return;
+    }
+
+    const start_time = `${String(nextStartHour).padStart(2, '0')}:00:00`;
+
     const scheduleData = {
-        start_time: "00:00:00", // формат без миллисекунд — сервер добавит сам
+        start_time: start_time,
         duration_hours: 1,
         duration_minutes: 0,
         grid_feed_w: 0,
         battery_level_percent: 50,
         charge_battery: true,
-        is_manual_mode: false // 👈 контролирует поле "Активен"
+        is_manual_mode: false
     };
 
     try {
         const response = await fetch('/api/modbus/schedules/create', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(scheduleData)
         });
 
@@ -132,12 +165,10 @@ async function addSchedulePeriod() {
 
         const newSchedule = await response.json();
 
-        // Разбор start_time (например "01:00:00.000Z")
         const startTime = new Date(`1970-01-01T${newSchedule.start_time}`);
         const startHour = startTime.getHours();
         const startMinute = startTime.getMinutes();
 
-        // Разбор длительности в формате "PT1H30M"
         let durationHour = 0;
         let durationMinute = 0;
         if (newSchedule.duration) {
@@ -149,7 +180,6 @@ async function addSchedulePeriod() {
             }
         }
 
-        // Добавляем период с учетом того, что active = is_manual_mode
         const newPeriod = {
             id: newSchedule.id,
             startHour,
@@ -159,7 +189,7 @@ async function addSchedulePeriod() {
             feedIn: newSchedule.grid_feed_w || 0,
             batteryLevel: newSchedule.battery_level_percent || 0,
             chargeEnabled: newSchedule.charge_battery,
-            active: newSchedule.is_manual_mode,  
+            active: newSchedule.is_manual_mode,
             isManualMode: newSchedule.is_manual_mode
         };
 
