@@ -34,24 +34,24 @@ function renderScheduleTable() {
             <td>${index + 1}</td>
             <td>
                 <input type="number" class="time-input" min="0" max="23" value="${period.startHour}" 
-                    onchange="updateSchedulePeriod(${period.id}, 'startHour', this.value)"> :
+                    onchange="updateSchedulePeriod('${period.id}', 'startHour', this.value)"> :
                 <input type="number" class="time-input" min="0" max="59" value="${period.startMinute}" 
-                    onchange="updateSchedulePeriod(${period.id}, 'startMinute', this.value)">
+                    onchange="updateSchedulePeriod('${period.id}', 'startMinute', this.value)">
             </td>
             <td>
                 <input type="number" class="time-input" min="0" max="23" value="${period.durationHour}" 
-                    onchange="updateSchedulePeriod(${period.id}, 'durationHour', this.value)"> ч
+                    onchange="updateSchedulePeriod('${period.id}', 'durationHour', this.value)"> ч
                 <input type="number" class="time-input" min="0" max="59" value="${period.durationMinute}" 
-                    onchange="updateSchedulePeriod(${period.id}, 'durationMinute', this.value)"> м
+                    onchange="updateSchedulePeriod('${period.id}', 'durationMinute', this.value)"> м
             </td>
             <td>${endTime.hour}:${endTime.minute.toString().padStart(2, '0')}</td>
             <td>
                 <input type="number" class="integer-input" min="0" max="100" step="0.1" value="${period.feedIn}" 
-                    onchange="updateSchedulePeriod(${period.id}, 'feedIn', this.value)">
+                    onchange="updateSchedulePeriod('${period.id}', 'feedIn', this.value)">
             </td>
             <td>
                 <input type="number" class="integer-input" min="0" max="100" value="${period.batteryLevel}" 
-                    onchange="updateSchedulePeriod(${period.id}, 'batteryLevel', this.value)">
+                    onchange="updateSchedulePeriod('${period.id}', 'batteryLevel', this.value)">
             </td>
             <td>
                 <select class="toggle-active" name="chargeEnabled" onchange="updateSchedulePeriod('${period.id}', 'chargeEnabled', this.value)">
