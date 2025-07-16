@@ -351,48 +351,60 @@ function renderTimeline() {
     let periodIndex = 0;
     schedulePeriods.forEach((period, index) => {
         if (!period.active) return;
-        
+    
         const startMinutes = period.startHour * 60 + period.startMinute;
-        const endMinutes = startMinutes + period.durationHour * 60 + period.durationMinute;
-        
-        const periodElem = document.createElement('div');
-        periodElem.className = 'timeline-period';
-        periodElem.title = `Период ${index + 1}: ${period.startHour}:${period.startMinute.toString().padStart(2, '0')} - ${calculateEndTime(period.startHour, period.startMinute, period.durationHour, period.durationMinute).hour}:${calculateEndTime(period.startHour, period.startMinute, period.durationHour, period.durationMinute).minute.toString().padStart(2, '0')}`;
-        
-        // Позиционирование и размер
-        periodElem.style.left = `${(startMinutes / 1440) * 100}%`;
-        periodElem.style.width = `${((endMinutes - startMinutes) / 1440) * 100}%`;
-        periodElem.style.backgroundColor = periodColors[index % periodColors.length];
-        
-        // Фиксированная высота и позиционирование по вертикали
-        const fixedHeight = 8; // Фиксированная высота в пикселях
-        periodElem.style.height = `${fixedHeight}px`;
-        
-        // Расположение от низа в зависимости от порядкового номера
+        const durationMinutes = period.durationHour * 60 + period.durationMinute;
+        const endMinutes = startMinutes + durationMinutes;
+    
         const bottomPosition = 5 + (periodIndex * heightStep);
-        periodElem.style.bottom = `${bottomPosition}%`;
-        periodElem.setAttribute('data-tooltip', 
-            `Период ${index + 1}\n` +
+    
+        const addPeriodBlock = (start, width, label) => {
+            const periodElem = document.createElement('div');
+            periodElem.className = 'timeline-period';
+            periodElem.style.left = `${(start / 1440) * 100}%`;
+            periodElem.style.width = `${(width / 1440) * 100}%`;
+            periodElem.style.backgroundColor = periodColors[index % periodColors.length];
+            periodElem.style.height = `8px`;
+            periodElem.style.bottom = `${bottomPosition}%`;
+    
+            periodElem.setAttribute('data-tooltip', label);
+    
+            periodElem.addEventListener('click', () => {
+                const rows = document.querySelectorAll('#scheduleTableBody tr');
+                if (rows[index]) {
+                    rows[index].style.backgroundColor = '#ffff99';
+                    setTimeout(() => {
+                        rows[index].style.backgroundColor = '';
+                    }, 2500);
+                    rows[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
+    
+            container.appendChild(periodElem);
+        };
+    
+        // Текст подсказки
+        const label = `Период ${index + 1}\n` +
             `Начало: ${period.startHour}:${period.startMinute.toString().padStart(2, '0')}\n` +
             `Длительность: ${period.durationHour}ч ${period.durationMinute}м\n` +
             `Мощность: ${period.feedIn} кВт\n` +
-            `Заряд: ${period.chargeEnabled ? 'Вкл' : 'Выкл'}`
-        );
-        // Клик по периоду прокручивает к соответствующей строке в таблице
-        periodElem.addEventListener('click', () => {
-            const rows = document.querySelectorAll('#scheduleTableBody tr');
-            if (rows[index]) {
-                rows[index].style.backgroundColor = '#ffff99';
-                setTimeout(() => {
-                    rows[index].style.backgroundColor = '';
-                }, 2500);
-                rows[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-
-           
-        });
-        
-        container.appendChild(periodElem);
+            `Заряд: ${period.chargeEnabled ? 'Вкл' : 'Выкл'}`;
+    
+        if (endMinutes <= 1440) {
+            // Не пересекает полночь
+            addPeriodBlock(startMinutes, durationMinutes, label);
+        } else {
+            // Пересекает полночь — нужно разделить
+            const untilMidnight = 1440 - startMinutes;
+            const afterMidnight = endMinutes - 1440;
+    
+            // Часть до 00:00
+            addPeriodBlock(startMinutes, untilMidnight, label);
+    
+            // Часть после 00:00
+            addPeriodBlock(0, afterMidnight, label);
+        }
+    
         periodIndex++;
     });
 }
@@ -415,7 +427,6 @@ function showNotification(message, type) {
     }, 3000);
 }
 
-
 async function fetchAllSchedulePeriods() {
     try {
         const response = await fetch('/api/modbus/schedules/', {
@@ -424,57 +435,57 @@ async function fetchAllSchedulePeriods() {
                 'Accept': 'application/json'
             }
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const periods = await response.json();
-        
+
         // Преобразуем полученные данные в формат, используемый на фронтенде
         const formattedPeriods = periods.map(period => {
-            // Парсим время начала
             const startTime = new Date(`1970-01-01T${period.start_time}`);
             const startHour = startTime.getHours();
             const startMinute = startTime.getMinutes();
-            
-            // Парсим длительность (ISO 8601 формат, например "PT1H30M")
+
             let durationHour = 0;
             let durationMinute = 0;
-            
             if (period.duration) {
                 const durationRegex = /PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
                 const matches = period.duration.match(durationRegex);
-                
                 if (matches) {
                     durationHour = matches[1] ? parseInt(matches[1]) : 0;
                     durationMinute = matches[2] ? parseInt(matches[2]) : 0;
                 }
             }
-            
+
             return {
                 id: period.id,
-                startHour: startHour,
-                startMinute: startMinute,
-                durationHour: durationHour,
-                durationMinute: durationMinute,
+                startHour,
+                startMinute,
+                durationHour,
+                durationMinute,
                 feedIn: period.grid_feed_w,
                 batteryLevel: period.battery_level_percent,
                 chargeEnabled: period.charge_battery,
                 active: period.is_manual_mode
-                
             };
         });
-        
-        // Обновляем глобальный массив периодов
+
+        // ✅ Сортировка по времени старта (раньше — выше)
+        formattedPeriods.sort((a, b) => {
+            const timeA = a.startHour * 60 + a.startMinute;
+            const timeB = b.startHour * 60 + b.startMinute;
+            return timeA - timeB;
+        });
+
         schedulePeriods = formattedPeriods;
-        
-        // Перерисовываем таблицу и временную шкалу
+
         renderScheduleTable();
         renderTimeline();
-        
+
         return formattedPeriods;
-        
+
     } catch (error) {
         console.error('Ошибка при загрузке периодов:', error);
         showNotification('Ошибка при загрузке расписания', 'error');
