@@ -45,7 +45,6 @@ async def encrypt_data(data: bytes, key: bytes) -> bytes:
     return encoded_data
 
 
-
 def _sync_decrypt_data_impl(encrypted_data: bytes, key: bytes) -> str:
     if len(key) not in [16, 24, 32]:
         raise ValueError("Key must be 16, 24, or 32 bytes long.")
@@ -58,6 +57,7 @@ def _sync_decrypt_data_impl(encrypted_data: bytes, key: bytes) -> str:
     decrypted_data = unpad(cipher.decrypt(ciphertext), AES.block_size)
     return decrypted_data.decode("utf-8")
 
+
 async def decrypt_data(encrypted_data: bytes, key: bytes) -> str:
     """
     Эта асинхронная функция дешифрует данные, зашифрованные функцией encrypt_data.
@@ -67,7 +67,7 @@ async def decrypt_data(encrypted_data: bytes, key: bytes) -> str:
         result = await asyncio.to_thread(_sync_decrypt_data_impl, encrypted_data, key)
         return result
     except (ValueError, KeyError) as e:
-        
+
         raise ValueError("Decryption failed. Invalid key or corrupted data.") from e
 
 
@@ -122,6 +122,7 @@ def _sync_decrypt_user_key_impl(encrypted_key: str, aes_key_setting: str) -> byt
 
     cipher = Fernet(base64.urlsafe_b64encode(aes_key_derived))
     return cipher.decrypt(ciphertext)
+
 
 async def decrypt_user_key(encrypted_key: str) -> bytes:
     """

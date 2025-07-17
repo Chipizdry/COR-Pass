@@ -19,8 +19,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.schemas import LawyerCreate
 
 
-
-
 async def create_lawyer(
     lawyer_data: LawyerCreate,
     db: AsyncSession,
@@ -31,9 +29,9 @@ async def create_lawyer(
     """
     lawyer = Lawyer(
         lawyer_cor_id=user.cor_id,
-        first_name = lawyer_data.first_name,
-        surname = lawyer_data.last_name,
-        middle_name = lawyer_data.middle_name
+        first_name=lawyer_data.first_name,
+        surname=lawyer_data.last_name,
+        middle_name=lawyer_data.middle_name,
     )
 
     db.add(lawyer)
@@ -41,7 +39,8 @@ async def create_lawyer(
     await db.commit()
     await db.refresh(lawyer)
 
-    return lawyer 
+    return lawyer
+
 
 async def get_doctors(
     skip: int,

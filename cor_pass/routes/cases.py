@@ -170,11 +170,14 @@ async def update_case_code(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-
-@router.post("/referrals/upsert", response_model=ReferralResponse, status_code=status.HTTP_200_OK, dependencies=[Depends(doctor_access)])
+@router.post(
+    "/referrals/upsert",
+    response_model=ReferralResponse,
+    status_code=status.HTTP_200_OK,
+    dependencies=[Depends(doctor_access)],
+)
 async def upsert_referral_endpoint(
-    referral_data: ReferralCreate,
-    db: AsyncSession = Depends(get_db)
+    referral_data: ReferralCreate, db: AsyncSession = Depends(get_db)
 ):
     """
     **Создание или обновление направления для кейса (Upsert)**\n
@@ -183,37 +186,49 @@ async def upsert_referral_endpoint(
     """
     case = await case_service.get_single_case(db=db, case_id=referral_data.case_id)
     if not case:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Associated Case not found")
-    db_referral = await case_service.upsert_referral(db=db, referral_data=referral_data, case=case)
-    
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Associated Case not found"
+        )
+    db_referral = await case_service.upsert_referral(
+        db=db, referral_data=referral_data, case=case
+    )
+
     attachments_response = [
         ReferralAttachmentResponse(
             id=att.id,
             filename=att.filename,
             content_type=att.content_type,
-            file_url=router.url_path_for("get_referral_attachment", attachment_id=att.id)
-        ) for att in db_referral.attachments
+            file_url=router.url_path_for(
+                "get_referral_attachment", attachment_id=att.id
+            ),
+        )
+        for att in db_referral.attachments
     ]
 
     # Создаем и возвращаем объект ReferralResponse
-    referral_response_obj = ReferralResponse.model_validate(db_referral) # ИЛИ .from_orm для Pydantic v1.x
+    referral_response_obj = ReferralResponse.model_validate(
+        db_referral
+    )  # ИЛИ .from_orm для Pydantic v1.x
     referral_response_obj.attachments = attachments_response
 
     return referral_response_obj
 
 
-@router.get("/referrals/{case_id}", response_model=ReferralResponse, dependencies=[Depends(doctor_access)])
-async def get_single_referral(
-    case_id: str,
-    db: AsyncSession = Depends(get_db)
-):
+@router.get(
+    "/referrals/{case_id}",
+    response_model=ReferralResponse,
+    dependencies=[Depends(doctor_access)],
+)
+async def get_single_referral(case_id: str, db: AsyncSession = Depends(get_db)):
     """
     **Получение информации о направлении по case_id**\n
     Возвращает полную информацию о направлении, включая ссылки на прикрепленные файлы.
     """
     referral = await case_service.get_referral_by_case(db=db, case_id=case_id)
     if not referral:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Referral not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Referral not found"
+        )
 
     # Генерируем URL для каждого прикрепленного файла
     attachments_response = [
@@ -221,8 +236,11 @@ async def get_single_referral(
             id=att.id,
             filename=att.filename,
             content_type=att.content_type,
-            file_url=router.url_path_for("get_referral_attachment", attachment_id=att.id)
-        ) for att in referral.attachments
+            file_url=router.url_path_for(
+                "get_referral_attachment", attachment_id=att.id
+            ),
+        )
+        for att in referral.attachments
     ]
 
     referral_response_obj = ReferralResponse.model_validate(referral)
@@ -230,12 +248,17 @@ async def get_single_referral(
     referral_response_obj.attachments = attachments_response
 
     return referral_response_obj
- 
-@router.post("/{referral_id}/attachments", response_model=ReferralAttachmentResponse, dependencies=[Depends(doctor_access)])
+
+
+@router.post(
+    "/{referral_id}/attachments",
+    response_model=ReferralAttachmentResponse,
+    dependencies=[Depends(doctor_access)],
+)
 async def upload_referral_attachment(
     referral_id: str,
     file: UploadFile = Depends(validate_document_file),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     **Загрузка прикрепленного файла для направления**\n
@@ -246,13 +269,15 @@ async def upload_referral_attachment(
         id=db_attachment.id,
         filename=db_attachment.filename,
         content_type=db_attachment.content_type,
-        file_url=router.url_path_for("get_referral_attachment", attachment_id=db_attachment.id)
+        file_url=router.url_path_for(
+            "get_referral_attachment", attachment_id=db_attachment.id
+        ),
     )
+
 
 @router.get("/attachments/{attachment_id}", dependencies=[Depends(doctor_access)])
 async def get_referral_attachment(
-    attachment_id: str,
-    db: AsyncSession = Depends(get_db)
+    attachment_id: str, db: AsyncSession = Depends(get_db)
 ):
     """
     **Получение содержимого прикрепленного файла**\n
@@ -260,7 +285,9 @@ async def get_referral_attachment(
     """
     attachment = await case_service.get_referral_attachment(db, attachment_id)
     if not attachment:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Attachment not found"
+        )
 
     # Потоковая передача данных из базы данных
     async def file_data_stream():
@@ -269,37 +296,45 @@ async def get_referral_attachment(
     return StreamingResponse(file_data_stream(), media_type=attachment.content_type)
 
 
-
-@router.post("/{case_id}/take", response_model=CaseOwnershipResponse, summary="Взять кейс себе")
+@router.post(
+    "/{case_id}/take", response_model=CaseOwnershipResponse, summary="Взять кейс себе"
+)
 async def take_case(
     case_id: str,
-    user: User = Depends(auth_service.get_current_user), # Получаем ID текущего доктора
-    db: AsyncSession = Depends(get_db)
+    user: User = Depends(auth_service.get_current_user),  # Получаем ID текущего доктора
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Позволяет авторизованному доктору взять на себя владение указанным кейсом.
     """
     doctor = await get_doctor(doctor_id=user.cor_id, db=db)
     try:
-        response = await case_service.take_case_ownership(db=db, case_id=case_id, doctor_id = doctor.doctor_id)
+        response = await case_service.take_case_ownership(
+            db=db, case_id=case_id, doctor_id=doctor.doctor_id
+        )
         return response
     except HTTPException as e:
         raise e
 
 
-
-@router.post("/{case_id}/release", response_model=CaseOwnershipResponse, summary="Убрать кейс с себя")
+@router.post(
+    "/{case_id}/release",
+    response_model=CaseOwnershipResponse,
+    summary="Убрать кейс с себя",
+)
 async def release_case(
     case_id: str,
-    user: User = Depends(auth_service.get_current_user), # Получаем ID текущего доктора
-    db: AsyncSession = Depends(get_db)
+    user: User = Depends(auth_service.get_current_user),  # Получаем ID текущего доктора
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Позволяет авторизованному доктору отказаться от владения указанным кейсом.
     """
     doctor = await get_doctor(doctor_id=user.cor_id, db=db)
     try:
-        response = await case_service.release_case_ownership(db=db, case_id=case_id, doctor_id = doctor.doctor_id)
+        response = await case_service.release_case_ownership(
+            db=db, case_id=case_id, doctor_id=doctor.doctor_id
+        )
         return response
     except HTTPException as e:
         raise e
@@ -310,11 +345,15 @@ async def release_case(
     dependencies=[Depends(doctor_access)],
     response_model=CaseDetailsResponse,
 )
-async def print_all_case_glasses(case_id: str, printing: bool = False, db: AsyncSession = Depends(get_db)):
+async def print_all_case_glasses(
+    case_id: str, printing: bool = False, db: AsyncSession = Depends(get_db)
+):
     """
     Печатает все стёкла кейса
     """
-    db_case = await case_service.print_all_case_glasses(db=db, case_id=case_id, printing=printing)
+    db_case = await case_service.print_all_case_glasses(
+        db=db, case_id=case_id, printing=printing
+    )
     if db_case is None:
         raise HTTPException(status_code=404, detail="Case not found")
     return db_case
@@ -325,11 +364,15 @@ async def print_all_case_glasses(case_id: str, printing: bool = False, db: Async
     dependencies=[Depends(doctor_access)],
     response_model=CaseDetailsResponse,
 )
-async def print_all_case_cassettes(case_id: str, printing: bool = False, db: AsyncSession = Depends(get_db)):
+async def print_all_case_cassettes(
+    case_id: str, printing: bool = False, db: AsyncSession = Depends(get_db)
+):
     """
     Печатает все кассеты кейса
     """
-    db_case = await case_service.print_all_case_cassette(db=db, case_id=case_id, printing=printing)
+    db_case = await case_service.print_all_case_cassette(
+        db=db, case_id=case_id, printing=printing
+    )
     if db_case is None:
         raise HTTPException(status_code=404, detail="Case not found")
     return db_case
@@ -340,12 +383,15 @@ async def print_all_case_cassettes(case_id: str, printing: bool = False, db: Asy
     dependencies=[Depends(doctor_access)],
     response_model=CaseDetailsResponse,
 )
-
-async def print_case_qr(case_id: str, printing: bool = False, db: AsyncSession = Depends(get_db)):
+async def print_case_qr(
+    case_id: str, printing: bool = False, db: AsyncSession = Depends(get_db)
+):
     """
     Печатает все кассеты кейса
     """
-    db_case = await case_service.print_case_qr(db=db, case_id=case_id, printing=printing)
+    db_case = await case_service.print_case_qr(
+        db=db, case_id=case_id, printing=printing
+    )
     if db_case is None:
         raise HTTPException(status_code=404, detail="Case not found")
     return db_case

@@ -1,10 +1,7 @@
 from datetime import datetime, timedelta
 from typing import List
 import uuid
-
-
 from sqlalchemy import func, and_, select
-
 from cor_pass.database.models import (
     AuthSessionStatus,
     CorIdAuthSession,
@@ -15,7 +12,6 @@ from cor_pass.schemas import (
     InitiateLoginRequest,
     UserSessionModel,
 )
-
 from loguru import logger
 from cor_pass.services.cipher import (
     encrypt_data,
@@ -65,8 +61,8 @@ async def create_user_session(
             ip_address=body.ip_address,
             device_os=body.device_os,
             refresh_token=encrypted_refresh_token,
-            jti = body.jti,
-            access_token = encrypted_access_token
+            jti=body.jti,
+            access_token=encrypted_access_token,
         )
         try:
             db.add(new_session)
@@ -93,7 +89,6 @@ async def get_user_sessions_by_device_info(
     return list(sessions)
 
 
-
 async def update_user_session_jti(db: AsyncSession, session_id: str, new_jti: str):
     """Обновляет JTI для существующей сессии."""
     result = await db.execute(select(UserSession).where(UserSession.id == session_id))
@@ -106,7 +101,12 @@ async def update_user_session_jti(db: AsyncSession, session_id: str, new_jti: st
 
 
 async def update_session_token(
-    user: User, token: str | None, device_info: str, jti: str, access_token: str, db: AsyncSession
+    user: User,
+    token: str | None,
+    device_info: str,
+    jti: str,
+    access_token: str,
+    db: AsyncSession,
 ) -> UserSession | None:
     """
     Асинхронно обновляет refresh token для сессии пользователя на указанном устройстве.
@@ -122,12 +122,8 @@ async def update_session_token(
         key = await decrypt_user_key(user.unique_cipher_key)
 
         if existing_session and token is not None:
-            encrypted_refresh_token = await encrypt_data(
-                data=token, key=key
-            )
-            encrypted_access_token = await encrypt_data(
-                data=access_token, key=key
-    )
+            encrypted_refresh_token = await encrypt_data(data=token, key=key)
+            encrypted_access_token = await encrypt_data(data=access_token, key=key)
 
             existing_session.refresh_token = encrypted_refresh_token
             existing_session.jti = jti
@@ -150,7 +146,9 @@ async def update_session_token(
         raise Exception("Ошибка при поиске или обновлении сессии")
 
 
-async def get_session_by_id(user: User, db: AsyncSession, session_id: str) -> UserSession | None:
+async def get_session_by_id(
+    user: User, db: AsyncSession, session_id: str
+) -> UserSession | None:
     """
     Асинхронно получает сессию пользователя по ее ID, проверяя принадлежность пользователя.
     """

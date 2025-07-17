@@ -97,7 +97,6 @@ async def send_email_code_forgot_password(
 async def send_email_code_with_qr(email: EmailStr, host: str, recovery_code):
     logger.debug(f"Sending email to {email}")
     try:
-        # Генерация QR кода
         qr_code_bytes = generate_qr_code(recovery_code)
         recovery_file = await generate_recovery_file(recovery_code)
 
@@ -124,7 +123,6 @@ async def send_email_code_with_qr(email: EmailStr, host: str, recovery_code):
 
 async def send_email_code_with_temp_pass(
     email: EmailStr,
-    #  host: str,
     temp_pass,
 ):
     logger.debug(f"Sending email to {email}")
@@ -134,7 +132,6 @@ async def send_email_code_with_temp_pass(
             subject="Temp Pass",
             recipients=[email],
             template_body={
-                # "host": host,
                 "temp_pass": temp_pass,
             },
             subtype=MessageType.html,

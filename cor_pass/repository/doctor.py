@@ -18,16 +18,21 @@ from cor_pass.database.models import (
     PatientStatus,
     User,
     Doctor_Status,
-    DoctorSignature
+    DoctorSignature,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cor_pass.repository.patient import get_patient_by_corid
 from cor_pass.repository.person import get_user_by_corid
-from cor_pass.schemas import DoctorCreate, DoctorSignatureResponse, GetAllPatientsResponce, PatientDecryptedResponce, PatientResponseForGetPatients
+from cor_pass.schemas import (
+    DoctorCreate,
+    DoctorSignatureResponse,
+    GetAllPatientsResponce,
+    PatientDecryptedResponce,
+    PatientResponseForGetPatients,
+)
 from cor_pass.services.cipher import decrypt_data
 from cor_pass.config.config import settings
-
 
 
 async def create_doctor(
@@ -271,7 +276,6 @@ async def get_doctor_patients_with_status(
     return result, total_count
 
 
-
 async def get_patients_with_optional_status(
     db: AsyncSession,
     doctor: Optional[Doctor] = None,
@@ -281,21 +285,20 @@ async def get_patients_with_optional_status(
     sort_by: Optional[str] = "change_date",
     sort_order: Optional[str] = "desc",
     skip: int = 1,
-    limit: int = 30,
+    limit: int = 30
 ) -> Tuple[List, int]:
-    """
-    Асинхронно отримує список пацієнтів разом з їх статусами (від лікаря та клініки)
-    з урахуванням опціональної фільтрації за лікарем, іншими фільтрами, сортування та пагінації.
-    """
     query = (
         select(DoctorPatientStatus, Patient, PatientClinicStatusModel)
         .join(Patient, DoctorPatientStatus.patient_id == Patient.id)
-        .join(PatientClinicStatusModel, PatientClinicStatusModel.patient_id == Patient.id, isouter=True)
+        .join(
+            PatientClinicStatusModel,
+            PatientClinicStatusModel.patient_id == Patient.id,
+            isouter=True,
+        )
     )
 
     if doctor:
         query = query.where(DoctorPatientStatus.doctor_id == doctor.id)
-
 
     if doctor_status_filters:
         query = query.where(
@@ -304,12 +307,13 @@ async def get_patients_with_optional_status(
 
     if clinic_status_filters:
         query = query.where(
-            PatientClinicStatusModel.patient_status_for_clinic.in_([s.value for s in clinic_status_filters])
+            PatientClinicStatusModel.patient_status_for_clinic.in_(
+                [s.value for s in clinic_status_filters]
+            )
         )
 
     if sex_filters:
         query = query.where(Patient.sex.in_(sex_filters))
-
 
     order_by_clause = None
     if sort_by == "change_date":
@@ -328,7 +332,6 @@ async def get_patients_with_optional_status(
     if order_by_clause is not None:
         query = query.order_by(order_by_clause)
 
-
     offset = (skip - 1) * limit
     patients_data_result = await db.execute(query.offset(offset).limit(limit))
 
@@ -337,24 +340,31 @@ async def get_patients_with_optional_status(
     count_query = (
         select(func.count(Patient.id.distinct()))
         .select_from(Patient)
-        .join(DoctorPatientStatus, DoctorPatientStatus.patient_id == Patient.id, isouter=True)
-        .join(PatientClinicStatusModel, PatientClinicStatusModel.patient_id == Patient.id, isouter=True)
+        .join(
+            DoctorPatientStatus,
+            DoctorPatientStatus.patient_id == Patient.id,
+            isouter=True,
+        )
+        .join(
+            PatientClinicStatusModel,
+            PatientClinicStatusModel.patient_id == Patient.id,
+            isouter=True,
+        )
     )
-    
 
     if doctor:
         count_query = count_query.where(DoctorPatientStatus.doctor_id == doctor.id)
-
 
     if doctor_status_filters:
         count_query = count_query.where(
             DoctorPatientStatus.status.in_([s.value for s in doctor_status_filters])
         )
-    
 
     if clinic_status_filters:
         count_query = count_query.where(
-            PatientClinicStatusModel.patient_status_for_clinic.in_([s.value for s in clinic_status_filters])
+            PatientClinicStatusModel.patient_status_for_clinic.in_(
+                [s.value for s in clinic_status_filters]
+            )
         )
 
     if sex_filters:
@@ -365,7 +375,6 @@ async def get_patients_with_optional_status(
 
     result = []
     decoded_key = base64.b64decode(settings.aes_key)
-    
 
     for doctor_patient_status, patient, clinic_patient_status in patients_data:
         decrypted_surname = (
@@ -383,9 +392,15 @@ async def get_patients_with_optional_status(
             if patient.encrypted_middle_name
             else None
         )
-        status_for_doctor = doctor_patient_status.status if doctor_patient_status else None
-        status_for_clinic = clinic_patient_status.patient_status_for_clinic if clinic_patient_status else None
-        patient_response = PatientResponseForGetPatients(   
+        status_for_doctor = (
+            doctor_patient_status.status if doctor_patient_status else None
+        )
+        status_for_clinic = (
+            clinic_patient_status.patient_status_for_clinic
+            if clinic_patient_status
+            else None
+        )
+        patient_response = PatientResponseForGetPatients(
             id=patient.id,
             patient_cor_id=patient.patient_cor_id,
             surname=decrypted_surname,
@@ -398,14 +413,13 @@ async def get_patients_with_optional_status(
             address=patient.address if patient else None,
             change_date=patient.change_date if patient else None,
             doctor_status=status_for_doctor,
-            clinic_status=status_for_clinic)
+            clinic_status=status_for_clinic,
+        )
         result.append(patient_response)
 
-    response = GetAllPatientsResponce(
-        patients = result,
-        total_count = total_count
-    )
+    response = GetAllPatientsResponce(patients=result, total_count=total_count)
     return response
+
 
 async def get_doctor_single_patient_with_status(
     patient_cor_id: str,
@@ -417,49 +431,68 @@ async def get_doctor_single_patient_with_status(
     """
     existing_patient = await get_patient_by_corid(cor_id=patient_cor_id, db=db)
     if not existing_patient:
-        raise HTTPException(
-            status_code=404, detail=f"Пациент не найден"
-        )
-    stmt_status = select(DoctorPatientStatus).where(DoctorPatientStatus.patient_id == existing_patient.id).where(DoctorPatientStatus.doctor_id == doctor.id)
+        raise HTTPException(status_code=404, detail=f"Пациент не найден")
+    stmt_status = (
+        select(DoctorPatientStatus)
+        .where(DoctorPatientStatus.patient_id == existing_patient.id)
+        .where(DoctorPatientStatus.doctor_id == doctor.id)
+    )
     result_status = await db.execute(stmt_status)
     result_status = result_status.scalar_one_or_none()
 
-
     decoded_key = base64.b64decode(settings.aes_key)
-    existing_patient.encrypted_surname = await decrypt_data(existing_patient.encrypted_surname, decoded_key)if existing_patient.encrypted_surname else None
+    existing_patient.encrypted_surname = (
+        await decrypt_data(existing_patient.encrypted_surname, decoded_key)
+        if existing_patient.encrypted_surname
+        else None
+    )
 
-    existing_patient.encrypted_first_name = await decrypt_data(existing_patient.encrypted_first_name, decoded_key)if existing_patient.encrypted_first_name else None
-    existing_patient.encrypted_middle_name = await decrypt_data(existing_patient.encrypted_middle_name, decoded_key)if existing_patient.encrypted_middle_name else None
+    existing_patient.encrypted_first_name = (
+        await decrypt_data(existing_patient.encrypted_first_name, decoded_key)
+        if existing_patient.encrypted_first_name
+        else None
+    )
+    existing_patient.encrypted_middle_name = (
+        await decrypt_data(existing_patient.encrypted_middle_name, decoded_key)
+        if existing_patient.encrypted_middle_name
+        else None
+    )
 
     user_birth_year = existing_patient.birth_date
     if user_birth_year is None and existing_patient.patient_cor_id:
-        cor_id_parts = existing_patient.patient_cor_id.split('-')
+        cor_id_parts = existing_patient.patient_cor_id.split("-")
         if len(cor_id_parts) > 1:
             year_part = cor_id_parts[1]
-            numbers = re.findall(r'\d+', year_part)
+            numbers = re.findall(r"\d+", year_part)
             if numbers:
                 try:
-                    user_birth_year = (numbers[0])
+                    user_birth_year = numbers[0]
                 except ValueError:
                     user_birth_year = None
 
     patient_age: Optional[int] = None
     if existing_patient.birth_date:
         today = date.today()
-        patient_age = today.year - existing_patient.birth_date.year - \
-                        ((today.month, today.day) < (existing_patient.birth_date.month, existing_patient.birth_date.day))
+        patient_age = (
+            today.year
+            - existing_patient.birth_date.year
+            - (
+                (today.month, today.day)
+                < (existing_patient.birth_date.month, existing_patient.birth_date.day)
+            )
+        )
     response = PatientDecryptedResponce(
-        patient_cor_id = existing_patient.patient_cor_id,
-        surname = existing_patient.encrypted_surname,
-        first_name = existing_patient.encrypted_first_name,
-        middle_name = existing_patient.encrypted_middle_name,
-        sex = existing_patient.sex,
-        birth_date = user_birth_year,
+        patient_cor_id=existing_patient.patient_cor_id,
+        surname=existing_patient.encrypted_surname,
+        first_name=existing_patient.encrypted_first_name,
+        middle_name=existing_patient.encrypted_middle_name,
+        sex=existing_patient.sex,
+        birth_date=user_birth_year,
         status=result_status.status,
-        age=patient_age
-
+        age=patient_age,
     )
     return response
+
 
 async def get_doctor_single_patient_without_doctor_status(
     patient_cor_id: str,
@@ -471,49 +504,66 @@ async def get_doctor_single_patient_without_doctor_status(
     """
     existing_patient = await get_patient_by_corid(cor_id=patient_cor_id, db=db)
     if not existing_patient:
-        raise HTTPException(
-            status_code=404, detail=f"Пациент не найден"
-        )
-    stmt_status = select(DoctorPatientStatus).where(DoctorPatientStatus.patient_id == existing_patient.id)
+        raise HTTPException(status_code=404, detail=f"Пациент не найден")
+    stmt_status = select(DoctorPatientStatus).where(
+        DoctorPatientStatus.patient_id == existing_patient.id
+    )
     result_status = await db.execute(stmt_status)
     result_status = result_status.scalar_one_or_none()
 
-
     decoded_key = base64.b64decode(settings.aes_key)
-    existing_patient.encrypted_surname = await decrypt_data(existing_patient.encrypted_surname, decoded_key)if existing_patient.encrypted_surname else None
+    existing_patient.encrypted_surname = (
+        await decrypt_data(existing_patient.encrypted_surname, decoded_key)
+        if existing_patient.encrypted_surname
+        else None
+    )
 
-    existing_patient.encrypted_first_name = await decrypt_data(existing_patient.encrypted_first_name, decoded_key)if existing_patient.encrypted_first_name else None
-    existing_patient.encrypted_middle_name = await decrypt_data(existing_patient.encrypted_middle_name, decoded_key)if existing_patient.encrypted_middle_name else None
+    existing_patient.encrypted_first_name = (
+        await decrypt_data(existing_patient.encrypted_first_name, decoded_key)
+        if existing_patient.encrypted_first_name
+        else None
+    )
+    existing_patient.encrypted_middle_name = (
+        await decrypt_data(existing_patient.encrypted_middle_name, decoded_key)
+        if existing_patient.encrypted_middle_name
+        else None
+    )
 
     user_birth_year = existing_patient.birth_date
     if user_birth_year is None and existing_patient.patient_cor_id:
-        cor_id_parts = existing_patient.patient_cor_id.split('-')
+        cor_id_parts = existing_patient.patient_cor_id.split("-")
         if len(cor_id_parts) > 1:
             year_part = cor_id_parts[1]
-            numbers = re.findall(r'\d+', year_part)
+            numbers = re.findall(r"\d+", year_part)
             if numbers:
                 try:
-                    user_birth_year = (numbers[0])
+                    user_birth_year = numbers[0]
                 except ValueError:
                     user_birth_year = None
 
     patient_age: Optional[int] = None
     if existing_patient.birth_date:
         today = date.today()
-        patient_age = today.year - existing_patient.birth_date.year - \
-                        ((today.month, today.day) < (existing_patient.birth_date.month, existing_patient.birth_date.day))
+        patient_age = (
+            today.year
+            - existing_patient.birth_date.year
+            - (
+                (today.month, today.day)
+                < (existing_patient.birth_date.month, existing_patient.birth_date.day)
+            )
+        )
     response = PatientDecryptedResponce(
-        patient_cor_id = existing_patient.patient_cor_id,
-        surname = existing_patient.encrypted_surname,
-        first_name = existing_patient.encrypted_first_name,
-        middle_name = existing_patient.encrypted_middle_name,
-        sex = existing_patient.sex,
-        birth_date = user_birth_year,
+        patient_cor_id=existing_patient.patient_cor_id,
+        surname=existing_patient.encrypted_surname,
+        first_name=existing_patient.encrypted_first_name,
+        middle_name=existing_patient.encrypted_middle_name,
+        sex=existing_patient.sex,
+        birth_date=user_birth_year,
         status=result_status.status,
-        age=patient_age
-
+        age=patient_age,
     )
     return response
+
 
 async def upload_doctor_photo_service(
     doctor_id: str, file: UploadFile, db: AsyncSession
@@ -589,14 +639,14 @@ async def upload_certificate_service(
     await db.commit()
     return {"document_id": certificate_id, "message": "Сертификат успешно загружен"}
 
+
 async def create_doctor_signature(
-    db: AsyncSession, 
-    doctor_id: str, # uuid
-    signature_name: Optional[str], 
+    db: AsyncSession,
+    doctor_id: str,  # uuid
+    signature_name: Optional[str],
     router: APIRouter,
     signature_scan_file: UploadFile,
-    is_default: bool = False
-    
+    is_default: bool = False,
 ) -> DoctorSignatureResponse:
     """
     Загружает новую подпись доктора и сохраняет её в базе данных.
@@ -605,9 +655,14 @@ async def create_doctor_signature(
     signature_mime_type = signature_scan_file.content_type
 
     if not signature_bytes:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Файл подписи пустой.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Файл подписи пустой."
+        )
     if not signature_mime_type or not signature_mime_type.startswith("image/"):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Пожалуйста, загрузите файл изображения для подписи.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Пожалуйста, загрузите файл изображения для подписи.",
+        )
 
     if is_default:
         await db.execute(
@@ -619,26 +674,31 @@ async def create_doctor_signature(
     db_signature = DoctorSignature(
         doctor_id=doctor_id,
         signature_name=signature_name,
-        signature_scan_data=signature_bytes,        
-        signature_scan_type=signature_mime_type,     
+        signature_scan_data=signature_bytes,
+        signature_scan_type=signature_mime_type,
         is_default=is_default,
-        created_at=func.now() 
+        created_at=func.now(),
     )
     db.add(db_signature)
     await db.commit()
     await db.refresh(db_signature)
 
-    signature_data = router.url_path_for("get_signature_attachment", signature_id=db_signature.id) if db_signature.signature_scan_data else None
+    signature_data = (
+        router.url_path_for("get_signature_attachment", signature_id=db_signature.id)
+        if db_signature.signature_scan_data
+        else None
+    )
 
     return DoctorSignatureResponse(
         id=db_signature.id,
         doctor_id=db_signature.doctor_id,
         signature_name=db_signature.signature_name,
-        signature_scan_data=signature_data, 
+        signature_scan_data=signature_data,
         signature_scan_type=db_signature.signature_scan_type,
         is_default=db_signature.is_default,
-        created_at=db_signature.created_at
+        created_at=db_signature.created_at,
     )
+
 
 async def get_doctor_signatures(
     db: AsyncSession, doctor_id: str, router: APIRouter
@@ -652,10 +712,12 @@ async def get_doctor_signatures(
         .order_by(DoctorSignature.created_at.desc())
     )
     db_signatures = signatures_result.scalars().all()
-    
+
     response_signatures = []
     for sig in db_signatures:
-        signature_data=router.url_path_for("get_signature_attachment", signature_id=sig.id)
+        signature_data = router.url_path_for(
+            "get_signature_attachment", signature_id=sig.id
+        )
         response_signatures.append(
             DoctorSignatureResponse(
                 id=sig.id,
@@ -664,10 +726,11 @@ async def get_doctor_signatures(
                 signature_scan_data=signature_data,
                 signature_scan_type=sig.signature_scan_type,
                 is_default=sig.is_default,
-                created_at=sig.created_at
+                created_at=sig.created_at,
             )
         )
     return response_signatures
+
 
 async def set_default_doctor_signature(
     db: AsyncSession, doctor_id: str, signature_id: str, router: APIRouter
@@ -682,37 +745,49 @@ async def set_default_doctor_signature(
         .where(DoctorSignature.doctor_id == doctor_id)
         .values(is_default=False)
     )
-    
+
     signature_to_update = await db.scalar(
-        select(DoctorSignature).where(DoctorSignature.id == signature_id, DoctorSignature.doctor_id == doctor_id)
+        select(DoctorSignature).where(
+            DoctorSignature.id == signature_id, DoctorSignature.doctor_id == doctor_id
+        )
     )
     if not signature_to_update:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Подпись не найдена или принадлежит другому врачу.")
-    
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Подпись не найдена или принадлежит другому врачу.",
+        )
+
     signature_to_update.is_default = True
     await db.commit()
     await db.refresh(signature_to_update)
 
-    return await get_doctor_signatures(db, doctor_id, router=router) 
+    return await get_doctor_signatures(db, doctor_id, router=router)
 
-async def delete_doctor_signature(
-    db: AsyncSession, doctor_id: str, signature_id: str
-):
+
+async def delete_doctor_signature(db: AsyncSession, doctor_id: str, signature_id: str):
     """
     Удаляет указанную подпись доктора.
     """
     signature_to_delete = await db.scalar(
-        select(DoctorSignature)
-        .where(DoctorSignature.id == signature_id, DoctorSignature.doctor_id == doctor_id)
+        select(DoctorSignature).where(
+            DoctorSignature.id == signature_id, DoctorSignature.doctor_id == doctor_id
+        )
     )
     if not signature_to_delete:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Подпись не найдена или принадлежит другому врачу.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Подпись не найдена или принадлежит другому врачу.",
+        )
 
     await db.delete(signature_to_delete)
     await db.commit()
     return {"message": "Подпись удалена."}
 
 
-async def get_signature_data(db: AsyncSession, signature_id: str) -> Optional[DoctorSignature]:
-    result = await db.execute(select(DoctorSignature).where(DoctorSignature.id == signature_id))
+async def get_signature_data(
+    db: AsyncSession, signature_id: str
+) -> Optional[DoctorSignature]:
+    result = await db.execute(
+        select(DoctorSignature).where(DoctorSignature.id == signature_id)
+    )
     return result.scalar_one_or_none()

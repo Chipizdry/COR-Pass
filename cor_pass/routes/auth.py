@@ -67,7 +67,7 @@ import time
 IP_ATTEMPTS_PREFIX = "login:ip_attempts:"
 IP_BLOCKED_PREFIX = "login:ip_blocked:"
 MAX_ATTEMPTS_PER_IP = 15
-BLOCK_DURATION_SECONDS = 15 * 60 # 15 минут в секундах
+BLOCK_DURATION_SECONDS = 15 * 60  # 15 минут в секундах
 
 
 router = APIRouter(prefix="/auth", tags=["Authorization"])
@@ -77,7 +77,10 @@ ALGORITHM = settings.algorithm
 
 
 @router.post(
-    "/signup", response_model=ResponseUser, status_code=status.HTTP_201_CREATED, dependencies=[Depends(RateLimiter(times=10, seconds=60))]
+    "/signup",
+    response_model=ResponseUser,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RateLimiter(times=10, seconds=60))],
 )
 async def signup(
     body: UserModel,
@@ -127,7 +130,7 @@ async def signup(
         "ip_address": device_information["ip_address"],  # IP-адрес
         "device_os": device_information["device_os"],
         "jti": access_token_jti,
-        "access_token": access_token
+        "access_token": access_token,
     }
     new_session = await repository_session.create_user_session(
         body=UserSession(**session_data),  # Передаём данные для сессии
@@ -146,7 +149,7 @@ async def signup(
 @router.post(
     "/login",
     response_model=LoginResponseModel,
-    dependencies=[Depends(RateLimiter(times=10, seconds=60))]
+    dependencies=[Depends(RateLimiter(times=10, seconds=60))],
 )
 async def login(
     request: Request,
@@ -168,9 +171,7 @@ async def login(
         blocked_until_timestamp = float(blocked_until_str)
         if blocked_until_timestamp > time.time():
             block_dt = datetime.fromtimestamp(blocked_until_timestamp)
-            logger.warning(
-                f"IP-адрес {client_ip} заблокирован до {block_dt} (Redis)."
-            )
+            logger.warning(f"IP-адрес {client_ip} заблокирован до {block_dt} (Redis).")
             raise HTTPException(
                 status_code=429,
                 detail=f"IP-адрес заблокирован до {block_dt}",
@@ -179,7 +180,7 @@ async def login(
             await redis_client.delete(f"{IP_BLOCKED_PREFIX}{client_ip}")
 
     user = await repository_person.get_user_by_email(body.username, db)
-    
+
     if user is None or not auth_service.verify_password(body.password, user.password):
         log_message = (
             f"Неудачная попытка входа для пользователя {body.username} с IP {client_ip}: "
@@ -189,11 +190,17 @@ async def login(
 
         current_attempts = await redis_client.incr(f"{IP_ATTEMPTS_PREFIX}{client_ip}")
         if current_attempts == 1:
-            await redis_client.expire(f"{IP_ATTEMPTS_PREFIX}{client_ip}", BLOCK_DURATION_SECONDS)
+            await redis_client.expire(
+                f"{IP_ATTEMPTS_PREFIX}{client_ip}", BLOCK_DURATION_SECONDS
+            )
 
         if current_attempts >= MAX_ATTEMPTS_PER_IP:
             block_until_timestamp = time.time() + BLOCK_DURATION_SECONDS
-            await redis_client.set(f"{IP_BLOCKED_PREFIX}{client_ip}", str(block_until_timestamp), ex=BLOCK_DURATION_SECONDS)
+            await redis_client.set(
+                f"{IP_BLOCKED_PREFIX}{client_ip}",
+                str(block_until_timestamp),
+                ex=BLOCK_DURATION_SECONDS,
+            )
             block_dt = datetime.fromtimestamp(block_until_timestamp)
             logger.warning(
                 f"Слишком много попыток авторизации с IP-адреса {client_ip}. Блокировка до {block_dt} (Redis)."
@@ -202,15 +209,14 @@ async def login(
                 status_code=429,
                 detail=f"Слишком много попыток авторизации. IP-адрес заблокирован до {block_dt}",
             )
-        
+
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
-            detail="User not found / invalid email or password" 
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found / invalid email or password",
         )
     else:
         await redis_client.delete(f"{IP_ATTEMPTS_PREFIX}{client_ip}")
         await redis_client.delete(f"{IP_BLOCKED_PREFIX}{client_ip}")
-
 
     # Получаем информацию об устройстве
     device_information = di.get_device_info(request)
@@ -253,7 +259,7 @@ async def login(
         "ip_address": device_information["ip_address"],  # IP-адрес
         "device_os": device_information["device_os"],
         "jti": access_token_jti,
-        "access_token": access_token  
+        "access_token": access_token,
     }
     new_session = await repository_session.create_user_session(
         body=UserSessionModel(**session_data),  # Передаём данные для сессии
@@ -298,7 +304,10 @@ async def initiate_login(
     dependencies=[Depends(RateLimiter(times=60, seconds=60))],
 )
 async def check_session_status(
-    body: CheckSessionRequest, request: Request, db: AsyncSession = Depends(get_db), device_info: dict = Depends(di.get_device_header)
+    body: CheckSessionRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    device_info: dict = Depends(di.get_device_header),
 ):
     """
     Проверка стутуса заявки на вход и возврат токенов в случае её подтверждения
@@ -335,7 +344,6 @@ async def check_session_status(
     # Проверка ролей
     user_roles = await repository_person.get_user_roles(email=user.email, db=db)
 
-
     # Получаем токены
     token_data = {"oid": str(user.id), "corid": user.cor_id, "roles": user_roles}
     expires_delta = (
@@ -359,11 +367,13 @@ async def check_session_status(
             "user_id": user.cor_id,
             "refresh_token": refresh_token,
             "device_type": "Mobile CorEnergy",  # Тип устройства
-            "device_info": device_information["device_info"],  # Информация об устройстве "iOS 18.5 MobileCorEnergy"
+            "device_info": device_information[
+                "device_info"
+            ],  # Информация об устройстве "iOS 18.5 MobileCorEnergy"
             "ip_address": device_information["ip_address"],  # IP-адрес
             "device_os": device_information["device_os"],
             "jti": access_token_jti,
-            "access_token": access_token
+            "access_token": access_token,
         }
         new_session = await repository_session.create_user_session(
             body=UserSession(**session_data),  # Передаём данные для сессии
@@ -372,10 +382,16 @@ async def check_session_status(
         )
     else:
         await repository_session.update_session_token(
-            user=user, token=refresh_token, device_info=device_information["device_info"], db=db, jti=access_token_jti, access_token=access_token
+            user=user,
+            token=refresh_token,
+            device_info=device_information["device_info"],
+            db=db,
+            jti=access_token_jti,
+            access_token=access_token,
         )
         logger.debug(
-            f"{user.email}'s refresh token updated for device {device_information.get('device_info')}")
+            f"{user.email}'s refresh token updated for device {device_information.get('device_info')}"
+        )
     response = ConfirmCheckSessionResponse(
         status="approved",
         access_token=access_token,
@@ -383,6 +399,7 @@ async def check_session_status(
         token_type="bearer",
     )
     return response
+
 
 # вызывается на стороне Кор-айди
 @router.post(
@@ -393,7 +410,7 @@ async def check_session_status(
 async def confirm_login(
     request: Request,
     body: ConfirmLoginRequest,
-    current_user: User = Depends(auth_service.get_current_user), 
+    current_user: User = Depends(auth_service.get_current_user),
     db: AsyncSession = Depends(get_db),
     device_info: dict = Depends(di.get_device_header),
 ):
@@ -477,11 +494,12 @@ async def confirm_login(
             "user_id": user.cor_id,
             "refresh_token": refresh_token,
             "device_type": "Mobile CorEnergy",  # Тип устройства
-            "device_info": device_information["device_info"] + " MobileCorEnergy",  # Информация об устройстве
+            "device_info": device_information["device_info"]
+            + " MobileCorEnergy",  # Информация об устройстве
             "ip_address": device_information["ip_address"],  # IP-адрес
             "device_os": device_information["device_os"],
             "jti": access_token_jti,
-            "access_token": access_token
+            "access_token": access_token,
         }
         new_session = await repository_session.create_user_session(
             body=UserSession(**session_data),  # Передаём данные для сессии
@@ -523,8 +541,13 @@ async def get_user_device_rate_limit_key(request: Request) -> str:
     if not token:
         return None
     try:
-        payload = jwt.decode(token, key=auth_service.SECRET_KEY, algorithms=auth_service.ALGORITHM, options={"verify_exp": False}) 
-        
+        payload = jwt.decode(
+            token,
+            key=auth_service.SECRET_KEY,
+            algorithms=auth_service.ALGORITHM,
+            options={"verify_exp": False},
+        )
+
         user_id = payload.get("oid")
     except JWTError as e:
         logger.debug(f"Failed to decode token for rate limiter key (JWTError): {e}")
@@ -540,10 +563,15 @@ async def get_user_device_rate_limit_key(request: Request) -> str:
         user_agent = request.headers.get("User-Agent", "unknown-agent")
         return f"ip:{request.client.host}_ua:{user_agent}"
 
+
 @router.get(
     "/refresh_token",
     response_model=TokenModel,
-    dependencies=[Depends(RateLimiter(times=1, seconds=5, identifier=get_user_device_rate_limit_key))]
+    dependencies=[
+        Depends(
+            RateLimiter(times=1, seconds=5, identifier=get_user_device_rate_limit_key)
+        )
+    ],
 )
 async def refresh_token(
     request: Request,
@@ -579,7 +607,9 @@ async def refresh_token(
         user.cor_id, device_information["device_info"], db
     )
     logger.debug(f"Detected device type: {device_information['device_type']}")
-    logger.debug(f"Detected existing_sessions: {device_information["device_info"]} - {existing_sessions}")
+    logger.debug(
+        f"Detected existing_sessions: {device_information["device_info"]} - {existing_sessions}"
+    )
     is_valid_session = False
     if device_information["device_type"] == "Mobile":
         # logger.debug(">>> Entered Mobile validation block <<<")
@@ -600,16 +630,14 @@ async def refresh_token(
                 # logger.debug(f"Comparing tokens: received={token} vs decrypted_session={session_token}")
                 if session_token == token:
                     is_valid_session = True
-                    logger.debug(
-                        f"Mobile session validation is {is_valid_session}"
-                    )
-                    break 
+                    logger.debug(f"Mobile session validation is {is_valid_session}")
+                    break
             except Exception:
                 logger.warning(
                     f"Failed to decrypt refresh token for session {session.id}"
                 )
-        
-        if not is_valid_session: 
+
+        if not is_valid_session:
             logger.debug(
                 f"Invalid refresh token for this mobile device. Mobile session validation is {is_valid_session}"
             )
@@ -620,9 +648,7 @@ async def refresh_token(
     elif device_information["device_type"] == "Mobile CorEnergy":
         # logger.debug(">>> Entered Mobile CorEnergy validation block <<<")
         if not existing_sessions:
-            logger.debug(
-                f"Session not found for this device for cor-energy app"
-            )
+            logger.debug(f"Session not found for this device for cor-energy app")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Session not found for this device",
@@ -639,11 +665,12 @@ async def refresh_token(
                     logger.debug(
                         f"Mobile cor-energy session validation is {is_valid_session}"
                     )
-                    break 
+                    break
             except Exception:
                 logger.warning(
-                    f"Failed to decrypt refresh token for cor-energy session {session.id}")        
-        if not is_valid_session: 
+                    f"Failed to decrypt refresh token for cor-energy session {session.id}"
+                )
+        if not is_valid_session:
             logger.debug(
                 f"Invalid refresh token for this cor-energy mobile device. Mobile session validation is {is_valid_session}"
             )
@@ -654,9 +681,7 @@ async def refresh_token(
     elif device_information["device_type"] == "MobileCorEnergy":
         # logger.debug(">>> Entered Mobile CorEnergy validation block <<<")
         if not existing_sessions:
-            logger.debug(
-                f"Session not found for this device for cor-energy app"
-            )
+            logger.debug(f"Session not found for this device for cor-energy app")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Session not found for this device",
@@ -673,18 +698,19 @@ async def refresh_token(
                     logger.debug(
                         f"Mobile cor-energy session validation is {is_valid_session}"
                     )
-                    break 
+                    break
             except Exception:
                 logger.warning(
-                    f"Failed to decrypt refresh token for cor-energy session {session.id}")        
-        if not is_valid_session: 
+                    f"Failed to decrypt refresh token for cor-energy session {session.id}"
+                )
+        if not is_valid_session:
             logger.debug(
                 f"Invalid refresh token for this cor-energy mobile device. Mobile session validation is {is_valid_session}"
             )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid refresh token for this device",
-            )                                
+            )
     elif device_information["device_type"] == "Desktop":
         # logger.debug(">>> Entered Desktop validation block <<<")
         is_valid_session = True
@@ -708,7 +734,12 @@ async def refresh_token(
         )
 
         await repository_session.update_session_token(
-            user=user, token=refresh_token, device_info=device_information["device_info"], db=db, jti=access_token_jti, access_token=access_token
+            user=user,
+            token=refresh_token,
+            device_info=device_information["device_info"],
+            db=db,
+            jti=access_token_jti,
+            access_token=access_token,
         )
         logger.debug(
             f"{user.email}'s refresh token updated for device {device_information.get('device_info')}"
@@ -720,12 +751,13 @@ async def refresh_token(
         }
     else:
         logger.debug(
-                        f"Invalid refresh token for this device {device_information["device_type"]} {device_information["device_info"]}"
-                    )
+            f"Invalid refresh token for this device {device_information["device_type"]} {device_information["device_info"]}"
+        )
         raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid refresh token",
-            )
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+        )
+
 
 @router.get("/verify")
 async def verify_access_token(
@@ -785,7 +817,9 @@ async def send_verification_code(
     return {"message": "Check your email for verification code."}
 
 
-@router.post("/confirm_email", dependencies=[Depends(RateLimiter(times=10, seconds=60))])
+@router.post(
+    "/confirm_email", dependencies=[Depends(RateLimiter(times=10, seconds=60))]
+)
 async def confirm_email(body: VerificationModel, db: AsyncSession = Depends(get_db)):
     """
     **Проверка кода верификации почты** \n
@@ -853,7 +887,10 @@ async def forgot_password_send_verification_code(
     return {"message": "Check your email for verification code."}
 
 
-@router.post("/restore_account_by_text", dependencies=[Depends(RateLimiter(times=10, seconds=60))])
+@router.post(
+    "/restore_account_by_text",
+    dependencies=[Depends(RateLimiter(times=10, seconds=60))],
+)
 async def restore_account_by_text(
     body: RecoveryCodeModel,
     request: Request,
@@ -928,7 +965,7 @@ async def restore_account_by_text(
         "ip_address": device_information["ip_address"],  # IP-адрес
         "device_os": device_information["device_os"],  # Операционная система
         "jti": access_token_jti,
-        "access_token": access_token
+        "access_token": access_token,
     }
     new_session = await repository_session.create_user_session(
         body=UserSession(**session_data),  # Передаём данные для сессии
@@ -948,7 +985,10 @@ async def restore_account_by_text(
     }
 
 
-@router.post("/restore_account_by_recovery_file", dependencies=[Depends(RateLimiter(times=10, seconds=60))])
+@router.post(
+    "/restore_account_by_recovery_file",
+    dependencies=[Depends(RateLimiter(times=10, seconds=60))],
+)
 async def upload_recovery_file(
     request: Request,
     file: UploadFile = File(...),
@@ -1013,7 +1053,7 @@ async def upload_recovery_file(
             "ip_address": device_information["ip_address"],  # IP-адрес
             "device_os": device_information["device_os"],  # Операционная система
             "jti": access_token_jti,
-            "access_token": access_token
+            "access_token": access_token,
         }
         new_session = await repository_session.create_user_session(
             body=UserSession(**session_data),  # Передаём данные для сессии

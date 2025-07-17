@@ -71,7 +71,7 @@ async def read_records(
             record_name=record.record_name,
             website=record.website,
             username=decrypted_username,
-            password=record.password,  # Password is not decrypted here
+            password=record.password,
             is_favorite=record.is_favorite,
         )
         decrypted_records.append(record_response)

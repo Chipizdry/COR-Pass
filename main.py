@@ -3,7 +3,7 @@ import time
 import uvicorn
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from fastapi import FastAPI, Request, Depends, HTTPException, Response, status, Request
+from fastapi import FastAPI, Request, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -17,7 +17,12 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from fastapi_limiter import FastAPILimiter
 
 
-from cor_pass.repository.cerbo_service import cerbo_collection_task, close_modbus_client, create_modbus_client, energetic_schedule_task
+from cor_pass.repository.cerbo_service import (
+    cerbo_collection_task,
+    close_modbus_client,
+    create_modbus_client,
+    energetic_schedule_task,
+)
 from cor_pass.routes import auth, person
 from cor_pass.database.db import get_db, async_session_maker
 from cor_pass.database.redis_db import redis_client
@@ -25,7 +30,6 @@ from cor_pass.database.redis_db import redis_client
 from cor_pass.routes import (
     auth,
     records,
-    tags,
     password_generator,
     cor_id,
     otp_auth,
@@ -46,60 +50,58 @@ from cor_pass.routes import (
     lab_assistants,
     energy_managers,
     cerbo_routes,
-    blood_pressures
+    blood_pressures,
 )
 from cor_pass.config.config import settings
 from cor_pass.services.ip2_location import initialize_ip2location
 from loguru import logger
 from cor_pass.services.auth import auth_service
-from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from collections import defaultdict
 from jose import JWTError, jwt
 
 from cor_pass.services.websocket import check_session_timeouts, cleanup_auth_sessions
 
-from cor_pass.services.logger import setup_logging 
+from cor_pass.services.logger import setup_logging
 
 setup_logging()
-
 
 
 all_licenses_info = [
     {
         "name": "IP2Location LITE Database License",
         "url": "https://lite.ip2location.com/",
-        "description": "Используется для IP-геолокации. Требуется указание ссылки как часть условий лицензии."
+        "description": "Используется для IP-геолокации. Требуется указание ссылки как часть условий лицензии.",
     },
     {
         "name": "OpenSlide (LGPL v2.1)",
         "url": "https://openslide.org/license/",
-        "description": "Библиотека для чтения изображений с микроскопа. Распространяется под LGPL v2.1."
+        "description": "Библиотека для чтения изображений с микроскопа. Распространяется под LGPL v2.1.",
     },
     {
         "name": "Psycopg (LGPL 3.0 / Modified BSD)",
         "url": "https://www.psycopg.org/docs/license.html",
-        "description": "PostgreSQL адаптер для Python. Распространяется под двойной лицензией LGPL 3.0 или Modified BSD."
+        "description": "PostgreSQL адаптер для Python. Распространяется под двойной лицензией LGPL 3.0 или Modified BSD.",
     },
     {
         "name": "MIT License",
         "url": "https://opensource.org/licenses/MIT",
-        "description": "Многие компоненты API распространяются под разрешительной лицензией MIT."
+        "description": "Многие компоненты API распространяются под разрешительной лицензией MIT.",
     },
     {
         "name": "Apache License 2.0",
         "url": "https://www.apache.org/licenses/LICENSE-2.0",
-        "description": "Некоторые компоненты API распространяются под разрешительной лицензией Apache 2.0."
+        "description": "Некоторые компоненты API распространяются под разрешительной лицензией Apache 2.0.",
     },
     {
         "name": "BSD 3-Clause License",
         "url": "https://opensource.org/licenses/BSD-3-Clause",
-        "description": "Некоторые компоненты API распространяются под разрешительной лицензией BSD 3-Clause."
+        "description": "Некоторые компоненты API распространяются под разрешительной лицензией BSD 3-Clause.",
     },
     {
         "name": "BSD 2-Clause License",
         "url": "https://opensource.org/licenses/BSD-2-Clause",
-        "description": "Некоторые компоненты API распространяются под разрешительной лицензией BSD 2-Clause."
+        "description": "Некоторые компоненты API распространяются под разрешительной лицензией BSD 2-Clause.",
     },
 ]
 
@@ -123,8 +125,8 @@ api_description += """
 
 app = FastAPI(
     title="COR-ID API",
-    description=api_description, 
-    version="1.0.1", 
+    description=api_description,
+    version="1.0.1",
     openapi_url="/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -179,7 +181,7 @@ async def validation_exception_handler(request: Request, exc: ValueError):
     return JSONResponse(
         # logger.error(f"Произошла ошибка валидации: {str(exc)}"),
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"detail": "Произошла ошибка валидации", "error": str(exc)} 
+        content={"detail": "Произошла ошибка валидации", "error": str(exc)},
     )
 
 
@@ -250,36 +252,6 @@ async def track_active_users(request: Request, call_next):
     return response
 
 
-
-"""
-@app.middleware("http")
-async def track_active_users(request: Request, call_next):
-    response = None 
-    user_token = request.headers.get("Authorization")
-    if user_token:
-        token_parts = user_token.split(" ")
-        if len(token_parts) >= 2:
-            try:
-                decoded_token = jwt.decode(
-                    token_parts[1],
-                    options={"verify_signature": False},
-                    key=auth_service.SECRET_KEY,
-                    algorithms=[auth_service.ALGORITHM],
-                )
-                oid = decoded_token.get("oid")
-                if oid: 
-                    await redis_client.set(oid, time.time())
-                # await redis_client.set(oid, time.time())
-            except JWTError as e:
-                print(f"JWTError in track_active_users: {e}") 
-                return Response("Unauthorized: Invalid token", status_code=status.HTTP_401_UNAUTHORIZED)
-            except Exception as e:
-                print(f"An unexpected error in track_active_users: {e}")
-                return Response("Internal Server Error in middleware", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    if response is None: 
-        response = await call_next(request)
-    return response
-"""
 async def custom_identifier(request: Request) -> str:
     return request.client.host
 
@@ -293,16 +265,18 @@ async def startup():
     asyncio.create_task(check_session_timeouts())
     asyncio.create_task(cleanup_auth_sessions())
     initialize_ip2location()
-    await create_modbus_client(app)
-    asyncio.create_task(cleanup_auth_sessions())
-    asyncio.create_task(cerbo_collection_task(app))
-    asyncio.create_task(energetic_schedule_task(async_session_maker))
+    if settings.app_env == "development":
+        await create_modbus_client(app)
+        asyncio.create_task(cerbo_collection_task(app))
+        asyncio.create_task(energetic_schedule_task(async_session_maker))
     # asyncio.create_task(cerbo_GX.read_modbus_and_cache())
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
     logger.info("------------- SHUTDOWN --------------")
     await close_modbus_client(app)
+
 
 auth_attempts = defaultdict(list)
 blocked_ips = {}

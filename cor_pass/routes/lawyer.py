@@ -26,12 +26,13 @@ from loguru import logger
 
 router = APIRouter(prefix="/lawyer", tags=["Lawyer"])
 
+
 @router.post(
     "/signup_as_lawyer",
     response_model=LawyerResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(admin_access)],
-    tags=["Admin"]
+    tags=["Admin"],
 )
 async def signup_user_as_lawyer(
     user_cor_id: str,
@@ -63,13 +64,12 @@ async def signup_user_as_lawyer(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred during lawyer creation.",
         )
-    # Сериализуем ответ
     lawyer_response = LawyerResponse(
         id=lawyer.id,
         lawyer_cor_id=lawyer.lawyer_cor_id,
         first_name=lawyer.first_name,
         last_name=lawyer.surname,
-        middle_name=lawyer.middle_name
+        middle_name=lawyer.middle_name,
     )
 
     return lawyer_response
@@ -176,7 +176,9 @@ async def assign_status(
     if doctor_status == doctor.status:
         return {"message": "The account status has already been assigned"}
     else:
-        await repository_lawyer.approve_doctor(doctor=doctor, db=db, status=doctor_status)
+        await repository_lawyer.approve_doctor(
+            doctor=doctor, db=db, status=doctor_status
+        )
         return {
             "message": f"{doctor.first_name} {doctor.last_name}'s status - {doctor_status.value}"
         }
@@ -200,9 +202,7 @@ async def delete_user(doctor_id: str, db: AsyncSession = Depends(get_db)):
 @router.get("/doctors/{doctor_id}/photo", dependencies=[Depends(lawyer_access)])
 async def get_doctor_photo(doctor_id: str, db: AsyncSession = Depends(get_db)):
     """Получает фотографию врача из базы данных."""
-    doctor = await repository_lawyer.get_doctor(
-        doctor_id=doctor_id, db=db
-    )  # Assuming you have a function to get basic doctor info
+    doctor = await repository_lawyer.get_doctor(doctor_id=doctor_id, db=db)
     if not doctor or not doctor.doctors_photo:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Doctor or photo not found"
@@ -211,9 +211,7 @@ async def get_doctor_photo(doctor_id: str, db: AsyncSession = Depends(get_db)):
     async def image_stream():
         yield doctor.doctors_photo
 
-    return StreamingResponse(
-        image_stream(), media_type="image/jpeg"
-    )  # Adjust media type as needed
+    return StreamingResponse(image_stream(), media_type="image/jpeg")
 
 
 @router.get("/diplomas/{diploma_id}", dependencies=[Depends(lawyer_access)])
@@ -234,7 +232,9 @@ async def get_diploma_file(diploma_id: str, db: AsyncSession = Depends(get_db)):
 @router.get("/certificates/{certificate_id}", dependencies=[Depends(lawyer_access)])
 async def get_certificate_file(certificate_id: str, db: AsyncSession = Depends(get_db)):
     """Получает файл сертификата (изображение или PDF) из базы данных."""
-    document = await repository_lawyer.get_certificate_by_id(certificate_id=certificate_id, db=db)
+    document = await repository_lawyer.get_certificate_by_id(
+        certificate_id=certificate_id, db=db
+    )
     if not document or not document.file_data or not document.file_type:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Document or file not found"

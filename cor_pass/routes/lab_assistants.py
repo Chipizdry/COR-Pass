@@ -10,21 +10,15 @@ from sqlalchemy.exc import IntegrityError
 from cor_pass.database.db import get_db
 from cor_pass.repository.lab_assistant import create_lab_assistant
 from cor_pass.repository.lawyer import get_doctor
-from cor_pass.schemas import (
-    LabAssistantCreate,
-    LabAssistantResponse
-)
+from cor_pass.schemas import LabAssistantCreate, LabAssistantResponse
 
 from cor_pass.repository import person as repository_person
 from cor_pass.services.access import doctor_access, lab_assistant_or_doctor_access
-import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from loguru import logger
 
 router = APIRouter(prefix="/lab_assistant", tags=["LabAssistant"])
-
-
 
 
 @router.post(
@@ -43,7 +37,8 @@ async def signup_user_as_lab_assistant(
     if exist_doctor:
         logger.debug(f"{user_cor_id} user is doctor")
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Doctor account already exists for this user"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Doctor account already exists for this user",
         )
     user = await repository_person.get_user_by_corid(db=db, cor_id=user_cor_id)
     if not user:
@@ -76,12 +71,10 @@ async def signup_user_as_lab_assistant(
         lab_assistant_cor_id=lab_assistant.lab_assistant_cor_id,
         first_name=lab_assistant.first_name,
         surname=lab_assistant.surname,
-        middle_name=lab_assistant.middle_name
+        middle_name=lab_assistant.middle_name,
     )
 
     return lab_assistant_response
-
-
 
 
 @router.post(
@@ -95,4 +88,3 @@ async def check_access(
 ):
 
     return "lab_assistant_response"
-

@@ -65,7 +65,7 @@ async def get_all_users(
     users_list_with_activity = []
 
     for user in list_users:
-        oid = str(user.id)  
+        oid = str(user.id)
         last_active = None
         if await redis_client.exists(oid):
             users_last_activity = await redis_client.get(oid)
@@ -101,10 +101,11 @@ async def get_all_users(
     return users_list_with_activity
 
 
-
-async def _create_profile_response(db_profile, current_user, router_instance) -> ProfileResponse:
+async def _create_profile_response(
+    db_profile, current_user, router_instance
+) -> ProfileResponse:
     """Формирует ProfileResponse, дешифруя поля и добавляя данные из User."""
-    response_data = db_profile.__dict__.copy() 
+    response_data = db_profile.__dict__.copy()
     decoded_key = base64.b64decode(settings.aes_key)
 
     for field_name in ["surname", "first_name", "middle_name"]:
@@ -117,11 +118,9 @@ async def _create_profile_response(db_profile, current_user, router_instance) ->
 
         response_data.pop(encrypted_field, None)
 
-
     response_data["email"] = current_user.email
-    response_data["sex"] = current_user.user_sex 
+    response_data["sex"] = current_user.user_sex
 
-    # Добавляем URL для фото, если оно существует
     # if db_profile.photo_data:
     #     response_data["photo_url"] = router_instance.url_path_for("get_profile_photo_endpoint", user_id=current_user.id)
     # else:
@@ -130,11 +129,10 @@ async def _create_profile_response(db_profile, current_user, router_instance) ->
     return ProfileResponse.model_validate(response_data)
 
 
-
 @router.get(
-    "/get_user_info/{user_cor_id}", 
-    response_model=FullUserInfoResponse, 
-    dependencies=[Depends(admin_access)]
+    "/get_user_info/{user_cor_id}",
+    response_model=FullUserInfoResponse,
+    dependencies=[Depends(admin_access)],
 )
 async def get_all_user_info(
     user_cor_id: str,
@@ -153,13 +151,13 @@ async def get_all_user_info(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found.")
 
     last_active = None
-    if await redis_client.exists(str(user.id)): 
+    if await redis_client.exists(str(user.id)):
         users_last_activity_str = await redis_client.get(str(user.id))
         try:
             last_active = users_last_activity_str
         except (ValueError, TypeError) as e:
             logger.error(f"Error parsing last_active from Redis: {e}")
-            last_active = None 
+            last_active = None
 
     full_user_data["user_info"] = UserDb(
         id=user.id,
@@ -168,11 +166,11 @@ async def get_all_user_info(
         account_status=user.account_status,
         is_active=user.is_active,
         last_password_change=user.last_password_change,
-        user_sex=user.user_sex, 
-        birth=user.birth, 
+        user_sex=user.user_sex,
+        birth=user.birth,
         user_index=user.user_index,
         created_at=user.created_at,
-        last_active=last_active, 
+        last_active=last_active,
     )
 
     user_roles = await person.get_user_roles(email=user.email, db=db)
@@ -181,73 +179,74 @@ async def get_all_user_info(
 
     profile = await person.get_profile_by_user_id(db=db, user_id=user.id)
     if profile:
-        profile_response = await _create_profile_response(profile, user, router) 
+        profile_response = await _create_profile_response(profile, user, router)
         full_user_data["profile"] = profile_response
-
 
     doctor = await lawyer.get_all_doctor_info(doctor_id=user.cor_id, db=db)
     if doctor:
         doctor_response = DoctorWithRelationsResponse(
-        id=doctor.id,
-        doctor_id=doctor.doctor_id,
-        work_email=doctor.work_email,
-        phone_number=doctor.phone_number,
-        first_name=doctor.first_name,
-        middle_name=doctor.middle_name,
-        doctors_photo=f"/doctors/{doctor.doctor_id}/photo" if doctor.doctors_photo else None,
-        last_name=doctor.last_name,
-        place_of_registration=doctor.place_of_registration,
-        passport_code=doctor.passport_code,
-        taxpayer_identification_number=doctor.taxpayer_identification_number,
-        scientific_degree=doctor.scientific_degree,
-        date_of_last_attestation=doctor.date_of_last_attestation,
-        status=doctor.status,
-        diplomas=[
-            DiplomaResponse(
-                id=diploma.id,
-                date=diploma.date,
-                series=diploma.series,
-                number=diploma.number,
-                university=diploma.university,
-                file_data=f"/diplomas/{diploma.id}" if diploma.file_data else None,
-            )
-            for diploma in doctor.diplomas
-        ],
-        certificates=[
-            CertificateResponse(
-                id=certificate.id,
-                date=certificate.date,
-                series=certificate.series,
-                number=certificate.number,
-                university=certificate.university,
-                file_data=(
-                    f"/certificates/{certificate.id}" if certificate.file_data else None
-                ),
-            )
-            for certificate in doctor.certificates
-        ],
-        clinic_affiliations=[
-            ClinicAffiliationResponse(
-                id=affiliation.id,
-                clinic_name=affiliation.clinic_name,
-                department=affiliation.department,
-                position=affiliation.position,
-                specialty=affiliation.specialty,
-            )
-            for affiliation in doctor.clinic_affiliations
-        ],
-    )
+            id=doctor.id,
+            doctor_id=doctor.doctor_id,
+            work_email=doctor.work_email,
+            phone_number=doctor.phone_number,
+            first_name=doctor.first_name,
+            middle_name=doctor.middle_name,
+            doctors_photo=(
+                f"/doctors/{doctor.doctor_id}/photo" if doctor.doctors_photo else None
+            ),
+            last_name=doctor.last_name,
+            place_of_registration=doctor.place_of_registration,
+            passport_code=doctor.passport_code,
+            taxpayer_identification_number=doctor.taxpayer_identification_number,
+            scientific_degree=doctor.scientific_degree,
+            date_of_last_attestation=doctor.date_of_last_attestation,
+            status=doctor.status,
+            diplomas=[
+                DiplomaResponse(
+                    id=diploma.id,
+                    date=diploma.date,
+                    series=diploma.series,
+                    number=diploma.number,
+                    university=diploma.university,
+                    file_data=f"/diplomas/{diploma.id}" if diploma.file_data else None,
+                )
+                for diploma in doctor.diplomas
+            ],
+            certificates=[
+                CertificateResponse(
+                    id=certificate.id,
+                    date=certificate.date,
+                    series=certificate.series,
+                    number=certificate.number,
+                    university=certificate.university,
+                    file_data=(
+                        f"/certificates/{certificate.id}"
+                        if certificate.file_data
+                        else None
+                    ),
+                )
+                for certificate in doctor.certificates
+            ],
+            clinic_affiliations=[
+                ClinicAffiliationResponse(
+                    id=affiliation.id,
+                    clinic_name=affiliation.clinic_name,
+                    department=affiliation.department,
+                    position=affiliation.position,
+                    specialty=affiliation.specialty,
+                )
+                for affiliation in doctor.clinic_affiliations
+            ],
+        )
         full_user_data["doctor_info"] = doctor_response
 
     return full_user_data
 
 
-
-
 @router.get(
-    "/get_user_info/{user_cor_id}/user-data", 
-    response_model=UserDataResponse, 
-    dependencies=[Depends(admin_access)]
+    "/get_user_info/{user_cor_id}/user-data",
+    response_model=UserDataResponse,
+    dependencies=[Depends(admin_access)],
 )
 async def get_user_data_info(
     user_cor_id: str,
@@ -266,13 +265,13 @@ async def get_user_data_info(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found.")
 
     last_active = None
-    if await redis_client.exists(str(user.id)): 
+    if await redis_client.exists(str(user.id)):
         users_last_activity_str = await redis_client.get(str(user.id))
         try:
             last_active = users_last_activity_str
         except (ValueError, TypeError) as e:
             logger.error(f"Error parsing last_active from Redis: {e}")
-            last_active = None 
+            last_active = None
 
     user_data["user_info"] = UserDb(
         id=user.id,
@@ -281,20 +280,20 @@ async def get_user_data_info(
         account_status=user.account_status,
         is_active=user.is_active,
         last_password_change=user.last_password_change,
-        user_sex=user.user_sex, 
-        birth=user.birth, 
+        user_sex=user.user_sex,
+        birth=user.birth,
         user_index=user.user_index,
         created_at=user.created_at,
-        last_active=last_active, 
+        last_active=last_active,
     )
 
     return user_data
 
 
 @router.get(
-    "/get_user_info/{user_cor_id}/user-roles", 
-    response_model=UserRolesResponseForAdmin, 
-    dependencies=[Depends(admin_access)]
+    "/get_user_info/{user_cor_id}/user-roles",
+    response_model=UserRolesResponseForAdmin,
+    dependencies=[Depends(admin_access)],
 )
 async def get_user_roles_info(
     user_cor_id: str,
@@ -319,11 +318,10 @@ async def get_user_roles_info(
     return user_data
 
 
-
 @router.get(
-    "/get_user_info/{user_cor_id}/profile-data", 
-    response_model=UserProfileResponseForAdmin, 
-    dependencies=[Depends(admin_access)]
+    "/get_user_info/{user_cor_id}/profile-data",
+    response_model=UserProfileResponseForAdmin,
+    dependencies=[Depends(admin_access)],
 )
 async def get_user_profile_info(
     user_cor_id: str,
@@ -341,19 +339,18 @@ async def get_user_profile_info(
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found.")
 
-
     profile = await person.get_profile_by_user_id(db=db, user_id=user.id)
     if profile:
-        profile_response = await _create_profile_response(profile, user, router) 
+        profile_response = await _create_profile_response(profile, user, router)
         user_data["profile"] = profile_response
 
     return user_data
 
 
 @router.get(
-    "/get_user_info/{user_cor_id}/doctors-data", 
-    response_model=UserDoctorsDataResponseForAdmin, 
-    dependencies=[Depends(admin_access)]
+    "/get_user_info/{user_cor_id}/doctors-data",
+    response_model=UserDoctorsDataResponseForAdmin,
+    dependencies=[Depends(admin_access)],
 )
 async def get_user_doctors_info(
     user_cor_id: str,
@@ -371,63 +368,65 @@ async def get_user_doctors_info(
     if not user:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found.")
 
-
     doctor = await lawyer.get_all_doctor_info(doctor_id=user.cor_id, db=db)
     if doctor:
         doctor_response = DoctorWithRelationsResponse(
-        id=doctor.id,
-        doctor_id=doctor.doctor_id,
-        work_email=doctor.work_email,
-        phone_number=doctor.phone_number,
-        first_name=doctor.first_name,
-        middle_name=doctor.middle_name,
-        doctors_photo=f"/doctors/{doctor.doctor_id}/photo" if doctor.doctors_photo else None,
-        last_name=doctor.last_name,
-        place_of_registration=doctor.place_of_registration,
-        passport_code=doctor.passport_code,
-        taxpayer_identification_number=doctor.taxpayer_identification_number,
-        scientific_degree=doctor.scientific_degree,
-        date_of_last_attestation=doctor.date_of_last_attestation,
-        status=doctor.status,
-        diplomas=[
-            DiplomaResponse(
-                id=diploma.id,
-                date=diploma.date,
-                series=diploma.series,
-                number=diploma.number,
-                university=diploma.university,
-                file_data=f"/diplomas/{diploma.id}" if diploma.file_data else None,
-            )
-            for diploma in doctor.diplomas
-        ],
-        certificates=[
-            CertificateResponse(
-                id=certificate.id,
-                date=certificate.date,
-                series=certificate.series,
-                number=certificate.number,
-                university=certificate.university,
-                file_data=(
-                    f"/certificates/{certificate.id}" if certificate.file_data else None
-                ),
-            )
-            for certificate in doctor.certificates
-        ],
-        clinic_affiliations=[
-            ClinicAffiliationResponse(
-                id=affiliation.id,
-                clinic_name=affiliation.clinic_name,
-                department=affiliation.department,
-                position=affiliation.position,
-                specialty=affiliation.specialty,
-            )
-            for affiliation in doctor.clinic_affiliations
-        ],
-    )
+            id=doctor.id,
+            doctor_id=doctor.doctor_id,
+            work_email=doctor.work_email,
+            phone_number=doctor.phone_number,
+            first_name=doctor.first_name,
+            middle_name=doctor.middle_name,
+            doctors_photo=(
+                f"/doctors/{doctor.doctor_id}/photo" if doctor.doctors_photo else None
+            ),
+            last_name=doctor.last_name,
+            place_of_registration=doctor.place_of_registration,
+            passport_code=doctor.passport_code,
+            taxpayer_identification_number=doctor.taxpayer_identification_number,
+            scientific_degree=doctor.scientific_degree,
+            date_of_last_attestation=doctor.date_of_last_attestation,
+            status=doctor.status,
+            diplomas=[
+                DiplomaResponse(
+                    id=diploma.id,
+                    date=diploma.date,
+                    series=diploma.series,
+                    number=diploma.number,
+                    university=diploma.university,
+                    file_data=f"/diplomas/{diploma.id}" if diploma.file_data else None,
+                )
+                for diploma in doctor.diplomas
+            ],
+            certificates=[
+                CertificateResponse(
+                    id=certificate.id,
+                    date=certificate.date,
+                    series=certificate.series,
+                    number=certificate.number,
+                    university=certificate.university,
+                    file_data=(
+                        f"/certificates/{certificate.id}"
+                        if certificate.file_data
+                        else None
+                    ),
+                )
+                for certificate in doctor.certificates
+            ],
+            clinic_affiliations=[
+                ClinicAffiliationResponse(
+                    id=affiliation.id,
+                    clinic_name=affiliation.clinic_name,
+                    department=affiliation.department,
+                    position=affiliation.position,
+                    specialty=affiliation.specialty,
+                )
+                for affiliation in doctor.clinic_affiliations
+            ],
+        )
         user_data["doctor_info"] = doctor_response
 
     return user_data
-
 
 
 @router.patch("/asign_status/{account_status}", dependencies=[Depends(admin_access)])
@@ -593,7 +592,7 @@ async def signup_user_as_doctor(
         cer, dip, clin = await create_doctor_service(
             doctor_data=doctor_data, db=db, doctor=doctor
         )
-        
+
         await lawyer.approve_doctor(doctor=doctor, db=db, status=Doctor_Status.approved)
     except IntegrityError as e:
         logger.error(f"Database integrity error: {e}")
@@ -693,8 +692,13 @@ async def register_new_user(
             detail="Некорректные данные регистрации пользователя.",
         )
 
-@router.get("/ws_connections", summary="Получить список активных WebSocket-соединений",
-            response_model=List[Dict], dependencies=[Depends(admin_access)])
+
+@router.get(
+    "/ws_connections",
+    summary="Получить список активных WebSocket-соединений",
+    response_model=List[Dict],
+    dependencies=[Depends(admin_access)],
+)
 async def get_ws_connections():
     """
     Возвращает список всех активных WebSocket-соединений, включая их ID и информацию о клиенте.
@@ -703,8 +707,12 @@ async def get_ws_connections():
     return websocket_events_manager.get_active_connection_info()
 
 
-@router.delete("/ws_connections/{connection_id}", summary="Отключить конкретное WebSocket-соединение",
-               status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(admin_access)])
+@router.delete(
+    "/ws_connections/{connection_id}",
+    summary="Отключить конкретное WebSocket-соединение",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(admin_access)],
+)
 async def disconnect_specific_ws_connection(connection_id: str):
     """
     Отключает конкретное WebSocket-соединение по его ID.
@@ -714,8 +722,12 @@ async def disconnect_specific_ws_connection(connection_id: str):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.delete("/ws_connections/", summary="Отключить все активные WebSocket-соединения",
-               status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(admin_access)])
+@router.delete(
+    "/ws_connections/",
+    summary="Отключить все активные WebSocket-соединения",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(admin_access)],
+)
 async def disconnect_all_ws_connections():
     """
     Отключает все активные WebSocket-соединения.

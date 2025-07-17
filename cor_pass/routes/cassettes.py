@@ -33,7 +33,7 @@ async def create_cassette_for_sample(
         db=db,
         sample_id=body.sample_id,
         num_cassettes=body.num_cassettes,
-        printing=printing
+        printing=printing,
     )
 
 

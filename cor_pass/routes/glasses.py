@@ -32,7 +32,7 @@ async def create_glass_for_cassette(
         cassette_id=body.cassette_id,
         num_glasses=body.num_glasses,
         staining_type=body.staining_type,
-        printing = printing
+        printing=printing,
     )
 
 
@@ -68,7 +68,9 @@ async def delete_glasses_endpoint(
     response_model=GlassModelScheema,
     dependencies=[Depends(doctor_access)],
 )
-async def change_glass_staining(glass_id: str, body: ChangeGlassStaining, db: AsyncSession = Depends(get_db)):
+async def change_glass_staining(
+    glass_id: str, body: ChangeGlassStaining, db: AsyncSession = Depends(get_db)
+):
     """Получаем информацию о стекле по его ID."""
     db_glass = await glass_service.change_staining(db=db, glass_id=glass_id, body=body)
     if db_glass is None:
@@ -76,15 +78,18 @@ async def change_glass_staining(glass_id: str, body: ChangeGlassStaining, db: As
     return db_glass
 
 
-
 @router.patch(
     "/{glass_id}/printed",
     response_model=GlassModelScheema,
     dependencies=[Depends(doctor_access)],
 )
-async def change_glass_printing_status(glass_id: str, printing: bool, db: AsyncSession = Depends(get_db)):
+async def change_glass_printing_status(
+    glass_id: str, printing: bool, db: AsyncSession = Depends(get_db)
+):
     """Меняем статус печати стекла"""
-    db_glass = await glass_service.change_printing_status(db=db, glass_id=glass_id, printing=printing)
+    db_glass = await glass_service.change_printing_status(
+        db=db, glass_id=glass_id, printing=printing
+    )
     if db_glass is None:
         raise HTTPException(status_code=404, detail="Glass not found")
     return db_glass

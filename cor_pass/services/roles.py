@@ -3,7 +3,14 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cor_pass.database import db
-from cor_pass.database.models import Doctor, Doctor_Status, EnergyManager, Lawyer, User, LabAssistant
+from cor_pass.database.models import (
+    Doctor,
+    Doctor_Status,
+    EnergyManager,
+    Lawyer,
+    User,
+    LabAssistant,
+)
 from cor_pass.services.auth import auth_service
 from cor_pass.config.config import settings
 
@@ -19,9 +26,11 @@ class AdminRoleChecker:
 
 
 class LawyerRoleChecker:
-    async def is_lawyer(self, 
-                        user: User = Depends(auth_service.get_current_user),
-                        db: AsyncSession = Depends(db.get_db)):
+    async def is_lawyer(
+        self,
+        user: User = Depends(auth_service.get_current_user),
+        db: AsyncSession = Depends(db.get_db),
+    ):
         is_lawyer = False
         if user.email in settings.lawyer_accounts:
             is_lawyer = True
@@ -29,7 +38,7 @@ class LawyerRoleChecker:
         result = await db.execute(query)
         lawyer = result.scalar_one_or_none()
         if lawyer:
-           is_lawyer = True 
+            is_lawyer = True
         return is_lawyer
 
 
@@ -59,11 +68,14 @@ class LabAssistantRoleChecker:
         user: User = Depends(auth_service.get_current_user),
         db: AsyncSession = Depends(db.get_db),
     ):
-        lab_assistant_query = select(LabAssistant).where(LabAssistant.lab_assistant_cor_id == user.cor_id)
+        lab_assistant_query = select(LabAssistant).where(
+            LabAssistant.lab_assistant_cor_id == user.cor_id
+        )
         lab_assistant = await db.scalar(lab_assistant_query)
 
         if lab_assistant:
-            return lab_assistant 
+            return lab_assistant
+
 
 class EnergyManagerRoleChecker:
     async def is_energy_manager(
@@ -71,7 +83,9 @@ class EnergyManagerRoleChecker:
         user: User = Depends(auth_service.get_current_user),
         db: AsyncSession = Depends(db.get_db),
     ):
-        energy_manager_query = select(EnergyManager).where(EnergyManager.energy_manager_cor_id == user.cor_id)
+        energy_manager_query = select(EnergyManager).where(
+            EnergyManager.energy_manager_cor_id == user.cor_id
+        )
         energy_manager = await db.scalar(energy_manager_query)
 
         if energy_manager:

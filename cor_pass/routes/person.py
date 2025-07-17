@@ -60,6 +60,7 @@ async def read_cor_id(
         )
     return cor_id
 
+
 @router.get(
     "/my_core_id_qr",
     dependencies=[Depends(user_access)],
@@ -192,13 +193,14 @@ async def change_email(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-
         )
     else:
         if body.email:
             await person.change_user_email(body.email, user, db)
             logger.debug(f"{current_user.id} - changed his email to {body.email}")
-            return {"message": f"User '{current_user.id}' changed his email to {body.email}"}
+            return {
+                "message": f"User '{current_user.id}' changed his email to {body.email}"
+            }
         else:
             logger.warning("Incorrect email input provided for user email change.")
             raise HTTPException(
@@ -455,7 +457,6 @@ async def read_sessions(
     :rtype: List[UserSessionResponseModel]
     """
     try:
-        # Получаем все сессии пользователя из базы данных
         sessions_from_db = await repository_session.get_all_user_sessions(
             db, current_user.cor_id, skip, limit
         )
@@ -466,13 +467,10 @@ async def read_sessions(
             detail="Internal server error",
         )
 
-    # Создаем список для результатов с геолокацией
     response_sessions = []
     for session in sessions_from_db:
-        # Для каждой сессии получаем данные геолокации по IP-адресу
         geolocation_data = get_ip_geolocation(session.ip_address)
 
-        # Создаем экземпляр UserSessionResponseModel, объединяя данные сессии и геолокации
         session_response = UserSessionResponseModel(
             id=session.id,
             user_id=session.user_id,
@@ -483,8 +481,7 @@ async def read_sessions(
             created_at=session.created_at,
             updated_at=session.updated_at,
             jti=session.jti,
-            # Распаковываем словарь с геолокацией
-            **geolocation_data
+            **geolocation_data,
         )
         response_sessions.append(session_response)
 
@@ -522,7 +519,6 @@ async def read_session_info(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
         )
-     # Получаем данные геолокации
     geolocation_data = get_ip_geolocation(user_session.ip_address)
     response_data = {
         "id": user_session.id,
@@ -534,7 +530,7 @@ async def read_session_info(
         "created_at": user_session.created_at,
         "updated_at": user_session.updated_at,
         "jti": user_session.jti,
-        **geolocation_data # Распаковываем словарь с геолокацией
+        **geolocation_data,
     }
 
     return UserSessionResponseModel(**response_data)
@@ -556,26 +552,33 @@ async def remove_session(
     :rtype: UserSessionResponseModel
     :raises HTTPException 404: If the session with the specified ID does not exist.
     """
-    session_to_revoke = await repository_session.get_session_by_id(db=db, session_id=session_id, user=current_user)
+    session_to_revoke = await repository_session.get_session_by_id(
+        db=db, session_id=session_id, user=current_user
+    )
     if not session_to_revoke:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Сессия не найдена.")
-    
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Сессия не найдена."
+        )
+
     if session_to_revoke.user_id != current_user.cor_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Вы не можете отозвать чужую сессию.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Вы не можете отозвать чужую сессию.",
+        )
     if session_to_revoke.jti:
         blacklist_expires = timedelta(seconds=settings.access_token_expiration)
     await redis_service.add_jti_to_blacklist(session_to_revoke.jti, blacklist_expires)
     token = session_to_revoke.access_token
     session_token = await decrypt_data(
-                    encrypted_data=token,
-                    key=await decrypt_user_key(current_user.unique_cipher_key),
-                )
+        encrypted_data=token,
+        key=await decrypt_user_key(current_user.unique_cipher_key),
+    )
     event_data = {
         "channel": "cor-erp-prod",
         "event_type": "token_blacklisted",
         "token": session_token,
         "reason": "Token explicitly revoked or logged out.",
-        "timestamp": datetime.now(timezone.utc).timestamp()
+        "timestamp": datetime.now(timezone.utc).timestamp(),
     }
     await websocket_events_manager.broadcast_event(event_data)
 
@@ -584,16 +587,19 @@ async def remove_session(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Session not found"
         )
-    
+
     return session
 
 
-async def _create_profile_response(db_profile, current_user, router_instance) -> ProfileResponse:
+async def _create_profile_response(
+    db_profile, current_user, router_instance
+) -> ProfileResponse:
     """Формирует ProfileResponse, дешифруя поля и добавляя данные из User."""
-    response_data = db_profile.__dict__.copy() # Копируем, чтобы не изменять исходный ORM объект
+    response_data = (
+        db_profile.__dict__.copy()
+    )  # Копируем, чтобы не изменять исходный ORM объект
     decoded_key = base64.b64decode(settings.aes_key)
 
-    # Дешифруем нужные поля для ответа
     for field_name in ["surname", "first_name", "middle_name"]:
         encrypted_field = f"encrypted_{field_name}"
         encrypted_value = response_data.get(encrypted_field)
@@ -601,14 +607,13 @@ async def _create_profile_response(db_profile, current_user, router_instance) ->
             response_data[field_name] = await decrypt_data(encrypted_value, decoded_key)
         else:
             response_data[field_name] = None
-        # Удаляем зашифрованное поле из ответа
+
         response_data.pop(encrypted_field, None)
 
-    # Добавляем данные из User
     response_data["email"] = current_user.email
-    response_data["sex"] = current_user.user_sex # Если sex есть в User
+    response_data["sex"] = current_user.user_sex
 
-    # Добавляем URL для фото, если оно существует
+    # URL для фото
     # if db_profile.photo_data:
     #     response_data["photo_url"] = router_instance.url_path_for("get_profile_photo_endpoint", user_id=current_user.id)
     # else:
@@ -617,11 +622,13 @@ async def _create_profile_response(db_profile, current_user, router_instance) ->
     return ProfileResponse.model_validate(response_data)
 
 
-@router.put("/profile/upsert", response_model=ProfileResponse, status_code=status.HTTP_200_OK)
+@router.put(
+    "/profile/upsert", response_model=ProfileResponse, status_code=status.HTTP_200_OK
+)
 async def upsert_user_profile_endpoint(
     profile_data: ProfileCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(auth_service.get_current_user)
+    current_user: User = Depends(auth_service.get_current_user),
 ):
     """
     **Создание или обновление профиля пользователя**\n
@@ -629,28 +636,35 @@ async def upsert_user_profile_endpoint(
     или обновляет существующий.
     """
     if not current_user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+        )
+    if profile_data.birth_date.year != current_user.birth:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Пользователь указал не верный год рождения (год рождения должен совпадать с указанным ранее в cor-id)",
+        )
     db_profile = await person.upsert_user_profile(db, current_user.id, profile_data)
-    
-    # Формируем ответ, используя вспомогательную функцию
+
     return await _create_profile_response(db_profile, current_user, router)
 
 
 @router.get("/profile", response_model=ProfileResponse, status_code=status.HTTP_200_OK)
 async def get_user_profile_endpoint(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(auth_service.get_current_user)
+    current_user: User = Depends(auth_service.get_current_user),
 ):
     """
     **Получение профиля текущего пользователя**\n
     Возвращает данные профиля для текущего авторизованного пользователя.
     """
     if not current_user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+        )
+
     db_profile = await person.get_profile_by_user_id(db, current_user.id)
-    
+
     if not db_profile:
         profile_data = ProfileCreate()
         db_profile = await person.upsert_user_profile(db, current_user.id, profile_data)
@@ -662,14 +676,16 @@ async def get_user_profile_endpoint(
 async def upload_profile_photo_endpoint(
     file: UploadFile = Depends(validate_image_file),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(auth_service.get_current_user)
+    current_user: User = Depends(auth_service.get_current_user),
 ):
     """
     **Загрузка или обновление фотографии профиля.**\n
     Принимает изображение (JPEG/PNG) и сохраняет его для профиля текущего пользователя.
     """
     if not current_user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+        )
     db_profile = await person.get_profile_by_user_id(db, current_user.id)
     if not db_profile:
         profile_data = ProfileCreate()
@@ -682,34 +698,36 @@ async def upload_profile_photo_endpoint(
 @router.get("/photo", status_code=status.HTTP_200_OK)
 async def get_profile_photo_endpoint(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(auth_service.get_current_user) 
+    current_user: User = Depends(auth_service.get_current_user),
 ):
     """
     **Получение фотографии профиля.**\n
     Возвращает фотографию профиля текущего авторизованного пользователя.
     """
     if not current_user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+        )
+
     user_id_to_fetch = current_user.id
 
     photo_data = await person.get_profile_photo(db=db, user_id=user_id_to_fetch)
-    
+
     if not photo_data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile photo not found.")
-    
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Profile photo not found."
+        )
+
     async def image_stream():
         yield photo_data[0]
 
-    return StreamingResponse(
-        image_stream(), media_type=photo_data[1])
+    return StreamingResponse(image_stream(), media_type=photo_data[1])
 
 
-
-@router.get("/photo/base64", status_code=status.HTTP_200_OK) 
+@router.get("/photo/base64", status_code=status.HTTP_200_OK)
 async def get_profile_photo_base64_endpoint(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(auth_service.get_current_user) 
+    current_user: User = Depends(auth_service.get_current_user),
 ):
     """
     **Получение фотографии профиля в формате Base64.**\n
@@ -717,18 +735,21 @@ async def get_profile_photo_base64_endpoint(
     в виде Base64-строки, встраиваемой в Data URL.
     """
     if not current_user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
+        )
+
     user_id_to_fetch = current_user.id
 
-    photo_data = await person.get_profile_photo(db=db, user_id=user_id_to_fetch) 
-    
+    photo_data = await person.get_profile_photo(db=db, user_id=user_id_to_fetch)
+
     if not photo_data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile photo not found.")
-    
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Profile photo not found."
+        )
+
     encoded_photo = base64.b64encode(photo_data[0]).decode("utf-8")
-    
+
     photo_data_url = f"data:{photo_data[1]};base64,{encoded_photo}"
 
     return JSONResponse(content={"photo_data_url": photo_data_url})
-    

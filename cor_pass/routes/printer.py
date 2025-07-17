@@ -11,10 +11,13 @@ router = APIRouter(tags=["Printer"])
 
 
 PRINTER_IP = "192.168.154.209"
+
+
 class LabelData(BaseModel):
     model_id: int
     content: str
     uuid: str
+
 
 class PrintRequest(BaseModel):
     printer_ip: str
@@ -27,7 +30,9 @@ async def print_labels(data: PrintRequest):
     try:
         async with httpx.AsyncClient() as client:
             # Отправляем только данные меток без IP
-            response = await client.post(printer_url, json={"labels": [label.dict() for label in data.labels]})
+            response = await client.post(
+                printer_url, json={"labels": [label.dict() for label in data.labels]}
+            )
             if response.status_code == 200:
                 return {"success": True, "printer_response": response.text}
             else:

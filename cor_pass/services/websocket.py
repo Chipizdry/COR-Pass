@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from cor_pass.database.db import async_session_maker
 from loguru import logger
-# Словарь для хранения активных WebSocket-соединений (session_token -> WebSocket)
+
 active_connections: dict[str, WebSocket] = {}
 
 
@@ -21,7 +21,9 @@ async def close_websocket_connection(session_token: str):
     if session_token in active_connections:
         await active_connections[session_token].close()
         del active_connections[session_token]
-        logger.debug(f"WebSocket соединение для {session_token} закрыто из-за таймаута.")
+        logger.debug(
+            f"WebSocket соединение для {session_token} закрыто из-за таймаута."
+        )
 
 
 async def check_session_timeouts():
@@ -44,15 +46,14 @@ async def check_session_timeouts():
                     await send_websocket_message(
                         session.session_token, {"status": "timeout"}
                     )
-                    await close_websocket_connection(
-                        session.session_token
-                    )  # Закрываем соединение
-
+                    await close_websocket_connection(session.session_token)
             except Exception as e:
-                logger.error(f"Ошибка в асинхронной фоновой задаче проверки таймаутов: {e}")
+                logger.error(
+                    f"Ошибка в асинхронной фоновой задаче проверки таймаутов: {e}"
+                )
                 await db.rollback()
             finally:
-                await asyncio.sleep(60)  # Проверять каждую минуту
+                await asyncio.sleep(60)
 
 
 async def cleanup_auth_sessions():

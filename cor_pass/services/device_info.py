@@ -29,30 +29,23 @@ def get_device_info(request: Request) -> dict:
     Поддерживает как веб-браузеры, так и мобильные приложения.
     """
     user_agent = request.headers.get("User-Agent", "Unknown device")
-    # ip_address = request.client.host
     ip_address = get_client_ip(request)
 
-    # Определяем тип устройства и ОС
-    device_type = "Desktop"  # По умолчанию считаем устройство десктопом
+    device_type = "Desktop"
     device_os = "Unknown OS"
 
-    # Проверяем, является ли запрос от мобильного приложения
     is_mobile_app = request.headers.get("X-Device-Type") is not None
 
     if is_mobile_app:
-        # Если запрос от мобильного приложения, используем кастомные заголовки
         device_type = request.headers.get("X-Device-Type", "Mobile")
         device_os = request.headers.get("X-Device-OS", "Unknown OS")
         device_info = request.headers.get("X-Device-Info", "Unknown device")
     else:
-        # Если запрос от веб-браузера, анализируем User-Agent
         device_info = user_agent
 
-        # Определяем тип устройства
         if "Mobile" in user_agent or "iPhone" in user_agent or "Android" in user_agent:
             device_type = "Mobile"
 
-        # Определяем операционную систему
         if "Windows" in user_agent:
             device_os = "Windows"
         elif "Mac OS" in user_agent:

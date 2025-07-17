@@ -4,8 +4,8 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 SQLALCHEMY_DATABASE_URL = settings.sqlalchemy_database_url
 
-POOL_SIZE = 10  
-MAX_OVERFLOW = 30 
+POOL_SIZE = 10
+MAX_OVERFLOW = 30
 
 engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
@@ -13,7 +13,7 @@ engine = create_async_engine(
     max_overflow=MAX_OVERFLOW,
     pool_timeout=60,
     pool_pre_ping=True,
-    pool_recycle=3600
+    pool_recycle=3600,
 )
 # engine = create_async_engine(SQLALCHEMY_DATABASE_URL)
 # Base = declarative_base()

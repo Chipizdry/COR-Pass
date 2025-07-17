@@ -89,14 +89,11 @@ async def update_device_access(
     return device_access
 
 
-# Создает указанное количество устройств
 async def create_manufactured_devices_bulk(db: AsyncSession, count: int):
     new_devices = []
     for _ in range(count):
         token = str(uuid.uuid4())
-        serial_number = str(
-            uuid.uuid4().hex[:12]
-        )  # Генерируем короткий уникальный серийный номер
+        serial_number = str(uuid.uuid4().hex[:12])
         new_devices.append(ManufacturedDevice(token=token, serial_number=serial_number))
     db.add_all(new_devices)
     await db.commit()

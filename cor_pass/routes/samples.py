@@ -106,7 +106,6 @@ async def delete_samples(
     return result
 
 
-
 @router.patch(
     "/{sample_id}/print_glasses",
     response_model=Sample,
@@ -114,7 +113,7 @@ async def delete_samples(
 )
 async def print_all_sample_glasses(
     sample_id: str,
-    printing: bool=False,
+    printing: bool = False,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -138,7 +137,7 @@ async def print_all_sample_glasses(
 )
 async def print_all_sample_cassettes(
     sample_id: str,
-    printing: bool=False,
+    printing: bool = False,
     db: AsyncSession = Depends(get_db),
 ):
     """

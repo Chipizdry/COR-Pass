@@ -2,7 +2,10 @@ import re
 from string import ascii_uppercase
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from cor_pass.repository.case import _update_ancestor_statuses_from_cassette, _update_ancestor_statuses_from_glass
+from cor_pass.repository.case import (
+    _update_ancestor_statuses_from_cassette,
+    _update_ancestor_statuses_from_glass,
+)
 from cor_pass.schemas import (
     Sample as SampleModelScheema,
     Cassette as CassetteModelScheema,
@@ -177,7 +180,6 @@ async def create_sample(
 
     created_samples_db: List[db_models.Sample] = []
 
-    
     samples_result = await db.execute(
         select(db_models.Sample.sample_number)
         .where(db_models.Sample.case_id == db_case.id)
@@ -199,10 +201,9 @@ async def create_sample(
                 )
         except ValueError:
 
-            next_sample_char = "A"  
+            next_sample_char = "A"
 
     first_created_sample_id = None
-
 
     for i in range(num_samples):
         sample_number = next_sample_char
@@ -217,7 +218,6 @@ async def create_sample(
         if i == 0:
             first_created_sample_id = db_sample.id
 
-        
         db_cassette = db_models.Cassette(
             sample_id=db_sample.id, cassette_number=f"{sample_number}1"
         )
@@ -229,7 +229,6 @@ async def create_sample(
         await db.refresh(db_case)
         await db.refresh(db_cassette)
 
-        
         db_glass = db_models.Glass(
             cassette_id=db_cassette.id,
             glass_number=0,
@@ -248,7 +247,6 @@ async def create_sample(
         await _update_ancestor_statuses_from_cassette(db=db, cassette=db_cassette)
         await _update_ancestor_statuses_from_glass(db=db, glass=db_glass)
 
-
         try:
             last_index = ascii_uppercase.index(next_sample_char)
             if last_index < len(ascii_uppercase) - 1:
@@ -256,7 +254,7 @@ async def create_sample(
             else:
                 next_sample_char = f"Z{len(existing_sample_numbers) + 1 + i + 1 - len(ascii_uppercase)}"
         except ValueError:
-            next_sample_char = f"A{i + 2}" 
+            next_sample_char = f"A{i + 2}"
 
     created_samples = [
         SampleModelScheema.model_validate(sample).model_dump()
@@ -285,7 +283,7 @@ async def create_sample(
                 return (
                     cassette.cassette_number,
                     0,
-                )  
+                )
 
             sorted_cassettes = sorted(
                 first_sample_details_db.cassette, key=sort_cassettes
@@ -340,7 +338,6 @@ async def delete_samples(db: AsyncSession, samples_ids: List[str]) -> Dict[str, 
             await db.delete(db_sample)
             deleted_count += 1
 
-            # Обновляем счётчики
             db_case.bank_count -= 1
             db_case.cassette_count -= num_cassettes_to_decrement
             db_case.glass_count -= num_glasses_to_decrement
@@ -363,7 +360,6 @@ async def delete_samples(db: AsyncSession, samples_ids: List[str]) -> Dict[str, 
     return response
 
 
-
 async def print_all_sample_cassettes(
     db: AsyncSession, sample_id: str, printing: bool
 ) -> Optional[SampleModelScheema]:
@@ -384,7 +380,7 @@ async def print_all_sample_cassettes(
     sample_db = sample_result.scalar_one_or_none()
 
     if not sample_db:
-        return None 
+        return None
     sample_db.is_printed_cassette = printing
     cassettes_to_update = list(sample_db.cassette) if sample_db.cassette else []
 
@@ -397,20 +393,21 @@ async def print_all_sample_cassettes(
             letter_part = match.group(1)
             number_part = int(match.group(2))
             return (letter_part, number_part)
-        return (cassette.cassette_number, 0) 
-
+        return (cassette.cassette_number, 0)
 
     sorted_cassettes_db = sorted(sample_db.cassette, key=sort_cassettes)
 
-
     sample_schema = SampleModelScheema.model_validate(sample_db)
-    sample_schema.cassettes = [] 
+    sample_schema.cassettes = []
 
     for cassette_db in sorted_cassettes_db:
         cassette_schema = CassetteModelScheema.model_validate(cassette_db)
         cassette_schema.glasses = sorted(
-            [GlassModelScheema.model_validate(glass_db) for glass_db in cassette_db.glass],
-            key=lambda glass_s: glass_s.glass_number
+            [
+                GlassModelScheema.model_validate(glass_db)
+                for glass_db in cassette_db.glass
+            ],
+            key=lambda glass_s: glass_s.glass_number,
         )
         await _update_ancestor_statuses_from_cassette(db=db, cassette=cassette_db)
         for glass_db in cassette_db.glass:
@@ -418,9 +415,8 @@ async def print_all_sample_cassettes(
         sample_schema.cassettes.append(cassette_schema)
 
     await db.commit()
-    await db.refresh(sample_db) 
+    await db.refresh(sample_db)
     return sample_schema
-
 
 
 async def print_all_sample_glasses(
@@ -458,20 +454,23 @@ async def print_all_sample_glasses(
         return (cassette.cassette_number, 0)
 
     sample_schema = SampleModelScheema.model_validate(sample_db)
-    
+
     sorted_cassettes_db = sorted(sample_db.cassette, key=sort_cassettes)
-    sample_schema.cassettes = [] 
+    sample_schema.cassettes = []
 
     for cassette_db in sorted_cassettes_db:
         cassette_schema = CassetteModelScheema.model_validate(cassette_db)
-        
+
         cassette_schema.glasses = sorted(
-            [GlassModelScheema.model_validate(glass_db) for glass_db in cassette_db.glass],
-            key=lambda glass_s: glass_s.glass_number
+            [
+                GlassModelScheema.model_validate(glass_db)
+                for glass_db in cassette_db.glass
+            ],
+            key=lambda glass_s: glass_s.glass_number,
         )
         sample_schema.cassettes.append(cassette_schema)
 
     await db.commit()
-    await db.refresh(sample_db) 
+    await db.refresh(sample_db)
 
     return sample_schema

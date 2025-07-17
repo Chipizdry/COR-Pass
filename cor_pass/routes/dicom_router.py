@@ -23,17 +23,15 @@ from pydicom import config
 from loguru import logger
 
 pydicom.config.settings.reading_validation_mode = pydicom.config.RAISE
-# logger = logging.getLogger("svs_logger")
-# logging.basicConfig(level=logging.INFO)
 
 
 SUPPORTED_TRANSFER_SYNTAXES = {
-    '1.2.840.10008.1.2': 'Implicit VR Little Endian',
-    '1.2.840.10008.1.2.1': 'Explicit VR Little Endian',
-    '1.2.840.10008.1.2.2': 'Explicit VR Big Endian',
-    '1.2.840.10008.1.2.4.70': 'JPEG Lossless, Non-Hierarchical, First-Order Prediction',
-    '1.2.840.10008.1.2.4.57': 'JPEG Lossless, Non-Hierarchical',
-    '1.2.840.10008.1.2.4.50': 'JPEG Baseline',
+    "1.2.840.10008.1.2": "Implicit VR Little Endian",
+    "1.2.840.10008.1.2.1": "Explicit VR Little Endian",
+    "1.2.840.10008.1.2.2": "Explicit VR Big Endian",
+    "1.2.840.10008.1.2.4.70": "JPEG Lossless, Non-Hierarchical, First-Order Prediction",
+    "1.2.840.10008.1.2.4.57": "JPEG Lossless, Non-Hierarchical",
+    "1.2.840.10008.1.2.4.50": "JPEG Baseline",
 }
 
 
@@ -47,15 +45,18 @@ os.makedirs(DICOM_ROOT_DIR, exist_ok=True)
 def check_dicom_support():
     logger.debug("\n[INFO] Проверка поддержки DICOM:")
     logger.debug(f"GDCM доступен: {'gdcm' in pydicom.config.pixel_data_handlers}")
-    logger.debug(f"Pylibjpeg доступен: {'pylibjpeg' in pydicom.config.pixel_data_handlers}")
-    logger.debug(f"OpenJPEG доступен: {'openjpeg' in pydicom.config.pixel_data_handlers}")
-    
+    logger.debug(
+        f"Pylibjpeg доступен: {'pylibjpeg' in pydicom.config.pixel_data_handlers}"
+    )
+    logger.debug(
+        f"OpenJPEG доступен: {'openjpeg' in pydicom.config.pixel_data_handlers}"
+    )
+
     # Вывод информации о Transfer Syntax
     logger.debug("\nПоддерживаемые Transfer Syntax:")
     for uid, name in SUPPORTED_TRANSFER_SYNTAXES.items():
         handler = pydicom.uid.UID(uid).is_supported
         logger.debug(f"{name} ({uid}): {'✓' if handler else '✗'}")
-
 
 
 @lru_cache(maxsize=16)
@@ -65,12 +66,15 @@ def load_volume(user_cor_id: str):
     # Чтение всех файлов
     user_dicom_dir = os.path.join(DICOM_ROOT_DIR, user_cor_id)
     if not os.path.exists(user_dicom_dir):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="DICOM данные для этого пользователя не найдены.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="DICOM данные для этого пользователя не найдены.",
+        )
 
     dicom_paths = [
         os.path.join(user_dicom_dir, f)
         for f in os.listdir(user_dicom_dir)
-        if not f.startswith('.') and os.path.isfile(os.path.join(user_dicom_dir, f))
+        if not f.startswith(".") and os.path.isfile(os.path.join(user_dicom_dir, f))
     ]
 
     datasets = []
@@ -81,9 +85,11 @@ def load_volume(user_cor_id: str):
             read_attempts = [
                 lambda: pydicom.dcmread(path),  # Стандартное чтение
                 lambda: pydicom.dcmread(path, force=True),  # Принудительное чтение
-                lambda: pydicom.dcmread(path, force=True, defer_size=1024),  # Чтение с ограничением
+                lambda: pydicom.dcmread(
+                    path, force=True, defer_size=1024
+                ),  # Чтение с ограничением
             ]
-            
+
             for attempt in read_attempts:
                 try:
                     ds = attempt()
@@ -96,22 +102,32 @@ def load_volume(user_cor_id: str):
                 continue
 
             # Попытка декомпрессии если файл сжат
-            if hasattr(ds, 'file_meta') and hasattr(ds.file_meta, 'TransferSyntaxUID'):
+            if hasattr(ds, "file_meta") and hasattr(ds.file_meta, "TransferSyntaxUID"):
                 if ds.file_meta.TransferSyntaxUID.is_compressed:
                     try:
                         ds.decompress()  # Автоматический выбор декомпрессора
                     except Exception as decompress_error:
-                        print(f"[WARN] Не удалось декомпрессировать {path}: {decompress_error}")
+                        print(
+                            f"[WARN] Не удалось декомпрессировать {path}: {decompress_error}"
+                        )
                         continue
 
             # Проверка необходимых атрибутов
-            required_attrs = ['ImagePositionPatient', 'ImageOrientationPatient', 'pixel_array']
+            required_attrs = [
+                "ImagePositionPatient",
+                "ImageOrientationPatient",
+                "pixel_array",
+            ]
             if all(hasattr(ds, attr) for attr in required_attrs):
                 datasets.append((ds, path))
             else:
-                logger.debug(f"[WARN] Файл {path} не содержит необходимых DICOM-тегов. Пропущен.")
-                logger.debug(f"       Найдены теги: {[attr for attr in required_attrs if hasattr(ds, attr)]}")
-                
+                logger.debug(
+                    f"[WARN] Файл {path} не содержит необходимых DICOM-тегов. Пропущен."
+                )
+                logger.debug(
+                    f"       Найдены теги: {[attr for attr in required_attrs if hasattr(ds, attr)]}"
+                )
+
         except Exception as e:
             logger.debug(f"[WARN] Пропущен файл {path} из-за ошибки чтения: {str(e)}")
             continue
@@ -133,27 +149,43 @@ def load_volume(user_cor_id: str):
     for ds, path in datasets:
         try:
             # Получаем pixel_array с обработкой возможных ошибок
-            if not hasattr(ds, 'pixel_array'):
-                logger.debug(f"[WARN] Файл {path} не содержит pixel_array после декомпрессии")
+            if not hasattr(ds, "pixel_array"):
+                logger.debug(
+                    f"[WARN] Файл {path} не содержит pixel_array после декомпрессии"
+                )
                 continue
 
             arr = ds.pixel_array.astype(np.float32)
 
             # Применяем Rescale Slope/Intercept если они есть
-            if hasattr(ds, 'RescaleSlope') and hasattr(ds, 'RescaleIntercept'):
+            if hasattr(ds, "RescaleSlope") and hasattr(ds, "RescaleIntercept"):
                 try:
-                    slope = float(ds.RescaleSlope) if isinstance(ds.RescaleSlope, (str, pydicom.multival.MultiValue)) else ds.RescaleSlope
-                    intercept = float(ds.RescaleIntercept) if isinstance(ds.RescaleIntercept, (str, pydicom.multival.MultiValue)) else ds.RescaleIntercept
+                    slope = (
+                        float(ds.RescaleSlope)
+                        if isinstance(
+                            ds.RescaleSlope, (str, pydicom.multival.MultiValue)
+                        )
+                        else ds.RescaleSlope
+                    )
+                    intercept = (
+                        float(ds.RescaleIntercept)
+                        if isinstance(
+                            ds.RescaleIntercept, (str, pydicom.multival.MultiValue)
+                        )
+                        else ds.RescaleIntercept
+                    )
                     arr = arr * slope + intercept
                 except Exception as e:
-                    print(f"[WARN] Ошибка применения RescaleSlope/Intercept в {path}: {e}")
+                    print(
+                        f"[WARN] Ошибка применения RescaleSlope/Intercept в {path}: {e}"
+                    )
 
             slices.append(arr)
             shapes.append(arr.shape)
 
             if example_ds is None:
                 example_ds = ds
-                
+
         except Exception as e:
             logger.debug(f"[ERROR] Ошибка обработки {os.path.basename(path)}: {e}")
             continue
@@ -167,8 +199,11 @@ def load_volume(user_cor_id: str):
     logger.debug(f"[INFO] Приведение всех срезов к форме {target_shape}")
 
     resized_slices = [
-        resize(slice_, target_shape, preserve_range=True).astype(np.float32)
-        if slice_.shape != target_shape else slice_
+        (
+            resize(slice_, target_shape, preserve_range=True).astype(np.float32)
+            if slice_.shape != target_shape
+            else slice_
+        )
         for slice_ in slices
     ]
 
@@ -182,10 +217,19 @@ def load_volume(user_cor_id: str):
 def get_viewer(current_user: User = Depends(auth_service.get_current_user)):
     return HTMLResponse(HTML_FILE.read_text(encoding="utf-8"))
 
+
 def apply_window(img, ds):
     try:
-        wc = float(ds.WindowCenter[0]) if isinstance(ds.WindowCenter, pydicom.multival.MultiValue) else float(ds.WindowCenter)
-        ww = float(ds.WindowWidth[0]) if isinstance(ds.WindowWidth, pydicom.multival.MultiValue) else float(ds.WindowWidth)
+        wc = (
+            float(ds.WindowCenter[0])
+            if isinstance(ds.WindowCenter, pydicom.multival.MultiValue)
+            else float(ds.WindowCenter)
+        )
+        ww = (
+            float(ds.WindowWidth[0])
+            if isinstance(ds.WindowWidth, pydicom.multival.MultiValue)
+            else float(ds.WindowWidth)
+        )
         img_min = wc - ww / 2
         img_max = wc + ww / 2
         img = np.clip(img, img_min, img_max)
@@ -204,20 +248,22 @@ def reconstruct(
     mode: str = Query("auto", enum=["auto", "window", "raw"]),
     window_center: float = Query(None),
     window_width: float = Query(None),
-    current_user: User = Depends(auth_service.get_current_user)
+    current_user: User = Depends(auth_service.get_current_user),
 ):
     try:
         volume, ds = load_volume(str(current_user.cor_id))
 
         # Получаем spacing
-        ps = ds.PixelSpacing if hasattr(ds, 'PixelSpacing') else [1, 1]
-        st = float(ds.SliceThickness) if hasattr(ds, 'SliceThickness') else 1.0
+        ps = ds.PixelSpacing if hasattr(ds, "PixelSpacing") else [1, 1]
+        st = float(ds.SliceThickness) if hasattr(ds, "SliceThickness") else 1.0
 
         if plane == "axial":
             img = volume[np.clip(index, 0, volume.shape[0] - 1), :, :]
             spacing_x, spacing_y = ps
         elif plane == "sagittal":
-            img = np.flip(volume[:, :, np.clip(index, 0, volume.shape[2] - 1)], axis=(0, 1))
+            img = np.flip(
+                volume[:, :, np.clip(index, 0, volume.shape[2] - 1)], axis=(0, 1)
+            )
             spacing_x, spacing_y = st, ps[0]
         elif plane == "coronal":
             img = np.flip(volume[:, np.clip(index, 0, volume.shape[1] - 1), :], axis=0)
@@ -230,10 +276,24 @@ def reconstruct(
             img = apply_window(img, ds)
         elif mode == "window":
             try:
-                wc = window_center if window_center is not None else (
-                    float(ds.WindowCenter[0]) if isinstance(ds.WindowCenter, pydicom.multival.MultiValue) else float(ds.WindowCenter))
-                ww = window_width if window_width is not None else (
-                    float(ds.WindowWidth[0]) if isinstance(ds.WindowWidth, pydicom.multival.MultiValue) else float(ds.WindowWidth))
+                wc = (
+                    window_center
+                    if window_center is not None
+                    else (
+                        float(ds.WindowCenter[0])
+                        if isinstance(ds.WindowCenter, pydicom.multival.MultiValue)
+                        else float(ds.WindowCenter)
+                    )
+                )
+                ww = (
+                    window_width
+                    if window_width is not None
+                    else (
+                        float(ds.WindowWidth[0])
+                        if isinstance(ds.WindowWidth, pydicom.multival.MultiValue)
+                        else float(ds.WindowWidth)
+                    )
+                )
                 img_min = wc - ww / 2
                 img_max = wc + ww / 2
                 img = np.clip(img, img_min, img_max)
@@ -254,7 +314,7 @@ def reconstruct(
             (512, 512),
             method=Image.Resampling.BICUBIC,
             color=0,
-            centering=(0.5, 0.5)
+            centering=(0.5, 0.5),
         )
 
         buf = BytesIO()
@@ -264,15 +324,15 @@ def reconstruct(
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @router.post("/upload")
 async def upload_dicom_files(
     files: List[UploadFile] = File(...),
-    current_user: User = Depends(auth_service.get_current_user)
+    current_user: User = Depends(auth_service.get_current_user),
 ):
     try:
         user_dir = os.path.join(DICOM_ROOT_DIR, str(current_user.cor_id))
@@ -298,7 +358,7 @@ async def upload_dicom_files(
 
             processed_files += 1
 
-            if file_ext == '.svs':
+            if file_ext == ".svs":
                 try:
                     # Проверяем что .svs файл действительно читается как OpenSlide
                     OpenSlide(temp_path)
@@ -307,12 +367,14 @@ async def upload_dicom_files(
                     valid_svs += 1
                 except OpenSlideUnsupportedFormatError:
                     os.remove(temp_path)
-                    print(f"[ERROR] Файл {file.filename} не является допустимым SVS-форматом.")
+                    print(
+                        f"[ERROR] Файл {file.filename} не является допустимым SVS-форматом."
+                    )
                 continue
 
-            if file_ext == '.zip':
+            if file_ext == ".zip":
                 try:
-                    with zipfile.ZipFile(temp_path, 'r') as zip_ref:
+                    with zipfile.ZipFile(temp_path, "r") as zip_ref:
                         for member in zip_ref.namelist():
                             member_path = os.path.join(user_dicom_dir, member)
                             if not member_path.startswith(user_dicom_dir):
@@ -328,8 +390,10 @@ async def upload_dicom_files(
         dicom_paths = [
             os.path.join(user_dicom_dir, f)
             for f in os.listdir(user_dicom_dir)
-            if not f.startswith('.') and os.path.isfile(os.path.join(user_dicom_dir, f)) and
-               f.lower().endswith(('.dcm', '')) and not f.lower().endswith('.svs')
+            if not f.startswith(".")
+            and os.path.isfile(os.path.join(user_dicom_dir, f))
+            and f.lower().endswith((".dcm", ""))
+            and not f.lower().endswith(".svs")
         ]
 
         for file_path in dicom_paths:
@@ -341,7 +405,9 @@ async def upload_dicom_files(
 
         if valid_dicom == 0 and valid_svs == 0:
             shutil.rmtree(user_dicom_dir)
-            raise HTTPException(status_code=400, detail="No valid DICOM or SVS files found.")
+            raise HTTPException(
+                status_code=400, detail="No valid DICOM or SVS files found."
+            )
 
         load_volume.cache_clear()
 
@@ -352,14 +418,15 @@ async def upload_dicom_files(
         elif valid_dicom > 0 and valid_svs > 0:
             message = f"Загружено {valid_dicom} срезов DICOM и {valid_svs} файл(ов) SVS"
         else:
-            message = "Файлы загружены, но не удалось распознать ни одного DICOM или SVS."
+            message = (
+                "Файлы загружены, но не удалось распознать ни одного DICOM или SVS."
+            )
 
-        return {
-            "message": message
-        }
+        return {"message": message}
 
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -373,11 +440,12 @@ def get_volume_info(current_user: User = Depends(auth_service.get_current_user))
         return {
             "slices": volume.shape[0],
             "width": volume.shape[1],
-            "height": volume.shape[2]
+            "height": volume.shape[2],
         }
     except Exception as e:
         print(f"Error in volume_info: {str(e)}")  # Логирование
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/metadata")
 def get_metadata(current_user: User = Depends(auth_service.get_current_user)):
@@ -385,19 +453,17 @@ def get_metadata(current_user: User = Depends(auth_service.get_current_user)):
         volume, ds = load_volume(str(current_user.cor_id))
         depth, height, width = volume.shape
 
-        spacing = ds.PixelSpacing if hasattr(ds, 'PixelSpacing') else [1.0, 1.0]
-        slice_thickness = float(ds.SliceThickness) if hasattr(ds, 'SliceThickness') else 1.0
+        spacing = ds.PixelSpacing if hasattr(ds, "PixelSpacing") else [1.0, 1.0]
+        slice_thickness = (
+            float(ds.SliceThickness) if hasattr(ds, "SliceThickness") else 1.0
+        )
 
         metadata = {
-            "shape": {
-                "depth": depth,
-                "height": height,
-                "width": width
-            },
+            "shape": {"depth": depth, "height": height, "width": width},
             "spacing": {
                 "x": float(spacing[1]),
                 "y": float(spacing[0]),
-                "z": slice_thickness
+                "z": slice_thickness,
             },
             "study_info": {
                 "StudyInstanceUID": getattr(ds, "StudyInstanceUID", "N/A"),
@@ -410,28 +476,31 @@ def get_metadata(current_user: User = Depends(auth_service.get_current_user)):
                 "DeviceModel": getattr(ds, "ManufacturerModelName", "N/A"),
                 "KVP": getattr(ds, "KVP", "N/A"),
                 "XRayTubeCurrent": getattr(ds, "XRayTubeCurrent", "N/A"),
-                "Exposure": getattr(ds, "Exposure", "N/A")
-            }
+                "Exposure": getattr(ds, "Exposure", "N/A"),
+            },
         }
 
         return metadata
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 def handle_compressed_dicom(file_path):
     try:
         ds = pydicom.dcmread(file_path, force=True)
-        
-        if hasattr(ds, 'file_meta') and ds.file_meta.TransferSyntaxUID.is_compressed:
+
+        if hasattr(ds, "file_meta") and ds.file_meta.TransferSyntaxUID.is_compressed:
             try:
-                ds.decompress('gdcm')  # Сначала пробуем GDCM
+                ds.decompress("gdcm")  # Сначала пробуем GDCM
             except:
                 try:
-                    ds.decompress('pylibjpeg')  # Затем pylibjpeg
+                    ds.decompress("pylibjpeg")  # Затем pylibjpeg
                 except:
-                    print(f"[WARN] Все методы декомпрессии не сработали для {file_path}")
+                    print(
+                        f"[WARN] Все методы декомпрессии не сработали для {file_path}"
+                    )
                     return None
-                    
+
         return ds
     except Exception as e:
         print(f"[ERROR] Ошибка обработки сжатого DICOM: {e}")

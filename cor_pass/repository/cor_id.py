@@ -113,6 +113,7 @@ async def create_new_corid(user: User, db: AsyncSession):
         await db.rollback()
         raise e
 
+
 async def create_only_corid(birth: int, user_sex: str, db: AsyncSession):
     birth_year_gender = f"{birth}{user_sex}"
     jan_first_2024 = datetime(2024, 1, 1).date()

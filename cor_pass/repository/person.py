@@ -1,18 +1,11 @@
 import base64
-from http.client import HTTPException
 from typing import List, Optional
-from fastapi import UploadFile, status
+from fastapi import UploadFile
 from sqlalchemy.future import select
 from sqlalchemy import func
 import uuid
 from datetime import datetime
-from cor_pass.database.models import (
-    User,
-    Status,
-    Verification,
-    UserSettings,
-    Profile
-)
+from cor_pass.database.models import User, Status, Verification, UserSettings, Profile
 from cor_pass.repository.password_generator import generate_password
 from cor_pass.repository import cor_id as repository_cor_id
 from cor_pass.schemas import (
@@ -40,6 +33,7 @@ from sqlalchemy.exc import NoResultFound
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.config.config import settings
+
 
 async def get_user_by_email(email: str, db: AsyncSession) -> User | None:
     """
@@ -465,10 +459,14 @@ async def get_user_roles(email: str, db: AsyncSession) -> List[str]:
     doctor = await role_check.doctor_role_checker.is_doctor(user=user, db=db)
     if doctor:
         roles.append("doctor")
-    lab_assistant = await role_check.lab_assistant_role_checker.is_lab_assistant(user=user, db=db)
+    lab_assistant = await role_check.lab_assistant_role_checker.is_lab_assistant(
+        user=user, db=db
+    )
     if lab_assistant:
         roles.append("lab_assistant")
-    energy_manager = await role_check.energy_manager_role_checker.is_energy_manager(user=user, db=db)
+    energy_manager = await role_check.energy_manager_role_checker.is_energy_manager(
+        user=user, db=db
+    )
     if energy_manager:
         roles.append("energy_manager")
     if user.is_active:
@@ -510,6 +508,7 @@ async def get_profile_by_user_id(db: AsyncSession, user_id: str) -> Optional[Pro
     """
 
     from sqlalchemy.orm import selectinload
+
     result = await db.execute(
         select(Profile)
         .where(Profile.user_id == user_id)
@@ -517,49 +516,69 @@ async def get_profile_by_user_id(db: AsyncSession, user_id: str) -> Optional[Pro
     )
     return result.scalars().first()
 
-async def upsert_user_profile(db: AsyncSession, user_id: str, profile_data: ProfileCreate) -> Profile:
+
+async def upsert_user_profile(
+    db: AsyncSession, user_id: str, profile_data: ProfileCreate
+) -> Profile:
     """
     Создает или обновляет профиль пользователя, обрабатывая шифрование.
     """
     db_profile = await get_profile_by_user_id(db, user_id)
 
-    update_data = profile_data.model_dump(exclude_unset=True) # Получаем только переданные поля
+    update_data = profile_data.model_dump(
+        exclude_unset=True
+    )  # Получаем только переданные поля
     decoded_key = base64.b64decode(settings.aes_key)
 
     if db_profile:
         print(f"Updating existing profile for user_id: {user_id}")
         for field, value in update_data.items():
             if field in ["surname", "first_name", "middle_name"]:
-                setattr(db_profile, f"encrypted_{field}", await encrypt_data(value.encode("utf-8"), decoded_key) if value is not None else None)
-            elif field == "photo": 
-                pass 
+                setattr(
+                    db_profile,
+                    f"encrypted_{field}",
+                    (
+                        await encrypt_data(value.encode("utf-8"), decoded_key)
+                        if value is not None
+                        else None
+                    ),
+                )
+            elif field == "photo":
+                pass
             else:
                 setattr(db_profile, field, value)
-        
+
         await db.commit()
         await db.refresh(db_profile)
     else:
         print(f"Creating new profile for user_id: {user_id}")
         profile_dict = {}
-        
+
         for field, value in update_data.items():
             if field in ["surname", "first_name", "middle_name"]:
-                profile_dict[f"encrypted_{field}"] = await encrypt_data(value.encode("utf-8"), decoded_key) if value is not None else None
+                profile_dict[f"encrypted_{field}"] = (
+                    await encrypt_data(value.encode("utf-8"), decoded_key)
+                    if value is not None
+                    else None
+                )
             else:
                 profile_dict[field] = value
-        
+
         db_profile = Profile(user_id=user_id, **profile_dict)
         db.add(db_profile)
         await db.commit()
         await db.refresh(db_profile)
-    
+
     return db_profile
 
-async def upload_profile_photo(db: AsyncSession, user_id: str, file: UploadFile) -> Profile:
+
+async def upload_profile_photo(
+    db: AsyncSession, user_id: str, file: UploadFile
+) -> Profile:
     """
     Загружает или обновляет фотографию профиля пользователя.
     """
-    db_profile = await get_profile_by_user_id(db, user_id)    
+    db_profile = await get_profile_by_user_id(db, user_id)
     file_data = await file.read()
     db_profile.photo_data = file_data
     db_profile.photo_file_type = file.content_type
@@ -568,7 +587,10 @@ async def upload_profile_photo(db: AsyncSession, user_id: str, file: UploadFile)
     await db.refresh(db_profile)
     return db_profile
 
-async def get_profile_photo(db: AsyncSession, user_id: str) -> Optional[tuple[bytes, str]]:
+
+async def get_profile_photo(
+    db: AsyncSession, user_id: str
+) -> Optional[tuple[bytes, str]]:
     """
     Получает бинарные данные фотографии профиля и её тип.
     Возвращает кортеж (photo_data, photo_file_type) или None.

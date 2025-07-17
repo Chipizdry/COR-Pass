@@ -1,7 +1,8 @@
 import logging
 import sys
 from loguru import logger
-from cor_pass.config.config import settings 
+from cor_pass.config.config import settings
+
 
 class InterceptHandler(logging.Handler):
     def emit(self, record):
@@ -11,6 +12,7 @@ class InterceptHandler(logging.Handler):
             level = record.levelno
         logger.opt(depth=6, exception=record.exc_info).log(level, record.getMessage())
 
+
 def setup_logging():
     logger.remove()
 
@@ -19,11 +21,10 @@ def setup_logging():
     logger.add(
         sys.stdout,
         format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
-        level=log_level
+        level=log_level,
     )
 
     logging.basicConfig(handlers=[InterceptHandler()], level=0)
-
 
     logging.getLogger("gunicorn").handlers = [InterceptHandler()]
     logging.getLogger("gunicorn").propagate = False
@@ -44,7 +45,7 @@ def setup_logging():
     logging.getLogger("uvicorn.error").handlers = [InterceptHandler()]
     logging.getLogger("uvicorn.error").propagate = False
     logging.getLogger("uvicorn.error").setLevel(log_level)
-    
+
     logging.getLogger("pymodbus.logging").setLevel(logging.INFO)
 
-    logging.getLogger("passlib.handlers.bcrypt").setLevel(logging.ERROR) 
+    logging.getLogger("passlib.handlers.bcrypt").setLevel(logging.ERROR)

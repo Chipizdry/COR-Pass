@@ -9,18 +9,6 @@ from cor_pass.schemas import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-"""
-Модели в базе 
-    device_class = Column(String, nullable=False)
-    device_identifier = Column(String, nullable=False, unique=True, index=True)
-    subnet_mask = Column(String, nullable=True)
-    gateway = Column(String, nullable=True)
-    ip_address = Column(String, nullable=False)
-    port = Column(Integer, nullable=True)
-    comment = Column(String, nullable=True)
-    location = Column(String, nullable=True)
-"""
-
 
 async def create_printing_device(db: AsyncSession, body: CreatePrintingDevice):
     db_printing_device = PrintingDevice(

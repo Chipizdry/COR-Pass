@@ -145,7 +145,7 @@ async function addSchedulePeriod() {
         duration_minutes: 0,
         grid_feed_w: 0,
         battery_level_percent: 50,
-        charge_battery: 500,
+        charge_battery_value: 500,
         is_manual_mode: false
     };
 
@@ -186,7 +186,7 @@ async function addSchedulePeriod() {
             durationMinute,
             feedIn: newSchedule.grid_feed_w || 0,
             batteryLevel: newSchedule.battery_level_percent || 0,
-            chargeEnabled: newSchedule.charge_battery,
+            chargeEnabled: newSchedule.charge_battery_value || 500,
             active: newSchedule.is_manual_mode,
             isManualMode: newSchedule.is_manual_mode
         };
@@ -256,7 +256,7 @@ async function saveSchedulePeriod(buttonElement) {
         duration_minutes: durationMinute,
         grid_feed_w: feedIn,
         battery_level_percent: batteryLevel,
-        charge_battery: chargeEnabled,
+        charge_battery_value: chargeEnabled,
         is_manual_mode: isManualMode
     };
 
@@ -345,7 +345,7 @@ async function toggleSchedule() {
             duration_minutes: period.durationMinute,
             grid_feed_w: period.feedIn,
             battery_level_percent: period.batteryLevel,
-            charge_battery: period.chargeEnabled,
+            charge_battery_value: period.chargeEnabled,
             is_manual_mode: scheduleEnabled // 👈 массово устанавливаем
         };
 

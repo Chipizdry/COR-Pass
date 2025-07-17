@@ -9,10 +9,7 @@ from fastapi import (
 from sqlalchemy.exc import IntegrityError
 from cor_pass.database.db import get_db
 from cor_pass.repository.energy_manager import create_energy_manager
-from cor_pass.schemas import (
-    EnergyManagerCreate,
-    EnergyManagerResponse
-)
+from cor_pass.schemas import EnergyManagerCreate, EnergyManagerResponse
 
 from cor_pass.repository import person as repository_person
 from cor_pass.services.access import admin_access
@@ -28,7 +25,7 @@ router = APIRouter(prefix="/energy_managers", tags=["EnergyManager"])
     response_model=EnergyManagerResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(admin_access)],
-    tags=["Admin"]
+    tags=["Admin"],
 )
 async def signup_user_as_energy_manager(
     user_cor_id: str,
@@ -60,14 +57,12 @@ async def signup_user_as_energy_manager(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred during energy_manager creation.",
         )
-    # Сериализуем ответ
     energy_manager_response = EnergyManagerResponse(
         id=energy_manager.id,
         energy_manager_cor_id=energy_manager.energy_manager_cor_id,
         first_name=energy_manager.first_name,
         surname=energy_manager.surname,
-        middle_name=energy_manager.middle_name
+        middle_name=energy_manager.middle_name,
     )
 
     return energy_manager_response
-

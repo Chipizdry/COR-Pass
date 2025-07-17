@@ -7,8 +7,6 @@ from loguru import logger
 router = APIRouter()
 
 
-
-
 @router.websocket("/ws/events")
 async def websocket_endpoint(websocket: WebSocket):
     """
@@ -21,5 +19,8 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         websocket_events_manager.disconnect(connection_id)
     except Exception as e:
-        logger.error(f"Unhandled error in WebSocket endpoint for ID {connection_id}: {e}", exc_info=True)
+        logger.error(
+            f"Unhandled error in WebSocket endpoint for ID {connection_id}: {e}",
+            exc_info=True,
+        )
         websocket_events_manager.disconnect(connection_id)

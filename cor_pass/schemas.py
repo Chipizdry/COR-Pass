@@ -5,23 +5,19 @@ from pydantic import (
     Field,
     EmailStr,
     PositiveInt,
-    ValidationInfo,
     computed_field,
     field_validator,
     model_validator,
 )
-from typing import Generic, List, Optional, TypeVar, Union, Tuple
+from typing import Generic, List, Literal, Optional, TypeVar, Union
 from datetime import datetime, time, timedelta
 
-from sqlalchemy import UUID
-from cor_pass.database import models
 from cor_pass.database.models import (
     AccessLevel,
     PatientClinicStatus,
     PatientStatus,
     Status,
     Doctor_Status,
-    AuthSessionStatus,
     MacroArchive,
     DecalcificationType,
     SampleType,
@@ -496,6 +492,7 @@ class DoctorResponse(BaseModel):
         from_attributes = True
         arbitrary_types_allowed = True
 
+
 class DoctorResponseForSignature(BaseModel):
     id: str = Field(..., description="ID врача")
     doctor_id: str = Field(..., description="COR-ID врача")
@@ -517,6 +514,7 @@ class DoctorResponseForSignature(BaseModel):
     class Config:
         from_attributes = True
         arbitrary_types_allowed = True
+
 
 class DoctorCreateResponse(BaseModel):
     id: str = Field(..., description="ID врача")
@@ -631,9 +629,11 @@ class PatientDecryptedResponce(BaseModel):
     age: Optional[int] = None
     status: Optional[PatientStatus] = None
 
+
 class PaginatedPatientsResponse(BaseModel):
     items: List[PatientResponce]
     total: int
+
 
 class ExistingPatientRegistration(BaseModel):
     email: Optional[EmailStr] = Field(
@@ -645,14 +645,15 @@ class ExistingPatientRegistration(BaseModel):
         max_length=1,
         description="Пол пациента, может быть 'M'(мужской) или 'F'(женский)",
     )
-    
+
     @field_validator("sex")
-    @classmethod 
-    def validate_sex_and_normalize(cls, v: str) -> str: 
-        normalized_v = v.upper() 
+    @classmethod
+    def validate_sex_and_normalize(cls, v: str) -> str:
+        normalized_v = v.upper()
         if normalized_v not in ["M", "F"]:
             raise ValueError('Пол пациента должен быть "M" или "F".')
-        return normalized_v 
+        return normalized_v
+
 
 class NewPatientRegistration(BaseModel):
     email: Optional[EmailStr] = Field(
@@ -676,7 +677,7 @@ class NewPatientRegistration(BaseModel):
         if v == "":
             return None
         return v
-    
+
     @field_validator("birth_date")
     @classmethod
     def validate_birth_date(cls, v: Optional[date]) -> Optional[date]:
@@ -684,7 +685,7 @@ class NewPatientRegistration(BaseModel):
             raise ValueError("Необходимо указать дату рождения")
 
         min_birth_date = date(1900, 1, 1)
-        current_date = date.today() 
+        current_date = date.today()
 
         if v < min_birth_date:
             raise ValueError("Дата рождения не может быть раньше 1 января 1900 года.")
@@ -693,18 +694,24 @@ class NewPatientRegistration(BaseModel):
             raise ValueError("Дата рождения не может быть в будущем.")
 
         return v
-    
+
     @field_validator("sex")
-    @classmethod 
-    def validate_sex_and_normalize(cls, v: str) -> str: 
-        normalized_v = v.upper() 
+    @classmethod
+    def validate_sex_and_normalize(cls, v: str) -> str:
+        normalized_v = v.upper()
         if normalized_v not in ["M", "F"]:
             raise ValueError('Пол пациента должен быть "M" или "F".')
-        return normalized_v 
+        return normalized_v
 
 
 class ExistingPatientAdd(BaseModel):
-    cor_id: str = Field(..., min_length=10, max_length=18, description="Cor ID существующего пользователя")
+    cor_id: str = Field(
+        ...,
+        min_length=10,
+        max_length=18,
+        description="Cor ID существующего пользователя",
+    )
+
 
 class PatientCreationResponse(BaseModel):
     id: str
@@ -720,9 +727,11 @@ class PatientCreationResponse(BaseModel):
     address: Optional[str]
 
     class Config:
-        from_attributes = True # Для совместимости с SQLAlchemy
+        from_attributes = True  # Для совместимости с SQLAlchemy
+
 
 # Модели для лабораторных исследований
+
 
 class CaseOwnerResponse(BaseModel):
     id: Optional[str] = Field(None, description="ID врача")
@@ -733,6 +742,7 @@ class CaseOwnerResponse(BaseModel):
     middle_name: Optional[str] = Field(None, description="Отчество врача")
     last_name: Optional[str] = Field(None, description="Фамилия врача")
     is_case_owner: Optional[bool] = Field(False, description="Владелец кейса")
+
 
 class GlassBase(BaseModel):
     glass_number: int
@@ -748,12 +758,14 @@ class GlassCreate(BaseModel):
     )
     num_glasses: int = Field(default=1, description="Количество создаваемых стекол")
 
+
 class ChangeGlassStaining(BaseModel):
     staining_type: StainingType = Field(
         ...,
         description="Тип окрашивания для стекла",
         example=StainingType.HE,
     )
+
 
 class Glass(GlassBase):
     id: str
@@ -762,6 +774,7 @@ class Glass(GlassBase):
 
     class Config:
         from_attributes = True
+
 
 class GlassForGlassPage(GlassBase):
     id: str
@@ -829,6 +842,7 @@ class Cassette(CassetteBase):
     class Config:
         from_attributes = True
 
+
 class CassetteForGlassPage(BaseModel):
     # id: str
     # sample_id: str
@@ -858,6 +872,7 @@ class Sample(SampleBase):
 
     class Config:
         from_attributes = True
+
 
 class SampleForGlassPage(BaseModel):
     # id: str
@@ -911,7 +926,9 @@ class CaseCreate(BaseModel):
         description="Тип исследования",
         example=MaterialType.R,
     )
-    num_samples: int = Field(1, ge=1, description="Количество семплов для создания в каждом кейсе")
+    num_samples: int = Field(
+        1, ge=1, description="Количество семплов для создания в каждом кейсе"
+    )
 
 
 class CaseCreateResponse(BaseModel):
@@ -934,8 +951,6 @@ class UpdateCaseCode(BaseModel):
     )
 
 
-
-
 class Case(BaseModel):
     id: str
     creation_date: datetime
@@ -947,9 +962,9 @@ class Case(BaseModel):
     pathohistological_conclusion: Optional[str] = None
     microdescription: Optional[str] = None
     grossing_status: Optional[str] = None
-    is_printed_cassette: Optional[bool] 
-    is_printed_glass: Optional[bool] 
-    is_printed_qr: Optional[bool] 
+    is_printed_cassette: Optional[bool]
+    is_printed_glass: Optional[bool]
+    is_printed_qr: Optional[bool]
 
     class Config:
         from_attributes = True
@@ -972,9 +987,9 @@ class FirstCaseDetailsSchema(BaseModel):
     id: str
     case_code: str
     creation_date: datetime
-    is_printed_cassette: Optional[bool] 
-    is_printed_glass: Optional[bool] 
-    is_printed_qr: Optional[bool] 
+    is_printed_cassette: Optional[bool]
+    is_printed_glass: Optional[bool]
+    is_printed_qr: Optional[bool]
     samples: List[Sample]
 
 
@@ -1017,15 +1032,14 @@ class CaseDetailsResponse(BaseModel):
     glass_count: int
     pathohistological_conclusion: Optional[str] = None
     microdescription: Optional[str] = None
-    is_printed_cassette: Optional[bool] 
-    is_printed_glass: Optional[bool] 
-    is_printed_qr: Optional[bool] 
+    is_printed_cassette: Optional[bool]
+    is_printed_glass: Optional[bool]
+    is_printed_qr: Optional[bool]
     samples: List[SampleWithoutCassettesSchema | Sample]
     # case_owner: Optional[DoctorResponseForSignature] = None
 
     class Config:
         from_attributes = True
-
 
 
 class SimpleCaseResponse(BaseModel):
@@ -1133,29 +1147,37 @@ class ReferralAttachmentResponse(BaseModel):
     file_url: Optional[str] = Field(None, description="URL файла")
 
     class Config:
-        from_attributes = True 
+        from_attributes = True
 
 
 class ReferralAttachmentCreate(BaseModel):
     filename: str
     content_type: str
-    file_data: bytes 
+    file_data: bytes
 
 
 class ReferralCreate(BaseModel):
     case_id: str = Field(..., description="ID связанного кейса")
-    biomaterial_date: Optional[date] = Field(None, description="Дата забора биоматериала")
+    biomaterial_date: Optional[date] = Field(
+        None, description="Дата забора биоматериала"
+    )
     research_type: Optional[StudyType] = Field(None, description="Вид исследования")
-    container_count: Optional[int] = Field(None, description="Фактическое количество контейнеров")
+    container_count: Optional[int] = Field(
+        None, description="Фактическое количество контейнеров"
+    )
     medical_card_number: Optional[str] = Field(None, description="Номер медкарты")
     clinical_data: Optional[str] = Field(None, description="Клинические данные")
     clinical_diagnosis: Optional[str] = Field(None, description="Клинический диагноз")
-    medical_institution: Optional[str] = Field(None, description="Медицинское учреждение")
+    medical_institution: Optional[str] = Field(
+        None, description="Медицинское учреждение"
+    )
     department: Optional[str] = Field(None, description="Отделение")
     attending_doctor: Optional[str] = Field(None, description="Лечащий врач")
     doctor_contacts: Optional[str] = Field(None, description="Контакты врача")
     medical_procedure: Optional[str] = Field(None, description="Медицинская процедура")
-    final_report_delivery: Optional[str] = Field(None, description="Финальный репорт отправить")
+    final_report_delivery: Optional[str] = Field(
+        None, description="Финальный репорт отправить"
+    )
     issued_at: Optional[date] = Field(None, description="Выдано (дата)")
 
 
@@ -1177,17 +1199,17 @@ class ReferralResponse(BaseModel):
     medical_procedure: Optional[str]
     final_report_delivery: Optional[str]
     issued_at: Optional[date]
-    attachments: List[ReferralAttachmentResponse] = [] 
+    attachments: List[ReferralAttachmentResponse] = []
 
     class Config:
         from_attributes = True
+
 
 class ReferralResponseForDoctor(BaseModel):
     case_details: Optional[Case]
     case_owner: Optional[CaseOwnerResponse]
     referral_id: Optional[str] = Field(..., description="Referral ID")
     attachments: Optional[List[ReferralAttachmentResponse]] = []
-    
 
     class Config:
         from_attributes = True
@@ -1206,11 +1228,10 @@ class ReferralUpdate(BaseModel):
     doctor_contacts: Optional[str] = None
     medical_procedure: Optional[str] = None
     final_report_delivery: Optional[str] = None
-    issued_at: Optional[date] = None 
+    issued_at: Optional[date] = None
 
     class Config:
-        from_attributes = True 
-
+        from_attributes = True
 
 
 class ProfileCreate(BaseModel):
@@ -1218,14 +1239,19 @@ class ProfileCreate(BaseModel):
     first_name: Optional[str] = Field(None, max_length=25, description="Имя")
     middle_name: Optional[str] = Field(None, max_length=25, description="Отчество")
     birth_date: Optional[date] = Field(None, description="Дата рождения")
-    phone_number: Optional[str] = Field(None, max_length=15, description="Номер телефона")
+    phone_number: Optional[str] = Field(
+        None, max_length=15, description="Номер телефона"
+    )
     city: Optional[str] = Field(None, max_length=50, description="Город")
     car_brand: Optional[str] = Field(None, max_length=50, description="Марка авто")
     engine_type: Optional[str] = Field(None, max_length=50, description="Тип двигателя")
-    fuel_tank_volume: Optional[int] = Field(None, ge=0, le=1000, description="Обьем бензобака")
+    fuel_tank_volume: Optional[int] = Field(
+        None, ge=0, le=1000, description="Обьем бензобака"
+    )
 
-    class Config: 
-        from_attributes = True 
+    class Config:
+        from_attributes = True
+
 
 class ProfileResponse(BaseModel):
     email: str = Field(description="Имейл пользователя")
@@ -1238,48 +1264,61 @@ class ProfileResponse(BaseModel):
     city: Optional[str] = Field(None, description="Город")
     car_brand: Optional[str] = Field(None, description="Марка авто")
     engine_type: Optional[str] = Field(None, description="Тип двигателя")
-    fuel_tank_volume: Optional[int] = Field(None, ge=0, le=1000, description="Обьем бензобака")
+    fuel_tank_volume: Optional[int] = Field(
+        None, ge=0, le=1000, description="Обьем бензобака"
+    )
 
     class Config:
-        from_attributes = True 
+        from_attributes = True
+
 
 class DeleteMyAccount(BaseModel):
     password: str = Field(min_length=6, max_length=20)
 
 
 class FullUserInfoResponse(BaseModel):
-    user_info: UserDb 
-    user_roles: Optional[List[str]] = None 
-    profile: Optional[ProfileResponse] = None 
-    doctor_info: Optional[DoctorWithRelationsResponse] = None 
+    user_info: UserDb
+    user_roles: Optional[List[str]] = None
+    profile: Optional[ProfileResponse] = None
+    doctor_info: Optional[DoctorWithRelationsResponse] = None
+
     class Config:
-        from_attributes = True 
+        from_attributes = True
+
 
 class UserDataResponse(BaseModel):
-    user_info: UserDb 
+    user_info: UserDb
+
     class Config:
-        from_attributes = True 
+        from_attributes = True
+
 
 class UserProfileResponseForAdmin(BaseModel):
-    profile: Optional[ProfileResponse] = None 
+    profile: Optional[ProfileResponse] = None
+
     class Config:
-        from_attributes = True 
+        from_attributes = True
+
 
 class UserDoctorsDataResponseForAdmin(BaseModel):
-    doctor_info: Optional[DoctorWithRelationsResponse] = None 
+    doctor_info: Optional[DoctorWithRelationsResponse] = None
+
     class Config:
-        from_attributes = True 
+        from_attributes = True
+
 
 class UserRolesResponseForAdmin(BaseModel):
-    user_roles: Optional[List[str]] = None 
+    user_roles: Optional[List[str]] = None
+
     class Config:
-        from_attributes = True 
+        from_attributes = True
+
 
 class ReferralFileSchema(BaseModel):
-    id: Optional[str] = None 
-    file_name: Optional[str] = None 
-    file_type: Optional[str] = None 
-    file_url: Optional[str] = None 
+    id: Optional[str] = None
+    file_name: Optional[str] = None
+    file_type: Optional[str] = None
+    file_url: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -1294,11 +1333,12 @@ class FirstCaseReferralDetailsSchema(BaseModel):
     general_macrodescription: Optional[str] = None
     grossing_status: Optional[str] = None
     patient_cor_id: Optional[str] = None
-   
-    attachments: Optional[List[ReferralFileSchema]] = None 
+
+    attachments: Optional[List[ReferralFileSchema]] = None
 
     class Config:
         from_attributes = True
+
 
 class DoctorSignatureBase(BaseModel):
     signature_name: Optional[str] = None
@@ -1306,27 +1346,30 @@ class DoctorSignatureBase(BaseModel):
 
 
 class DoctorSignatureCreate(DoctorSignatureBase):
-    pass 
+    pass
+
 
 class DoctorSignatureResponse(DoctorSignatureBase):
     id: str
     doctor_id: str
-    signature_scan_data: Optional[str] = None 
-    signature_scan_type: Optional[str] = None 
+    signature_scan_data: Optional[str] = None
+    signature_scan_type: Optional[str] = None
     created_at: datetime
 
     class Config:
         from_attributes = True
 
+
 class ReportSignatureSchema(BaseModel):
     id: str
-    doctor: DoctorResponseForSignature 
-    signed_at: Optional[datetime] = None 
+    doctor: DoctorResponseForSignature
+    signed_at: Optional[datetime] = None
 
-    doctor_signature: Optional[DoctorSignatureResponse] = None 
+    doctor_signature: Optional[DoctorSignatureResponse] = None
 
     class Config:
         from_attributes = True
+
 
 class ReportBaseSchema(BaseModel):
     immunohistochemical_profile: Optional[str] = None
@@ -1334,18 +1377,22 @@ class ReportBaseSchema(BaseModel):
     pathomorphological_diagnosis: Optional[str] = None
     icd_code: Optional[str] = None
     comment: Optional[str] = None
-    
-    attached_glass_ids: Optional[List[str]] = None 
+
+    attached_glass_ids: Optional[List[str]] = None
+
 
 class ReportCreateSchema(ReportBaseSchema):
     pass
 
+
 class ReportUpdateSchema(ReportBaseSchema):
     pass
+
+
 class DoctorDiagnosisSchema(BaseModel):
     id: str
     report_id: str
-    doctor: DoctorResponseForSignature 
+    doctor: DoctorResponseForSignature
     created_at: datetime
     immunohistochemical_profile: Optional[str] = None
     molecular_genetic_profile: Optional[str] = None
@@ -1354,15 +1401,17 @@ class DoctorDiagnosisSchema(BaseModel):
     comment: Optional[str] = None
     report_microdescription: Optional[str] = None
     report_macrodescription: Optional[str] = None
-    signature: Optional[ReportSignatureSchema] = None 
+    signature: Optional[ReportSignatureSchema] = None
 
     class Config:
         from_attributes = True
+
+
 class FinalReportResponseSchema(BaseModel):
     id: Optional[str] = None
     case_id: str
     case_code: str
-    
+
     biopsy_date: Optional[date] = None
     arrival_date: Optional[date] = None
     report_date: Optional[date] = None
@@ -1387,7 +1436,7 @@ class FinalReportResponseSchema(BaseModel):
     clinical_diagnosis: Optional[str] = None
 
     painting: Optional[List[StainingType]] = None
-    
+
     macroarchive: Optional[MacroArchive] = None
     decalcification: Optional[DecalcificationType] = None
     fixation: Optional[FixationType] = None
@@ -1395,26 +1444,30 @@ class FinalReportResponseSchema(BaseModel):
     containers_recieved: Optional[int] = None
     containers_actual: Optional[int] = None
 
-    doctor_diagnoses: List[DoctorDiagnosisSchema] = [] 
+    doctor_diagnoses: List[DoctorDiagnosisSchema] = []
 
-    # attached_glass_ids: List[str] = [] 
-    attached_glasses: List[Glass] = [] 
+    # attached_glass_ids: List[str] = []
+    attached_glasses: List[Glass] = []
 
     class Config:
         from_attributes = True
+
 
 class PatientFinalReportPageResponse(BaseModel):
     all_cases: Optional[List[Case]] = None
     last_case_details: Optional[Case] = None
     case_owner: Optional[CaseOwnerResponse]
     report_details: Optional[FinalReportResponseSchema]
+
     class Config:
         from_attributes = True
+
 
 class CaseFinalReportPageResponse(BaseModel):
     case_details: Case
     case_owner: Optional[CaseOwnerResponse]
     report_details: Optional[FinalReportResponseSchema]
+
     class Config:
         from_attributes = True
 
@@ -1429,7 +1482,6 @@ class PatientCasesWithReferralsResponse(BaseModel):
         from_attributes = True
 
 
-
 class FirstCaseGlassDetailsSchema(BaseModel):
     id: str
     case_code: str
@@ -1439,18 +1491,18 @@ class FirstCaseGlassDetailsSchema(BaseModel):
     general_macrodescription: Optional[str] = None
     grossing_status: Optional[str] = None
     patient_cor_id: Optional[str] = None
-    is_printed_cassette: Optional[bool] 
-    is_printed_glass: Optional[bool] 
+    is_printed_cassette: Optional[bool]
+    is_printed_glass: Optional[bool]
     is_printed_qr: Optional[bool]
 
-    samples: List[SampleForGlassPage] 
+    samples: List[SampleForGlassPage]
 
     class Config:
         from_attributes = True
 
 
 class PatientGlassPageResponse(BaseModel):
-    all_cases: List[Case] 
+    all_cases: List[Case]
     first_case_details_for_glass: Optional[FirstCaseGlassDetailsSchema] = None
     case_owner: Optional[CaseOwnerResponse]
     report_details: Optional[FinalReportResponseSchema]
@@ -1465,18 +1517,17 @@ class SingleCaseGlassPageResponse(BaseModel):
     report_details: Optional[FinalReportResponseSchema]
 
 
-
-
 class PathohistologicalConclusionResponse(BaseModel):
     pathohistological_conclusion: Optional[str] = None
+
 
 class UpdatePathohistologicalConclusion(BaseModel):
     pathohistological_conclusion: str
 
 
-
 class MicrodescriptionResponse(BaseModel):
     microdescription: Optional[str] = None
+
 
 class UpdateMicrodescription(BaseModel):
     microdescription: str
@@ -1484,9 +1535,9 @@ class UpdateMicrodescription(BaseModel):
 
 class SampleForExcisionPage(BaseModel):
     id: str
-    sample_number: str 
-    is_archived: bool = False 
-    macro_description: Optional[str] = None 
+    sample_number: str
+    is_archived: bool = False
+    macro_description: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -1501,10 +1552,9 @@ class LastCaseExcisionDetailsSchema(BaseModel):
     case_parameters: Optional[CaseParametersScheema] = None
     grossing_status: Optional[str] = None
     patient_cor_id: Optional[str] = None
-    is_printed_cassette: Optional[bool] 
-    is_printed_glass: Optional[bool] 
-    is_printed_qr: Optional[bool] 
-
+    is_printed_cassette: Optional[bool]
+    is_printed_glass: Optional[bool]
+    is_printed_qr: Optional[bool]
 
     samples: List[SampleForExcisionPage]
 
@@ -1529,8 +1579,6 @@ class SingleCaseExcisionPageResponse(BaseModel):
     class Config:
         from_attributes = True
 
-        
-
 
 # Тестовые схемы под репорт
 class GlassTestModelScheema(BaseModel):
@@ -1543,33 +1591,41 @@ class GlassTestModelScheema(BaseModel):
 class CassetteTestForGlassPage(BaseModel):
     id: str
     cassette_number: str
-    sample_id: str 
+    sample_id: str
 
-    glasses: List[GlassTestModelScheema] = [] 
+    glasses: List[GlassTestModelScheema] = []
+
 
 class SampleTestForGlassPage(BaseModel):
     id: str
-    sample_number: str 
+    sample_number: str
     case_id: str
     sample_macro_description: Optional[str] = None
 
-    cassettes: List[CassetteTestForGlassPage] = [] 
+    cassettes: List[CassetteTestForGlassPage] = []
+
 
 class FirstCaseTestGlassDetailsSchema(BaseModel):
     id: str
     case_code: str
-    creation_date: datetime 
+    creation_date: datetime
     grossing_status: Optional[str] = None
     samples: List[SampleTestForGlassPage]
+
     class Config:
         from_attributes = True
 
 
-
 class LabAssistantCreate(BaseModel):
-    first_name: Optional[str] = Field(None, min_length=1, max_length=20, description="Имя лаборанта")
-    middle_name: Optional[str] = Field(None, min_length=1, max_length=20, description="Отчество лаборанта")
-    last_name: Optional[str] = Field(None, min_length=1, max_length=20, description="Фамилия лаборанта")
+    first_name: Optional[str] = Field(
+        None, min_length=1, max_length=20, description="Имя лаборанта"
+    )
+    middle_name: Optional[str] = Field(
+        None, min_length=1, max_length=20, description="Отчество лаборанта"
+    )
+    last_name: Optional[str] = Field(
+        None, min_length=1, max_length=20, description="Фамилия лаборанта"
+    )
 
     class Config:
         from_attributes = True
@@ -1588,9 +1644,15 @@ class LabAssistantResponse(BaseModel):
 
 
 class EnergyManagerCreate(BaseModel):
-    first_name: Optional[str] = Field(None, min_length=1, max_length=20, description="Имя менеджера энергии")
-    middle_name: Optional[str] = Field(None, min_length=1, max_length=20, description="Отчество менеджера энергии")
-    last_name: Optional[str] = Field(None, min_length=1, max_length=20, description="Фамилия менеджера энергии")
+    first_name: Optional[str] = Field(
+        None, min_length=1, max_length=20, description="Имя менеджера энергии"
+    )
+    middle_name: Optional[str] = Field(
+        None, min_length=1, max_length=20, description="Отчество менеджера энергии"
+    )
+    last_name: Optional[str] = Field(
+        None, min_length=1, max_length=20, description="Фамилия менеджера энергии"
+    )
 
     class Config:
         from_attributes = True
@@ -1606,8 +1668,6 @@ class EnergyManagerResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-
 
 
 class PatientResponseForGetPatients(BaseModel):
@@ -1626,18 +1686,21 @@ class PatientResponseForGetPatients(BaseModel):
     clinic_status: Optional[PatientClinicStatus] = None
 
 
-
-
 class GetAllPatientsResponce(BaseModel):
     patients: List[PatientResponseForGetPatients]
     total_count: int
 
 
-
 class LawyerCreate(BaseModel):
-    first_name: str = Field(..., min_length=1, max_length=20, description="Имя менеджера энергии")
-    middle_name: str = Field(..., min_length=1, max_length=20, description="Отчество менеджера энергии")
-    last_name: str = Field(..., min_length=1, max_length=20, description="Фамилия менеджера энергии")
+    first_name: str = Field(
+        ..., min_length=1, max_length=20, description="Имя менеджера энергии"
+    )
+    middle_name: str = Field(
+        ..., min_length=1, max_length=20, description="Отчество менеджера энергии"
+    )
+    last_name: str = Field(
+        ..., min_length=1, max_length=20, description="Фамилия менеджера энергии"
+    )
 
     class Config:
         from_attributes = True
@@ -1655,38 +1718,36 @@ class LawyerResponse(BaseModel):
         from_attributes = True
 
 
-
-
 class ReportResponseSchema(BaseModel):
     id: str
     case_id: str
-    case_details: Optional[Case] = None 
+    case_details: Optional[Case] = None
     macro_description_from_case_params: Optional[str] = None
     microdescription_from_case: Optional[str] = None
     concatenated_macro_description: Optional[str] = None
 
-    doctor_diagnoses: List[DoctorDiagnosisSchema] = [] 
+    doctor_diagnoses: List[DoctorDiagnosisSchema] = []
 
     attached_glasses: List[Glass] = []
 
     class Config:
         from_attributes = True
+
+
 class PatientReportPageResponse(BaseModel):
-    all_cases: List[Case] 
-    
-    last_case_for_report: Optional[Case] = None 
+    all_cases: List[Case]
+
+    last_case_for_report: Optional[Case] = None
     report_details: Optional[ReportResponseSchema] = None
-    
-    all_glasses_for_last_case: List[FirstCaseGlassDetailsSchema] = [] 
+
+    all_glasses_for_last_case: List[FirstCaseGlassDetailsSchema] = []
 
     class Config:
         from_attributes = True
 
 
-
 class SignReportRequest(BaseModel):
     doctor_signature_id: Optional[str] = None
-
 
 
 class PatientTestReportPageResponse(BaseModel):
@@ -1695,8 +1756,10 @@ class PatientTestReportPageResponse(BaseModel):
     case_owner: Optional[CaseOwnerResponse]
     report_details: Optional[ReportResponseSchema]
     all_glasses_for_last_case: Optional[FirstCaseTestGlassDetailsSchema] = None
+
     class Config:
         from_attributes = True
+
 
 class CaseIDReportPageResponse(BaseModel):
     last_case_for_report: Optional[Case] = None
@@ -1706,7 +1769,6 @@ class CaseIDReportPageResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
 
 
 class DoctorDiagnosisInputSchema(BaseModel):
@@ -1721,16 +1783,15 @@ class DoctorDiagnosisInputSchema(BaseModel):
 
 class ReportAndDiagnosisUpdateSchema(BaseModel):
 
-    attached_glass_ids: Optional[List[str]] = None 
+    attached_glass_ids: Optional[List[str]] = None
     doctor_diagnosis_data: Optional[DoctorDiagnosisInputSchema] = None
-
-
 
 
 class CaseCloseResponse(BaseModel):
     message: str
     case_id: str
     new_status: str
+
 
 class CaseOwnershipResponse(BaseModel):
     case_details: Optional[CaseDetailsResponse]
@@ -1758,25 +1819,25 @@ class CaseOwnershipResponse(BaseModel):
 #         return v
 
 
-#     @model_validator(mode='after') 
+#     @model_validator(mode='after')
 #     def check_diastolic_less_than_systolic(self):
 #         if self.diastolic_pressure >= self.systolic_pressure:
 #             raise ValueError("Диастолическое давление не может быть выше или равно систолическому.")
-#         return self 
+#         return self
 
 # class BloodPressureMeasures(BaseModel):
-#     sistolic: Optional[int] = Field(None, alias="sistolic") 
+#     sistolic: Optional[int] = Field(None, alias="sistolic")
 #     diastolic: Optional[int] = Field(None, alias="diastolic")
 
 
 # class IndividualResult(BaseModel):
-#     measures: str | BloodPressureMeasures 
-#     member: List[str] 
+#     measures: str | BloodPressureMeasures
+#     member: List[str]
 
 
 # class TonometrIncomingData(BaseModel):
 #     created_at: datetime
-#     member: List[str] 
+#     member: List[str]
 #     result: List[IndividualResult]
 
 
@@ -1789,73 +1850,100 @@ class NewBloodPressureMeasurementResponse(BaseModel):
     user_id: str
     created_at: datetime
 
-class BloodPressureMeasurementCreate(BaseModel):
-    systolic_pressure: Optional[int] = Field(None, gt=0, description="Систолическое (верхнее) давление")
-    diastolic_pressure: Optional[int] = Field(None, gt=0, description="Диастолическое (нижнее) давление")
-    pulse: Optional[int] = Field(None, gt=0, description="Пульс")
-    measured_at: datetime = Field(..., description="Дата и время измерения (с устройства)")
 
-    @field_validator('systolic_pressure')
+class BloodPressureMeasurementCreate(BaseModel):
+    systolic_pressure: Optional[int] = Field(
+        None, gt=0, description="Систолическое (верхнее) давление"
+    )
+    diastolic_pressure: Optional[int] = Field(
+        None, gt=0, description="Диастолическое (нижнее) давление"
+    )
+    pulse: Optional[int] = Field(None, gt=0, description="Пульс")
+    measured_at: datetime = Field(
+        ..., description="Дата и время измерения (с устройства)"
+    )
+
+    @field_validator("systolic_pressure")
     @classmethod
     def validate_systolic_range(cls, v):
         if v is not None and not (50 <= v <= 250):
-            raise ValueError("Систолическое давление должно быть в диапазоне от 50 до 250.")
+            raise ValueError(
+                "Систолическое давление должно быть в диапазоне от 50 до 250."
+            )
         return v
 
-    @field_validator('diastolic_pressure')
+    @field_validator("diastolic_pressure")
     @classmethod
     def validate_diastolic_range(cls, v):
-        if v is not None and not (30 <= v <= 150): 
-            raise ValueError("Диастолическое давление должно быть в диапазоне от 30 до 150.")
+        if v is not None and not (30 <= v <= 150):
+            raise ValueError(
+                "Диастолическое давление должно быть в диапазоне от 30 до 150."
+            )
         return v
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_diastolic_less_than_systolic(self):
         if self.diastolic_pressure is not None and self.systolic_pressure is not None:
             if self.diastolic_pressure >= self.systolic_pressure:
-                raise ValueError("Диастолическое давление не может быть выше или равно систолическому.")
+                raise ValueError(
+                    "Диастолическое давление не может быть выше или равно систолическому."
+                )
         return self
+
 
 class BloodPressureMeasurementResponse(BloodPressureMeasurementCreate):
     id: str = Field(..., description="Уникальный идентификатор измерения")
-    user_id: str = Field(..., description="Идентификатор пользователя, которому принадлежит измерение")
+    user_id: str = Field(
+        ..., description="Идентификатор пользователя, которому принадлежит измерение"
+    )
     created_at: datetime = Field(..., description="Дата и время записи в БД")
 
     class Config:
-        from_attributes = True     
+        from_attributes = True
+
 
 class MeasureValue(BaseModel):
     value: int
+
 
 class BloodPressureMeasures(BaseModel):
     sistolic: int = Field(..., gt=0, description="Систолическое (верхнее) давление")
     diastolic: int = Field(..., gt=0, description="Диастолическое (нижнее) давление")
 
-    @field_validator('sistolic')
+    @field_validator("sistolic")
     @classmethod
     def validate_systolic_range(cls, v):
         if not (50 <= v <= 250):
-            raise ValueError("Систолическое давление должно быть в диапазоне от 50 до 250.")
+            raise ValueError(
+                "Систолическое давление должно быть в диапазоне от 50 до 250."
+            )
         return v
 
-    @field_validator('diastolic')
+    @field_validator("diastolic")
     @classmethod
     def validate_diastolic_range(cls, v):
         if not (30 <= v <= 150):
-            raise ValueError("Диастолическое давление должно быть в диапазоне от 30 до 150.")
+            raise ValueError(
+                "Диастолическое давление должно быть в диапазоне от 30 до 150."
+            )
         return v
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def check_diastolic_less_than_systolic(self):
         if self.diastolic >= self.sistolic:
-            raise ValueError("Диастолическое давление не может быть выше или равно систолическому.")
+            raise ValueError(
+                "Диастолическое давление не может быть выше или равно систолическому."
+            )
         return self
 
-MeasuresValue = str 
+
+MeasuresValue = str
+
 
 class IndividualResult(BaseModel):
-    measures: MeasuresValue  
+    measures: MeasuresValue
     member: List[str]
+
 
 class TonometrIncomingData(BaseModel):
     created_at: datetime
@@ -1863,22 +1951,33 @@ class TonometrIncomingData(BaseModel):
     results_list: List[IndividualResult] = Field(..., alias="results")
 
 
+# Модели для опроса инвертора
 
-# Модели для опроса инвертора 
 
 class FullDeviceMeasurementCreate(BaseModel):
     # Общая информация о измерении
     measured_at: datetime = Field(..., description="Время измерения")
-    object_name: Optional[str] = Field(None, description="ID устройства, если применимо")
-    
+    object_name: Optional[str] = Field(
+        None, description="ID устройства, если применимо"
+    )
+
     # агрегированные данные
-    general_battery_power: float = Field(..., description="Общая мощность батареи") # Изменено на float
-    inverter_total_ac_output: float = Field(..., description="Общая выходная мощность AC инвертора") # Изменено на float
-    ess_total_input_power: float = Field(..., description="Общая входная мощность ESS") # Изменено на float
-    solar_total_pv_power: float = Field(..., description="Общая мощность солнечных панелей") # Изменено на float
+    general_battery_power: float = Field(
+        ..., description="Общая мощность батареи"
+    )  # Изменено на float
+    inverter_total_ac_output: float = Field(
+        ..., description="Общая выходная мощность AC инвертора"
+    )  # Изменено на float
+    ess_total_input_power: float = Field(
+        ..., description="Общая входная мощность ESS"
+    )  # Изменено на float
+    solar_total_pv_power: float = Field(
+        ..., description="Общая мощность солнечных панелей"
+    )  # Изменено на float
 
     class Config:
         from_attributes = True
+
 
 class FullDeviceMeasurementResponse(FullDeviceMeasurementCreate):
     id: str
@@ -1886,20 +1985,29 @@ class FullDeviceMeasurementResponse(FullDeviceMeasurementCreate):
 
 
 class CerboMeasurementResponse(BaseModel):
-    id: str = Field(..., description="Уникальный идентификатор записи") 
+    id: str = Field(..., description="Уникальный идентификатор записи")
     created_at: datetime = Field(..., description="Дата и время сохранения записи в БД")
-    measured_at: datetime = Field(..., description="Дата и время измерения, полученное с устройства")
+    measured_at: datetime = Field(
+        ..., description="Дата и время измерения, полученное с устройства"
+    )
     object_name: Optional[str] = Field(None, description="Имя объекта/устройства")
     general_battery_power: float = Field(..., description="Мощность батареи")
-    inverter_total_ac_output: float = Field(..., description="Общая выходная мощность инвертора AC")
-    ess_total_input_power: float = Field(..., description="Общая входная мощность ESS AC")
-    solar_total_pv_power: float = Field(..., description="Общая мощность солнечных панелей")
+    inverter_total_ac_output: float = Field(
+        ..., description="Общая выходная мощность инвертора AC"
+    )
+    ess_total_input_power: float = Field(
+        ..., description="Общая входная мощность ESS AC"
+    )
+    solar_total_pv_power: float = Field(
+        ..., description="Общая мощность солнечных панелей"
+    )
 
     class Config:
         from_attributes = True
 
 
 T = TypeVar("T")
+
 
 class PaginatedResponse(BaseModel, Generic[T]):
     items: List[T] = Field(..., description="Список элементов на текущей странице")
@@ -1911,14 +2019,18 @@ class PaginatedResponse(BaseModel, Generic[T]):
 
 # Модель данных для управления ESS
 
+
 class VebusSOCControl(BaseModel):
-    soc_threshold: int 
+    soc_threshold: int
+
 
 class EssAdvancedControl(BaseModel):
     ac_power_setpoint_fine: int = Field(..., ge=-100000, le=100000)
 
+
 class GridLimitUpdate(BaseModel):
     enabled: bool  # True → 1, False → 0
+
 
 class EssModeControl(BaseModel):
     switch_position: int = Field(..., ge=1, le=4)
@@ -1929,43 +2041,58 @@ class EssPowerControl(BaseModel):
     ess_power_setpoint_l2: Optional[int] = Field(None, ge=-32768, le=32767)
     ess_power_setpoint_l3: Optional[int] = Field(None, ge=-32768, le=32767)
 
+
 class EssFeedInControl(BaseModel):
     max_feed_in_l1: Optional[int] = None
     max_feed_in_l2: Optional[int] = None
     max_feed_in_l3: Optional[int] = None
 
 
-
-
 """
 Модели для расписания
 """
+
+
 class EnergeticScheduleBase(BaseModel):
     start_time: time = Field(..., description="Время начала работы режима (ЧЧ:ММ)")
-    duration_hours: int = Field(..., ge=0, description="Продолжительность режима в часах")
-    duration_minutes: int = Field(..., ge=0, lt=60, description="Продолжительность режима в минутах (0-59)")
+    duration_hours: int = Field(
+        ..., ge=0, description="Продолжительность режима в часах"
+    )
+    duration_minutes: int = Field(
+        ..., ge=0, lt=60, description="Продолжительность режима в минутах (0-59)"
+    )
     grid_feed_w: int = Field(..., ge=0, description="Параметр отдачи в сеть (Вт)")
-    battery_level_percent: int = Field(..., ge=0, le=100, description="Целевой уровень батареи (%)")
-    charge_battery: bool = Field(False, description="Флаг: заряжать батарею в этом режиме")
-    is_manual_mode: bool = Field(False, description="Флаг: находится ли инвертор в ручном режиме")
-    
+    battery_level_percent: int = Field(
+        ..., ge=0, le=100, description="Целевой уровень батареи (%)"
+    )
+    charge_battery_value: int = Field(..., ge=-1, le=10000, description="заряжать батарею в этом режиме и с каким значением")
+    is_manual_mode: bool = Field(
+        False, description="Флаг: находится ли инвертор в ручном режиме"
+    )
+
     class Config:
         from_attributes = True
 
+
 class EnergeticScheduleCreate(EnergeticScheduleBase):
     pass
+
 
 class EnergeticScheduleResponse(BaseModel):
 
     id: str = Field(..., description="Уникальный идентификатор расписания")
     start_time: time = Field(..., description="Время начала работы режима (ЧЧ:ММ)")
     grid_feed_w: float = Field(..., ge=0.0, description="Параметр отдачи в сеть (Вт)")
-    battery_level_percent: int = Field(..., ge=0, le=100, description="Целевой уровень батареи (%)")
-    charge_battery: bool = Field(False, description="Флаг: заряжать батарею в этом режиме")
+    battery_level_percent: int = Field(
+        ..., ge=0, le=100, description="Целевой уровень батареи (%)"
+    )
+    charge_battery_value: int = Field(..., ge=-1, le=10000, description="заряжать батарею в этом режиме и с каким значением")
     is_active: bool = Field(True, description="Флаг: активно ли это расписание")
-    is_manual_mode: bool = Field(False, description="Флаг: находится ли инвертор в ручном режиме")
-    duration: Optional[timedelta] = None 
-    
+    is_manual_mode: bool = Field(
+        False, description="Флаг: находится ли инвертор в ручном режиме"
+    )
+    duration: Optional[timedelta] = None
+
     @computed_field
     @property
     def formatted_duration(self) -> str:
@@ -1973,17 +2100,57 @@ class EnergeticScheduleResponse(BaseModel):
             total_seconds = int(self.duration.total_seconds())
             hours, remainder = divmod(total_seconds, 3600)
             minutes, seconds = divmod(remainder, 60)
-            
+
             parts = []
             if hours > 0:
                 parts.append(f"{hours}h")
             if minutes > 0:
                 parts.append(f"{minutes}m")
-            if seconds > 0 or not parts: 
+            if seconds > 0 or not parts:
                 parts.append(f"{seconds}s")
-            
+
             return " ".join(parts)
-        return "N/A" 
+        return "N/A"
 
     class Config:
         from_attributes = True
+
+
+class RegisterWriteRequest(BaseModel):
+    slave_id: int
+    register: int
+    value: int
+
+
+class InverterPowerPayload(BaseModel):
+    inverter_power: float
+
+class DVCCMaxChargeCurrentRequest(BaseModel):
+    current_limit: int = Field(
+        ..., ge=-1, le=32767, description="DVCCMaxChargeCurrent (-1 или положительное значение до 32767)"
+    )
+
+
+
+
+
+class SearchResultPatientOverview(PatientFirstCaseDetailsResponse):
+    search_type: Literal["patient_overview"] = "patient_overview"
+
+class SearchResultCaseDetails(PatientGlassPageResponse): 
+    search_type: Literal["case_details"] = "case_details"
+
+SearchResultUnion = Union[
+    SearchResultPatientOverview,
+    SearchResultCaseDetails
+]
+
+class UnifiedSearchResponse(BaseModel):
+    data: SearchResultUnion = Field(discriminator='search_type')
+
+
+class SearchCaseDetailsSimple(BaseModel):
+    search_type: Literal["case_details"] = "case_details"
+    case_id: str
+    patient_id: str
+

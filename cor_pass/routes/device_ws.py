@@ -42,9 +42,7 @@ async def device_websocket_endpoint(
     await websocket.accept()
     try:
         device = await auth_service.get_current_device(token, db)
-        device_id_str = str(
-            device.id
-        )  # Преобразуем ID устройства в строку для ключей словарей
+        device_id_str = str(device.id)
         # device_id_str = "str(device.id)"
         # await websocket.accept()
         print(f"Устройство с ID {device_id_str} (токен: {token[:10]}...) подключилось.")
@@ -55,11 +53,7 @@ async def device_websocket_endpoint(
                 print(f"Получены данные от устройства {device_id_str}: {data}")
                 try:
                     json_data = json.loads(data)
-                    device_data[device_id_str] = (
-                        json_data  # Сохраняем последние полученные данные, к примеру
-                    )
-                    # Тут можно добавить логику обработки полученных данных от устройства
-                    # Например, сохранение в базу данных через сессию db
+                    device_data[device_id_str] = json_data
                 except json.JSONDecodeError:
                     print(
                         f"Получены некорректные JSON данные от устройства {device_id_str}: {data}"
@@ -148,7 +142,6 @@ async def disconnect_device(device_id: str):
     )
 
 
-# Активация нового устройства по его токену
 @router.post(
     "/activate", response_model=DeviceResponse, dependencies=[Depends(user_access)]
 )
@@ -283,7 +276,6 @@ async def get_device_data(
     ),
     db: AsyncSession = Depends(get_db),
 ):
-    # Здесь будет логика получения данных с устройства
     return {"device_id": device.id, "data": "some sensor data"}
 
 
@@ -300,7 +292,6 @@ async def send_command_to_device(
     db: AsyncSession = Depends(get_db),
     command: str = "start",
 ):
-    # Здесь будет логика отправки команды на устройство
     return {"device_id": device.id, "command_sent": command}
 
 

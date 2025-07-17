@@ -34,7 +34,11 @@ class LawyerAccess:
     def __init__(self, email):
         self.email = email
 
-    async def __call__(self, user: User = Depends(auth_service.get_current_user), db: AsyncSession = Depends(db.get_db)):
+    async def __call__(
+        self,
+        user: User = Depends(auth_service.get_current_user),
+        db: AsyncSession = Depends(db.get_db),
+    ):
         has_access = False
         if user.email in settings.admin_accounts:
             has_access = True
@@ -72,9 +76,10 @@ class DoctorAccess:
                 detail="Doctor access required and status is not approved",
             )
         return doctor
-    
-class LabAssistantOrDoctorAccess: 
-    def __init__(self, email): 
+
+
+class LabAssistantOrDoctorAccess:
+    def __init__(self, email):
         self.email = email
 
     async def __call__(
@@ -82,17 +87,19 @@ class LabAssistantOrDoctorAccess:
         user: User = Depends(auth_service.get_current_user),
         db: AsyncSession = Depends(db.get_db),
     ):
-        lab_assistant_query = select(LabAssistant).where(LabAssistant.lab_assistant_cor_id == user.cor_id)
+        lab_assistant_query = select(LabAssistant).where(
+            LabAssistant.lab_assistant_cor_id == user.cor_id
+        )
         lab_assistant = await db.scalar(lab_assistant_query)
 
         if lab_assistant:
-            return lab_assistant 
+            return lab_assistant
 
         doctor_query = select(Doctor).where(Doctor.doctor_id == user.cor_id)
         doctor = await db.scalar(doctor_query)
 
         if doctor and doctor.status == Doctor_Status.approved:
-            return doctor 
+            return doctor
 
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -104,4 +111,4 @@ user_access = UserAccess([User.is_active])
 admin_access = AdminAccess([User.email])
 lawyer_access = LawyerAccess([User.email])
 doctor_access = DoctorAccess([User.email])
-lab_assistant_or_doctor_access = LabAssistantOrDoctorAccess([User.email]) 
+lab_assistant_or_doctor_access = LabAssistantOrDoctorAccess([User.email])
