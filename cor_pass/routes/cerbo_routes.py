@@ -292,7 +292,7 @@ async def set_vebus_soc(control: VebusSOCControl, request: Request):
         logger.debug(f"📤 Установка VE.Bus SoC: {control.soc_threshold}%")
         client = request.app.state.modbus_client
 
-        # Значение с масштабированием x10 (как в описании)
+        
         scaled_value = int(control.soc_threshold * 10)
 
         await client.write_register(

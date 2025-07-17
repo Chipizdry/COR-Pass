@@ -46,8 +46,8 @@ function renderScheduleTable() {
             </td>
             <td>${endTime.hour}:${endTime.minute.toString().padStart(2, '0')}</td>
             <td>
-                <input type="number" class="integer-input" min="0" max="100000" step="10" value="${period.feedIn}" 
-                    onchange="updateSchedulePeriod('${period.id}', 'feedIn', this.value)">
+                    <input type="number" class="integer-input" min="-100000" max="100000" step="10" value="${period.feedIn}" 
+                     onchange="updateSchedulePeriod('${period.id}', 'feedIn', this.value)">
             </td>
             <td>
                 <input type="number" class="integer-input" min="0" max="100" value="${period.batteryLevel}" 
