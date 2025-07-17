@@ -297,6 +297,7 @@ async function fetchEssAdvancedSettings() {
             // Устанавливаем начальное значение для ползунка отдачи в сеть
             const feedInValue = data.ac_power_setpoint_fine || 0;
             const InverterPowerValue = data.max_discharge_power || 0;
+            const ChargingCurrent =data.dvcc_max_charge_current || 0;
             // Обновляем исходное значение только если ползунок не был изменен пользователем
             if (!isFeedInSliderChanged) {
                 initialFeedInValue = feedInValue;
@@ -307,6 +308,12 @@ async function fetchEssAdvancedSettings() {
                 initialInverterPowerValue = InverterPowerValue;
                 document.getElementById('InverterPowerSlider').value = InverterPowerValue;
                 document.getElementById('InverterSliderValue').textContent = InverterPowerValue;
+            }
+
+            if (!chargingCurrentChanged) {
+                initialChargingCurrent =ChargingCurrent ;
+                document.getElementById("ChargingCurrentSlider").value =ChargingCurrent ;
+                document.getElementById("ChargingSliderValue").textContent = ChargingCurrent + " A";
             }
 
 
@@ -329,7 +336,7 @@ function updateEssAdvancedDisplay(data) {
     document.getElementById("charge_voltage").textContent = data.max_charge_voltage + " В";
     document.getElementById("input1_src").textContent = formatInputSource(data.ac_input_1_source);
     document.getElementById("input2_src").textContent = formatInputSource(data.ac_input_2_source);
-   // console.log("Ограничение выдачи:",data.grid_limiting_status);
+   
 }
 
 function formatInputSource(code) {
@@ -386,29 +393,57 @@ async function saveAcSetpoint() {
     }
 }
 
-
 async function saveInverterPower() {
-    const value = parseInt(document.getElementById('InverterPowerSlider').value, 10);
+    const saveButton = document.getElementById('saveInverterPower');
+    saveButton.disabled = true;
+
+    let successMessages = [];
 
     try {
-        const res = await fetch('/api/modbus/ess_advanced_settings/inverter_power', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ inverter_power: value })
-        });
+        if (inverterPowerChanged) {
+            const inverterValue = parseInt(document.getElementById('InverterPowerSlider').value, 10);
+            const res = await fetch('/api/modbus/ess_advanced_settings/inverter_power', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ inverter_power: inverterValue })
+            });
+            if (!res.ok) throw new Error((await res.json()).detail || "Ошибка записи регистра 2704");
 
-        if (!res.ok) throw new Error((await res.json()).detail || "Ошибка записи регистра 2704");
+            initialInverterPowerValue = inverterValue;
+            inverterPowerChanged = false;
+            successMessages.push("Мощность инвертора");
+        }
 
-        initialInverterPowerValue = value;
-        isInverterSliderChanged = false;
-        document.getElementById('saveInverterPower').disabled = true;
+        if (chargingCurrentChanged) {
+            const chargingValue = parseInt(document.getElementById('ChargingCurrentSlider').value, 10);
+            const res = await fetch('/api/modbus/ess_advanced_settings/dvcc_max_charge_current', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ current_limit: chargingValue })
+            });
+            if (!res.ok) throw new Error((await res.json()).detail || "Ошибка записи регистра 2705");
 
+            initialChargingCurrent = chargingValue;
+            chargingCurrentChanged = false;
+            successMessages.push("Ток заряда");
+        }
+
+        // Очистка таймеров
         if (inverterChangeTimeout) {
             clearTimeout(inverterChangeTimeout);
             inverterChangeTimeout = null;
         }
+        if (chargingChangeTimeout) {
+            clearTimeout(chargingChangeTimeout);
+            chargingChangeTimeout = null;
+        }
 
-        showInverterConfirmationMessage("✅ Успешно сохранено", true);
+        if (successMessages.length > 0) {
+            showInverterConfirmationMessage(`✅ Сохранено: ${successMessages.join(", ")}`, true);
+        } else {
+            showInverterConfirmationMessage("Нет изменений для сохранения", false);
+        }
+
     } catch (err) {
         showInverterConfirmationMessage("❌ Ошибка: " + err.message, false);
     }

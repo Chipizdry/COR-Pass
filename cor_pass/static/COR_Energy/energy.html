@@ -641,9 +641,9 @@
                  <h3 style="margin-top:30; color:#291161;font-size: 17px;">Информация о инверторе</h3>
             </div> 
 
-            <label for="ChargingCurrent" style="font-weight: bold;">Ток заряда MAX (A)</label>
+            <label for="ChargingCurrentSlider" style="font-weight: bold;">Ток заряда MAX (A)</label>
             <div style="display: flex; align-items: center; gap: 10px;">
-                <input type="range" id="ChargingCurrentSlider" min="0" max="30000" step="100" value="0" style="width: 250px;">
+                <input type="range" id="ChargingCurrentSlider" min="0" max="3000" step="100" value="0" style="width: 250px;">
                 <span id="ChargingSliderValue">0</span>
             </div>
 
@@ -729,6 +729,10 @@
             let initialInverterPowerValue = 0;
             let inverterChangeTimeout = null;
             let inverterPowerChanged = false;
+
+            let initialChargingCurrent = 0;
+            let chargingChangeTimeout = null;
+            let chargingCurrentChanged = false;
             
             let lastPowerValue = 0;
 
@@ -805,9 +809,9 @@
             document.getElementById("batteryModal").style.display = "none";
                 }
 
-                    document.getElementById('feedInPowerSlider').addEventListener('input', function() {
-                        document.getElementById('feedInSliderValue').textContent = this.value;
-                    });
+            document.getElementById('feedInPowerSlider').addEventListener('input', function() {
+            document.getElementById('feedInSliderValue').textContent = this.value;
+            });
                     
 // Обработчик изменения ползунка батареи
 document.getElementById('State_Of_Сharge').addEventListener('input', function() {
@@ -873,7 +877,23 @@ document.getElementById('InverterPowerSlider').addEventListener('input', functio
 });
 
 
+document.getElementById('ChargingCurrentSlider').addEventListener('input', function () {
+    const newValue = this.value;
+    const saveButton = document.getElementById('saveInverterPower');
+    document.getElementById('ChargingSliderValue').textContent = newValue;
 
+    chargingCurrentChanged = true;
+    saveButton.disabled = false;
+
+    if (chargingChangeTimeout) {
+        clearTimeout(chargingChangeTimeout);
+    }
+
+    chargingChangeTimeout = setTimeout(() => {
+        resetChargingSlider();
+        showInverterConfirmationMessage("Изменения тока заряда не сохранены!!!", false);
+    }, 4000);
+});
 
 
         </script>

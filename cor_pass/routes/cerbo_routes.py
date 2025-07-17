@@ -48,6 +48,8 @@ class RegisterWriteRequest(BaseModel):
 class InverterPowerPayload(BaseModel):
     inverter_power: float
 
+class DVCCMaxChargeCurrentRequest(BaseModel):
+    current_limit: int  # -1 или положительное значение до 32767
 
 
 @router.get("/error_count")
@@ -408,6 +410,37 @@ async def set_inverter_power_setpoint(payload: InverterPowerPayload, request: Re
 
 
 
+@router.post("/ess_advanced_settings/dvcc_max_charge_current")
+async def set_dvcc_max_charge_current(data: DVCCMaxChargeCurrentRequest, request: Request):
+    """
+    Устанавливает DVCC system max charge current (регистр 2705)
+    """
+    try:
+        client = request.app.state.modbus_client
+        slave = INVERTER_ID
+
+        value = data.current_limit
+
+        # Проверка границ значений int16
+        if not -32768 <= value <= 32767:
+            raise HTTPException(status_code=400, detail="Значение выходит за пределы int16")
+
+        # Преобразуем в формат Modbus (uint16) для передачи
+        if value < 0:
+            register_value = (1 << 16) + value  # преобразуем -1 в 0xFFFF
+        else:
+            register_value = value
+
+        # Запись в регистр
+        await client.write_register(address=2705, value=register_value, slave=slave)
+
+        logging.info(f"✅ Установлен DVCC max charge current: {value} A (регистр 2705 = {register_value})")
+        return {"status": "ok", "value": value}
+
+    except Exception as e:
+        register_modbus_error()
+        logging.error("❗ Ошибка установки DVCC max charge current", exc_info=e)
+        raise HTTPException(status_code=500, detail="Modbus ошибка")
 
 
 

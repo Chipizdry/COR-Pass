@@ -452,6 +452,28 @@
         }
     }
 
+
+
+    function resetChargingSlider() {
+        const slider = document.getElementById('ChargingCurrentSlider');
+        slider.value = initialChargingCurrent;
+        document.getElementById('ChargingSliderValue').textContent = initialChargingCurrent;
+        chargingCurrentChanged = false;
+    
+        if (chargingChangeTimeout) {
+            clearTimeout(chargingChangeTimeout);
+            chargingChangeTimeout = null;
+        }
+    
+        const saveButton = document.getElementById('saveInverterPower');
+        if (!inverterPowerChanged && !chargingCurrentChanged) {
+            saveButton.disabled = true;
+        }
+    }    
+
+    
+
+
 // Функция показа сообщения
 function showConfirmationMessage(message, isSuccess) {
     const element = document.getElementById('confirmationMessage');
