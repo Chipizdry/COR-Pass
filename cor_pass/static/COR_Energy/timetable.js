@@ -1,4 +1,21 @@
 
+function getShiftedTime(h, m, shiftHours) {
+    const date = new Date();
+    date.setUTCHours(h);
+    date.setUTCMinutes(m);
+    date.setUTCSeconds(0);
+    date.setUTCMilliseconds(0);
+    date.setUTCHours(date.getUTCHours() + shiftHours);
+    return {
+        hours: date.getUTCHours(),
+        minutes: date.getUTCMinutes(),
+    };
+}
+
+function formatIsoTimeWithShift(h, m) {
+    const shifted = getShiftedTime(h, m, -3);
+    return `${String(shifted.hours).padStart(2, '0')}:${String(shifted.minutes).padStart(2, '0')}:00.000Z`;
+}
 
 
 function initScheduleTable() {
@@ -248,8 +265,8 @@ async function saveSchedulePeriod(buttonElement) {
     const active = row.querySelector('select[name="active"]').value === 'true';
     const isManualMode = active; 
 
-    const formattedStartTime = formatIsoTime(startHour, startMinute); // "08:00:00.000Z"
-
+   // const formattedStartTime = formatIsoTime(startHour, startMinute); // "08:00:00.000Z"
+    const formattedStartTime = formatIsoTimeWithShift(startHour, startMinute); 
     const dataToSend = {
         start_time: formattedStartTime,
         duration_hours: durationHour,
@@ -340,7 +357,8 @@ async function toggleSchedule() {
 
     const updatePromises = schedulePeriods.map(async period => {
         const dataToSend = {
-            start_time: formatIsoTime(period.startHour, period.startMinute),
+         //   start_time: formatIsoTime(period.startHour, period.startMinute),
+            start_time: formatIsoTimeWithShift(period.startHour, period.startMinute),
             duration_hours: period.durationHour,
             duration_minutes: period.durationMinute,
             grid_feed_w: period.feedIn,
@@ -500,8 +518,12 @@ async function fetchAllSchedulePeriods() {
         // Преобразуем полученные данные в формат, используемый на фронтенде
         const formattedPeriods = periods.map(period => {
             const startTime = new Date(`1970-01-01T${period.start_time}`);
-            const startHour = startTime.getHours();
-            const startMinute = startTime.getMinutes();
+            let startHour = startTime.getHours();
+            let startMinute = startTime.getMinutes();
+
+            // сдвигаем +3 ЧАСА сразу после получения, локально используем уже сдвинутое
+            ({ hours: startHour, minutes: startMinute } = getShiftedTime(startHour, startMinute, 3));
+
 
             let durationHour = 0;
             let durationMinute = 0;
@@ -522,7 +544,7 @@ async function fetchAllSchedulePeriods() {
                 durationMinute,
                 feedIn: period.grid_feed_w,
                 batteryLevel: period.battery_level_percent,
-                chargeEnabled: period.charge_battery,
+                chargeEnabled:period.charge_battery_value,
                 active: period.is_manual_mode
             };
         });
