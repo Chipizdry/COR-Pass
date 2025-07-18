@@ -19,7 +19,7 @@ function formatIsoTimeWithShift(h, m) {
 
 
 function initScheduleTable() {
-    fetchAllSchedulePeriods().then(() => {
+    fetchAllSchedulePeriods().then(() => {   
         renderScheduleTable();
     });
 }
@@ -163,7 +163,7 @@ async function addSchedulePeriod() {
         grid_feed_w: 0,
         battery_level_percent: 50,
         charge_battery_value: 500,
-        is_manual_mode: false
+        is_manual_mode: !false
     };
 
     try {
@@ -263,7 +263,7 @@ async function saveSchedulePeriod(buttonElement) {
     const batteryLevel = parseInt(row.querySelector('input[onchange*="batteryLevel"]').value);
     const chargeEnabled = parseInt(row.querySelector('input[onchange*="chargeEnabled"]').value);
     const active = row.querySelector('select[name="active"]').value === 'true';
-    const isManualMode = active; 
+    const isManualMode = !active; 
 
    // const formattedStartTime = formatIsoTime(startHour, startMinute); // "08:00:00.000Z"
     const formattedStartTime = formatIsoTimeWithShift(startHour, startMinute); 
@@ -364,7 +364,7 @@ async function toggleSchedule() {
             grid_feed_w: period.feedIn,
             battery_level_percent: period.batteryLevel,
             charge_battery_value: period.chargeEnabled,
-            is_manual_mode: scheduleEnabled // 👈 массово устанавливаем
+            is_manual_mode: !scheduleEnabled // 👈 массово устанавливаем
         };
 
         try {
@@ -461,7 +461,7 @@ function renderTimeline() {
             `Начало: ${period.startHour}:${period.startMinute.toString().padStart(2, '0')}\n` +
             `Длительность: ${period.durationHour}ч ${period.durationMinute}м\n` +
             `Мощность: ${period.feedIn} кВт\n` +
-            `Заряд: ${period.chargeEnabled}`;
+            `Ток заряда: ${period.chargeEnabled} А`;
     
         if (endMinutes <= 1440) {
             // Не пересекает полночь
@@ -475,6 +475,7 @@ function renderTimeline() {
             addPeriodBlock(startMinutes, untilMidnight, label);
     
             // Часть после 00:00
+            
             addPeriodBlock(0, afterMidnight, label);
         }
     
@@ -545,7 +546,7 @@ async function fetchAllSchedulePeriods() {
                 feedIn: period.grid_feed_w,
                 batteryLevel: period.battery_level_percent,
                 chargeEnabled:period.charge_battery_value,
-                active: period.is_manual_mode
+                active: !period.is_manual_mode
             };
         });
 
