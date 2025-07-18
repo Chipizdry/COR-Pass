@@ -40,6 +40,18 @@ function renderScheduleTable() {
         const row = document.createElement('tr');
         row.dataset.periodId = period.id;
         
+        row.dataset.original = JSON.stringify({
+            startHour: period.startHour,
+            startMinute: period.startMinute,
+            durationHour: period.durationHour,
+            durationMinute: period.durationMinute,
+            feedIn: period.feedIn,
+            batteryLevel: period.batteryLevel,
+            chargeEnabled: period.chargeEnabled,
+            active: period.active
+        });
+
+
         const endTime = calculateEndTime(
             period.startHour, 
             period.startMinute, 
@@ -81,7 +93,7 @@ function renderScheduleTable() {
                 </select>
             </td>
             <td>
-                <button onclick="saveSchedulePeriod(this)" class="action-btn save-btn" title="Сохранить">💾</button>
+                <button onclick="saveSchedulePeriod(this)" class="action-btn save-btn inactive" title="Сохранить">💾</button>         
                 <button onclick="deleteSchedulePeriod(this)" class="action-btn delete-btn" title="Удалить">❌</button>
             </td>
         `;
@@ -239,11 +251,24 @@ function updateSchedulePeriod(id, field, value) {
         if (field === 'startHour' && (convertedValue < 0 || convertedValue > 23)) return;
         if ((field === 'startMinute' || field === 'durationMinute') && (convertedValue < 0 || convertedValue > 59)) return;
         if (field === 'durationHour' && convertedValue < 0) return;
+        if (field === 'feedIn' && (convertedValue < -100000 || convertedValue > 100000)) return;
         if (field === 'batteryLevel' && (convertedValue < 0 || convertedValue > 100)) return;
         if (field === 'chargeEnabled' && (convertedValue < 0 || convertedValue > 32767)) return;
     }
     
     period[field] = convertedValue;
+
+
+    const row = document.querySelector(`tr[data-period-id="${id}"]`);
+    const saveBtn = row.querySelector('.save-btn');
+
+    if (checkIfPeriodChanged(row)) {
+        saveBtn.classList.remove('inactive');
+        saveBtn.classList.add('active');
+    } else {
+        saveBtn.classList.remove('active');
+        saveBtn.classList.add('inactive');
+    }
 }
 
 function formatIsoTime(h, m) {
@@ -265,7 +290,7 @@ async function saveSchedulePeriod(buttonElement) {
     const active = row.querySelector('select[name="active"]').value === 'true';
     const isManualMode = !active; 
 
-   // const formattedStartTime = formatIsoTime(startHour, startMinute); // "08:00:00.000Z"
+   
     const formattedStartTime = formatIsoTimeWithShift(startHour, startMinute); 
     const dataToSend = {
         start_time: formattedStartTime,
@@ -475,7 +500,7 @@ function renderTimeline() {
             addPeriodBlock(startMinutes, untilMidnight, label);
     
             // Часть после 00:00
-            
+
             addPeriodBlock(0, afterMidnight, label);
         }
     
@@ -569,4 +594,94 @@ async function fetchAllSchedulePeriods() {
         showNotification('Ошибка при загрузке расписания', 'error');
         return [];
     }
+}
+
+
+function checkIfPeriodChanged(row) {
+    const original = JSON.parse(row.dataset.original);
+
+    const current = {
+        startHour: parseInt(row.querySelector('input[onchange*="startHour"]').value),
+        startMinute: parseInt(row.querySelector('input[onchange*="startMinute"]').value),
+        durationHour: parseInt(row.querySelector('input[onchange*="durationHour"]').value),
+        durationMinute: parseInt(row.querySelector('input[onchange*="durationMinute"]').value),
+        feedIn: parseFloat(row.querySelector('input[onchange*="feedIn"]').value),
+        batteryLevel: parseInt(row.querySelector('input[onchange*="batteryLevel"]').value),
+        chargeEnabled: parseInt(row.querySelector('input[onchange*="chargeEnabled"]').value),
+        active: row.querySelector('select[name="active"]').value === 'true'
+    };
+
+    for (let key in original) {
+        // Приводим к числу или булевому значению для точного сравнения
+        if (typeof original[key] === 'boolean') {
+            if (Boolean(original[key]) !== Boolean(current[key])) return true;
+        } else if (typeof original[key] === 'number') {
+            if (Number(original[key]) !== Number(current[key])) return true;
+        } else {
+            if (original[key] !== current[key]) return true;
+        }
+    }
+
+    return false;
+}
+
+function savePeriod(id) {
+    const row = document.querySelector(`tr[data-period-id="${id}"]`);
+    if (!row) return;
+
+    const startHour = parseInt(row.querySelector('input[onchange*="startHour"]').value);
+    const startMinute = parseInt(row.querySelector('input[onchange*="startMinute"]').value);
+    const durationHour = parseInt(row.querySelector('input[onchange*="durationHour"]').value);
+    const durationMinute = parseInt(row.querySelector('input[onchange*="durationMinute"]').value);
+    const feedIn = parseFloat(row.querySelector('input[onchange*="feedIn"]').value);
+    const batteryLevel = parseInt(row.querySelector('input[onchange*="batteryLevel"]').value);
+    const chargeEnabled = parseInt(row.querySelector('input[onchange*="chargeEnabled"]').value);
+    const active = row.querySelector('select[name="active"]').value === 'true';
+
+    fetch('/save_schedule_period', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            id,
+            startHour,
+            startMinute,
+            durationHour,
+            durationMinute,
+            feedIn,
+            batteryLevel,
+            chargeEnabled,
+            active
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // ⬇️ Вот этот блок — обновляет сохранённые значения
+            const updatedRow = document.querySelector(`tr[data-period-id="${id}"]`);
+            if (updatedRow) {
+                updatedRow.dataset.original = JSON.stringify({
+                    startHour,
+                    startMinute,
+                    durationHour,
+                    durationMinute,
+                    feedIn,
+                    batteryLevel,
+                    chargeEnabled,
+                    active
+                });
+
+                const saveBtn = updatedRow.querySelector('.save-btn');
+                saveBtn.classList.remove('active');
+                saveBtn.classList.add('inactive');
+            }
+        } else {
+            alert('Ошибка при сохранении');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при сохранении');
+    });
 }
