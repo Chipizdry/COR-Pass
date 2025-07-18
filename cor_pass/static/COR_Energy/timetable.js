@@ -424,6 +424,92 @@ async function toggleSchedule() {
 // Инициализация таблицы при загрузке страницы
 document.addEventListener('DOMContentLoaded', initScheduleTable);
 
+/*
+function renderTimeline() {
+    const container = document.getElementById('timelinePeriods');
+    const hoursContainer = document.getElementById('timelineHours');
+    
+    // Очищаем контейнеры
+    container.innerHTML = '';
+    hoursContainer.innerHTML = '';
+    
+    // Добавляем часы (00:00 - 23:00)
+    for (let i = 0; i < 24; i++) {
+        const hourElem = document.createElement('div');
+        hourElem.className = 'timeline-hour';
+        hourElem.textContent = `${i.toString().padStart(2, '0')}:00`;
+        hoursContainer.appendChild(hourElem);
+    }
+    
+    // Определяем общее количество периодов для расчета шага высоты
+    const activePeriodsCount = schedulePeriods.filter(p => p.active).length;
+    const heightStep = activePeriodsCount > 0 ? 100 / (activePeriodsCount + 1) : 0;
+    
+    // Добавляем периоды
+    let periodIndex = 0;
+    schedulePeriods.forEach((period, index) => {
+        if (!period.active) return;
+    
+        const startMinutes = period.startHour * 60 + period.startMinute;
+        const durationMinutes = period.durationHour * 60 + period.durationMinute;
+        const endMinutes = startMinutes + durationMinutes;
+    
+        const bottomPosition = 5 + (periodIndex * heightStep);
+    
+        const addPeriodBlock = (start, width, label) => {
+            const periodElem = document.createElement('div');
+            periodElem.className = 'timeline-period';
+            periodElem.style.left = `${(start / 1440) * 100}%`;
+            periodElem.style.width = `${(width / 1440) * 100}%`;
+            periodElem.style.backgroundColor = periodColors[index % periodColors.length];
+            periodElem.style.height = `8px`;
+            periodElem.style.bottom = `${bottomPosition}%`;
+    
+            periodElem.setAttribute('data-tooltip', label);
+    
+            periodElem.addEventListener('click', () => {
+                const rows = document.querySelectorAll('#scheduleTableBody tr');
+                if (rows[index]) {
+                    rows[index].style.backgroundColor = '#ffff99';
+                    setTimeout(() => {
+                        rows[index].style.backgroundColor = '';
+                    }, 2500);
+                    rows[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
+    
+            container.appendChild(periodElem);
+        };
+    
+        // Текст подсказки
+        const label = `Период ${index + 1}\n` +
+            `Начало: ${period.startHour}:${period.startMinute.toString().padStart(2, '0')}\n` +
+            `Длительность: ${period.durationHour}ч ${period.durationMinute}м\n` +
+            `Потребление: ${period.feedIn} Вт\n` +
+            `Ток заряда: ${period.chargeEnabled} А`;
+    
+        if (endMinutes <= 1440) {
+            // Не пересекает полночь
+            addPeriodBlock(startMinutes, durationMinutes, label);
+        } else {
+            // Пересекает полночь — нужно разделить
+            const untilMidnight = 1440 - startMinutes;
+            const afterMidnight = endMinutes - 1440;
+    
+            // Часть до 00:00
+            addPeriodBlock(startMinutes, untilMidnight, label);
+    
+            // Часть после 00:00
+
+            addPeriodBlock(0, afterMidnight, label);
+        }
+    
+        periodIndex++;
+    });
+}
+
+ */
+
 
 function renderTimeline() {
     const container = document.getElementById('timelinePeriods');
@@ -485,7 +571,7 @@ function renderTimeline() {
         const label = `Период ${index + 1}\n` +
             `Начало: ${period.startHour}:${period.startMinute.toString().padStart(2, '0')}\n` +
             `Длительность: ${period.durationHour}ч ${period.durationMinute}м\n` +
-            `Мощность: ${period.feedIn} кВт\n` +
+            `Потребление: ${period.feedIn} Вт\n` +
             `Ток заряда: ${period.chargeEnabled} А`;
     
         if (endMinutes <= 1440) {
@@ -500,14 +586,39 @@ function renderTimeline() {
             addPeriodBlock(startMinutes, untilMidnight, label);
     
             // Часть после 00:00
-
             addPeriodBlock(0, afterMidnight, label);
         }
     
         periodIndex++;
     });
-}
 
+    // Добавляем линию текущего времени
+    const timeLine = document.createElement('div');
+    timeLine.id = 'currentTimeLine';
+    timeLine.className = 'current-time-line';
+    
+    const timeLabel = document.createElement('div');
+    timeLabel.className = 'current-time-label';
+    timeLine.appendChild(timeLabel);
+    
+    container.appendChild(timeLine);
+    
+    // Функция обновления положения линии
+    function updateCurrentTimeLine() {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const totalMinutes = hours * 60 + minutes;
+        const percentage = (totalMinutes / 1440) * 100;
+        
+        timeLine.style.left = `${percentage}%`;
+        timeLabel.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    }
+    
+    // Обновляем сразу и затем каждую минуту
+    updateCurrentTimeLine();
+    setInterval(updateCurrentTimeLine, 60000);
+}
 
 // Функция для показа уведомлений
 function showNotification(message, type) {
