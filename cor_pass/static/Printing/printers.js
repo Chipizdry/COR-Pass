@@ -71,23 +71,76 @@ async function printLabel(printerIp, templateNumber, content, resultElement = nu
         }
     }
     
-    // Функция мониторинга состояния принтера
-    function startPrinterMonitoring() {
-        const statusElement = document.getElementById('printerStatus');
-        const ipInput = document.getElementById('printerIp');
+ // Функция мониторинга состояния всех принтеров
+function startPrinterMonitoring() {
+    const statusElement = document.getElementById('printerStatus');
+    if (!statusElement) return;
 
-        setInterval(async () => {
-            const ip = ipInput ? ipInput.value.trim() : PRINTER_IP;
-            console.log(`[startPrinterMonitoring] Текущий IP: ${ip}`);
+    let currentPrinterIndex = 0;
+    
+    // Функция для проверки одного принтера
+    const checkNextPrinter = async () => {
+        // Обновляем список принтеров на случай изменений
+        await loadDevicesList();
+        
+        if (availablePrinters.length === 0) {
+            return;
+        }
 
-            const isAvailable = await checkPrinterAvailability(ip);
+        // Получаем текущий принтер (с циклическим перебором)
+        const printer = availablePrinters[currentPrinterIndex];
+        currentPrinterIndex = (currentPrinterIndex + 1) % availablePrinters.length;
 
-            console.log(`[startPrinterMonitoring] Статус принтера: ${isAvailable ? 'доступен' : 'недоступен'}`);
+        // Находим строку таблицы для этого принтера
+        const row = document.querySelector(`tr[data-device-id="${printer.id}"]`);
+        if (!row) return;
 
-            statusElement.textContent = isAvailable ? 'Принтер доступен' : 'Принтер недоступен';
-            statusElement.style.color = isAvailable ? 'green' : 'red';
-        }, 3000);
-    }
+        // Находим или создаем элемент для индикатора статуса
+        let statusIndicator = row.querySelector('.status-indicator');
+        if (!statusIndicator) {
+            statusIndicator = document.createElement('div');
+            statusIndicator.className = 'status-indicator';
+            statusIndicator.style.display = 'inline-block';
+            statusIndicator.style.width = '12px';
+            statusIndicator.style.height = '12px';
+            statusIndicator.style.borderRadius = '50%';
+            statusIndicator.style.marginRight = '5px';
+            statusIndicator.style.verticalAlign = 'middle';
+            
+            // Вставляем перед первым элементом в ячейке с IP
+            const ipCell = row.querySelector('td:nth-child(3)');
+            ipCell.insertBefore(statusIndicator, ipCell.firstChild);
+        }
+
+        // Проверяем доступность принтера
+        try {
+            statusIndicator.style.backgroundColor = 'gray'; // Серый - проверка
+            
+            const isAvailable = await checkPrinterAvailability(printer.ip_address);
+            
+            // Обновляем индикатор статуса
+            statusIndicator.style.backgroundColor = isAvailable ? 'green' : 'red';
+            
+            // Добавляем tooltip с дополнительной информацией
+            statusIndicator.title = `${printer.device_class} (${printer.ip_address})\n` +
+                                  `Статус: ${isAvailable ? 'Доступен' : 'Недоступен'}\n` +
+                                  `Последняя проверка: ${new Date().toLocaleTimeString()}`;
+            
+        } catch (error) {
+            statusIndicator.style.backgroundColor = 'orange'; // Оранжевый - ошибка проверки
+            statusIndicator.title = `Ошибка проверки: ${error.message}`;
+        }
+    };
+
+    // Запускаем первую проверку сразу
+    checkNextPrinter();
+    
+    // Затем продолжаем проверять с интервалом
+    const intervalId = setInterval(checkNextPrinter, 3000);
+    
+    // Возвращаем функцию для остановки мониторинга
+    return () => clearInterval(intervalId);
+}
     
 
     // Функция добавления нового устройства
@@ -174,11 +227,12 @@ async function printLabel(printerIp, templateNumber, content, resultElement = nu
 
 
 
-
- // Функция для получения списка устройств и отображения в таблице
- async function loadDevicesList() {
+// Функция для получения списка устройств и отображения в таблице с кнопками действий
+async function loadDevicesList() {
     const devicesListElement = document.getElementById('devicesList');
-    devicesListElement.innerHTML = '<p>Загрузка списка устройств...</p>';
+    if (devicesListElement) {
+        devicesListElement.innerHTML = '<p>Загрузка списка устройств...</p>';
+    }
     
     try {
         const response = await fetch('/api/printing_devices/all', {
@@ -194,86 +248,256 @@ async function printLabel(printerIp, templateNumber, content, resultElement = nu
         }
         
         const devices = await response.json();
-        availablePrinters = devices.filter(device => device.device_class === 'printer');
+        availablePrinters = devices.filter(device => 
+            device.device_class === 'GlassPrinter' || 
+            device.device_class === 'CassetPrinter' ||
+            device.device_class === 'CassetPrinterHopper'
+        );
         
         // Обновляем выпадающий список принтеров
         updatePrinterDropdown();
         
-        // Отображаем таблицу (ваш существующий код)
-        if (devices.length === 0) {
-            devicesListElement.innerHTML = '<p>Устройства не найдены</p>';
-            return;
+        if (devicesListElement) {
+            if (devices.length === 0) {
+                devicesListElement.innerHTML = '<p>Устройства не найдены</p>';
+                return devices;
+            }
+            
+            let tableHTML = `
+                <table class="devices-table">
+                    <thead>
+                        <tr>
+                            <th>Тип</th>
+                            <th>Идентификатор</th>
+                            <th>IP-адрес</th>
+                            <th>Местоположение</th>
+                            <th>Комментарий</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            devices.forEach(device => {
+                tableHTML += `
+                    <tr data-device-id="${device.id}">
+                        <td>${device.device_class}</td>
+                        <td>${device.device_identifier}</td>
+                        <td><input type="text" class="editable-field ip-address" value="${device.ip_address}" data-original="${device.ip_address}"></td>
+                        <td><input type="text" class="editable-field location" value="${device.location || ''}" data-original="${device.location || ''}"></td>
+                        <td><input type="text" class="editable-field comment" value="${device.comment || ''}" data-original="${device.comment || ''}"></td>
+                        <td class="actions">
+                            <button class="action-btn save-btn" onclick="saveDeviceChanges('${device.id}')" title="Сохранить">💾</button>
+                            <button class="action-btn delete-btn" onclick="deleteDevice('${device.id}')" title="Удалить">❌</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+            
+            devicesListElement.innerHTML = tableHTML;
         }
         
-        let tableHTML = `
-            <table class="devices-table">
-                <thead>
-                    <tr>
-                        <th>Тип</th>
-                        <th>Идентификатор</th>
-                        <th>IP-адрес</th>
-                        <th>Местоположение</th>
-                        <th>Комментарий</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-        
-        devices.forEach(device => {
-            tableHTML += `
-                <tr>
-                    <td>${device.device_class}</td>
-                    <td>${device.device_identifier}</td>
-                    <td>${device.ip_address}</td>
-                    <td>${device.location || '-'}</td>
-                    <td>${device.comment || '-'}</td>
-                </tr>
-            `;
-        });
-        
-        tableHTML += `
-                </tbody>
-            </table>
-        `;
-        
-        devicesListElement.innerHTML = tableHTML;
-        
+        return devices;
     } catch (error) {
         console.error('Ошибка при загрузке списка устройств:', error);
-        devicesListElement.innerHTML = `<p style="color: red;">Ошибка при загрузке: ${error.message}</p>`;
+        if (devicesListElement) {
+            devicesListElement.innerHTML = `<p style="color: red;">Ошибка при загрузке: ${error.message}</p>`;
+        }
+        throw error;
     }
 }
 
+// Функция для сохранения изменений устройства
+async function saveDeviceChanges(deviceId) {
+    const row = document.querySelector(`tr[data-device-id="${deviceId}"]`);
+    if (!row) return;
 
+    // Получаем все необходимые данные из строки таблицы
+    const deviceClass = row.querySelector('td:first-child').textContent;
+    const deviceIdentifier = row.querySelector('td:nth-child(2)').textContent;
+    const ipAddress = row.querySelector('.ip-address').value;
+    const location = row.querySelector('.location').value;
+    const comment = row.querySelector('.comment').value;
+
+    // Формируем полный объект данных согласно API
+    const deviceData = {
+        device_class: deviceClass,
+        device_identifier: deviceIdentifier,
+        ip_address: ipAddress,
+        subnet_mask: "255.255.255.0", // Значение по умолчанию
+        gateway: "0.0.0.0", // Значение по умолчанию
+        port: 0, // Значение по умолчанию
+        comment: comment,
+        location: location
+    };
+
+    try {
+        const response = await fetch(`/api/printing_devices/${deviceId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + getToken()
+            },
+            body: JSON.stringify(deviceData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Ошибка HTTP: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log('Устройство успешно обновлено:', result);
+
+        // Обновляем оригинальные значения в data-атрибутах
+        row.querySelector('.ip-address').dataset.original = ipAddress;
+        row.querySelector('.location').dataset.original = location;
+        row.querySelector('.comment').dataset.original = comment;
+
+        // Показываем уведомление вместо alert
+        showNotification('Изменения успешно сохранены!', 'success');
+        updatePrinterDropdown(); // Обновляем список принтеров
+
+    } catch (error) {
+        console.error('Ошибка при сохранении изменений:', error);
+        
+        // Показываем более информативное сообщение об ошибке
+        let errorMessage = 'Ошибка при сохранении: ';
+        if (error.message.includes('422')) {
+            errorMessage += 'Неверные данные. Проверьте введенные значения.';
+        } else {
+            errorMessage += error.message;
+        }
+        
+        showNotification(errorMessage, 'error');
+        
+        // Восстанавливаем оригинальные значения
+        row.querySelector('.ip-address').value = row.querySelector('.ip-address').dataset.original;
+        row.querySelector('.location').value = row.querySelector('.location').dataset.original;
+        row.querySelector('.comment').value = row.querySelector('.comment').dataset.original;
+    }
+}
+
+// Вспомогательная функция для показа уведомлений
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Автоматическое скрытие через 3 секунды
+    setTimeout(() => {
+        notification.classList.add('fade-out');
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 500);
+    }, 3000);
+}
+
+// Функция для удаления устройства
+async function deleteDevice(deviceId) {
+    if (!confirm('Вы уверены, что хотите удалить это устройство?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/printing_devices/${deviceId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + getToken()
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ошибка HTTP: ${response.status}`);
+        }
+
+        // Удаляем строку из таблицы
+        document.querySelector(`tr[data-device-id="${deviceId}"]`).remove();
+        alert('Устройство успешно удалено!');
+        updatePrinterDropdown(); // Обновляем список принтеров
+
+    } catch (error) {
+        console.error('Ошибка при удалении устройства:', error);
+        alert('Ошибка при удалении: ' + error.message);
+    }
+}
 
 function updatePrinterDropdown() {
     const printerDropdown = document.getElementById('printerIp');
+    const customIpInput = document.getElementById('customPrinterIp');
     if (!printerDropdown) return;
 
+    // Проверяем, что availablePrinters существует и является массивом
+    if (!Array.isArray(availablePrinters)) {
+        console.error('availablePrinters is not an array:', availablePrinters);
+        availablePrinters = [];
+    }
+
     // Сохраняем текущее значение
-    const currentValue = printerDropdown.value;
+    const currentValue = printerDropdown.value === 'custom' ? customIpInput.value : printerDropdown.value;
     
     // Очищаем и заполняем заново
     printerDropdown.innerHTML = '';
     
-    // Добавляем опцию по умолчанию
-    const defaultOption = document.createElement('option');
-    defaultOption.value = '';
-    defaultOption.textContent = '-- Выберите принтер --';
-    printerDropdown.appendChild(defaultOption);
-    
     // Добавляем все принтеры
-    availablePrinters.forEach(printer => {
-        const option = document.createElement('option');
-        option.value = printer.ip_address;
-        option.textContent = `${printer.ip_address}${printer.location ? ` (${printer.location})` : ''}`;
-        printerDropdown.appendChild(option);
+    if (availablePrinters.length > 0) {
+        console.log('Adding printers to dropdown:', availablePrinters);
+        availablePrinters.forEach(printer => {
+            const option = document.createElement('option');
+            option.value = printer.ip_address;
+            option.textContent = `${printer.ip_address}${printer.location ? ` (${printer.location})` : ''}`;
+            printerDropdown.appendChild(option);
+        });
+        
+        // Добавляем разделитель
+        const divider = document.createElement('option');
+        divider.disabled = true;
+        divider.textContent = '──────────';
+        printerDropdown.appendChild(divider);
+    }
+    
+    // Добавляем опцию для ввода своего IP
+    const customOption = document.createElement('option');
+    customOption.value = 'custom';
+    customOption.textContent = 'Ввести свой IP';
+    printerDropdown.appendChild(customOption);
+    
+    // Восстанавливаем выбранное значение
+    if (currentValue) {
+        if (availablePrinters.some(p => p.ip_address === currentValue)) {
+            printerDropdown.value = currentValue;
+            customIpInput.style.display = 'none';
+        } else {
+            printerDropdown.value = 'custom';
+            customIpInput.value = currentValue;
+            customIpInput.style.display = 'inline';
+        }
+    } else if (availablePrinters.length > 0) {
+        // Устанавливаем первый принтер по умолчанию
+        printerDropdown.value = availablePrinters[0].ip_address;
+    }
+    
+    // Обработчик изменения выбора
+    printerDropdown.addEventListener('change', function() {
+        if (this.value === 'custom') {
+            customIpInput.style.display = 'inline';
+            customIpInput.focus();
+        } else {
+            customIpInput.style.display = 'none';
+        }
     });
     
-    // Восстанавливаем выбранное значение, если оно есть в списке
-    if (currentValue && availablePrinters.some(p => p.ip_address === currentValue)) {
-        printerDropdown.value = currentValue;
-    }
+    // Обработчик ввода своего IP
+    customIpInput.addEventListener('input', function() {
+        // Можно добавить валидацию IP здесь
+    });
 }
 
 // Обработчик для модального окна теста
@@ -281,7 +505,11 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
     const testResult = document.getElementById('testResult');
     
     // Получаем значения из полей формы
-    const printerIp = document.getElementById('printerIp').value.trim();
+    const printerIpSelect = document.getElementById('printerIp');
+    const customIpInput = document.getElementById('customPrinterIp');
+    const printerIp = printerIpSelect.value === 'custom' 
+        ? customIpInput.value.trim() 
+        : printerIpSelect.value.trim();
     const templateId = document.getElementById('template').value;
     const clinicId = document.getElementById('clinicId').value.trim();
     const caseCode = document.getElementById('caseCode').value.trim();
@@ -291,6 +519,7 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
     const staining = document.getElementById('staining').value.trim();
     const hopperNumber = document.getElementById('hopperNumber').value.trim();
     const patientCorId = document.getElementById('patientCorId').value.trim();
+    const hopperID= 3;
     
     // Проверка обязательных полей
     if (!printerIp) {
@@ -309,6 +538,7 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
 
     // Формируем строку content из всех параметров
     const content = [
+        hopperID,
         clinicId,
         caseCode,
         sampleNumber,

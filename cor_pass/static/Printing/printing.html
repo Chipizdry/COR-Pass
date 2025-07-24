@@ -18,7 +18,7 @@
     <div class="main-container"> 
         <h1>Управление устройствами печати</h1>   
         <div class="print-container">
-            <button id="devicesBtn">Устройства и принтеры стёкол</button>
+            <button id="devicesBtn">Устройства и принтеры</button>
             <button id="testBtn">Тест</button>
             <button id="addDeviceBtn">Добавить устройство</button>
         </div>  
@@ -32,7 +32,7 @@
             <div class="modal-buttons">
               <button class="modal-button close" data-action="close" id="closedevicesModal">✖</button>
             </div>
-             <h3 style="margin-top:30; color:#291161;font-size: 17px;">Устройства и принтеры стёкол</h3>
+             <h3 style="margin-top:30; color:#291161;font-size: 17px;">Устройства и принтеры</h3>
         </div> 
         <div class="modal-content">
             <div id="devicesList">
@@ -54,7 +54,10 @@
            
             <div class="form">
                 <label for="printerIp">IP принтера:</label>
-                <input type="text" id="printerIp" value="192.168.154.192">
+                <select id="printerIp" style="width: 200px;">
+                    <option value="custom">Ввести свой IP</option>
+                </select>
+                <input type="text" id="customPrinterIp" style="display: none; width: 180px; margin-left: 5px;" placeholder="Введите IP">
             </div>
             <div class="form">
                 <label for="deviceId">Шаблон № (0-65535):</label>
@@ -121,6 +124,7 @@
                     <option value="">Выберите тип</option>
                     <option value="GlassPrinter">Принтер стёкол</option>
                     <option value="CassetPrinter">Принтер кассет</option>
+                    <option value="CassetPrinterHopper">Принтер-хоппер кассет</option>
                     <option value="scanner">Сканер</option>
                     <option value="other">Другое</option>
                 </select>
@@ -152,8 +156,15 @@
     <script>
         const PRINTER_IP = "192.168.154.192"; // IP-адрес по умолчанию
         let allPrinters = [];
+        let availablePrinters = []; 
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
+
+                    // Загружаем список устройств при старте
+            loadDevicesList().then(() => {
+                // После загрузки устройств инициализируем мониторинг принтера
+                startPrinterMonitoring();
+            });
             // Открытие модальных окон
             document.getElementById('devicesBtn').onclick = function() {
                 document.getElementById('devicesModal').style.display = 'block';

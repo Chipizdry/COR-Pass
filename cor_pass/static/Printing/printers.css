@@ -57,6 +57,17 @@ input, select {
     text-align: center;
 }
 
+/* Стили для контейнера таблицы */
+#devicesList {
+    max-height: 70vh;
+    overflow-y: auto;
+    margin: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Стили для таблицы */
 .devices-table {
     width: 100%;
     border-collapse: collapse;
@@ -64,9 +75,10 @@ input, select {
     font-size: 14px;
 }
 
-.devices-table th, .devices-table td {
+.devices-table th, 
+.devices-table td {
     border: 1px solid #ddd;
-    padding: 8px;
+    padding: 3px;
     text-align: left;
 }
 
@@ -74,6 +86,12 @@ input, select {
     background-color: #f2f2f2;
     position: sticky;
     top: 0;
+    font-size: 12px;
+    height: 30px;
+    white-space: normal;
+    word-wrap: break-word;
+    padding: 8px 4px;
+    line-height: 1.3;
 }
 
 .devices-table tr:nth-child(even) {
@@ -82,6 +100,73 @@ input, select {
 
 .devices-table tr:hover {
     background-color: #f1f1f1;
+}
+
+/* Стили для полей ввода в таблице */
+.devices-table .time-input, 
+.devices-table .integer-input {
+    text-align: center !important;
+    max-width: 50px !important;
+    height: 29px !important;
+    border-radius: 4px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 1px solid #ddd !important;
+    width: auto !important;
+}
+
+/* Стили для кнопок действий */
+.action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin: 0 5px;
+    padding: 5px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 15px;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+}
+
+.action-btn:active {
+    transform: translateY(1px);
+}
+
+.action-btn:disabled,
+.action-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Специфичные стили для кнопки сохранения */
+.save-btn {
+    color: #28a745;
+    background-color: white;
+}
+
+.save-btn:hover {
+    background-color: white;
+    transform: translateY(1px);
+}
+
+/* Специфичные стили для кнопки удаления */
+.delete-btn {
+    color: #dc3545;
+    background-color: none; 
+}
+
+.delete-btn:hover {
+    background-color: white;
+    transform: translateY(1px);
 }
 
 /* Стили для контейнера таблицы */
@@ -149,4 +234,19 @@ input, select {
     padding: 8px;
     border-radius: 4px;
     background-color: #f8f8f8;
+}
+
+.actions {
+    gap: 8px;
+    justify-content: center;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    font-size: 16px;
+    color: #555;
+    transition: color 0.2s;
 }
