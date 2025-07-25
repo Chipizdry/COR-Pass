@@ -71,7 +71,9 @@ async function printLabel(printerIp, templateNumber, content, resultElement = nu
         }
     }
     
- // Функция мониторинга состояния всех принтеров
+ 
+
+// Функция мониторинга состояния всех принтеров
 function startPrinterMonitoring() {
     const statusElement = document.getElementById('printerStatus');
     if (!statusElement) return;
@@ -80,9 +82,6 @@ function startPrinterMonitoring() {
     
     // Функция для проверки одного принтера
     const checkNextPrinter = async () => {
-        // Обновляем список принтеров на случай изменений
-        await loadDevicesList();
-        
         if (availablePrinters.length === 0) {
             return;
         }
@@ -95,53 +94,38 @@ function startPrinterMonitoring() {
         const row = document.querySelector(`tr[data-device-id="${printer.id}"]`);
         if (!row) return;
 
-        // Находим или создаем элемент для индикатора статуса
-        let statusIndicator = row.querySelector('.status-indicator');
-        if (!statusIndicator) {
-            statusIndicator = document.createElement('div');
-            statusIndicator.className = 'status-indicator';
-            statusIndicator.style.display = 'inline-block';
-            statusIndicator.style.width = '12px';
-            statusIndicator.style.height = '12px';
-            statusIndicator.style.borderRadius = '50%';
-            statusIndicator.style.marginRight = '5px';
-            statusIndicator.style.verticalAlign = 'middle';
-            
-            // Вставляем перед первым элементом в ячейке с IP
-            const ipCell = row.querySelector('td:nth-child(3)');
-            ipCell.insertBefore(statusIndicator, ipCell.firstChild);
-        }
+        // Находим индикатор статуса
+        const statusIndicator = row.querySelector('.status-indicator');
+        if (!statusIndicator) return;
 
-        // Проверяем доступность принтера
         try {
-            statusIndicator.style.backgroundColor = 'gray'; // Серый - проверка
-            
             const isAvailable = await checkPrinterAvailability(printer.ip_address);
             
-            // Обновляем индикатор статуса
-            statusIndicator.style.backgroundColor = isAvailable ? 'green' : 'red';
+            // Сохраняем статус
+            printerStatuses[printer.ip_address] = {
+                available: isAvailable,
+                lastChecked: new Date()
+            };
             
-            // Добавляем tooltip с дополнительной информацией
+            // Обновляем индикатор
+            statusIndicator.style.backgroundColor = isAvailable ? 'green' : 'red';
             statusIndicator.title = `${printer.device_class} (${printer.ip_address})\n` +
                                   `Статус: ${isAvailable ? 'Доступен' : 'Недоступен'}\n` +
                                   `Последняя проверка: ${new Date().toLocaleTimeString()}`;
             
         } catch (error) {
-            statusIndicator.style.backgroundColor = 'orange'; // Оранжевый - ошибка проверки
-            statusIndicator.title = `Ошибка проверки: ${error.message}`;
+            console.error(`Ошибка проверки принтера ${printer.ip_address}:`, error);
+            statusIndicator.style.backgroundColor = 'orange';
+            statusIndicator.title = `Ошибка проверки ${printer.ip_address}: ${error.message}`;
         }
     };
 
-    // Запускаем первую проверку сразу
-    checkNextPrinter();
-    
-    // Затем продолжаем проверять с интервалом
-    const intervalId = setInterval(checkNextPrinter, 3000);
+    // Запускаем проверку с интервалом
+    const intervalId = setInterval(checkNextPrinter, 1000);
     
     // Возвращаем функцию для остановки мониторинга
     return () => clearInterval(intervalId);
 }
-    
 
     // Функция добавления нового устройства
     async function addDevice() {
@@ -227,14 +211,14 @@ function startPrinterMonitoring() {
 
 
 
-// Функция для получения списка устройств и отображения в таблице с кнопками действий
+// Обновленная функция loadDevicesList
 async function loadDevicesList() {
     const devicesListElement = document.getElementById('devicesList');
-    if (devicesListElement) {
-        devicesListElement.innerHTML = '<p>Загрузка списка устройств...</p>';
-    }
-    
+    if (!devicesListElement) return;
+
     try {
+        devicesListElement.innerHTML = '<p>Загрузка списка устройств...</p>';
+        
         const response = await fetch('/api/printing_devices/all', {
             method: 'GET',
             headers: {
@@ -254,60 +238,57 @@ async function loadDevicesList() {
             device.device_class === 'CassetPrinterHopper'
         );
         
-        // Обновляем выпадающий список принтеров
         updatePrinterDropdown();
         
-        if (devicesListElement) {
-            if (devices.length === 0) {
-                devicesListElement.innerHTML = '<p>Устройства не найдены</p>';
-                return devices;
-            }
-            
-            let tableHTML = `
-                <table class="devices-table">
-                    <thead>
-                        <tr>
-                            <th>Тип</th>
-                            <th>Идентификатор</th>
-                            <th>IP-адрес</th>
-                            <th>Местоположение</th>
-                            <th>Комментарий</th>
-                            <th>Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-            devices.forEach(device => {
-                tableHTML += `
-                    <tr data-device-id="${device.id}">
-                        <td>${device.device_class}</td>
-                        <td>${device.device_identifier}</td>
-                        <td><input type="text" class="editable-field ip-address" value="${device.ip_address}" data-original="${device.ip_address}"></td>
-                        <td><input type="text" class="editable-field location" value="${device.location || ''}" data-original="${device.location || ''}"></td>
-                        <td><input type="text" class="editable-field comment" value="${device.comment || ''}" data-original="${device.comment || ''}"></td>
-                        <td class="actions">
-                            <button class="action-btn save-btn" onclick="saveDeviceChanges('${device.id}')" title="Сохранить">💾</button>
-                            <button class="action-btn delete-btn" onclick="deleteDevice('${device.id}')" title="Удалить">❌</button>
-                        </td>
+        let tableHTML = `
+            <table class="devices-table">
+                <thead>
+                    <tr>
+                        <th>Тип</th>
+                        <th>Идентификатор</th>
+                        <th>IP-адрес</th>
+                        <th>Местоположение</th>
+                        <th>Комментарий</th>
+                        <th>Действия</th>
                     </tr>
-                `;
-            });
+                </thead>
+                <tbody>
+        `;
+        
+        devices.forEach(device => {
+            const lastStatus = printerStatuses[device.ip_address];
+            const statusColor = lastStatus ? 
+                (lastStatus.available ? 'green' : 'red') : 'gray';
             
             tableHTML += `
-                    </tbody>
-                </table>
+                <tr data-device-id="${device.id}">
+                    <td>${device.device_class}</td>
+                    <td>${device.device_identifier}</td>
+                    <td><input type="text" class="editable-field ip-address" value="${device.ip_address}" data-original="${device.ip_address}"></td>
+                    <td><input type="text" class="editable-field location" value="${device.location || ''}" data-original="${device.location || ''}"></td>
+                    <td><input type="text" class="editable-field comment" value="${device.comment || ''}" data-original="${device.comment || ''}"></td>
+                    <td class="actions">
+                       
+                        <button class="action-btn save-btn" onclick="saveDeviceChanges('${device.id}')" title="Сохранить">💾</button>
+                        <button class="action-btn delete-btn" onclick="deleteDevice('${device.id}')" title="Удалить">❌</button>
+                         <div class="status-indicator" style="background-color: ${statusColor}" 
+                             title="${lastStatus ? `Статус: ${lastStatus.available ? 'Доступен' : 'Недоступен'}\nПоследняя проверка: ${lastStatus.lastChecked.toLocaleTimeString()}` : 'Статус неизвестен'}"></div>
+                    </td>
+                </tr>
             `;
-            
-            devicesListElement.innerHTML = tableHTML;
-        }
+        });
+        
+        tableHTML += `
+                </tbody>
+            </table>
+        `;
+        
+        devicesListElement.innerHTML = tableHTML;
         
         return devices;
     } catch (error) {
         console.error('Ошибка при загрузке списка устройств:', error);
-        if (devicesListElement) {
-            devicesListElement.innerHTML = `<p style="color: red;">Ошибка при загрузке: ${error.message}</p>`;
-        }
+        devicesListElement.innerHTML = `<p style="color: red;">Ошибка при загрузке: ${error.message}</p>`;
         throw error;
     }
 }
@@ -414,6 +395,7 @@ async function deleteDevice(deviceId) {
             }
         });
 
+        console.log("Ответ:",response);
         if (!response.ok) {
             throw new Error(`Ошибка HTTP: ${response.status}`);
         }
@@ -422,7 +404,7 @@ async function deleteDevice(deviceId) {
         document.querySelector(`tr[data-device-id="${deviceId}"]`).remove();
         alert('Устройство успешно удалено!');
         updatePrinterDropdown(); // Обновляем список принтеров
-
+        loadDevicesList();
     } catch (error) {
         console.error('Ошибка при удалении устройства:', error);
         alert('Ошибка при удалении: ' + error.message);

@@ -4,6 +4,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -157,6 +158,7 @@
         const PRINTER_IP = "192.168.154.192"; // IP-адрес по умолчанию
         let allPrinters = [];
         let availablePrinters = []; 
+        let printerStatuses = {};
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
 
