@@ -222,7 +222,7 @@ async def login(
     device_information = di.get_device_info(request)
 
     # Если устройство мобильное, проверяем, есть ли у пользователя сессии на этом устройстве
-    if device_information["device_type"] == "Mobile":
+    if (device_information["device_type"] == "Mobile"and body.username not in ["apple-test@cor-software.com", "google-test@cor-software.com"]):
         existing_sessions = await repository_session.get_user_sessions_by_device_info(
             user.cor_id, device_information["device_info"], db
         )

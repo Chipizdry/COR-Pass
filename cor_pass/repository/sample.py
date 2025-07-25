@@ -1,12 +1,18 @@
 import re
 from string import ascii_uppercase
+from fastapi import Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.repository.case import (
     _update_ancestor_statuses_from_cassette,
     _update_ancestor_statuses_from_glass,
 )
+from cor_pass.repository.cassette import print_cassette_data
+from cor_pass.repository.glass import print_glass_data
 from cor_pass.schemas import (
+    CassettePrinting,
+    GeneralPrinting,
+    GlassPrinting,
     Sample as SampleModelScheema,
     Cassette as CassetteModelScheema,
     Glass as GlassModelScheema,
@@ -361,7 +367,7 @@ async def delete_samples(db: AsyncSession, samples_ids: List[str]) -> Dict[str, 
 
 
 async def print_all_sample_cassettes(
-    db: AsyncSession, sample_id: str, printing: bool
+    db: AsyncSession, sample_id: str, printing: bool, data: GeneralPrinting, request: Request
 ) -> Optional[SampleModelScheema]:
     """
     Устанавливает статус 'is_printed' для всех кассет данного образца
@@ -384,6 +390,17 @@ async def print_all_sample_cassettes(
     sample_db.is_printed_cassette = printing
     cassettes_to_update = list(sample_db.cassette) if sample_db.cassette else []
 
+    for cassette_db in cassettes_to_update:
+        cassette_data = CassettePrinting(
+            printer_ip=data.printer_ip,
+            model_id=data.model_id,
+            clinic_name=data.clinic_name,
+            hooper=data.hooper,
+            cassete_id=cassette_db.id,
+            printing=printing
+        )
+        await print_cassette_data(db=db, data=cassette_data, request=request)
+ 
     for cassette_db in cassettes_to_update:
         cassette_db.is_printed = printing
 
@@ -409,9 +426,9 @@ async def print_all_sample_cassettes(
             ],
             key=lambda glass_s: glass_s.glass_number,
         )
-        await _update_ancestor_statuses_from_cassette(db=db, cassette=cassette_db)
-        for glass_db in cassette_db.glass:
-            await _update_ancestor_statuses_from_glass(db=db, glass=glass_db)
+        # await _update_ancestor_statuses_from_cassette(db=db, cassette=cassette_db)
+        # for glass_db in cassette_db.glass:
+        #     await _update_ancestor_statuses_from_glass(db=db, glass=glass_db)
         sample_schema.cassettes.append(cassette_schema)
 
     await db.commit()
@@ -420,7 +437,7 @@ async def print_all_sample_cassettes(
 
 
 async def print_all_sample_glasses(
-    db: AsyncSession, sample_id: str, printing: bool
+    db: AsyncSession, sample_id: str, printing: bool, data: GeneralPrinting, request: Request
 ) -> Optional[SampleModelScheema]:
     sample_result = await db.execute(
         select(db_models.Sample)
@@ -443,8 +460,18 @@ async def print_all_sample_glasses(
         glasses_to_update.extend(cassette_db.glass)
 
     for glass_db in glasses_to_update:
-        glass_db.is_printed = printing
+        glass_data = GlassPrinting(
+            printer_ip=data.printer_ip,
+            model_id=data.model_id,
+            clinic_name=data.clinic_name,
+            hooper=data.hooper,
+            glass_id=glass_db.id,
+            printing=printing
+        )
+        await print_glass_data(db=db, data=glass_data, request=request)
 
+    for glass_db in glasses_to_update:
+        glass_db.is_printed = printing
     def sort_cassettes(cassette):
         match = re.match(r"([A-Z]+)(\d+)", cassette.cassette_number)
         if match:

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.database.db import get_db
 from cor_pass.schemas import (
@@ -7,11 +8,16 @@ from cor_pass.schemas import (
     DeleteGlassesResponse,
     Glass as GlassModelScheema,
     GlassCreate,
+    GlassPrinting,
+    PrintLabel,
 )
 from cor_pass.repository import glass as glass_service
 from typing import List
 
 from cor_pass.services.access import doctor_access
+from loguru import logger
+
+from cor_pass.services.glass_and_cassette_printing import print_labels
 
 router = APIRouter(prefix="/glasses", tags=["Glass"])
 
@@ -84,12 +90,17 @@ async def change_glass_staining(
     dependencies=[Depends(doctor_access)],
 )
 async def change_glass_printing_status(
-    glass_id: str, printing: bool, db: AsyncSession = Depends(get_db)
+    data: GlassPrinting, request: Request, db: AsyncSession = Depends(get_db)
 ):
     """Меняем статус печати стекла"""
-    db_glass = await glass_service.change_printing_status(
-        db=db, glass_id=glass_id, printing=printing
-    )
-    if db_glass is None:
-        raise HTTPException(status_code=404, detail="Glass not found")
-    return db_glass
+
+    print_result = await glass_service.print_glass_data(db=db, data=data, request=request)
+
+    if print_result and print_result.get("success"):
+        updated_glass = await glass_service.change_printing_status(
+            db=db, glass_id=data.glass_id, printing=data.printing 
+        )
+        if updated_glass is None:
+            logger.warning(f"Предупреждение: Стекло {data.glass_id} не найдено для обновления статуса после успешной печати.")
+        
+        return updated_glass

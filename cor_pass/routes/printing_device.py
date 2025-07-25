@@ -100,6 +100,4 @@ async def delete_printing_device(
 ):
     """Удаляет устройство печати по его ID."""
     result = await delete_printing_device_by_id(uuid=printing_device_id, db=db)
-    if result is None:
-        raise HTTPException(status_code=404, detail="Printing device not found")
     return

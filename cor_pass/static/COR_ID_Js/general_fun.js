@@ -12,7 +12,7 @@ const modalConfigs = {
     step4Modal: { width: '460px', height: '690px', top: '20px', left: '300px' },
     addPatientModal: { width: '460px', height: '700px', top: '15px', left: '300px' },
     addDeviceModal: { width: '250px', height: 'auto', top: '50px', left: '250px' },
-    devicesModal: { width: 'auto', height: '450px', top: 'auto' , left: 'auto' },
+    devicesModal: { width: 'auto', height: 'auto', top: 'auto' , left: 'auto' },
     testModal: { width:'250px', height: 'auto', top: 'auto' , left: 'auto' },
     Dicom_upload_modal: { width: '460px', height: 'auto', top: 'auto', left: 'auto' },
     recovery_modal: { width: '250px', height: 'auto', top: 'auto', left: 'auto' },

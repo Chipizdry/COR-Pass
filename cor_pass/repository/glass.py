@@ -1,10 +1,12 @@
+from fastapi import HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from cor_pass.schemas import ChangeGlassStaining, Glass as GlassModelScheema
+from cor_pass.schemas import ChangeGlassStaining, Glass as GlassModelScheema, GlassPrinting, GlassResponseForPrinting, PrintLabel
 from typing import Any, Dict, List
 from sqlalchemy.orm import selectinload
 from cor_pass.database import models as db_models
 from cor_pass.repository import case as repository_cases
+from cor_pass.services.glass_and_cassette_printing import print_labels
 
 
 async def get_glass(db: AsyncSession, glass_id: int) -> GlassModelScheema | None:
@@ -197,3 +199,76 @@ async def change_printing_status(
         return GlassModelScheema.model_validate(glass_db)
 
     return None
+
+
+async def get_full_glass_info(db: AsyncSession, glass_id: str) -> GlassResponseForPrinting:
+    result = await db.execute(
+        select(db_models.Glass).where(db_models.Glass.id == glass_id)
+    )
+    db_glass = result.scalar_one_or_none()
+    if db_glass:
+
+        cassette_result = await db.execute(
+            select(db_models.Cassette)
+            .where(db_models.Cassette.id == db_glass.cassette_id)
+            .options(
+                selectinload(db_models.Cassette.sample).selectinload(
+                    db_models.Sample.case
+                )
+            )
+        )
+        db_cassette = cassette_result.scalar_one_or_none()
+        if not db_cassette:
+            raise ValueError(f"Касету з ID {db_glass.cassette_id} не знайдено")
+
+        sample_result = await db.execute(
+            select(db_models.Sample)
+            .where(db_models.Sample.id == db_cassette.sample_id)
+            .options(selectinload(db_models.Sample.case))
+        )
+        db_sample = sample_result.scalar_one_or_none()
+        if not db_sample:
+            raise ValueError(f"Семпл с ID {db_cassette.sample_id} не найден")
+
+        db_case_id = db_sample.case_id
+        db_case = await repository_cases.get_single_case(db=db, case_id=db_case_id)
+        db_sample = db_sample
+        db_case = db_case
+    response = GlassResponseForPrinting( 
+    case_code=db_case.case_code,
+    sample_number=db_sample.sample_number,
+    cassette_number=db_cassette.cassette_number,
+    glass_number=db_glass.glass_number,
+    staining=db_glass.staining,
+    patient_cor_id=db_case.patient_id)
+
+    return response
+
+
+async def print_glass_data(
+    data: GlassPrinting, db: AsyncSession, request: Request
+):
+    db_glass = await get_full_glass_info(db, data.glass_id)
+    if db_glass is None:
+        raise HTTPException(status_code=404, detail=f"Стекло с ID {data.glass_id} не найдено в базе данных")
+
+    clinic_name = data.clinic_name
+    case_code = db_glass.case_code
+    sample_number=db_glass.sample_number
+    cassette_number=db_glass.cassette_number
+    glass_number=db_glass.glass_number
+    staining=db_glass.staining
+    hooper=data.hooper
+    patient_cor_id=db_glass.patient_cor_id
+        
+    content = f"{clinic_name}|{case_code}|{sample_number}|{cassette_number}|L{glass_number}|{staining}|{hooper}|{patient_cor_id}"
+
+    label_to_print = PrintLabel(
+        model_id=data.model_id, 
+        content=content,
+        uuid=data.glass_id
+    )
+
+    print_result = await print_labels(printer_ip=data.printer_ip, labels_to_print=[label_to_print], request=request)
+
+    return print_result

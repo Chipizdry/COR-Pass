@@ -23,7 +23,7 @@
             <button id="testBtn">Тест</button>
             <button id="addDeviceBtn">Добавить устройство</button>
         </div>  
-        <div id="printerStatus" class="status-indicator">Статус принтера: проверка...</div>
+      <!--  <div id="printerStatus" class="status-indicator">Статус принтера: проверка...</div> -->
     </div>    
 
 
@@ -40,6 +40,7 @@
                 <!-- Здесь будет список устройств -->
                 <p>Список устройств загружается...</p>
             </div>
+            <div id="printerStatus" class="status-indicator">Статус принтера: проверка...</div> 
         </div>
     </div>
     
@@ -55,10 +56,10 @@
            
             <div class="form">
                 <label for="printerIp">IP принтера:</label>
-                <select id="printerIp" style="width: 200px;">
-                    <option value="custom">Ввести свой IP</option>
-                </select>
-                <input type="text" id="customPrinterIp" style="display: none; width: 180px; margin-left: 5px;" placeholder="Введите IP">
+                <input list="printerIps" id="printerIp" placeholder="Выберите или введите IP" class="combo-input">
+                <datalist id="printerIps">
+                    <!-- Опции будут добавлены динамически -->
+                </datalist>
             </div>
             <div class="form">
                 <label for="deviceId">Шаблон № (0-65535):</label>

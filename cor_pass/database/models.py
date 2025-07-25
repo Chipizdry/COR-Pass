@@ -1001,6 +1001,8 @@ class CerboMeasurement(Base):
 
     # Данные из solarchargers_status
     solar_total_pv_power: Column[float] = Column(Float, nullable=False)
+    
+    soc: Column[float] = Column(Float, nullable=True)
 
     def __repr__(self):
         return (

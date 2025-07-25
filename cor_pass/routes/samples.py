@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.database.db import get_db
 from cor_pass.schemas import (
     CreateSampleWithDetails,
     DeleteSampleRequest,
     DeleteSampleResponse,
+    GeneralPrinting,
     Sample,
     SampleCreate,
     UpdateSampleMacrodescription,
@@ -113,6 +114,8 @@ async def delete_samples(
 )
 async def print_all_sample_glasses(
     sample_id: str,
+    data: GeneralPrinting,
+    request: Request,
     printing: bool = False,
     db: AsyncSession = Depends(get_db),
 ):
@@ -121,7 +124,7 @@ async def print_all_sample_glasses(
 
     """
     db_sample = await sample_service.print_all_sample_glasses(
-        db=db, sample_id=sample_id, printing=printing
+        db=db, sample_id=sample_id, printing=printing, data=data, request=request
     )
     if db_sample is None:
         raise HTTPException(
@@ -137,6 +140,8 @@ async def print_all_sample_glasses(
 )
 async def print_all_sample_cassettes(
     sample_id: str,
+    data: GeneralPrinting,
+    request: Request,
     printing: bool = False,
     db: AsyncSession = Depends(get_db),
 ):
@@ -145,7 +150,7 @@ async def print_all_sample_cassettes(
 
     """
     db_sample = await sample_service.print_all_sample_cassettes(
-        db=db, sample_id=sample_id, printing=printing
+        db=db, sample_id=sample_id, printing=printing, data=data, request=request
     )
     if db_sample is None:
         raise HTTPException(

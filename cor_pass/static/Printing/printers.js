@@ -1,4 +1,5 @@
 
+
 async function printLabel(printerIp, templateNumber, content, resultElement = null) {
     if (resultElement) {
         resultElement.textContent = 'Отправка задания на печать...';
@@ -410,11 +411,10 @@ async function deleteDevice(deviceId) {
         alert('Ошибка при удалении: ' + error.message);
     }
 }
-
 function updatePrinterDropdown() {
-    const printerDropdown = document.getElementById('printerIp');
-    const customIpInput = document.getElementById('customPrinterIp');
-    if (!printerDropdown) return;
+    const printerInput = document.getElementById('printerIp');
+    const datalist = document.getElementById('printerIps');
+    if (!printerInput || !datalist) return;
 
     // Проверяем, что availablePrinters существует и является массивом
     if (!Array.isArray(availablePrinters)) {
@@ -423,63 +423,25 @@ function updatePrinterDropdown() {
     }
 
     // Сохраняем текущее значение
-    const currentValue = printerDropdown.value === 'custom' ? customIpInput.value : printerDropdown.value;
+    const currentValue = printerInput.value;
     
-    // Очищаем и заполняем заново
-    printerDropdown.innerHTML = '';
+    // Очищаем список
+    datalist.innerHTML = '';
     
     // Добавляем все принтеры
     if (availablePrinters.length > 0) {
-        console.log('Adding printers to dropdown:', availablePrinters);
         availablePrinters.forEach(printer => {
             const option = document.createElement('option');
             option.value = printer.ip_address;
             option.textContent = `${printer.ip_address}${printer.location ? ` (${printer.location})` : ''}`;
-            printerDropdown.appendChild(option);
+            datalist.appendChild(option);
         });
-        
-        // Добавляем разделитель
-        const divider = document.createElement('option');
-        divider.disabled = true;
-        divider.textContent = '──────────';
-        printerDropdown.appendChild(divider);
     }
-    
-    // Добавляем опцию для ввода своего IP
-    const customOption = document.createElement('option');
-    customOption.value = 'custom';
-    customOption.textContent = 'Ввести свой IP';
-    printerDropdown.appendChild(customOption);
     
     // Восстанавливаем выбранное значение
     if (currentValue) {
-        if (availablePrinters.some(p => p.ip_address === currentValue)) {
-            printerDropdown.value = currentValue;
-            customIpInput.style.display = 'none';
-        } else {
-            printerDropdown.value = 'custom';
-            customIpInput.value = currentValue;
-            customIpInput.style.display = 'inline';
-        }
-    } else if (availablePrinters.length > 0) {
-        // Устанавливаем первый принтер по умолчанию
-        printerDropdown.value = availablePrinters[0].ip_address;
+        printerInput.value = currentValue;
     }
-    
-    // Обработчик изменения выбора
-    printerDropdown.addEventListener('change', function() {
-        if (this.value === 'custom') {
-            customIpInput.style.display = 'inline';
-            customIpInput.focus();
-        } else {
-            customIpInput.style.display = 'none';
-        }
-    });
-    
-    // Обработчик ввода своего IP
-    customIpInput.addEventListener('input', function() {
-        // Можно добавить валидацию IP здесь
-    });
 }
 
 // Обработчик для модального окна теста
@@ -487,11 +449,9 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
     const testResult = document.getElementById('testResult');
     
     // Получаем значения из полей формы
-    const printerIpSelect = document.getElementById('printerIp');
+    const printerIp = document.getElementById('printerIp').value.trim();
     const customIpInput = document.getElementById('customPrinterIp');
-    const printerIp = printerIpSelect.value === 'custom' 
-        ? customIpInput.value.trim() 
-        : printerIpSelect.value.trim();
+   
     const templateId = document.getElementById('template').value;
     const clinicId = document.getElementById('clinicId').value.trim();
     const caseCode = document.getElementById('caseCode').value.trim();

@@ -2,10 +2,12 @@ import base64
 from enum import Enum
 import re
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, HTTPException, UploadFile, status
+from fastapi import APIRouter, HTTPException, Request, UploadFile, status
 from sqlalchemy import and_, func, literal_column, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from cor_pass.repository.cassette import print_cassette_data
+from cor_pass.repository.glass import print_glass_data
 from cor_pass.repository.lawyer import get_doctor
 from cor_pass.repository.patient import get_patient_by_corid
 from cor_pass.schemas import (
@@ -18,11 +20,14 @@ from cor_pass.schemas import (
     CaseOwnershipResponse,
     CaseParametersScheema,
     CassetteForGlassPage,
+    CassettePrinting,
     CassetteTestForGlassPage,
     DoctorDiagnosisSchema,
     DoctorResponseForSignature,
     FinalReportResponseSchema,
     FirstCaseTestGlassDetailsSchema,
+    GeneralPrinting,
+    GlassPrinting,
     GlassTestModelScheema,
     PatientFinalReportPageResponse,
     PatientTestReportPageResponse,
@@ -3889,8 +3894,9 @@ async def get_case_owner(
     return response
 
 
+
 async def print_all_case_glasses(
-    db: AsyncSession, case_id: str, printing: bool
+    db: AsyncSession, case_id: str, printing: bool, data: GeneralPrinting, request: Request
 ) -> Optional[Dict[str, Any]]:
     """
     Печатает все стёкла кейса, используя жадную загрузку для всех уровней.
@@ -3921,6 +3927,15 @@ async def print_all_case_glasses(
                 glasses_to_update.append(glass_db)
 
     for glass_db in glasses_to_update:
+        glass_data = GlassPrinting(
+            printer_ip=data.printer_ip,
+            model_id=data.model_id,
+            clinic_name=data.clinic_name,
+            hooper=data.hooper,
+            glass_id=glass_db.id,
+            printing=printing
+        )
+        await print_glass_data(db=db, data=glass_data, request=request)
         glass_db.is_printed = printing
 
     # def sort_cassettes(cassette: db_models.Cassette):
@@ -3947,8 +3962,9 @@ async def print_all_case_glasses(
     return case_response
 
 
+
 async def print_all_case_cassette(
-    db: AsyncSession, case_id: str, printing: bool
+    db: AsyncSession, case_id: str, printing: bool, data: GeneralPrinting, request: Request
 ) -> Optional[Dict[str, Any]]:
     """
     Печатает все кассеты кейса, используя жадную загрузку для всех уровней.
@@ -3973,6 +3989,15 @@ async def print_all_case_cassette(
         cassettes_to_update = list(sample_db.cassette) if sample_db.cassette else []
 
         for cassette_db in cassettes_to_update:
+            cassette_data = CassettePrinting(
+            printer_ip=data.printer_ip,
+            model_id=data.model_id,
+            clinic_name=data.clinic_name,
+            hooper=data.hooper,
+            cassete_id=cassette_db.id,
+            printing=printing
+        )
+            await print_cassette_data(db=db, data=cassette_data, request=request)
             cassette_db.is_printed = printing
 
     await db.commit()

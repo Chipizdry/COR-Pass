@@ -282,7 +282,7 @@ async def get_vebus_status(request: Request):
         logger.error("❗ Ошибка чтения VE.Bus регистров", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
-
+# статус зарядки проценты
 @router.post("/vebus/soc")
 async def set_vebus_soc(control: VebusSOCControl, request: Request):
     """
@@ -292,7 +292,7 @@ async def set_vebus_soc(control: VebusSOCControl, request: Request):
         logger.debug(f"📤 Установка VE.Bus SoC: {control.soc_threshold}%")
         client = request.app.state.modbus_client
 
-        
+        # Значение с масштабированием x10 (как в описании)
         scaled_value = int(control.soc_threshold * 10)
 
         await client.write_register(
@@ -308,7 +308,7 @@ async def set_vebus_soc(control: VebusSOCControl, request: Request):
         logger.error("❗ Ошибка установки VE.Bus SoC", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
-
+# отдача в сеть
 @router.post("/ess_advanced_settings/setpoint_fine")
 async def set_ess_advanced_setpoint_fine(control: EssAdvancedControl, request: Request):
     """
@@ -379,7 +379,7 @@ async def set_inverter_power_setpoint(payload: InverterPowerPayload, request: Re
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
 
-
+# Ток заряда 
 @router.post("/ess_advanced_settings/dvcc_max_charge_current")
 async def set_dvcc_max_charge_current(data: DVCCMaxChargeCurrentRequest, request: Request):
     """
@@ -696,7 +696,7 @@ async def write_register(request_data: RegisterWriteRequest, request: Request):
 )
 async def read_measurements(
     page: int = Query(1, ge=1, description="Номер страницы (начиная с 1)"),
-    page_size: int = Query(10, ge=1, le=100, description="Количество элементов на странице (от 1 до 100)"),
+    page_size: int = Query(10, ge=1, le=1000, description="Количество элементов на странице (от 1 до 1000)"),
     object_name: Optional[str] = Query(None, description="Фильтр по имени объекта"),
     start_date: Optional[datetime] = Query(None, description="Начальная дата измерения (ISO 8601, например '2023-01-01T00:00:00')"),
     end_date: Optional[datetime] = Query(None, description="Конечная дата измерения (ISO 8601, например '2023-12-31T23:59:59')"),

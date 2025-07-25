@@ -1964,16 +1964,19 @@ class FullDeviceMeasurementCreate(BaseModel):
     # агрегированные данные
     general_battery_power: float = Field(
         ..., description="Общая мощность батареи"
-    )  # Изменено на float
+    )  
     inverter_total_ac_output: float = Field(
         ..., description="Общая выходная мощность AC инвертора"
-    )  # Изменено на float
+    )  
     ess_total_input_power: float = Field(
         ..., description="Общая входная мощность ESS"
-    )  # Изменено на float
+    )  
     solar_total_pv_power: float = Field(
         ..., description="Общая мощность солнечных панелей"
-    )  # Изменено на float
+    )  
+    soc: float = Field(
+        ..., description="SOC - State of charge"
+    )  
 
     class Config:
         from_attributes = True
@@ -2001,6 +2004,9 @@ class CerboMeasurementResponse(BaseModel):
     solar_total_pv_power: float = Field(
         ..., description="Общая мощность солнечных панелей"
     )
+    soc: Optional[float] = Field(
+        None, description="SOC - State of charge"
+    )  
 
     class Config:
         from_attributes = True
@@ -2061,7 +2067,7 @@ class EnergeticScheduleBase(BaseModel):
     duration_minutes: int = Field(
         ..., ge=0, lt=60, description="Продолжительность режима в минутах (0-59)"
     )
-    grid_feed_w: int = Field(..., ge=0, description="Параметр отдачи в сеть (Вт)")
+    grid_feed_w: int = Field(..., ge=-100000, le=100000, description="Параметр отдачи в сеть (Вт)")
     battery_level_percent: int = Field(
         ..., ge=0, le=100, description="Целевой уровень батареи (%)"
     )
@@ -2082,7 +2088,7 @@ class EnergeticScheduleResponse(BaseModel):
 
     id: str = Field(..., description="Уникальный идентификатор расписания")
     start_time: time = Field(..., description="Время начала работы режима (ЧЧ:ММ)")
-    grid_feed_w: float = Field(..., ge=0.0, description="Параметр отдачи в сеть (Вт)")
+    grid_feed_w: float = Field(..., ge=-100000, le=100000, description="Параметр отдачи в сеть (Вт)")
     battery_level_percent: int = Field(
         ..., ge=0, le=100, description="Целевой уровень батареи (%)"
     )
@@ -2154,3 +2160,54 @@ class SearchCaseDetailsSimple(BaseModel):
     case_id: str
     patient_id: str
 
+class GeneralPrinting(BaseModel):
+    printer_ip: str
+    model_id: int
+    clinic_name: str
+    hooper: str
+    # printing: bool
+
+class GlassPrinting(BaseModel):
+    printer_ip: str
+    model_id: int
+    clinic_name: str
+    hooper: str
+    glass_id: str
+    printing: bool
+
+class GlassResponseForPrinting(BaseModel):
+
+    case_code: str
+    sample_number: str
+    cassette_number: str
+    glass_number: int
+    staining: str
+    patient_cor_id: str
+
+class CassettePrinting(BaseModel):
+    printer_ip: str
+    model_id: int
+    clinic_name: str
+    hooper: str
+    cassete_id: str
+    printing: bool
+
+class CassetteResponseForPrinting(BaseModel):
+
+    case_code: str
+    sample_number: str
+    cassette_number: str
+    patient_cor_id: str
+
+
+
+class PrintLabel(BaseModel):
+    """Модель для одной метки для печати."""
+    model_id: int
+    content: str
+    uuid: str 
+
+class PrintRequest(BaseModel):
+    """Модель для запроса на печать."""
+    printer_ip: str
+    labels: List[PrintLabel]

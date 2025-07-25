@@ -378,7 +378,10 @@ async def delete_my_account(
             logger.info(f"Account for user {current_user.email} was deleted")
             return {"message": f" user {current_user.email} - was deleted"}
         else:
-            return {"message": f"Password incorrect"}
+            raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password incorrect",
+        )
 
 
 @router.get("/get_last_password_change")

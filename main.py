@@ -127,9 +127,9 @@ app = FastAPI(
     title="COR-ID API",
     description=api_description,
     version="1.0.1",
-    openapi_url="/openapi.json",
-    docs_url="/docs",
-    redoc_url="/redoc",
+    openapi_url="/openapi.json" if settings.app_env == "development" else None,
+    docs_url="/docs" if settings.app_env == "development" else None,
+    redoc_url="/redoc" if settings.app_env == "development" else None,
 )
 
 # app = FastAPI()
@@ -268,7 +268,7 @@ async def startup():
     if settings.app_env == "development":
         await create_modbus_client(app)
         asyncio.create_task(cerbo_collection_task(app))
-        asyncio.create_task(energetic_schedule_task(async_session_maker))
+        asyncio.create_task(energetic_schedule_task(async_session_maker=async_session_maker, app=app))
     # asyncio.create_task(cerbo_GX.read_modbus_and_cache())
 
 

@@ -106,8 +106,10 @@ async def delete_printing_device_by_id(uuid: str, db: AsyncSession):
     result = await db.execute(stmt)
     printing_device = result.scalar_one_or_none()
     if not printing_device:
-        return None
+        raise HTTPException(
+            status_code=404,
+            detail= "Device not found"
+        )
     await db.delete(printing_device)
     await db.commit()
-    print("printing_device deleted")
     return

@@ -267,7 +267,41 @@ input, select {
 }
 
 /* Цвета статусов */
-.status-indicator.unknown { background-color: green; }
+.status-indicator.unknown { background-color: rgb(7, 244, 7); }
 .status-indicator.available { background-color: rgb(10, 244, 10); }
 .status-indicator.unavailable { background-color: red; }
 .status-indicator.error { background-color: orange; }
+
+
+/* Стили для комбинированного поля ввода */
+.combo-input {
+    width: 200px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-sizing: border-box;
+    font-size: 14px;
+    height: 39px;
+}
+
+/* Стили для выпадающего списка */
+datalist {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 0 0 4px 4px;
+    border-top: none;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+datalist option {
+    padding: 8px;
+    cursor: pointer;
+}
+
+datalist option:hover {
+    background-color: #f5f5f5;
+}

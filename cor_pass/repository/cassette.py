@@ -1,14 +1,19 @@
+from fastapi import HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.schemas import (
+    CassettePrinting,
+    CassetteResponseForPrinting,
     CassetteUpdateComment,
     Cassette as CassetteModelScheema,
     Glass as GlassModelScheema,
+    PrintLabel,
 )
 from typing import Any, Dict, List, Optional
 from sqlalchemy.orm import selectinload
 from cor_pass.database import models as db_models
 from cor_pass.repository import case as repository_cases
+from cor_pass.services.glass_and_cassette_printing import print_labels
 
 
 async def get_cassette(
@@ -196,3 +201,66 @@ async def change_printing_status(
         )
         return CassetteModelScheema.model_validate(cassette_db)
     return None
+
+
+
+async def get_cassette_full_info(
+    db: AsyncSession, cassette_id: str
+) -> CassetteResponseForPrinting:
+
+    result = await db.execute(
+        select(db_models.Cassette)
+        .where(db_models.Cassette.id == cassette_id)
+        .options(selectinload(db_models.Cassette.glass))
+    )
+    db_cassette = result.scalar_one_or_none()
+    if db_cassette:
+
+        sample_result = await db.execute(
+            select(db_models.Sample)
+            .where(db_models.Sample.id == db_cassette.sample_id)
+            .options(selectinload(db_models.Sample.case))
+        )
+        db_sample = sample_result.scalar_one_or_none()
+        if not db_sample:
+            raise ValueError(f"Семпл с ID {db_cassette.sample_id} не найден")
+
+        db_case = await db.get(db_models.Case, db_sample.case_id)
+
+
+    response = CassetteResponseForPrinting( 
+    case_code=db_case.case_code,
+    sample_number=db_sample.sample_number,
+    cassette_number=db_cassette.cassette_number,
+    patient_cor_id=db_case.patient_id)
+
+    return response
+
+
+async def print_cassette_data(
+    data: CassettePrinting, db: AsyncSession, request: Request
+):
+    db_cassette = await get_cassette_full_info(db=db, cassette_id=data.cassete_id)
+    if db_cassette is None:
+        raise HTTPException(status_code=404, detail=f"Кассета с ID {data.cassete_id} не найдена в базе данных")
+
+    clinic_name = data.clinic_name
+    case_code = db_cassette.case_code
+    sample_number=db_cassette.sample_number
+    cassette_number=db_cassette.cassette_number
+    glass_number="-"
+    staining="-"
+    hooper=data.hooper
+    patient_cor_id=db_cassette.patient_cor_id
+        
+    content = f"{clinic_name}|{case_code}|{sample_number}|{cassette_number}|L{glass_number}|{staining}|{hooper}|{patient_cor_id}"
+
+    label_to_print = PrintLabel(
+        model_id=data.model_id, 
+        content=content,
+        uuid=data.cassete_id
+    )
+
+    print_result = await print_labels(printer_ip=data.printer_ip, labels_to_print=[label_to_print], request=request)
+
+    return print_result

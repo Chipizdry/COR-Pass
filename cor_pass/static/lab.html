@@ -300,6 +300,7 @@
 </div>
 
 <script src="./COR_ID_Js/general_fun.js"></script>
+<script src="./Printing/printers.js"></script>
 <script src="./js/general.js"></script>
 <script src="./js/alert.js"></script>
 <script>
@@ -342,6 +343,43 @@
     const countOfCassetteInputNODE = document.querySelector('#countOfCassette')
 
     const macroDescriptionTextareaNODE = document.querySelector('#sampleMacroDescription')
+
+    const toQueryString = (object) => {
+        const searchParams = new URLSearchParams();
+        for (const key in object) {
+            searchParams.append(key, object[key]);
+        }
+
+        return searchParams.toString();
+    }
+    const printGlass = async (workCase, workSample, workCassette, workGlass) => {
+        return getDevicesList()
+            .then(devices => {
+                const currentDevice = devices.find(({device_class}) => device_class === "GlassPrinter")
+
+                return  {
+                    "printer_ip": currentDevice.ip_address,
+                    "model_id": 8,
+                    "clinic_name": "",
+                    "hooper": "",
+                    "printing": true
+                }
+            })
+    }
+    const printCassette = async (workCase, workSample, workCassette) => {
+        return getDevicesList()
+            .then(devices => {
+                const currentDevice = devices.find(({device_class}) => device_class === "GlassPrinter")
+
+                return  {
+                    "printer_ip": currentDevice.ip_address,
+                    "model_id": 8,
+                    "clinic_name": "",
+                    "hooper": "",
+                    "printing": true
+                }
+            })
+    }
 
     const changePrintUI = (elementNODE, value) => {
         elementNODE.setAttribute('src', `./assets/${value ? "printActive" : "print"}.svg`)
@@ -831,64 +869,76 @@
                     changePrintUI(elem.querySelector('img'), true)
                 })
         })
-        caseNewNODE.querySelector('.casePrintCassette').addEventListener('click', (e) => {
-            const elem = e.currentTarget;
+        caseNewNODE.querySelector('.casePrintCassette').addEventListener('click', async (e) => {
+            setTimeout(() => {
+                const elem = e.currentTarget;
 
-             fetch(`${API_BASE_URL}/api/cases/${currentCase.id}/print_cassettes?printing=true`, {
-                method: "PATCH",
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                    "Content-Type": "application/json"
-                },
-            })
-                .then(res => res.json())
-                .then(() => {
-                    cases[lastActiveCaseIndex].samples = (
-                        cases[lastActiveCaseIndex].samples
-                            .map((sample) => ({
-                                ...sample,
-                                cassettes: sample.cassettes.map((cassette) => ({
-                                    ...cassette,
-                                    is_printed: true
-                                }))
-                            }))
-                    )
+                printCassette()
+                    .then(printResultData => {
+                        fetch(`${API_BASE_URL}/api/cases/${currentCase.id}/print_cassettes?printing=true`, {
+                            method: "PATCH",
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify(printResultData)
+                        })
+                            .then(res => res.json())
+                            .then(() => {
+                                cases[lastActiveCaseIndex].samples = (
+                                    cases[lastActiveCaseIndex].samples
+                                        .map((sample) => ({
+                                            ...sample,
+                                            cassettes: sample.cassettes.map((cassette) => ({
+                                                ...cassette,
+                                                is_printed: true
+                                            }))
+                                        }))
+                                )
 
-                    showSuccessAlert("Касети дослідження раздрукованно")
-                    changePrintInModel();
-                    changePrintUI(elem.querySelector('img'), true)
-                })
+                                showSuccessAlert("Касети дослідження раздрукованно")
+                                changePrintInModel();
+                                changePrintUI(elem.querySelector('img'), true)
+                            })
+                    })
+            }, 100)
         })
-        caseNewNODE.querySelector('.casePrintGlass').addEventListener('click', (e) => {
-            const elem = e.currentTarget;
+        caseNewNODE.querySelector('.casePrintGlass').addEventListener('click', async (e) => {
+            setTimeout(() => {
+                const elem = e.currentTarget;
 
-             fetch(`${API_BASE_URL}/api/cases/${currentCase.id}/print_glasses?printing=true`, {
-                method: "PATCH",
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                    "Content-Type": "application/json"
-                },
-            })
-                .then(res => res.json())
-                .then(() => {
-                    cases[lastActiveCaseIndex].samples = (
-                        cases[lastActiveCaseIndex].samples
-                            .map((sample) => ({
-                                ...sample,
-                                cassettes: sample.cassettes.map((cassette) => ({
-                                    ...cassette,
-                                    glasses: cassette.glasses.map((glass) => ({
-                                        ...glass,
-                                        is_printed: true
-                                    }))
-                                }))
-                            }))
-                    )
+                printGlass()
+                    .then(printResultData => {
+                        fetch(`${API_BASE_URL}/api/cases/${currentCase.id}/print_glasses?printing=true`, {
+                            method: "PATCH",
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify(printResultData)
+                        })
+                            .then(res => res.json())
+                            .then(() => {
+                                cases[lastActiveCaseIndex].samples = (
+                                    cases[lastActiveCaseIndex].samples
+                                        .map((sample) => ({
+                                            ...sample,
+                                            cassettes: sample.cassettes.map((cassette) => ({
+                                                ...cassette,
+                                                glasses: cassette.glasses.map((glass) => ({
+                                                    ...glass,
+                                                    is_printed: true
+                                                }))
+                                            }))
+                                        }))
+                                )
 
-                    showSuccessAlert("Скельця дослідження раздрукованно")
-                    changePrintInModel();
-                    changePrintUI(elem.querySelector('img'), true)
-                })
+                                showSuccessAlert("Скельця дослідження раздрукованно")
+                                changePrintInModel();
+                                changePrintUI(elem.querySelector('img'), true)
+                            })
+                    })
+            }, 100)
         })
 
         caseNewNODE.addEventListener("click", () => {
@@ -946,60 +996,71 @@
 
         helpTextShowHendler(specimenNewNODE)
 
-        specimenNewNODE.querySelector('.specimenPrintGlass').addEventListener('click', (e) => {
-            const elem = e.currentTarget;
+        specimenNewNODE.querySelector('.specimenPrintGlass').addEventListener('click', async (e) => {
+            setTimeout(async () => {
+                const elem = e.currentTarget;
 
-             fetch(`${API_BASE_URL}/api/samples/${currentSpecimen.id}/print_glasses?printing=true`, {
-                method: "PATCH",
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                    "Content-Type": "application/json"
-                },
-            })
-                .then(res => res.json())
-                .then(() => {
-                    cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes = (
-                        cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes
-                            .map((cassette) => ({
-                                ...cassette,
-                                glasses: cassette.glasses.map((glass) => ({
-                                    ...glass,
-                                    is_printed: true
-                                }))
-                            }))
-                    )
+                printGlass()
+                    .then(printResultData => {
+                        fetch(`${API_BASE_URL}/api/samples/${currentSpecimen.id}/print_glasses?printing=true`, {
+                            method: "PATCH",
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify(printResultData)
+                        })
+                            .then(res => res.json())
+                            .then(() => {
+                                cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes = (
+                                    cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes
+                                        .map((cassette) => ({
+                                            ...cassette,
+                                            glasses: cassette.glasses.map((glass) => ({
+                                                ...glass,
+                                                is_printed: true
+                                            }))
+                                        }))
+                                )
 
 
-                    showSuccessAlert("Скельця зразка раздрукованно")
-                    changePrintInModel();
-                    changePrintUI(elem.querySelector('img'), true)
-                })
+                                showSuccessAlert("Скельця зразка раздрукованно")
+                                changePrintInModel();
+                                changePrintUI(elem.querySelector('img'), true)
+                            })
+                    })
+
+            }, 100)
         })
 
-        specimenNewNODE.querySelector('.specimenPrintCassette').addEventListener('click', (e) => {
-            const elem = e.currentTarget;
+        specimenNewNODE.querySelector('.specimenPrintCassette').addEventListener('click', async (e) => {
+            setTimeout(async () => {
+                printCassette()
+                    .then(printResultData => {
+                        fetch(`${API_BASE_URL}/api/samples/${currentSpecimen.id}/print_cassettes?printing=true`, {
+                            method: "PATCH",
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify(printResultData)
+                        })
+                            .then(res => res.json())
+                            .then(() => {
+                                cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes = (
+                                    cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes
+                                        .map((cassette) => ({
+                                            ...cassette,
+                                            is_printed: true
+                                        }))
+                                )
 
-            fetch(`${API_BASE_URL}/api/samples/${currentSpecimen.id}/print_cassettes?printing=true`, {
-                method: "PATCH",
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                    "Content-Type": "application/json"
-                },
-            })
-                .then(res => res.json())
-                .then(() => {
-                    cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes = (
-                        cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes
-                            .map((cassette) => ({
-                                ...cassette,
-                                is_printed: true
-                            }))
-                    )
-
-                    showSuccessAlert("Касети зразка раздрукованно")
-                    changePrintInModel();
-                    changePrintUI(elem.querySelector('img'), true)
-                })
+                                showSuccessAlert("Касети зразка раздрукованно")
+                                changePrintInModel();
+                                changePrintUI(elem.querySelector('img'), true)
+                            })
+                    })
+            }, 100)
         })
 
         specimenNewNODE.querySelector('.specimenItemArchive').addEventListener('click', (e) => {
@@ -1111,28 +1172,41 @@
         })
 
         cassetteColumnNODE.querySelector('.cassettePrint').addEventListener('click', () => {
-            fetch(`${API_BASE_URL}/api/cassettes/${currentCassette.id}/printed?printed=true`, {
-                method: "PATCH",
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                    "Content-Type": "application/json"
-                },
-            })
-                .then(res => res.json())
-                .then(() => {
-                    const currentCase = cases[lastActiveCaseIndex];
-                    const currentSpecimen = currentCase.samples[lastActiveSpecimenIndex];
-                    const currentCassetteIndex = currentSpecimen.cassettes.findIndex(({id}) => id === currentCassette.id )
 
-                    cases[lastActiveCaseIndex]
-                        .samples[lastActiveSpecimenIndex]
-                        .cassettes[currentCassetteIndex]
-                        .is_printed = true;
+            if(checkToken()){
+                printCassette()
+                    .then(printResultData => {
+                        fetch(`${API_BASE_URL}/api/cassettes/${currentCassette.id}/printed?printed=true`, {
+                            method: "PATCH",
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                ...printResultData,
+                                cassete_id: currentCassette?.id
+                            })
+                        })
+                            .then(res => res.json())
+                            .then(() => {
+                                const currentCase = cases[lastActiveCaseIndex];
+                                const currentSpecimen = currentCase.samples[lastActiveSpecimenIndex];
+                                const currentCassetteIndex = currentSpecimen.cassettes.findIndex(({id}) => id === currentCassette.id )
 
-                    showSuccessAlert("Касета відсканованна")
-                    changePrintInModel();
-                    changePrintUI(cassetteColumnNODE.querySelector('.cassettePrint img'), true)
-                })
+                                cases[lastActiveCaseIndex]
+                                    .samples[lastActiveSpecimenIndex]
+                                    .cassettes[currentCassetteIndex]
+                                    .is_printed = true;
+
+                                showSuccessAlert("Касета відсканованна")
+                                changePrintInModel();
+                                changePrintUI(cassetteColumnNODE.querySelector('.cassettePrint img'), true)
+                            })
+                    })
+                    .catch(e => {
+                        showErrorAlert(e?.response?.message || e?.message)
+                    })
+            }
         })
 
         cassetteColumnNODE.querySelector('.glassMark').addEventListener('click', (e) => {
@@ -1164,40 +1238,52 @@
         })
 
         div.querySelector('.glassItemPaint').addEventListener('click', (e) => {
-            fetch(`${API_BASE_URL}/api/glasses/${currentGlass.id}/printed?printing=true`, {
-                method: "PATCH",
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                    "Content-Type": "application/json"
-                },
-            })
-                .then(res => res.json())
-                .then(() => {
-                    const currentCase = cases[lastActiveCaseIndex];
-                    const currentSpecimen = currentCase.samples[lastActiveSpecimenIndex];
-                    const {currentCassetteIndex, currentGlassIndex} = currentSpecimen.cassettes.reduce((accum, cassette, index) => {
-                        const glassIndex = cassette.glasses.findIndex(({id}) => id === currentGlass.id)
+            if(checkToken()){
+                printGlass()
+                    .then(printResultData => {
+                        fetch(`${API_BASE_URL}/api/glasses/${currentGlass.id}/printed?printing=true`, {
+                            method: "PATCH",
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                ...printResultData,
+                                "glass_id": currentGlass.id,
+                            })
+                        })
+                            .then(res => res.json())
+                            .then(() => {
+                                const currentCase = cases[lastActiveCaseIndex];
+                                const currentSpecimen = currentCase.samples[lastActiveSpecimenIndex];
+                                const {currentCassetteIndex, currentGlassIndex} = currentSpecimen.cassettes.reduce((accum, cassette, index) => {
+                                    const glassIndex = cassette.glasses.findIndex(({id}) => id === currentGlass.id)
 
-                        if(glassIndex === -1){
-                            return accum
-                        }
+                                    if(glassIndex === -1){
+                                        return accum
+                                    }
 
-                        return {
-                            currentCassetteIndex: index,
-                            currentGlassIndex: glassIndex
-                        }
-                    }, {})
+                                    return {
+                                        currentCassetteIndex: index,
+                                        currentGlassIndex: glassIndex
+                                    }
+                                }, {})
 
-                    cases[lastActiveCaseIndex]
-                        .samples[lastActiveSpecimenIndex]
-                        .cassettes[currentCassetteIndex]
-                        .glasses[currentGlassIndex]
-                        .is_printed = true;
+                                cases[lastActiveCaseIndex]
+                                    .samples[lastActiveSpecimenIndex]
+                                    .cassettes[currentCassetteIndex]
+                                    .glasses[currentGlassIndex]
+                                    .is_printed = true;
 
-                    showSuccessAlert("Скельце раздрукованно")
-                    changePrintInModel();
-                    changePrintUI(div.querySelector('.glassItemPaint img'), true)
-                })
+                                showSuccessAlert("Скельце раздрукованно")
+                                changePrintInModel();
+                                changePrintUI(div.querySelector('.glassItemPaint img'), true)
+                            })
+                    })
+                    .catch(e => {
+                        showErrorAlert(e?.response?.message || e?.message)
+                    })
+            }
         })
 
 

@@ -1,5 +1,5 @@
 from click import File
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.database.db import get_db
@@ -13,6 +13,7 @@ from cor_pass.schemas import (
     CaseParametersScheema,
     DeleteCasesRequest,
     DeleteCasesResponse,
+    GeneralPrinting,
     PatientFirstCaseDetailsResponse,
     ReferralAttachmentResponse,
     ReferralCreate,
@@ -346,13 +347,14 @@ async def release_case(
     response_model=CaseDetailsResponse,
 )
 async def print_all_case_glasses(
-    case_id: str, printing: bool = False, db: AsyncSession = Depends(get_db)
+    case_id: str, data: GeneralPrinting,
+    request: Request, printing: bool = False, db: AsyncSession = Depends(get_db)
 ):
     """
     Печатает все стёкла кейса
     """
     db_case = await case_service.print_all_case_glasses(
-        db=db, case_id=case_id, printing=printing
+        db=db, case_id=case_id, printing=printing, data=data, request=request
     )
     if db_case is None:
         raise HTTPException(status_code=404, detail="Case not found")
@@ -365,13 +367,14 @@ async def print_all_case_glasses(
     response_model=CaseDetailsResponse,
 )
 async def print_all_case_cassettes(
-    case_id: str, printing: bool = False, db: AsyncSession = Depends(get_db)
+    case_id: str, data: GeneralPrinting,
+    request: Request, printing: bool = False, db: AsyncSession = Depends(get_db)
 ):
     """
     Печатает все кассеты кейса
     """
     db_case = await case_service.print_all_case_cassette(
-        db=db, case_id=case_id, printing=printing
+        db=db, case_id=case_id, printing=printing, data=data, request=request
     )
     if db_case is None:
         raise HTTPException(status_code=404, detail="Case not found")
