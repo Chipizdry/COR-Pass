@@ -212,6 +212,7 @@ function startPrinterMonitoring() {
 
 
 
+
 // Обновленная функция loadDevicesList
 async function loadDevicesList() {
     const devicesListElement = document.getElementById('devicesList');
@@ -233,14 +234,22 @@ async function loadDevicesList() {
         }
         
         const devices = await response.json();
+        
+        // Сохраняем все устройства для отображения в таблице
+        allPrinters = devices;
+        
+        // Фильтруем только принтеры для тестовой формы
         availablePrinters = devices.filter(device => 
             device.device_class === 'GlassPrinter' || 
             device.device_class === 'CassetPrinter' ||
-            device.device_class === 'CassetPrinterHopper'
+            device.device_class === 'CassetPrinterHopper'||
+            device.device_class ===`scanner`
         );
         
+        // Обновляем выпадающий список в тестовой форме
         updatePrinterDropdown();
         
+        // Создаем таблицу со всеми устройствами
         let tableHTML = `
             <table class="devices-table">
                 <thead>
@@ -256,7 +265,8 @@ async function loadDevicesList() {
                 <tbody>
         `;
         
-        devices.forEach(device => {
+        // Используем allPrinters вместо devices для отображения всех устройств
+        allPrinters.forEach(device => {
             const lastStatus = printerStatuses[device.ip_address];
             const statusColor = lastStatus ? 
                 (lastStatus.available ? 'green' : 'red') : 'gray';
@@ -269,10 +279,9 @@ async function loadDevicesList() {
                     <td><input type="text" class="editable-field location" value="${device.location || ''}" data-original="${device.location || ''}"></td>
                     <td><input type="text" class="editable-field comment" value="${device.comment || ''}" data-original="${device.comment || ''}"></td>
                     <td class="actions">
-                       
                         <button class="action-btn save-btn" onclick="saveDeviceChanges('${device.id}')" title="Сохранить">💾</button>
                         <button class="action-btn delete-btn" onclick="deleteDevice('${device.id}')" title="Удалить">❌</button>
-                         <div class="status-indicator" style="background-color: ${statusColor}" 
+                        <div class="status-indicator" style="background-color: ${statusColor}" 
                              title="${lastStatus ? `Статус: ${lastStatus.available ? 'Доступен' : 'Недоступен'}\nПоследняя проверка: ${lastStatus.lastChecked.toLocaleTimeString()}` : 'Статус неизвестен'}"></div>
                     </td>
                 </tr>
@@ -411,38 +420,55 @@ async function deleteDevice(deviceId) {
         alert('Ошибка при удалении: ' + error.message);
     }
 }
+
 function updatePrinterDropdown() {
     const printerInput = document.getElementById('printerIp');
     const datalist = document.getElementById('printerIps');
     if (!printerInput || !datalist) return;
 
-    // Проверяем, что availablePrinters существует и является массивом
     if (!Array.isArray(availablePrinters)) {
-        console.error('availablePrinters is not an array:', availablePrinters);
+        console.error('availablePrinters не является массивом:', availablePrinters);
         availablePrinters = [];
     }
 
-    // Сохраняем текущее значение
     const currentValue = printerInput.value;
-    
-    // Очищаем список
     datalist.innerHTML = '';
     
-    // Добавляем все принтеры
     if (availablePrinters.length > 0) {
         availablePrinters.forEach(printer => {
             const option = document.createElement('option');
             option.value = printer.ip_address;
             option.textContent = `${printer.ip_address}${printer.location ? ` (${printer.location})` : ''}`;
+            option.dataset.type = printer.device_class;
             datalist.appendChild(option);
         });
     }
     
-    // Восстанавливаем выбранное значение
     if (currentValue) {
         printerInput.value = currentValue;
     }
+
+    // Обработчик изменения выбора принтера
+    printerInput.addEventListener('input', function() {
+        const selectedOption = Array.from(datalist.options).find(opt => opt.value === this.value);
+        const hopperNumberContainer = document.getElementById('hopperNumberContainer');
+        
+        if (selectedOption) {
+            // Показываем поле для хоппера только для принтеров типа CassetPrinterHopper
+            if (selectedOption.dataset.type === 'CassetPrinterHopper') {
+                hopperNumberContainer.style.display = 'block';
+            } else {
+                hopperNumberContainer.style.display = 'none';
+            }
+        } else {
+            hopperNumberContainer.style.display = 'none';
+        }
+    });
+    
+    // Вызываем событие input для обновления состояния при загрузке
+    printerInput.dispatchEvent(new Event('input'));
 }
+
 
 // Обработчик для модального окна теста
 document.getElementById('sendLabelButton').addEventListener('click', async () => {
@@ -451,7 +477,7 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
     // Получаем значения из полей формы
     const printerIp = document.getElementById('printerIp').value.trim();
     const customIpInput = document.getElementById('customPrinterIp');
-   
+    const hopperNumber = document.getElementById('hopperNumber').value.trim();
     const templateId = document.getElementById('template').value;
     const clinicId = document.getElementById('clinicId').value.trim();
     const caseCode = document.getElementById('caseCode').value.trim();
@@ -459,9 +485,8 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
     const cassetteNumber = document.getElementById('cassetteNumber').value.trim();
     const glassNumber = document.getElementById('glassNumber').value.trim();
     const staining = document.getElementById('staining').value.trim();
-    const hopperNumber = document.getElementById('hopperNumber').value.trim();
     const patientCorId = document.getElementById('patientCorId').value.trim();
-    const hopperID= 3;
+   
     
     // Проверка обязательных полей
     if (!printerIp) {
@@ -480,17 +505,17 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
 
     // Формируем строку content из всех параметров
     const content = [
-        hopperID,
+        hopperNumber,
         clinicId,
         caseCode,
         sampleNumber,
         cassetteNumber,
         glassNumber,
         staining,
-        hopperNumber,
         patientCorId
-    ].join('|');
+    ].join('&');
 
+    console.log("Печать:",content);
     // Используем универсальную функцию печати
     await printLabel(printerIp, templateNumber, content, testResult);
 });

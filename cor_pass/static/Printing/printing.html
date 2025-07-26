@@ -61,10 +61,19 @@
                     <!-- Опции будут добавлены динамически -->
                 </datalist>
             </div>
+
+
+
             <div class="form">
                 <label for="deviceId">Шаблон № (0-65535):</label>
                 <input type="number" id="template" min="0" max="65535" required>
             </div>
+
+            <div class="form" id="hopperNumberContainer" style="width:40px; display: none;">
+                <label for="hopperNumber">Хоппер:</label>
+                <input type="number" id="hopperNumber"  min="0" max="6" required>
+            </div>
+           
 
             <div class="field-group">
                 <div class="form-group-test">
