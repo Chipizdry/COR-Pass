@@ -659,7 +659,7 @@ function updateSliders(volumeInfo) {
     }
   }
 
-
+/*
 
   document.querySelectorAll('.dicom-buttons').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -674,3 +674,126 @@ function updateSliders(volumeInfo) {
       update(targetPlane);  // просто заново грузим изображение
     });
   });
+*/
+
+  
+function openDicomFullscreen(plane) {
+  // Создаем контейнер для полноэкранного просмотра
+  const fullscreenViewer = document.createElement('div');
+  fullscreenViewer.id = 'dicom-fullscreen-viewer';
+  fullscreenViewer.className = 'dicom-fullscreen-viewer';
+  
+  // Создаем canvas для полноэкранного отображения
+  const fullscreenCanvas = document.createElement('canvas');
+  fullscreenCanvas.className = 'dicom-fullscreen-canvas';
+  fullscreenCanvas.id = `fullscreen-canvas-${plane}`;
+  
+  // Создаем контролы для слайдера
+  const controlsDiv = document.createElement('div');
+  controlsDiv.className = 'dicom-fullscreen-controls';
+  
+  const sliderContainer = document.createElement('div');
+  sliderContainer.className = 'dcm-range-container';
+  
+  const slider = document.createElement('input');
+  slider.type = 'range';
+  slider.id = `fullscreen-${plane}`;
+  slider.min = document.getElementById(plane).min;
+  slider.max = document.getElementById(plane).max;
+  slider.value = document.getElementById(plane).value;
+  
+  const valueDisplay = document.createElement('span');
+  valueDisplay.className = 'dcm-range-value';
+  valueDisplay.textContent = slider.value;
+  
+  slider.oninput = function() {
+    updateSliderValue(`fullscreen-${plane}`);
+    updateFullscreenDicom(plane);
+  };
+  
+  // Кнопка закрытия
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'dicom-fullscreen-close';
+  closeBtn.textContent = '×';
+  closeBtn.onclick = function() {
+    document.body.removeChild(fullscreenViewer);
+  };
+  
+  // Собираем все элементы
+  sliderContainer.appendChild(slider);
+  sliderContainer.appendChild(valueDisplay);
+  controlsDiv.appendChild(sliderContainer);
+  fullscreenViewer.appendChild(closeBtn);
+  fullscreenViewer.appendChild(fullscreenCanvas);
+  fullscreenViewer.appendChild(controlsDiv);
+  
+  // Добавляем на страницу
+  document.body.appendChild(fullscreenViewer);
+  
+  // Загружаем изображение
+  updateFullscreenDicom(plane);
+}
+
+async function updateFullscreenDicom(plane) {
+  const fullscreenCanvas = document.getElementById(`fullscreen-canvas-${plane}`);
+  const ctx = fullscreenCanvas.getContext('2d');
+  const idx = parseInt(document.getElementById(`fullscreen-${plane}`).value);
+  
+  // Устанавливаем размер canvas в зависимости от размера экрана
+  const maxSize = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9);
+  fullscreenCanvas.width = maxSize;
+  fullscreenCanvas.height = maxSize;
+  
+  const img = new Image();
+  img.onload = function() {
+    ctx.clearRect(0, 0, fullscreenCanvas.width, fullscreenCanvas.height);
+    
+    // Рассчитываем размеры для сохранения пропорций
+    const ratio = Math.min(
+      fullscreenCanvas.width / img.width,
+      fullscreenCanvas.height / img.height
+    );
+    const newWidth = img.width * ratio;
+    const newHeight = img.height * ratio;
+    const offsetX = (fullscreenCanvas.width - newWidth) / 2;
+    const offsetY = (fullscreenCanvas.height - newHeight) / 2;
+    
+    ctx.drawImage(img, offsetX, offsetY, newWidth, newHeight);
+  };
+  
+  const token = getToken();
+  const params = new URLSearchParams({
+    index: idx,
+    mode: currentMode,
+    t: Date.now()
+  });
+
+  if (currentMode === 'window') {
+    params.append('window_center', manualWindowCenter);
+    params.append('window_width', manualWindowWidth);
+  }
+
+  try {
+    const response = await fetch(`/api/dicom/reconstruct/${plane}?${params.toString()}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    
+    const blob = await response.blob();
+    img.src = URL.createObjectURL(blob);
+  } catch (error) {
+    console.error('Error loading DICOM image:', error);
+    if (error.message.includes('401')) {
+      showTokenExpiredModal();
+    }
+  }
+}
+
+// Модифицируем обработчик кнопок полноэкранного режима
+document.querySelectorAll('.dicom-buttons').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const targetPlane = btn.getAttribute('data-target');
+    openDicomFullscreen(targetPlane.replace('canvas-', ''));
+  });
+});
