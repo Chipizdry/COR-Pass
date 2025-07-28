@@ -346,14 +346,17 @@ g[onclick]:active {
 }
 
 
-
 .view-container {
   border: 1px solid #ccc;
-  margin-bottom: 10px;
+  margin-bottom: -10px;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
+
 .view-header {
+  width: 100%; /* Обязательно */
   background: #eee;
   padding: 5px 10px;
   display: flex;
@@ -361,7 +364,6 @@ g[onclick]:active {
   align-items: center;
   font-weight: bold;
 }
-
 
 .view-container.fullscreen {
   position: fixed;
