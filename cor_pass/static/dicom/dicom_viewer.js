@@ -658,3 +658,19 @@ function updateSliders(volumeInfo) {
       document.getElementById('upload-status').textContent = `Ошибка загрузки: ${error}`;
     }
   }
+
+
+
+  document.querySelectorAll('.dicom-buttons').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const container = btn.closest('.view-container');
+      const isFullscreen = container.classList.toggle('fullscreen');
+  
+      // Меняем текст кнопки
+      btn.textContent = isFullscreen ? '🗗' : '🗖';
+  
+      // Перерисовываем canvas с новым размером
+      const targetPlane = btn.getAttribute('data-target');
+      update(targetPlane);  // просто заново грузим изображение
+    });
+  });

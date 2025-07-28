@@ -16,8 +16,13 @@
 
 
   <div class="viewer hidden" id="DcmViewerFrame">
+    <div class="view-container">
+      <div class="view-header">
+        <span>Coronal</span>
+        <button class="dicom-buttons" data-target="coronal">🗖</button>
+      </div>
+
     <div class="view">
-      <label class="label-padded">Coronal</label> 
       <canvas id="canvas-coronal" width="512" height="512"></canvas>   
       <div class="dcm-range-container">
         <input type="range" id="coronal" min="0" max="100" value="50" 
@@ -25,9 +30,18 @@
         <span class="dcm-range-value">50</span>
       </div>
     </div>
-    
+  </div>
+
+
+
+  <div class="view-container">
+    <div class="view-header">
+      <span>Sagittal</span>
+      <button class="dicom-buttons" data-target="sagittal">🗖</button>
+    </div>
+
     <div class="view">
-      <label class="label-padded">Sagittal</label>
+   <!--   <label class="label-padded">Sagittal</label> -->
       <canvas id="canvas-sagittal" width="512" height="512"></canvas>     
       <div class="dcm-range-container">
         <input type="range" id="sagittal" min="0" max="100" value="50" 
@@ -35,9 +49,16 @@
         <span class="dcm-range-value">50</span>
       </div>
     </div>
-   
+  </div>
+  
+  <div class="view-container">
+    <div class="view-header">
+      <span>Axial</span>
+      <button class="dicom-buttons" data-target="canvas-axial">🗖</button>
+    </div>
+
     <div class="view">
-      <label class="label-padded">Axial</label>
+   <!--  <label class="label-padded">Axial</label> --> 
       <canvas id="canvas-axial" width="512" height="512"></canvas>
       <div class="dcm-range-container">
         <input type="range" id="axial" min="0" max="100" value="50" 
@@ -45,7 +66,7 @@
         <span class="dcm-range-value">50</span>
       </div>
     </div>
-
+  </div>
     <div class="dicom-upload-container">
   
       <div class="metadata-container" id="metadata-container" style="display: none;">

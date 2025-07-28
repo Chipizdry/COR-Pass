@@ -119,7 +119,31 @@
       color: #7527B2;
   }
   
+  .dicom-buttons {
+    display: flex;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    margin: -15px 0;
+    color: black;
+    cursor: pointer;
+    width: 100%;
+    max-width: 20px;
+    background: transparent;
+}
   
+.dicom-buttons:hover {
+  display: flex;
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  margin: -15px 0;
+  color: black;
+  cursor: pointer;
+  width: 100%;
+  max-width: 20px;
+  background: transparent;
+}
   .viewer-controls {
     grid-column: 1 / -1;
     padding: 10px;
@@ -319,4 +343,41 @@ g[onclick] {
 
 g[onclick]:active {
   transform: scale(0.99); /* Эффект нажатия */
+}
+
+
+
+.view-container {
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.view-header {
+  background: #eee;
+  padding: 5px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+}
+
+
+.view-container.fullscreen {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  background: black;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.view-container.fullscreen canvas {
+  width: 90vw;
+  height: 90vh;
+  max-width: none;
+  max-height: none;
 }
