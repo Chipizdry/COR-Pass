@@ -1,0 +1,239 @@
+
+
+
+/* Мобильная адаптация */
+@media screen and (max-width: 968px) {
+
+    html, body {
+        overflow: hidden;
+        height: 100% !important;
+        width: 100% !important;
+        position: fixed !important; /* особенно важно для мобильных Safari */
+        overscroll-behavior: none; /* запрещает резкое растягивание */
+        touch-action: none;
+      }
+
+      h2 {
+        color:#291161;
+        font-size: 16px;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+
+    .energy-container {
+        width: 100% !important;
+        max-width: 100% !important;
+    /*    height: auto !important; */
+        min-height: 300px;
+        max-height: 80vh;
+      /*  padding: 15px; */
+        border-radius: 0;
+        margin: 0;
+        overflow: hidden; 
+    }
+
+    .mobile-scale-wrapper {
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        position: relative;
+        touch-action: none; /* предотвращает перемещение пальцем */
+      }
+      
+      .svg-wrapper {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 540 / 600;
+        max-width: 100vw;
+        overflow: hidden;
+      }
+      /* Внутренний блок, который будет уменьшен */
+      .mobile-scale-inner {
+        transform: scale(0.7); /* Можете варьировать под устройство */
+        transform-origin: top left;
+        width: 142.857%; /* 100 / 0.7 */
+        height: 142.857%;
+        pointer-events: auto;
+      }
+
+    .tabs {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        overflow-x: hidden;
+        white-space: normal;
+    }
+
+    .tabs::-webkit-scrollbar {
+        display: none; /* Скрываем скроллбар в Chrome/Safari */
+    }
+
+    .tab {
+        flex: 0 0 auto;
+        min-width: 20px;
+        padding: 10px;
+        width: 25%;
+        font-size: 12px;
+    }
+
+    .tabcontent {
+        overflow-x: hidden; /* Запрещаем горизонтальный скролл */
+        height: auto !important;
+        max-height: none;
+        overflow-y: auto;
+    }
+  
+    /* Адаптация SVG контейнера */
+  
+    svg {
+        width: 100%;
+        height: auto;
+        max-height: none;
+        transform: none; /* Убрать масштабирование */
+        overflow: visible;
+    }
+    /* Уменьшение иконок */
+    .icon {
+      transform: scale(0.7);
+    }
+  
+    .battery-icon {
+      top: 200px !important;
+      left: 0 !important;
+    }
+  
+    .solar-battery-icon {
+      top: 220px !important;
+      left: 40% !important;
+    }
+  
+    .inverter-icon {
+      top: 100px !important;
+      left: 30% !important;
+    }
+  
+    .power-grid-icon {
+        top: -25px !important;
+        left: 5px !important;
+    }
+  
+    .power-icon {
+        top: 0px !important;
+        left: 50% !important;
+    }
+  
+    /* Адаптация модальных окон */
+    .modal {
+      width: 95% !important;
+      left: 2.5% !important;
+      top: 5vh !important;
+      max-height: 90vh;
+    }
+  
+    /* Адаптация графика */
+   
+    #chartContainer {
+     /*   height: 300px; */
+        width: 100%;
+    }
+  
+    /* Адаптация таблиц */
+    .phase-table {
+      font-size: 0.7em;
+    }
+  
+    /* Улучшение видимости анимации */
+    #loadFlowLine, #networkFlowLine, 
+    #solarLineV, #solarLineH,
+    #batteryLineV, #batteryLineH {
+      stroke-width: 4px !important;
+    }
+  }
+  
+  @media screen and (max-width: 480px) {
+
+    /*
+    .icon {
+      transform: scale(0.6);
+    }
+  
+    svg {
+      transform: scale(0.6);
+    }
+  */
+    #chartContainer {
+      height: 350px; 
+    }
+
+
+
+    html, body {
+        overflow: hidden;
+        height: 100% !important;
+        width: 100% !important;
+        position: fixed !important; /* особенно важно для мобильных Safari */
+        overscroll-behavior: none; /* запрещает резкое растягивание */
+      }
+
+    .energy-container {
+        width: 100% !important;
+        max-width: 100% !important;
+     /*   height: auto !important; */
+        min-height: 300px;
+        max-height: 80vh;
+        border-radius: 0;
+        margin: 0;
+        overflow: hidden; 
+    }
+
+
+
+    .tabs {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        overflow-x: hidden;
+        white-space: normal;
+    }
+
+    .tabs::-webkit-scrollbar {
+        display: none; /* Скрываем скроллбар в Chrome/Safari */
+    }
+
+    .tab {
+        flex: 0 0 auto;
+        min-width: 20px;
+        padding: 10px;
+        width: 25%;
+        font-size: 12px;
+    }
+
+    .tabcontent {
+        overflow-x: hidden; /* Запрещаем горизонтальный скролл */
+        height: auto !important;
+        max-height: none;
+        overflow-y: auto;
+    }
+
+    .link-button {
+        background: none;
+        border: none;
+        color: #7B43F2;
+        cursor: pointer;
+        font-size: 13px;
+        font-family: inherit;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        max-width: 100px;
+        height: 20px;
+        margin: 3px;
+    }
+
+    .connection-status {
+        margin-top: -19px;
+        font-size: 12px;
+        /* color: #7B43F2; */
+    }
+  
+  }

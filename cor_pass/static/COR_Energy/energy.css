@@ -4,24 +4,28 @@
     background-color: white;
     padding: 30px;
     border-radius: 30px;
-    max-width: 900;
+    max-width: 900px;
     width: 900px !important;
     text-align: center;
     height: 800px;
     flex-shrink: 0;
 }
 
-
- /* Стили для контейнера вкладок */
-.tabs {
-    display: flex; /* Вкладки располагаются в строку */
-    border-bottom: 1px solid #ccc; /* Нижняя граница под вкладками */
-    width: 100%; /* Вкладки занимают всю ширину контейнера */
-    box-sizing: border-box; /* Учет padding и border в ширину */
-    margin: 0;
-    padding: 0;
-    max-height: 80vh;
+body {
+    overflow: hidden;
+    
 }
+
+
+ .tabs {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        overflow-x: hidden;
+        white-space: normal;
+        border-bottom: 1px solid #ccc; 
+        box-sizing: border-box;
+    }
 
 /* Стили для каждой вкладки */
 .tab {
@@ -142,8 +146,8 @@ footer {
 }
 
 .inverter-icon {
-    top: 160px;
-    left: 315px;
+    top: 180px;
+    left: 332px;
 }
 
 .power-grid-icon {

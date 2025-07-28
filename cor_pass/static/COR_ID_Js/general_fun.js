@@ -5,7 +5,7 @@ const modalConfigs = {
     editModal: { width: '250px', height: 'auto', top: '50px', left: '50px' },
     myModal: { width: '250px', height: '450px', top: '50px', left: '250px' },
     settingsModal: { width: '460px', height: '710px', top: '50px', left: '450px' },
-    sessionsModal: { width: '450px', height: '350px', top: '100px', left: '100px' },
+    sessionsModal: { width: '450px', height: '350px', top: 'auto', left: 'auto' },
     step1Modal: { width: '460px', height: '690px', top: '20px', left: '300px' },
     step2Modal: { width: '460px', height: '690px', top: '20px', left: '300px' },
     step3Modal: { width: '460px', height: '690px', top: '20px', left: '300px' },
@@ -22,9 +22,9 @@ const modalConfigs = {
     batteryModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
     loadSettingsModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
     GridSettingsModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
-    SolarPanelModal: { width: '350px', height: '550px', top: '50px', left: 'auto' },
+    SolarPanelModal: { width: '350px', height: '550px', top: 'auto', left: 'auto' },
     RegistersModal: { width: '350px', height: '400px', top: '50px', left: 'auto' },
-    inverterModal: { width: '350px', height: 'auto', top: '50px', left: 'auto' },
+    inverterModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
 };
 
 //Функция получения токена

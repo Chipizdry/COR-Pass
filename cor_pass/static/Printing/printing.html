@@ -40,7 +40,7 @@
                 <!-- Здесь будет список устройств -->
                 <p>Список устройств загружается...</p>
             </div>
-            <div id="printerStatus" class="status-indicator">Статус принтера: проверка...</div> 
+          <!--  <div id="printerStatus" class="status-indicator">Статус принтера: проверка...</div>  -->
         </div>
     </div>
     
@@ -69,7 +69,7 @@
                 <input type="number" id="template" min="0" max="65535" required>
             </div>
 
-            <div class="form" id="hopperNumberContainer" style="width:40px; display: none;">
+            <div class="form" id="hopperNumberContainer" style="width:70px; display: none;">
                 <label for="hopperNumber">Хоппер:</label>
                 <input type="number" id="hopperNumber"  min="0" max="6" required>
             </div>
@@ -106,10 +106,7 @@
                     <label for="staining">Staining:</label>
                     <input type="text" id="staining" value="H&amp;E">
                 </div>
-                <div class="form-group-test" style="width:40px;">
-                    <label for="hopperNumber">Hopper:</label>
-                    <input type="text" id="hopperNumber" value="?">
-                </div>
+        
                 <div class="form-group-test" style="flex: 2;">
                     <label for="patientCorId">Patient COR ID:</label>
                     <input type="text" id="patientCorId" value="TDAJ92Z7-1983M">
@@ -140,10 +137,7 @@
                     <option value="other">Другое</option>
                 </select>
             </div>
-            <div class="form">
-                <label for="deviceId">ID устройства (0-65535):</label>
-                <input type="number" id="deviceId" min="0" max="65535" required>
-            </div>
+          
             <div class="form">
                 <label for="deviceIp">IP-адрес:</label>
                 <input type="text" id="deviceIp" required>
@@ -157,7 +151,7 @@
                 <input type="text" id="deviceInformation">
             </div>
             <button onclick="addDevice()">Добавить устройство</button>
-            <div id="addDeviceResult" style="margin-top: 15px;"></div>
+            <div id="addDeviceResult" style="margin: 5px 20px 20px 20px;color: rgb(16, 201, 16);font-size:13px"></div>
         </div>
     </div>
 
@@ -171,6 +165,7 @@
         let printerStatuses = {};
         // Инициализация при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
+            checkToken();
 
                     // Загружаем список устройств при старте
             loadDevicesList().then(() => {
@@ -200,11 +195,11 @@
             }
             
             // Закрытие модальных окон при клике вне окна
-            window.onclick = function(event) {
-                if (event.target.className === 'modal') {
-                    event.target.style.display = 'none';
-                }
-            }
+       //     window.onclick = function(event) {
+       //         if (event.target.className === 'modal') {
+       //             event.target.style.display = 'none';
+       //         }
+       //     }
             
                 makeModalDraggable('addDeviceModal');
                 makeModalDraggable('devicesModal');

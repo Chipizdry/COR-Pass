@@ -638,3 +638,20 @@ async function writeRegister() {
         output.textContent = `Ошибка: ${error.message}`;
     }
 }
+
+
+function checkViewport() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    const orientation = width > height ? "landscape" : "portrait";
+    
+    console.log(`Viewport: ${width}x${height}, ${orientation}`);
+    console.log(`Device pixel ratio: ${window.devicePixelRatio}`);
+    
+    // Проверка поддержки анимаций
+    const animationSupport = 'animate' in document.createElement('div');
+    console.log(`CSS Animations supported: ${animationSupport}`);
+  }
+  
+  window.addEventListener('resize', checkViewport);
+  checkViewport();

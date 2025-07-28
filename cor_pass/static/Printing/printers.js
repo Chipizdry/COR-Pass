@@ -1,11 +1,12 @@
 
-
 async function printLabel(printerIp, templateNumber, content, resultElement = null) {
+     checkToken();
     if (resultElement) {
         resultElement.textContent = 'Отправка задания на печать...';
         resultElement.style.color = 'black';
+        resultElement.style.display = 'block'; // показать элемент
     }
-    
+
     const requestData = {
         printer_ip: printerIp,
         labels: [
@@ -34,25 +35,32 @@ async function printLabel(printerIp, templateNumber, content, resultElement = nu
 
         const result = await response.json();
         console.log('Печать успешна:', result);
-        
+
         if (resultElement) {
             resultElement.textContent = `Задание отправлено (IP: ${printerIp}, Шаблон: ${templateNumber})`;
             resultElement.style.color = 'green';
+            resultElement.style.display = 'block'; // показать
+            setTimeout(() => {
+                resultElement.style.display = 'none';
+            }, 3000);
         }
-        
+
         return result;
     } catch (error) {
         console.error('Ошибка:', error);
-        
+
         if (resultElement) {
             resultElement.textContent = 'Ошибка при печати: ' + error.message;
             resultElement.style.color = 'red';
+            resultElement.style.display = 'block'; // показать
+            setTimeout(() => {
+                resultElement.style.display = 'none';
+            }, 3000);
         }
-        
+
         throw error;
     }
 }
-
 
 
     // Функция проверки доступности принтера
@@ -76,9 +84,6 @@ async function printLabel(printerIp, templateNumber, content, resultElement = nu
 
 // Функция мониторинга состояния всех принтеров
 function startPrinterMonitoring() {
-    const statusElement = document.getElementById('printerStatus');
-    if (!statusElement) return;
-
     let currentPrinterIndex = 0;
     
     // Функция для проверки одного принтера
@@ -130,82 +135,132 @@ function startPrinterMonitoring() {
 
     // Функция добавления нового устройства
     async function addDevice() {
+        checkToken();
         const resultElement = document.getElementById('addDeviceResult');
         resultElement.textContent = '';
-        
-        // Получаем значения из полей формы
+    
+        // Получаем значения из полей формы (без deviceId)
         const deviceType = document.getElementById('deviceType').value;
-        const deviceId = document.getElementById('deviceId').value;
         const deviceIp = document.getElementById('deviceIp').value;
         const deviceLocation = document.getElementById('deviceLocation').value;
         const deviceInfo = document.getElementById('deviceInformation').value;
-
-
-        // Проверяем обязательные поля
-        if (!deviceType || !deviceId || !deviceIp) {
+    
+        if (!deviceType || !deviceIp) {
             resultElement.textContent = 'Пожалуйста, заполните все обязательные поля';
             resultElement.style.color = 'red';
             return;
         }
-
-        // Проверяем валидность ID устройства
-        const idNumber = parseInt(deviceId);
-        if (isNaN(idNumber) || idNumber < 0 || idNumber > 65535) {
-            resultElement.textContent = 'ID устройства должен быть числом от 0 до 65535';
-            resultElement.style.color = 'red';
-            return;
-        }
-
-        // Подготавливаем данные для отправки
-        const deviceData = {
-            device_class: deviceType,
-            device_identifier: deviceId,
-            ip_address: deviceIp,
-            subnet_mask: "255.255.255.0", // По умолчанию
-            gateway: "0.0.0.0", // По умолчанию
-            port: 0, // По умолчанию
-            comment: deviceInfo || "", 
-            location: deviceLocation || "" // Если не указано - пустая строка
-        };
-
+    
         try {
-            resultElement.textContent = 'Добавление устройства...';
+            resultElement.textContent = 'Получение списка устройств...';
             resultElement.style.color = 'black';
-            
-            // Отправляем запрос на сервер
+    
+            // Загружаем все текущие устройства
+            const allDevicesResponse = await fetch('/api/printing_devices/all', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            });
+    
+            if (!allDevicesResponse.ok) {
+                throw new Error('Не удалось загрузить список устройств');
+            }
+    
+            const devices = await allDevicesResponse.json();
+    
+
+
+            // Проверка на дублирование IP
+                const duplicateIp = devices.find(device => device.ip_address === deviceIp);
+
+                if (duplicateIp) {
+                    resultElement.textContent = 'Устройство с таким IP уже существует!';
+                    resultElement.style.color = 'red';
+
+                    const ipInput = document.getElementById('deviceIp');
+                    ipInput.style.border = '2px solid red';
+
+                    setTimeout(() => {
+                        ipInput.style.border = '';
+                    }, 3000);
+
+                    return;
+                }
+
+
+
+            // Находим максимальный device_identifier (среди числовых значений)
+            let maxId = 0;
+            for (const device of devices) {
+                const id = parseInt(device.device_identifier);
+                if (!isNaN(id) && id > maxId) {
+                    maxId = id;
+                }
+            }
+    
+
+
+
+
+            const newDeviceId = (maxId + 1).toString();
+    
+            // Подготавливаем данные для отправки
+            const deviceData = {
+                device_class: deviceType,
+                device_identifier: newDeviceId,
+                ip_address: deviceIp,
+                subnet_mask: "255.255.255.0",
+                gateway: "0.0.0.0",
+                port: 0,
+                comment: deviceInfo || "",
+                location: deviceLocation || ""
+            };
+    
+            resultElement.textContent = 'Добавление устройства...';
+    
             const response = await fetch('/api/printing_devices/', {
                 method: 'POST',
                 headers: {
                     'accept': 'application/json',
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                    'Authorization': 'Bearer ' + getToken()
                 },
                 body: JSON.stringify(deviceData)
             });
-
+    
             if (!response.ok) {
                 throw new Error(`Ошибка HTTP: ${response.status}`);
             }
-
+    
             const result = await response.json();
             console.log('Устройство успешно добавлено:', result);
             resultElement.textContent = 'Устройство успешно добавлено!';
             resultElement.style.color = 'green';
-            
+    
             // Очищаем форму
             document.getElementById('deviceType').value = '';
-            document.getElementById('deviceId').value = '';
             document.getElementById('deviceIp').value = '';
             document.getElementById('deviceLocation').value = '';
-            
-            // Закрываем модальное окно через 2 секунды
+            document.getElementById('deviceInformation').value = '';
+    
             setTimeout(() => {
+                resultElement.textContent = '';
+               
+            }, 1500);
+    
+
+            setTimeout(() => {
+                resultElement.textContent = '';
                 document.getElementById('addDeviceModal').style.display = 'none';
-            }, 2000);
-            
+            }, 3000);
+    
+            loadDevicesList(); // Обновить таблицу
+    
         } catch (error) {
             console.error('Ошибка при добавлении устройства:', error);
-            resultElement.textContent = 'Произошла ошибка при добавлении устройства: ' + error.message;
+            resultElement.textContent = 'Ошибка при добавлении устройства: ' + error.message;
             resultElement.style.color = 'red';
         }
     }
@@ -215,6 +270,7 @@ function startPrinterMonitoring() {
 
 // Обновленная функция loadDevicesList
 async function loadDevicesList() {
+    checkToken();
     const devicesListElement = document.getElementById('devicesList');
     if (!devicesListElement) return;
 
@@ -305,6 +361,7 @@ async function loadDevicesList() {
 
 // Функция для сохранения изменений устройства
 async function saveDeviceChanges(deviceId) {
+    checkToken();
     const row = document.querySelector(`tr[data-device-id="${deviceId}"]`);
     if (!row) return;
 
@@ -393,6 +450,7 @@ function showNotification(message, type) {
 
 // Функция для удаления устройства
 async function deleteDevice(deviceId) {
+    checkToken();
     if (!confirm('Вы уверены, что хотите удалить это устройство?')) {
         return;
     }
@@ -472,6 +530,7 @@ function updatePrinterDropdown() {
 
 // Обработчик для модального окна теста
 document.getElementById('sendLabelButton').addEventListener('click', async () => {
+    checkToken();
     const testResult = document.getElementById('testResult');
     
     // Получаем значения из полей формы
@@ -513,7 +572,7 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
         glassNumber,
         staining,
         patientCorId
-    ].join('&');
+    ].join('|');
 
     console.log("Печать:",content);
     // Используем универсальную функцию печати
