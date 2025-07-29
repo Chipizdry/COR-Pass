@@ -364,26 +364,6 @@ g[onclick]:active {
   font-weight: bold;
 }
 
-/*
-.view-container.fullscreen {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 9999;
-  background: black;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.view-container.fullscreen canvas {
-  width: 90vw;
-  height: 90vh;
-  max-width: none;
-  max-height: none;
-}
-  */
 
 /* Стили FullScreen */
 .dicom-fullscreen-viewer {
@@ -437,4 +417,45 @@ g[onclick]:active {
   font-size: 20px;
   cursor: pointer;
   z-index: 10000;
+}
+
+.dicom-fullscreen-header {
+  background: #eee; 
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  width: 100%;
+  color: #333;
+  border-bottom: 1px solid #ccc;
+  height: 30px;
+}
+
+.dicom-fullscreen-header button {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #333;
+}
+
+.dicom-fullscreen-viewer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: black;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.dicom-fullscreen-content {
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: center;
+  align-items: center;
+  
 }

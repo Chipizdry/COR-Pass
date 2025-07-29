@@ -659,88 +659,94 @@ function updateSliders(volumeInfo) {
     }
   }
 
-/*
 
-  document.querySelectorAll('.dicom-buttons').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const container = btn.closest('.view-container');
-      const isFullscreen = container.classList.toggle('fullscreen');
-  
-      // Меняем текст кнопки
-      btn.textContent = isFullscreen ? '🗗' : '🗖';
-  
-      // Перерисовываем canvas с новым размером
-      const targetPlane = btn.getAttribute('data-target');
-      update(targetPlane);  // просто заново грузим изображение
-    });
-  });
-*/
 
-  
-function openDicomFullscreen(plane) {
-  // Создаем контейнер для полноэкранного просмотра
-  const fullscreenViewer = document.createElement('div');
-  fullscreenViewer.id = 'dicom-fullscreen-viewer';
-  fullscreenViewer.className = 'dicom-fullscreen-viewer';
-  
-  // Создаем canvas для полноэкранного отображения
-  const fullscreenCanvas = document.createElement('canvas');
-  fullscreenCanvas.className = 'dicom-fullscreen-canvas';
-  fullscreenCanvas.id = `fullscreen-canvas-${plane}`;
-  
-  // Создаем контролы для слайдера
-  const controlsDiv = document.createElement('div');
-  controlsDiv.className = 'dicom-fullscreen-controls';
-  
-  const sliderContainer = document.createElement('div');
-  sliderContainer.className = 'dcm-range-container';
-  
-  const slider = document.createElement('input');
-  slider.type = 'range';
-  slider.id = `fullscreen-${plane}`;
-  slider.min = document.getElementById(plane).min;
-  slider.max = document.getElementById(plane).max;
-  slider.value = document.getElementById(plane).value;
-  
-  const valueDisplay = document.createElement('span');
-  valueDisplay.className = 'dcm-range-value';
-  valueDisplay.textContent = slider.value;
-  
-  slider.oninput = function() {
-    updateSliderValue(`fullscreen-${plane}`);
+  function openDicomFullscreen(plane) {
+    // Создаем контейнер для полноэкранного просмотра
+    const fullscreenViewer = document.createElement('div');
+    fullscreenViewer.id = 'dicom-fullscreen-viewer';
+    fullscreenViewer.className = 'dicom-fullscreen-viewer';
+    
+    // Создаем хедер
+    const header = document.createElement('div');
+    header.className = 'dicom-fullscreen-header';
+    
+    const title = document.createElement('span');
+    title.textContent = plane.charAt(0).toUpperCase() + plane.slice(1); // Capitalize first letter
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '🗗'; 
+    closeBtn.className = 'dicom-buttons'; 
+    closeBtn.onclick = function() {
+      document.body.removeChild(fullscreenViewer);
+    };
+    
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+    
+    // Создаем контейнер для контента
+    const content = document.createElement('div');
+    content.className = 'dicom-fullscreen-content';
+    
+    // Создаем canvas для полноэкранного отображения
+    const fullscreenCanvas = document.createElement('canvas');
+    fullscreenCanvas.className = 'dicom-fullscreen-canvas';
+    fullscreenCanvas.id = `fullscreen-canvas-${plane}`;
+    
+    // Создаем контролы для слайдера
+    const controlsDiv = document.createElement('div');
+    controlsDiv.className = 'dicom-fullscreen-controls';
+    
+    const sliderContainer = document.createElement('div');
+    sliderContainer.className = 'dcm-range-container';
+    
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.id = `fullscreen-${plane}`;
+    slider.min = document.getElementById(plane).min;
+    slider.max = document.getElementById(plane).max;
+    slider.value = document.getElementById(plane).value;
+    
+    const valueDisplay = document.createElement('span');
+    valueDisplay.className = 'dcm-range-value';
+    valueDisplay.textContent = slider.value;
+    
+    slider.oninput = function() {
+      updateSliderValue(`fullscreen-${plane}`);
+      updateFullscreenDicom(plane);
+    };
+    
+    // Собираем все элементы
+    sliderContainer.appendChild(slider);
+    sliderContainer.appendChild(valueDisplay);
+    controlsDiv.appendChild(sliderContainer);
+    content.appendChild(fullscreenCanvas);
+    content.appendChild(controlsDiv);
+    
+    fullscreenViewer.appendChild(header);
+    fullscreenViewer.appendChild(content);
+    
+    // Добавляем на страницу
+    document.body.appendChild(fullscreenViewer);
+    
+    // Загружаем изображение
     updateFullscreenDicom(plane);
-  };
-  
-  // Кнопка закрытия
-  const closeBtn = document.createElement('button');
-  closeBtn.className = 'dicom-fullscreen-close';
-  closeBtn.textContent = '×';
-  closeBtn.onclick = function() {
-    document.body.removeChild(fullscreenViewer);
-  };
-  
-  // Собираем все элементы
-  sliderContainer.appendChild(slider);
-  sliderContainer.appendChild(valueDisplay);
-  controlsDiv.appendChild(sliderContainer);
-  fullscreenViewer.appendChild(closeBtn);
-  fullscreenViewer.appendChild(fullscreenCanvas);
-  fullscreenViewer.appendChild(controlsDiv);
-  
-  // Добавляем на страницу
-  document.body.appendChild(fullscreenViewer);
-  
-  // Загружаем изображение
-  updateFullscreenDicom(plane);
-}
+  }
+
+
 
 async function updateFullscreenDicom(plane) {
+  const fullscreenViewer = document.getElementById('dicom-fullscreen-viewer');
   const fullscreenCanvas = document.getElementById(`fullscreen-canvas-${plane}`);
   const ctx = fullscreenCanvas.getContext('2d');
   const idx = parseInt(document.getElementById(`fullscreen-${plane}`).value);
   
-  // Устанавливаем размер canvas в зависимости от размера экрана
-  const maxSize = Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9);
+  // Рассчитываем размер с учетом хедера и контролов
+  const headerHeight = document.querySelector('.dicom-fullscreen-header').offsetHeight;
+  const controlsHeight = document.querySelector('.dicom-fullscreen-controls').offsetHeight;
+  const availableHeight = window.innerHeight - headerHeight - controlsHeight - 20; // 20px padding
+  
+  const maxSize = Math.min(window.innerWidth * 0.9, availableHeight);
   fullscreenCanvas.width = maxSize;
   fullscreenCanvas.height = maxSize;
   
