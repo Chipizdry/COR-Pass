@@ -356,7 +356,6 @@ g[onclick]:active {
 
 
 .view-header {
-  width: 100%; 
   background: #eee;
   padding: 5px 10px;
   display: flex;
