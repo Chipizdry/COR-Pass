@@ -45,6 +45,7 @@
 }
   
   
+  
   input[type="range"] {
     width: 100%;
     max-width: 480px;
@@ -99,12 +100,11 @@
           line-height: 20px;
       }
   
-      .metadata-container {
+    .metadata-container {
       background: #f8f9fa;
       padding: 10px;
       border-radius: 5px;
       border: 1px solid #ddd;
-      margin-top: 10px;
   }
   
   .metadata-container h3 {
@@ -378,6 +378,7 @@ g[onclick]:active {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  overflow: hidden; 
 }
 
 .dicom-fullscreen-viewer.hidden {
@@ -420,7 +421,7 @@ g[onclick]:active {
 }
 
 .dicom-fullscreen-header {
-  background: #eee; 
+  background: #eee;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -428,7 +429,9 @@ g[onclick]:active {
   width: 100%;
   color: #333;
   border-bottom: 1px solid #ccc;
-  height: 30px;
+  height: 40px;
+  padding: 2px 55px;
+  box-sizing: border-box;
 }
 
 .dicom-fullscreen-header button {
@@ -437,7 +440,14 @@ g[onclick]:active {
   font-size: 16px;
   cursor: pointer;
   color: #333;
+  padding: 10px 40px 30px;
 }
+
+
+.dicom-fullscreen-header span {
+  margin-right: auto;
+}
+
 
 .dicom-fullscreen-viewer {
   position: fixed;
