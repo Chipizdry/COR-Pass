@@ -1,40 +1,71 @@
-
-
-
 from fastapi import APIRouter, Form
 from PIL import Image, ImageDraw, ImageFont
 from brother_ql.raster import BrotherQLRaster
 from brother_ql.conversion import convert
-from brother_ql.backends.network import send_over_network
+import socket
 import uuid
 
 router = APIRouter()
 
-PRINTER_IP = "192.168.154.154"  # IP  print server
+PRINTER_IP = "192.168.154.154"
 PRINTER_MODEL = "QL-810W"
-LABEL_TYPE = "62"  #  62 мм
+LABEL_TYPE = "62"
+
+def send_lpr_job(printer_ip, queue_name, data):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((printer_ip, 515))
+
+    def send_cmd(cmd):
+        s.sendall(cmd.encode('ascii') + b'\n')
+
+    # 1. Открываем print job
+    send_cmd(f"\x02{queue_name}")
+    if s.recv(1) != b'\x00':
+        s.close()
+        raise Exception("LPR: ошибка подтверждения команды печати")
+
+    # 2. Control file
+    control_file = f"H{socket.gethostname()}\nPuser\nfdfA123{queue_name}\nNlabel.txt\n"
+
+    send_cmd(f"\x02{len(control_file)} cfA123{queue_name}")
+    if s.recv(1) != b'\x00':
+        s.close()
+        raise Exception("LPR: ошибка подтверждения команды control file")
+
+    s.sendall(control_file.encode('ascii') + b'\x00')
+    if s.recv(1) != b'\x00':
+        s.close()
+        raise Exception("LPR: ошибка подтверждения отправки control file")
+
+    # 3. Data file
+    send_cmd(f"\x03{len(data)} dfA123{queue_name}")
+    if s.recv(1) != b'\x00':
+        s.close()
+        raise Exception("LPR: ошибка подтверждения команды data file")
+
+    s.sendall(data + b'\x00')
+    if s.recv(1) != b'\x00':
+        s.close()
+        raise Exception("LPR: ошибка подтверждения отправки data file")
+
+    s.close()
+
 
 @router.post("/print_code_label")
 def print_label(content: str = Form(...)):
     try:
         print("📦 Получен запрос на печать с текстом:", content)
 
-        # Шаг 1: Создание изображения
+        # Создание изображения
         img = Image.new("RGB", (696, 150), color="white")
         draw = ImageDraw.Draw(img)
         font = ImageFont.load_default()
         draw.text((10, 50), content, fill="black", font=font)
         print("🖼️ Изображение создано")
 
-        # Сохраняем изображение во временный файл (для отладки)
-        img_path = f"/tmp/label_debug_{uuid.uuid4().hex}.png"
-        img.save(img_path)
-        print(f"💾 Изображение сохранено для отладки: {img_path}")
-
-        # Шаг 2: Генерация инструкций
+        # Генерация инструкций для принтера
         qlr = BrotherQLRaster(PRINTER_MODEL)
         qlr.exception_on_warning = True
-        print("🖨️ Raster принтера инициализирован")
 
         convert(
             qlr=qlr,
@@ -49,16 +80,17 @@ def print_label(content: str = Form(...)):
             hq=True,
             cut=True
         )
-        print("🔄 Инструкции преобразования сгенерированы")
-        print(f"📄 Объём инструкций (байт): {len(qlr.data)}")
+        print(f"📄 Инструкций байт: {len(qlr.data)}")
 
-        # Шаг 3: Отправка на печать
-        print(f"📡 Отправка на принтер {PRINTER_IP}:9100 ...")
-        send_over_network(qlr, host=PRINTER_IP, port=9100)
-        print("✅ Инструкции успешно отправлены")
+        # Отправка данных через LPR протокол на порт 515
+        print(f"📡 Отправка данных на {PRINTER_IP}:515 через LPR ...")
+        send_lpr_job(PRINTER_IP, "lp", qlr.data)
+        print("✅ Отправка завершена")
 
         return {"status": "success"}
 
     except Exception as e:
         print("❌ Ошибка при печати:", str(e))
         return {"status": "error", "detail": str(e)}
+
+
