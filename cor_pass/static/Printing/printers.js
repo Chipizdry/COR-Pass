@@ -127,7 +127,7 @@ function startPrinterMonitoring() {
     };
 
     // Запускаем проверку с интервалом
-    const intervalId = setInterval(checkNextPrinter, 1000);
+    const intervalId = setInterval(checkNextPrinter, 3000);
     
     // Возвращаем функцию для остановки мониторинга
     return () => clearInterval(intervalId);
@@ -526,6 +526,19 @@ function updatePrinterDropdown() {
     // Вызываем событие input для обновления состояния при загрузке
     printerInput.dispatchEvent(new Event('input'));
 }
+
+
+function sendToPrint() {
+    const formData = new FormData();
+    formData.append("content", document.getElementById("labelText").value);
+  
+    fetch(`/api/print_code_label`, {
+      method: "POST",
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => alert("Статус: " + data.status));
+  }
 
 
 // Обработчик для модального окна теста

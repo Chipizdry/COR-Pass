@@ -81,7 +81,14 @@
   }
   
   
-  
+  .upload-instructions {
+    text-align: center;
+    color: #5B4296;
+    font-size: 13px;
+    margin: 10px 0 15px 0;
+    line-height: 1.4;
+    padding: 0 30px;
+  }
   
       .dicom-progress-container {
           margin-top: 10px;
