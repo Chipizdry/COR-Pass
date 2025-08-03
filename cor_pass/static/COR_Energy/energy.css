@@ -723,7 +723,6 @@ footer {
 }
 
 .time-range-control {
-    margin-bottom: 10px;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -743,8 +742,7 @@ footer {
 
 #customDateRange {
     display: none;
-    margin-top: 10px;
-    gap: 10px;
+    gap: 20px;
     align-items: center;
 }
 
@@ -754,18 +752,6 @@ footer {
     border: 1px solid #ccc;
 }
 
-#applyCustomRange {
-    padding: 5px 10px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-#applyCustomRange:hover {
-    background-color: #45a049;
-}
 
 .pages-control {
     margin-bottom: 10px;

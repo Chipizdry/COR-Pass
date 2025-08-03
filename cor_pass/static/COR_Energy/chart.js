@@ -36,15 +36,37 @@ function initPagesPerScreenControl() {
 async function loadDataForTimeRange(range) {
     const now = new Date();
     let startDate;
+    let intervals = 60;
     
     switch(range) {
-        case '1h': startDate = new Date(now.getTime() - 3600000); break;
-        case '6h': startDate = new Date(now.getTime() - 6 * 3600000); break;
-        case '12h': startDate = new Date(now.getTime() - 12 * 3600000); break;
-        case '24h': startDate = new Date(now.getTime() - 24 * 3600000); break;
-        case '3d': startDate = new Date(now.getTime() - 3 * 24 * 3600000); break;
-        case '7d': startDate = new Date(now.getTime() - 7 * 24 * 3600000); break;
-        case '30d': startDate = new Date(now.getTime() - 30 * 24 * 3600000); break;
+        case '1h': 
+            startDate = new Date(now.getTime() - 3600000);
+            intervals = 120;
+            break;
+        case '6h': 
+            startDate = new Date(now.getTime() - 6 * 3600000);
+            intervals = 180;
+            break;
+        case '12h': 
+            startDate = new Date(now.getTime() - 12 * 3600000);
+            intervals = 72;
+            break;
+        case '24h': 
+            startDate = new Date(now.getTime() - 24 * 3600000);
+            intervals = 96;
+            break;
+        case '3d': 
+            startDate = new Date(now.getTime() - 3 * 24 * 3600000);
+            intervals = 72;
+            break;
+        case '7d': 
+            startDate = new Date(now.getTime() - 7 * 24 * 3600000);
+            intervals = 168;
+            break;
+        case '30d': 
+            startDate = new Date(now.getTime() - 30 * 24 * 3600000);
+            intervals = 120;
+            break;
         default: return;
     }
     
@@ -52,20 +74,49 @@ async function loadDataForTimeRange(range) {
         isLoading = true;
         document.getElementById('loadingIndicator').style.display = 'inline';
         
-        const response = await fetch(`/api/modbus/measurements/?start=${startDate.toISOString()}&end=${now.toISOString()}`);
-        if (!response.ok) throw new Error('Network response was not ok');
+        // Форматируем даты без миллисекунд
+        const formatDateForAPI = (date) => {
+            return date.toISOString().replace(/\.\d{3}Z$/, '');
+        };
+        
+        const params = new URLSearchParams({
+            start_date: formatDateForAPI(startDate),
+            end_date: formatDateForAPI(now),
+            intervals: intervals
+        });
+        
+        const url = `/api/modbus/measurements/averaged/?${params.toString()}`;
+       // console.log('Fetching data from:', url);
+        
+        const response = await fetch(url, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            let errorData;
+            try {
+                errorData = await response.json();
+            } catch (e) {
+                errorData = { detail: response.statusText };
+            }
+            console.error('Server error details:', errorData);
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        }
         
         const data = await response.json();
+      //  console.log('Received data:', data);
         
-        // Очищаем все измерения и добавляем новые
         allMeasurements = [];
-        if (data.items && data.items.length > 0) {
-            allMeasurements[0] = data.items;
+        if (data && data.length > 0) {
+            allMeasurements[0] = data;
             currentPage = 1;
             updateChartData();
         }
     } catch (error) {
         console.error('Error loading time range data:', error);
+        alert(`Ошибка загрузки данных: ${error.message}`);
     } finally {
         isLoading = false;
         document.getElementById('loadingIndicator').style.display = 'none';
@@ -73,11 +124,12 @@ async function loadDataForTimeRange(range) {
 }
 
 
+
 function initTimeRangeControl() {
     // Установим текущую дату в кастомных полях
     const now = new Date();
-    const oneHourAgo = new Date(now.getTime() - 3600000);
-    document.getElementById('startDate').value = formatDateTimeLocal(oneHourAgo);
+    const oneDayAgo = new Date(now.getTime() - (24 * 3600000));
+    document.getElementById('startDate').value = formatDateTimeLocal(oneDayAgo);
     document.getElementById('endDate').value = formatDateTimeLocal(now);
     
     // Обработчик изменения периода
@@ -126,6 +178,59 @@ function initTimeRangeControl() {
     startLiveUpdates();
 }
 
+async function fetchAveragedMeasurements(startDate, endDate) {
+    try {
+        isLoading = true;
+        document.getElementById('loadingIndicator').style.display = 'inline';
+        
+        const durationHours = (endDate - startDate) / (1000 * 60 * 60);
+        let intervals;
+        
+        if (durationHours <= 1) intervals = 120;
+        else if (durationHours <= 6) intervals = 180;
+        else if (durationHours <= 24) intervals = 96;
+        else intervals = 120;
+        
+        const formatDateForAPI = (date) => {
+            return date.toISOString().replace(/\.\d{3}Z$/, '');
+        };
+        
+        const params = new URLSearchParams({
+            start_date: formatDateForAPI(startDate),
+            end_date: formatDateForAPI(endDate),
+            intervals: intervals
+        });
+        
+        const url = `/api/modbus/measurements/averaged/?${params.toString()}`;
+       // console.log('Fetching custom data from:', url);
+        
+        const response = await fetch(url, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Ошибка при загрузке данных');
+        }
+        
+        const data = await response.json();
+        
+        allMeasurements = [];
+        if (data && data.length > 0) {
+            allMeasurements[0] = data;
+            currentPage = 1;
+            updateChartData();
+        }
+    } catch (error) {
+        console.error('Error fetching averaged measurements:', error);
+        alert(`Ошибка загрузки данных: ${error.message}`);
+    } finally {
+        isLoading = false;
+        document.getElementById('loadingIndicator').style.display = 'none';
+    }
+}
 
 async function fetchMeasurements(page = 1) {
     try {
