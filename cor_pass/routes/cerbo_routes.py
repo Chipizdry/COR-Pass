@@ -1,9 +1,10 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from typing import List, Optional
-from cor_pass.repository.cerbo_service import BATTERY_ID, ESS_UNIT_ID, INVERTER_ID, REGISTERS, create_schedule, decode_signed_16, decode_signed_32, delete_schedule, get_all_schedules, get_device_measurements_paginated, get_modbus_client, get_schedule_by_id, register_modbus_error, update_schedule
+from cor_pass.repository.cerbo_service import BATTERY_ID, ESS_UNIT_ID, INVERTER_ID, REGISTERS, create_schedule, decode_signed_16, decode_signed_32, delete_schedule, get_all_schedules, get_device_measurements_paginated,get_averaged_measurements_service, get_modbus_client, get_schedule_by_id, register_modbus_error, update_schedule
 from cor_pass.schemas import CerboMeasurementResponse, DVCCMaxChargeCurrentRequest, EnergeticScheduleBase, EnergeticScheduleCreate, EnergeticScheduleResponse, EssAdvancedControl, GridLimitUpdate, InverterPowerPayload, PaginatedResponse, RegisterWriteRequest, VebusSOCControl
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from cor_pass.database.db import get_db
 from math import ceil
 from loguru import logger
@@ -720,6 +721,43 @@ async def read_measurements(
         page_size=page_size,
         total_pages=total_pages
     )
+
+
+    
+@router.get(
+    "/measurements/averaged/",
+    response_model=List[CerboMeasurementResponse],
+    summary="Усреднённые измерения по интервалам",
+    description="Возвращает усреднённые измерения, сгруппированные по интервалам времени (например, 60 точек за час)",
+    tags=["Measurements"]
+)
+async def get_averaged_measurements(
+    object_name: Optional[str] = Query(None, description="Фильтр по имени объекта"),
+    start_date: datetime = Query(..., description="Начальная дата периода (ISO 8601)"),
+    end_date: datetime = Query(..., description="Конечная дата периода (ISO 8601)"),
+    intervals: int = Query(60, gt=0, description="Количество интервалов для усреднения"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Получает усреднённые измерения за указанный период.
+    Каждая точка данных представляет собой среднее значение за интервал времени.
+    Например, при intervals=60 за час будет возвращено 60 точек (по одной на минуту),
+    где каждая точка - среднее из ~30 измерений (с интервалом 2 секунды).
+    """
+    try:
+        return await get_averaged_measurements_service(
+            db=db,
+            object_name=object_name,
+            start_date=start_date,
+            end_date=end_date,
+            intervals=intervals
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Ошибка при получении усреднённых измерений: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 
 
 

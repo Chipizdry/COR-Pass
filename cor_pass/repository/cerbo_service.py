@@ -4,6 +4,7 @@ from uuid import uuid4
 from fastapi import FastAPI, HTTPException
 from sqlalchemy import UUID, delete, func, select, update
 from typing import Any, Dict, List, Optional, Tuple
+from math import ceil
 
 from cor_pass.database.models import CerboMeasurement, EnergeticSchedule
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +13,7 @@ from cor_pass.schemas import (
     EnergeticScheduleCreate,
     FullDeviceMeasurementCreate,
     FullDeviceMeasurementResponse,
+    CerboMeasurementResponse
 )
 from loguru import logger
 from pymodbus.client import AsyncModbusTcpClient
@@ -1127,3 +1129,82 @@ async def energetic_schedule_task(async_session_maker, app):
             )
 
         await asyncio.sleep(SCHEDULE_CHECK_INTERVAL_SECONDS)
+
+
+
+async def get_averaged_measurements_service(
+    db: AsyncSession,
+    object_name: Optional[str] = None,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    intervals: int = 60
+) -> List[CerboMeasurementResponse]:
+    """
+    Получает усреднённые измерения за указанный период, группируя данные по минутным интервалам.
+    Каждая минута содержит усреднённые значения из 30 записей (с интервалом 2 секунды).
+    
+    Args:
+        db: Асинхронная сессия базы данных
+        object_name: Фильтр по имени объекта
+        start_date: Начальная дата периода
+        end_date: Конечная дата периода
+        intervals: Количество минутных интервалов для усреднения (по умолчанию 60)
+        
+    Returns:
+        Список из 60 усреднённых измерений в формате CerboMeasurementResponse
+    """
+    if not start_date or not end_date:
+        raise ValueError("Необходимо указать start_date и end_date")
+
+    # Рассчитываем продолжительность периода в минутах
+    total_minutes = int((end_date - start_date).total_seconds() / 60)
+    if total_minutes < intervals:
+        intervals = total_minutes
+        logger.warning(f"Запрошено {intervals} интервалов, но доступно только {total_minutes} минут данных")
+
+    # Создаем список временных интервалов
+    interval_size = (end_date - start_date) / intervals
+    interval_starts = [start_date + i * interval_size for i in range(intervals)]
+    
+    averaged_results = []
+
+    for interval_start in interval_starts:
+        interval_end = interval_start + interval_size
+        
+        # Получаем все измерения для текущего минутного интервала
+        query = select(CerboMeasurement).where(
+            CerboMeasurement.measured_at >= interval_start,
+            CerboMeasurement.measured_at < interval_end
+        )
+        
+        if object_name:
+            query = query.where(CerboMeasurement.object_name == object_name)
+            
+        result = await db.execute(query)
+        measurements = result.scalars().all()
+
+        if not measurements:
+            # Если данных нет, добавляем None или пропускаем интервал
+            continue
+
+        # Вычисляем средние значения для каждого поля
+        def avg(field):
+            values = [getattr(m, field) for m in measurements if getattr(m, field) is not None]
+            return sum(values) / len(values) if values else None
+
+        # Используем первую запись как базовую для неизменяемых полей
+        base = measurements[0]
+        
+        averaged_results.append(CerboMeasurementResponse(
+            id=base.id,
+            created_at=base.created_at,
+            measured_at=interval_start,  # Время начала интервала
+            object_name=base.object_name,
+            general_battery_power=avg("general_battery_power"),
+            inverter_total_ac_output=avg("inverter_total_ac_output"),
+            ess_total_input_power=avg("ess_total_input_power"),
+            solar_total_pv_power=avg("solar_total_pv_power"),
+            soc=avg("soc")
+        ))
+
+    return averaged_results
