@@ -25,8 +25,89 @@ function initPagesPerScreenControl() {
         pagesPerScreen = parseInt(this.value);
         updateChartData();
     });
+    
+    // Скрываем элемент по умолчанию
+    control.style.display = 'none';
 }
 
+function initTimeRangeControl() {
+    // Проверяем, не добавлен ли уже элемент
+    if (document.getElementById('timeRangeSelect')) return;
+    
+    const control = document.createElement('div');
+    control.className = 'time-range-control';
+    control.innerHTML = `
+        <label>Период:</label>
+        <select id="timeRangeSelect">
+            <option value="realtime">В реальном времени</option>
+            <option value="1h">Последний час</option>
+            <option value="6h">Последние 6 часов</option>
+            <option value="12h">Последние 12 часов</option>
+            <option value="24h">Последние 24 часа</option>
+            <option value="3d">Последние 3 дня</option>
+            <option value="7d">Последние 7 дней</option>
+            <option value="30d">Последние 30 дней</option>
+            <option value="custom">Выбрать даты...</option>
+        </select>
+        <div id="customDateRange">
+            <input type="datetime-local" id="startDate">
+            <input type="datetime-local" id="endDate">
+            <button id="applyCustomRange">Применить</button>
+        </div>
+    `;
+    document.querySelector('.chart-controls').prepend(control);
+    
+    // Установим текущую дату в кастомных полях
+    const now = new Date();
+    document.getElementById('startDate').valueAsDate = new Date(now.getTime() - 3600000); // 1 час назад
+    document.getElementById('endDate').valueAsDate = now;
+    
+    // Обработчик изменения периода
+    document.getElementById('timeRangeSelect').addEventListener('change', function() {
+        const pagesControl = document.querySelector('.pages-control');
+        
+        if (this.value === 'realtime') {
+            // Показываем выбор количества страниц
+            pagesControl.style.display = 'flex';
+            document.getElementById('customDateRange').style.display = 'none';
+            startLiveUpdates();
+        } else if (this.value === 'custom') {
+            // Скрываем выбор количества страниц и показываем кастомный диапазон
+            pagesControl.style.display = 'none';
+            document.getElementById('customDateRange').style.display = 'flex';
+        } else {
+            // Скрываем оба элемента и загружаем данные
+            pagesControl.style.display = 'none';
+            document.getElementById('customDateRange').style.display = 'none';
+            loadDataForTimeRange(this.value);
+        }
+    });
+    
+    // Обработчик для кастомного диапазона
+    document.getElementById('applyCustomRange').addEventListener('click', function() {
+        const startDate = new Date(document.getElementById('startDate').value);
+        const endDate = new Date(document.getElementById('endDate').value);
+        
+        if (!startDate || !endDate) {
+            alert('Пожалуйста, выберите обе даты');
+            return;
+        }
+        
+        if (startDate >= endDate) {
+            alert('Конечная дата должна быть позже начальной');
+            return;
+        }
+        
+        // Рассчитываем количество интервалов в зависимости от длительности периода
+        const durationHours = (endDate - startDate) / (1000 * 60 * 60);
+        const intervals = durationHours <= 1 ? 60 : 96; // 60 точек для периода ≤1 часа, 96 для более длительных
+        
+        fetchAveragedMeasurements(startDate, endDate, intervals);
+    });
+    
+    // Загружаем данные по умолчанию (режим реального времени)
+    startLiveUpdates();
+}
 
 async function fetchMeasurements(page = 1) {
     try {
@@ -208,7 +289,7 @@ function initPowerChart() {
                     yAxisID: 'y'
                 },
                 {
-                    label: 'Общая входная мощность ESS (кВт)',
+                    label: 'Входная мощность ESS(кВт)',
                     data: [],
                     borderColor: 'rgba(255, 99, 132, 1)',
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',
@@ -373,6 +454,7 @@ async function startChartUpdates() {
     // Инициализируем элементы управления
     initPageSlider();
     initPagesPerScreenControl();
+    initTimeRangeControl();
     
     // Инициализируем массив для хранения всех страниц
     allMeasurements = new Array(100);

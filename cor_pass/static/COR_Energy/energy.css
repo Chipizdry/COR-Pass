@@ -685,3 +685,102 @@ footer {
     font-size: 12px;
     z-index: 11;
 }
+
+
+
+
+
+
+/* chart-controls.css */
+.view-mode-control {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 8px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+}
+
+.view-mode-control label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.view-mode-control input[type="radio"] {
+    margin: 0;
+}
+
+.mode-dependent-controls {
+    display: none;
+}
+
+.mode-dependent-controls.active {
+    display: block;
+}
+
+.time-range-control {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.time-range-control label {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.time-range-control select {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+#customDateRange {
+    display: none;
+    margin-top: 10px;
+    gap: 10px;
+    align-items: center;
+}
+
+#customDateRange input {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+#applyCustomRange {
+    padding: 5px 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#applyCustomRange:hover {
+    background-color: #45a049;
+}
+
+.pages-control {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pages-control label {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.pages-control select {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
