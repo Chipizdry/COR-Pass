@@ -30,55 +30,75 @@ function initPagesPerScreenControl() {
     control.style.display = 'none';
 }
 
+
+
+// Функция для загрузки данных по временному диапазону
+async function loadDataForTimeRange(range) {
+    const now = new Date();
+    let startDate;
+    
+    switch(range) {
+        case '1h': startDate = new Date(now.getTime() - 3600000); break;
+        case '6h': startDate = new Date(now.getTime() - 6 * 3600000); break;
+        case '12h': startDate = new Date(now.getTime() - 12 * 3600000); break;
+        case '24h': startDate = new Date(now.getTime() - 24 * 3600000); break;
+        case '3d': startDate = new Date(now.getTime() - 3 * 24 * 3600000); break;
+        case '7d': startDate = new Date(now.getTime() - 7 * 24 * 3600000); break;
+        case '30d': startDate = new Date(now.getTime() - 30 * 24 * 3600000); break;
+        default: return;
+    }
+    
+    try {
+        isLoading = true;
+        document.getElementById('loadingIndicator').style.display = 'inline';
+        
+        const response = await fetch(`/api/modbus/measurements/?start=${startDate.toISOString()}&end=${now.toISOString()}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        const data = await response.json();
+        
+        // Очищаем все измерения и добавляем новые
+        allMeasurements = [];
+        if (data.items && data.items.length > 0) {
+            allMeasurements[0] = data.items;
+            currentPage = 1;
+            updateChartData();
+        }
+    } catch (error) {
+        console.error('Error loading time range data:', error);
+    } finally {
+        isLoading = false;
+        document.getElementById('loadingIndicator').style.display = 'none';
+    }
+}
+
+
 function initTimeRangeControl() {
-    // Проверяем, не добавлен ли уже элемент
-    if (document.getElementById('timeRangeSelect')) return;
-    
-    const control = document.createElement('div');
-    control.className = 'time-range-control';
-    control.innerHTML = `
-        <label>Период:</label>
-        <select id="timeRangeSelect">
-            <option value="realtime">В реальном времени</option>
-            <option value="1h">Последний час</option>
-            <option value="6h">Последние 6 часов</option>
-            <option value="12h">Последние 12 часов</option>
-            <option value="24h">Последние 24 часа</option>
-            <option value="3d">Последние 3 дня</option>
-            <option value="7d">Последние 7 дней</option>
-            <option value="30d">Последние 30 дней</option>
-            <option value="custom">Выбрать даты...</option>
-        </select>
-        <div id="customDateRange">
-            <input type="datetime-local" id="startDate">
-            <input type="datetime-local" id="endDate">
-            <button id="applyCustomRange">Применить</button>
-        </div>
-    `;
-    document.querySelector('.chart-controls').prepend(control);
-    
     // Установим текущую дату в кастомных полях
     const now = new Date();
-    document.getElementById('startDate').valueAsDate = new Date(now.getTime() - 3600000); // 1 час назад
-    document.getElementById('endDate').valueAsDate = now;
+    const oneHourAgo = new Date(now.getTime() - 3600000);
+    document.getElementById('startDate').value = formatDateTimeLocal(oneHourAgo);
+    document.getElementById('endDate').value = formatDateTimeLocal(now);
     
     // Обработчик изменения периода
     document.getElementById('timeRangeSelect').addEventListener('change', function() {
-        const pagesControl = document.querySelector('.pages-control');
+        const isRealtime = this.value === 'realtime';
+        const isCustom = this.value === 'custom';
         
-        if (this.value === 'realtime') {
-            // Показываем выбор количества страниц
-            pagesControl.style.display = 'flex';
-            document.getElementById('customDateRange').style.display = 'none';
+        // Управление видимостью элементов
+        document.querySelector('.pages-control').style.display = isRealtime ? 'flex' : 'none';
+        document.querySelector('.time-range-slider-container').style.display = isRealtime ? 'block' : 'none';
+        document.querySelector('.time-display').style.display = isRealtime ? 'block' : 'none';
+        document.getElementById('customDateRange').style.display = isCustom ? 'flex' : 'none';
+        
+        if (isRealtime) {
             startLiveUpdates();
-        } else if (this.value === 'custom') {
-            // Скрываем выбор количества страниц и показываем кастомный диапазон
-            pagesControl.style.display = 'none';
-            document.getElementById('customDateRange').style.display = 'flex';
+        } else if (isCustom) {
+            // Останавливаем обновления в реальном времени
+            stopChartUpdates();
         } else {
-            // Скрываем оба элемента и загружаем данные
-            pagesControl.style.display = 'none';
-            document.getElementById('customDateRange').style.display = 'none';
+            // Загружаем данные для выбранного диапазона
+            stopChartUpdates();
             loadDataForTimeRange(this.value);
         }
     });
@@ -98,16 +118,14 @@ function initTimeRangeControl() {
             return;
         }
         
-        // Рассчитываем количество интервалов в зависимости от длительности периода
-        const durationHours = (endDate - startDate) / (1000 * 60 * 60);
-        const intervals = durationHours <= 1 ? 60 : 96; // 60 точек для периода ≤1 часа, 96 для более длительных
-        
-        fetchAveragedMeasurements(startDate, endDate, intervals);
+        stopChartUpdates();
+        fetchAveragedMeasurements(startDate, endDate);
     });
     
-    // Загружаем данные по умолчанию (режим реального времени)
+    // Запускаем режим реального времени по умолчанию
     startLiveUpdates();
 }
+
 
 async function fetchMeasurements(page = 1) {
     try {
@@ -446,35 +464,41 @@ function updateChartData() {
     powerChart.update();
 }
 
+
+
 // Основная функция запуска
 async function startChartUpdates() {    
-    // Инициализируем график
+    // Инициализация графика и элементов управления
     initPowerChart();
-    
-    // Инициализируем элементы управления
     initPageSlider();
-    initPagesPerScreenControl();
     initTimeRangeControl();
     
-    // Инициализируем массив для хранения всех страниц
+    // Инициализация массива измерений
     allMeasurements = new Array(100);
     
-    // Первоначальная загрузка
-    await loadPages(1);
-    
-    // Периодическое обновление
-    if (!chartUpdateInterval) {
-        chartUpdateInterval = setInterval(async () => {
-            if (!isSliderMoving && currentPage === 1) {
-                const newMeasurements = await fetchMeasurements(1);
-                if (newMeasurements.length > 0) {
-                    allMeasurements[0] = newMeasurements;
-                    updateChartData();
-                }
-            }
-        }, 1000);
-    }
+    // Запуск режима реального времени
+    startLiveUpdates();
 }
+
+function startLiveUpdates() {
+    // Останавливаем предыдущие обновления, если они есть
+    stopChartUpdates();
+    
+    // Загружаем первую страницу
+    loadPages(1);
+    
+    // Запускаем интервал обновлений
+    chartUpdateInterval = setInterval(async () => {
+        if (!isSliderMoving && currentPage === 1) {
+            const newMeasurements = await fetchMeasurements(1);
+            if (newMeasurements.length > 0) {
+                allMeasurements[0] = newMeasurements;
+                updateChartData();
+            }
+        }
+    }, 1000);
+}
+
 
 
 
@@ -483,10 +507,7 @@ function stopChartUpdates() {
         clearInterval(chartUpdateInterval);
         chartUpdateInterval = null;
     }
-    if (powerChart) {
-        powerChart.destroy();
-        powerChart = null;
-    }
+   
 }
 
 // Останавливаем обновления при закрытии вкладки
@@ -519,3 +540,14 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+
+function formatDateTimeLocal(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+}

@@ -356,21 +356,58 @@
        
 </div>
 
-        <!-- Контент вкладки Мониторинг -->
+       
+       <!-- Контент вкладки Мониторинг -->
         <div id="monitor" class="tabcontent">
             <!-- Контейнер для графика -->
             <div id="chartContainer">
                 <canvas id="powerChart"></canvas>
             </div>
+            
+            <!-- Блок управления периодом -->
             <div class="chart-controls">
-                <div class="time-range-slider-container">
+                <div class="time-range-control">
+                    <label>Период:</label>
+                    <select id="timeRangeSelect">
+                        <option value="realtime">В реальном времени</option>
+                        <option value="1h">Последний час</option>
+                        <option value="6h">Последние 6 часов</option>
+                        <option value="12h">Последние 12 часов</option>
+                        <option value="24h">Последние 24 часа</option>
+                        <option value="3d">Последние 3 дня</option>
+                        <option value="7d">Последние 7 дней</option>
+                        <option value="30d">Последние 30 дней</option>
+                        <option value="custom">Выбрать даты...</option>
+                    </select>
+                    <div id="customDateRange" style="display: none;">
+                        <input type="datetime-local" id="startDate">
+                        <input type="datetime-local" id="endDate">
+                        <button id="applyCustomRange">Применить</button>
+                    </div>
+                </div>
+                
+                <!-- Блок пагинации (только для реального времени) -->
+                <div class="pages-control" style="display: none;">
+                    <label>Страниц на экран:</label>
+                    <select id="pagesPerScreenSelect">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+                
+                <div class="time-range-slider-container" style="display: none;">
                     <input type="range" id="pageSlider" min="1" max="100" value="1" class="time-range-slider">
                     <div class="slider-labels">
                         <span>Страница 100</span>
                         <span>Страница 1</span>
                     </div>
                 </div>
-                <div class="time-display">
+                
+                <div class="time-display" style="display: none;">
                     <span id="currentPageDisplay">Текущая страница: 1</span>
                     <span id="loadingIndicator" style="display:none; margin-left:10px;">Загрузка...</span>
                 </div>
