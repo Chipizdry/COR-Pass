@@ -1131,7 +1131,7 @@ async def energetic_schedule_task(async_session_maker, app):
         await asyncio.sleep(SCHEDULE_CHECK_INTERVAL_SECONDS)
 
 
-
+"""
 async def get_averaged_measurements_service(
     db: AsyncSession,
     object_name: Optional[str] = None,
@@ -1139,7 +1139,7 @@ async def get_averaged_measurements_service(
     end_date: Optional[datetime] = None,
     intervals: int = 60
 ) -> List[CerboMeasurementResponse]:
-    """
+    """ """
     Получает усреднённые измерения за указанный период, группируя данные по минутным интервалам.
     Каждая минута содержит усреднённые значения из 30 записей (с интервалом 2 секунды).
     
@@ -1152,7 +1152,7 @@ async def get_averaged_measurements_service(
         
     Returns:
         Список из 60 усреднённых измерений в формате CerboMeasurementResponse
-    """
+    """ """
     if not start_date or not end_date:
         raise ValueError("Необходимо указать start_date и end_date")
 
@@ -1208,3 +1208,67 @@ async def get_averaged_measurements_service(
         ))
 
     return averaged_results
+"""
+
+async def get_averaged_measurements_service(
+    db: AsyncSession,
+    object_name: Optional[str] = None,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    intervals: int = 60
+) -> List[CerboMeasurementResponse]:
+    if not start_date or not end_date:
+        raise ValueError("Необходимо указать start_date и end_date")
+
+    # Получаем все данные за период одним запросом
+    query = select(CerboMeasurement).where(
+        CerboMeasurement.measured_at >= start_date,
+        CerboMeasurement.measured_at <= end_date
+    )
+    
+    if object_name:
+        query = query.where(CerboMeasurement.object_name == object_name)
+    
+    result = await db.execute(query)
+    all_measurements = result.scalars().all()
+
+    if not all_measurements:
+        return []
+
+    # Группируем измерения по интервалам
+    interval_size = (end_date - start_date) / intervals
+    grouped_measurements = [[] for _ in range(intervals)]
+    
+    for measurement in all_measurements:
+        interval_idx = min(
+            int((measurement.measured_at - start_date) / interval_size),
+            intervals - 1
+        )
+        grouped_measurements[interval_idx].append(measurement)
+
+    # Вычисляем средние значения
+    averaged_results = []
+    for i, measurements in enumerate(grouped_measurements):
+        if not measurements:
+            continue
+            
+        interval_start = start_date + i * interval_size
+        
+        def avg(field):
+            values = [getattr(m, field) for m in measurements if getattr(m, field) is not None]
+            return sum(values) / len(values) if values else None
+
+        base = measurements[0]
+        averaged_results.append(CerboMeasurementResponse(
+            id=base.id,
+            created_at=base.created_at,
+            measured_at=interval_start,
+            object_name=base.object_name,
+            general_battery_power=avg("general_battery_power"),
+            inverter_total_ac_output=avg("inverter_total_ac_output"),
+            ess_total_input_power=avg("ess_total_input_power"),
+            solar_total_pv_power=avg("solar_total_pv_power"),
+            soc=avg("soc")
+        ))
+
+    return averaged_results    
