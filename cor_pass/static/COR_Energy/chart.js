@@ -141,6 +141,7 @@ function processMeasurementsData(measurements) {
         new Date(a.measured_at) - new Date(b.measured_at));
     
     const labels = [];
+    const soc =[];
     const loadPower = [];
     const solarPower = [];
     const batteryPower = [];
@@ -160,9 +161,10 @@ function processMeasurementsData(measurements) {
         solarPower.push(Math.round(measurement.solar_total_pv_power / 10) / 100);
         batteryPower.push(Math.round(measurement.general_battery_power / 10) / 100);
         essTotalInputPower.push(Math.round(measurement.ess_total_input_power / 10) / 100);
+        soc.push(measurement.soc);
     });
 
-    return { labels, loadPower, solarPower, batteryPower, essTotalInputPower };
+    return { labels, loadPower, solarPower, batteryPower, essTotalInputPower,soc };
 }
 
 // Функция для инициализации графика
@@ -179,12 +181,13 @@ function initPowerChart() {
             labels: [],
             datasets: [
                 {
-                    label: 'Мощность нагрузки (кВт)',
+                    label: 'Нагрузка(кВт)',
                     data: [],
                     borderColor: 'rgba(75, 192, 192, 1)',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
                     borderWidth: 2,
-                    pointRadius: 0
+                    pointRadius: 0,
+                    yAxisID: 'y' // Основная ось Y
                 },
                 {
                     label: 'Солнечная генерация (кВт)',
@@ -192,7 +195,8 @@ function initPowerChart() {
                     borderColor: 'rgba(255, 159, 64, 1)',
                     backgroundColor: 'rgba(255, 159, 64, 0.2)',
                     borderWidth: 2,
-                    pointRadius: 0
+                    pointRadius: 0,
+                    yAxisID: 'y'
                 },
                 {
                     label: 'Мощность батареи (кВт)',
@@ -200,7 +204,8 @@ function initPowerChart() {
                     borderColor: 'rgba(153, 102, 255, 1)',
                     backgroundColor: 'rgba(153, 102, 255, 0.2)',
                     borderWidth: 2,
-                    pointRadius: 0
+                    pointRadius: 0,
+                    yAxisID: 'y'
                 },
                 {
                     label: 'Общая входная мощность ESS (кВт)',
@@ -208,7 +213,19 @@ function initPowerChart() {
                     borderColor: 'rgba(255, 99, 132, 1)',
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',
                     borderWidth: 2,
-                    pointRadius: 0
+                    pointRadius: 0,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Батарея (%)',
+                    data: [],
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    yAxisID: 'soc-y', // Ось для SOC
+                    borderDash: [5, 5], // Пунктирная линия
+                    hidden: false // Показываем по умолчанию
                 }
             ]
         },
@@ -224,8 +241,7 @@ function initPowerChart() {
                     },
                     grid: {
                         display: false
-                    },
-                    // Убрали reverse: true, так как данные теперь правильно сортируются
+                    }
                 },
                 y: {
                     title: {
@@ -236,6 +252,22 @@ function initPowerChart() {
                     max: 20,
                     ticks: {
                         stepSize: 5
+                    },
+                    position: 'left'
+                },
+                'soc-y': {
+                    title: {
+                        display: true,
+                        text: 'Заряд (%)'
+                    },
+                    min: 0,
+                    max: 100,
+                    ticks: {
+                        stepSize: 10
+                    },
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false // Не показываем сетку для SOC
                     }
                 }
             },
@@ -246,7 +278,11 @@ function initPowerChart() {
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            return `${context.dataset.label}: ${context.raw.toFixed(2)} кВт`;
+                            let label = context.dataset.label || '';
+                            if (label.includes('SOC')) {
+                                return `${label}: ${context.raw}%`;
+                            }
+                            return `${label}: ${context.raw.toFixed(2)} кВт`;
                         }
                     }
                 }
@@ -263,6 +299,7 @@ function initPowerChart() {
 // Функция для обновления данных графика
 function updateChartData() {
     let combinedLabels = [];
+    let combinedSoc = [];
     let combinedLoadPower = [];
     let combinedSolarPower = [];
     let combinedBatteryPower = [];
@@ -279,6 +316,7 @@ function updateChartData() {
         if (measurements) {
             const {
                 labels,
+                soc,
                 loadPower,
                 solarPower,
                 batteryPower,
@@ -293,6 +331,7 @@ function updateChartData() {
             combinedSolarPower.push(...solarPower);
             combinedBatteryPower.push(...batteryPower);
             combinedEssTotalInputPower.push(...essTotalInputPower);
+            combinedSoc.push(...soc);
         } else {
             console.log(`Страница ${page} — пусто или не загружена`);
         }
@@ -305,6 +344,7 @@ function updateChartData() {
     powerChart.data.datasets[1].data = combinedSolarPower;
     powerChart.data.datasets[2].data = combinedBatteryPower;
     powerChart.data.datasets[3].data = combinedEssTotalInputPower;
+    powerChart.data.datasets[4].data = combinedSoc;
 
     const allData = [
         ...combinedLoadPower,
