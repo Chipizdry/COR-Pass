@@ -49,7 +49,7 @@ async function loadDataForTimeRange(range) {
             break;
         case '12h': 
             startDate = new Date(now.getTime() - 12 * 3600000);
-            intervals = 12;
+            intervals = 144;
             break;
         case '24h': 
             startDate = new Date(now.getTime() - 24 * 3600000);

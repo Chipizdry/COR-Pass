@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="/static/COR_ID_css/styles.css">
     <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/modal.css">
     <link rel="stylesheet" href="/static/COR_Energy/energy.css">
-    <link rel="stylesheet" href="/static/COR_Energy/energy_smart.css">
+  <!-- <link rel="stylesheet" href="/static/COR_Energy/energy_smart.css"> --> 
     <title>COR-Energy</title>
     <script src="/static/COR_Energy/scripts.js"></script>
     <script src="/static/COR_Energy/power-settings.js"></script>
@@ -384,20 +384,22 @@
                         <input type="datetime-local" id="endDate">
                         <button id="applyCustomRange">Применить</button>
                     </div>
+                    <!-- Блок пагинации (только для реального времени) -->
+                    <div class="pages-control" style="display: none;">
+                        <label>Страниц на экран:</label>
+                        <select id="pagesPerScreenSelect">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
                 </div>
                 
-                <!-- Блок пагинации (только для реального времени) -->
-                <div class="pages-control" style="display: none;">
-                    <label>Страниц на экран:</label>
-                    <select id="pagesPerScreenSelect">
-                        <option value="1">1</option>
-                        <option value="2">2</option>
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                        <option value="20">20</option>
-                        <option value="50">50</option>
-                    </select>
-                </div>
+                
+               
                 
                 <div class="time-range-slider-container" style="display: none;">
                     <input type="range" id="pageSlider" min="1" max="100" value="1" class="time-range-slider">
