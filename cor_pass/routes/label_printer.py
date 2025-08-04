@@ -5,6 +5,7 @@ from brother_ql.conversion import convert
 import socket
 import uuid
 import time
+
 router = APIRouter()
 
 PRINTER_IP = "192.168.154.154"
@@ -33,70 +34,100 @@ def create_label_image(text, max_width=696, max_height=300):
 
     print(f"Перед convert(): размер изображения {img.size}")
     return img
-def send_lpr_job(printer_ip, queue_name, data):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((printer_ip, 515))
 
-    def send_cmd(cmd):
-        s.sendall(cmd.encode('ascii') + b'\n')
 
-    # 1. Инициация очереди
-    send_cmd(f"\x02{queue_name}")
-    ack = s.recv(1)
-    if ack != b'\x00':
-        raise Exception(f"LPR: ошибка подтверждения очереди: {ack!r}")
 
-    # 2. Control file (минимальный)
-    control_file = (
-        f"H{socket.gethostname()}\n"    # hostname
-        f"Ppython\n"                    # person/user
-        f"Jlabel\n"                     # job name
-        f"l\n"                          # output to printer
-        f"UdfA123{queue_name}\n"        # unlink data file
-        f"Nlabel.prn\n"                 # name of source file
-    )
 
-    send_cmd(f"\x02{len(control_file)} cfA123{queue_name}")
-    ack = s.recv(1)
-    if ack != b'\x00':
-        raise Exception(f"LPR: ошибка подтверждения control file: {ack!r}")
 
-    s.sendall(control_file.encode('ascii') + b'\x00')
-    ack = s.recv(1)
-    if ack != b'\x00':
-        raise Exception(f"LPR: ошибка подтверждения control file data: {ack!r}")
+def send_lpr_job(printer_ip, queue_name, data, timeout=5):
+    try:
+        print(f"⌛ Подключение к {printer_ip}:515...")
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(timeout)
+        
+        # Увеличиваем буфер для чтения
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 8192)
+        
+        s.connect((printer_ip, 515))
+        print("✓ Соединение установлено")
 
-    time.sleep(0.1)
+        def send_cmd(cmd):
+            print(f"→ Отправка: {cmd[:100]}...")
+            s.sendall(cmd.encode('ascii') + b'\n')
+            response = s.recv(1024)  # Читаем больше данных
+            print(f"← Ответ: {response!r}")
+            return response
 
-    # 3. Data file
-    send_cmd(f"\x03{len(data)} dfA123{queue_name}")
-    ack = s.recv(1)
-    if ack != b'\x00':
-        raise Exception(f"LPR: ошибка подтверждения команды data file: {ack!r}")
+        # 1. Инициация очереди (без ожидания ACK)
+        print("\n=== 1. ИНИЦИАЦИЯ ОЧЕРЕДИ ===")
+        cmd = f"\x02{queue_name}"
+        response = send_cmd(cmd)
+        
+        # Некоторые принтеры не требуют подтверждения на этом этапе
+        if response and response != b'\x00':
+            print(f"⚠ Неожиданный ответ: {response!r}")
 
-    s.sendall(data + b'\x00')
-    ack = s.recv(1)
-    if ack != b'\x00':
-        raise Exception(f"LPR: ошибка подтверждения отправки data file: {ack!r}")
+        # 2. Control file (упрощенный)
+        print("\n=== 2. CONTROL FILE ===")
+        control_file = f"H{socket.gethostname()[:31]}\nPguest\nJlabel\nldfA{queue_name}\n"
+        print(f"Content:\n{control_file}")
 
-    s.close()
+        cmd = f"\x02{len(control_file)} cfA{queue_name}"
+        response = send_cmd(cmd)
+        
+        # Отправка данных control file
+        s.sendall(control_file.encode('ascii') + b'\x00')
+        response = s.recv(1024)
+        print(f"Ответ на control file: {response!r}")
+
+        # 3. Data file
+        print("\n=== 3. DATA FILE ===")
+        cmd = f"\x03{len(data)} dfA{queue_name}"
+        response = send_cmd(cmd)
+        
+        # Отправка данных
+        print(f"Отправка {len(data)} байт...")
+        chunks = [data[i:i+1024] for i in range(0, len(data), 1024)]
+        for chunk in chunks:
+            s.sendall(chunk)
+        s.sendall(b'\x00')
+        
+        response = s.recv(1024)
+        print(f"Финальный ответ: {response!r}")
+        
+        return True
+
+    except Exception as e:
+        print(f"❌ Ошибка: {str(e)}")
+        raise
+    finally:
+        s.close()
+        print("Соединение закрыто")
+
+
 
 
 @router.post("/print_code_label")
 def print_label(content: str = Form(...)):
+    print("\n" + "="*50)
+    print(f"🆕 Новый запрос на печать: '{content[:20]}...'")
+    
     try:
-        print("📦 Получен запрос на печать с текстом:", content)
+        # Проверка доступности принтера
+        print("🔍 Проверка доступности принтера...")
+        if not check_printer_available(PRINTER_IP):
+            msg = "Принтер недоступен"
+            print(f"❌ {msg}")
+            return {"status": "error", "detail": msg}
 
+        # Создание изображения
+        print("🖼️ Создание изображения...")
         img = create_label_image(content)
+        print(f"🖼️ Размер изображения: {img.size}")
 
-        print(f"🖼️ Изображение создано, размер: {img.size}")
-
-        img = resize_image(img, max_width=696, max_height=300)
-        print(f"🖼️ После resize_image(): размер {img.size}")
-
+        # Конвертация в QL-формат
+        print("🔄 Конвертация в формат Brother QL...")
         qlr = BrotherQLRaster(PRINTER_MODEL)
-        qlr.exception_on_warning = True
-
         convert(
             qlr=qlr,
             images=[img],
@@ -105,23 +136,28 @@ def print_label(content: str = Form(...)):
             threshold=70.0,
             dither=False,
             compress=True,
-            red=False,
-            dpi_600=False,
-            hq=True,
             cut=True
         )
+        print(f"📦 Размер данных для печати: {len(qlr.data)} байт")
 
-        print(f"📄 Инструкций байт: {len(qlr.data)}")
-        print(f"📡 Отправка данных на {PRINTER_IP}:515 через LPR ...")
-       # send_lpr_job(PRINTER_IP, "lp", qlr.data)
-      #  send_lpr_job(PRINTER_IP, "raw", qlr.data)
-        send_lpr_job(PRINTER_IP, "label", qlr.data)
-        print("✅ Отправка завершена")
+        # Попытка печати через разные очереди
+        QUEUE_NAMES = ["lp", "LPT1", "PRINTER", "Brother", "label"]
+        print(f"🖨️ Попытка печати через очереди: {QUEUE_NAMES}")
+        
+        for queue in QUEUE_NAMES:
+            print(f"\n=== Попытка печати через очередь '{queue}' ===")
+            try:
+                if send_lpr_job(PRINTER_IP, queue, qlr.data):
+                    print(f"✅ Успешная печать через очередь '{queue}'")
+                    return {"status": "success"}
+            except Exception as e:
+                print(f"⚠️ Ошибка с очередью '{queue}': {str(e)}")
+                continue
 
-        return {"status": "success"}
+        raise Exception("Не удалось отправить на печать через все доступные очереди")
 
     except Exception as e:
-        print("❌ Ошибка при печати:", str(e))
+        print(f"❌ Фатальная ошибка: {str(e)}")
         return {"status": "error", "detail": str(e)}
 
 
@@ -139,3 +175,17 @@ def resize_image(img, max_width=696, max_height=300):
         print(f"🖼️ Изображение изменено с ({w},{h}) до ({new_w},{new_h})")
 
     return img
+
+
+
+def check_printer_available(ip, port=515, timeout=2):
+    try:
+        print(f"🔌 Проверка подключения к {ip}:{port}...")
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(timeout)
+            s.connect((ip, port))
+            print(f"✓ Принтер доступен")
+            return True
+    except Exception as e:
+        print(f"❌ Ошибка подключения: {str(e)}")
+        return False
