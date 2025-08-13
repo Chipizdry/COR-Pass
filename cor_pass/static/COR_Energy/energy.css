@@ -770,3 +770,16 @@ footer {
     border-radius: 4px;
     border: 1px solid #ccc;
 }
+
+
+
+@media (max-width: 768px) {
+    .svg-wrapper {
+        width: 100%;
+        overflow: auto;
+    }
+    svg {
+        width: 100%;
+        height: auto;
+    }
+}

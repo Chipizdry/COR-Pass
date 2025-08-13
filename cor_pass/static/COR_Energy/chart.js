@@ -339,7 +339,7 @@ function initPageSlider() {
 // Функция для обработки данных измерений
 function processMeasurementsData(measurements) {
     if (!measurements) return { labels: [], loadPower: [], solarPower: [], batteryPower: [], essTotalInputPower: [] };
-    console.log('Raw measurement:', measurements);
+ //   console.log('Raw measurement:', measurements);
     // Сортируем по возрастанию времени (старые данные сначала)
     const sortedMeasurements = [...measurements].sort((a, b) => 
         new Date(a.measured_at) - new Date(b.measured_at));

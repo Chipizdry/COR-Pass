@@ -188,3 +188,11 @@ document.querySelector('.close-btn').addEventListener('click', () => {
     svsViewerDiv.classList.add('hidden');
    
 });
+
+
+
+function openSVSInNewTab(svsPath) {
+    const token = getToken();
+    const viewerUrl = `/svs-viewer?path=${encodeURIComponent(svsPath)}&token=${encodeURIComponent(token)}`;
+    window.open(viewerUrl, '_blank');
+}
