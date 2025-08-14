@@ -1,0 +1,12 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY scan_worker/requirements_scan.txt .
+RUN pip install --no-cache-dir -r requirements_scan.txt
+
+COPY scan_worker /app/scan_worker
+
+COPY cor_pass /app/cor_pass
+
+ENV PYTHONPATH=/app
+
+CMD ["python", "scan_worker/smbprotocol_worker.py"]

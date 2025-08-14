@@ -18,10 +18,10 @@ from fastapi_limiter import FastAPILimiter
 
 
 from cor_pass.repository.cerbo_service import (
-    cerbo_collection_task,
+    # cerbo_collection_task,
     close_modbus_client,
     create_modbus_client,
-    energetic_schedule_task,
+    # energetic_schedule_task,
 )
 from cor_pass.routes import auth, person
 from cor_pass.database.db import get_db, async_session_maker
@@ -268,8 +268,8 @@ async def startup():
     initialize_ip2location()
     if settings.app_env == "development":
         await create_modbus_client(app)
-        asyncio.create_task(cerbo_collection_task(app))
-        asyncio.create_task(energetic_schedule_task(async_session_maker=async_session_maker, app=app))
+        # asyncio.create_task(cerbo_collection_task(app))
+        # asyncio.create_task(energetic_schedule_task(async_session_maker=async_session_maker, app=app))
     # asyncio.create_task(cerbo_GX.read_modbus_and_cache())
 
 
