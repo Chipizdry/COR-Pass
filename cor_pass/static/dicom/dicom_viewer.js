@@ -426,7 +426,7 @@ function updateSliders(volumeInfo) {
 
 
 
-
+/*
 
     function generateSvsMetadataHTML(svsMetadata) {
       return `
@@ -463,7 +463,45 @@ function updateSliders(volumeInfo) {
           </div>
       `;
   }
+  */
+
+  function generateSvsMetadataHTML(svsMetadata) {
+    return `
+        <div class="metadata-section">
+            <div class="metadata-info-container">
+                <h4>Basic Information</h4>
+                <div class="metadata-grid">
+                    <div class="metadata-item"><span class="metadata-label">Filename:</span> ${svsMetadata.filename}</div>
+                    <div class="metadata-item"><span class="metadata-label">Dimensions:</span> ${svsMetadata.dimensions.width.toLocaleString()} × ${svsMetadata.dimensions.height.toLocaleString()} px</div>
+                    <div class="metadata-item"><span class="metadata-label">Levels:</span> ${svsMetadata.dimensions.levels}</div>
+                    <div class="metadata-item"><span class="metadata-label">MPP:</span> ${svsMetadata.basic_info.mpp}</div>
+                    <div class="metadata-item"><span class="metadata-label">Magnification:</span> ${svsMetadata.basic_info.magnification}x</div>
+                    <div class="metadata-item"><span class="metadata-label">Scan Date:</span> ${svsMetadata.basic_info.scan_date}</div>
+                    <div class="metadata-item"><span class="metadata-label">Scanner:</span> ${svsMetadata.basic_info.scanner}</div>
+                </div>
+            </div>
+        </div>
   
+        <div class="metadata-section">
+            <h4>Level Details</h4>
+            <table class="metadata-table">
+                <thead><tr><th>Level</th><th>Downsample</th><th>Dimensions</th></tr></thead>
+                <tbody>
+                    ${svsMetadata.levels.map((lvl, i) => `
+                        <tr><td>${i}</td><td>${lvl.downsample.toFixed(1)}</td><td>${lvl.width.toLocaleString()} × ${lvl.height.toLocaleString()}</td></tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+  
+        <div class="metadata-section">
+            <details class="technical-metadata">
+                <summary>Technical Metadata</summary>
+                <pre>${svsMetadata.full_properties ? Object.entries(svsMetadata.full_properties).map(([k, v]) => `${k}: ${v}`).join('\n') : 'No technical metadata available.'}</pre>
+            </details>
+        </div>
+    `;
+  }
 
 
   const navOverlay = document.createElement('canvas');

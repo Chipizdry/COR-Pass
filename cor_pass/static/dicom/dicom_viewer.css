@@ -537,3 +537,35 @@ g[onclick]:active {
 #expand-panel-btn:hover {
   background: rgba(0,0,0,0.9);
 }
+
+
+.metadata-info-container {
+  width: 300px;
+  height: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  margin-bottom: 20px;
+}
+
+.metadata-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.metadata-item {
+  display: flex;
+  justify-content: space-between;
+}
+
+.metadata-label {
+  font-weight: bold;
+  color: #5B4296;
+  margin-right: 10px;
+}
