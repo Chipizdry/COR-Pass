@@ -81,7 +81,15 @@
   }
   
   
-  
+    
+  .upload-instructions {
+    text-align: center;
+    color: #5B4296;
+    font-size: 13px;
+    margin: 10px 0 15px 0;
+    line-height: 1.4;
+    padding: 0 30px;
+  }
   
       .dicom-progress-container {
           margin-top: 10px;
@@ -253,10 +261,10 @@ details pre {
   width: 300px;
   height: 100vh;
   background-color:white;
-  color: white;
+  color:#5B4296;
   overflow-y: auto;
-
-  position: relative; /* или просто убрать position:absolute */
+  padding: 15px;
+  position: relative;
 }
 
 
@@ -468,4 +476,64 @@ g[onclick]:active {
   justify-content: center;
   align-items: center;
   
+}
+
+
+
+
+
+.toggle-panel-btn {
+  width: 30px;
+  height: 30px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.toggle-panel-btn:hover {
+  background: rgba(0,0,0,0.9);
+}
+
+.svs-metadata-panel.collapsed {
+  transform: translateX(100%);
+  width: 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.svs-metadata-panel {
+  transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease;
+}
+
+
+#expand-panel-btn {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 60px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  border: none;
+  border-radius: 4px 0 0 4px;
+  cursor: pointer;
+  font-size: 16px;
+  z-index: 10001;
+  display: none;
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+}
+
+#expand-panel-btn:hover {
+  background: rgba(0,0,0,0.9);
 }

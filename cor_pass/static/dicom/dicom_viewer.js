@@ -137,6 +137,7 @@ function prepareUIBeforeUpload() {
     document.getElementById('loading-spinner')?.style?.setProperty("display", "block");
   
     try {
+      checkToken();
       const result = await uploadFilesWithProgress(formData, token);
   
       progressBar.style.width = '100%';
