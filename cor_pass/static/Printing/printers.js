@@ -11,7 +11,7 @@ async function printLabel(printerIp, templateNumber, content, resultElement = nu
         printer_ip: printerIp,
         labels: [
             {
-                model_id: templateNumber,
+                number_model_id: templateNumber,
                 content: content,
                 uuid: Date.now().toString()  
             }

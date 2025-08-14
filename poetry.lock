@@ -1892,6 +1892,20 @@ files = [
 ]
 
 [[package]]
+name = "pysmb"
+version = "1.2.11"
+description = "pysmb is an experimental SMB/CIFS library written in Python to support file sharing between Windows and Linux machines"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pysmb-1.2.11.zip", hash = "sha256:3a33214f737e877a8ead579e63c9944941deff5e12100e1ca65311b230b1786a"},
+]
+
+[package.dependencies]
+pyasn1 = "*"
+tqdm = "*"
+
+[[package]]
 name = "python-dotenv"
 version = "1.0.1"
 description = "Read key-value pairs from a .env file and set them as environment variables"
@@ -2363,6 +2377,27 @@ xml = ["defusedxml", "lxml"]
 zarr = ["fsspec", "zarr (<3)"]
 
 [[package]]
+name = "tqdm"
+version = "4.67.1"
+description = "Fast, Extensible Progress Meter"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "tqdm-4.67.1-py3-none-any.whl", hash = "sha256:26445eca388f82e72884e0d580d5464cd801a3ea01e63e5601bdff9ba6a48de2"},
+    {file = "tqdm-4.67.1.tar.gz", hash = "sha256:f8aef9c52c08c13a65f30ea34f4e5aac3fd1a34959879d7e59e63027286627f2"},
+]
+
+[package.dependencies]
+colorama = {version = "*", markers = "platform_system == \"Windows\""}
+
+[package.extras]
+dev = ["nbval", "pytest (>=6)", "pytest-asyncio (>=0.24)", "pytest-cov", "pytest-timeout"]
+discord = ["requests"]
+notebook = ["ipywidgets (>=6)"]
+slack = ["slack-sdk"]
+telegram = ["requests"]
+
+[[package]]
 name = "typer"
 version = "0.12.3"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
@@ -2759,4 +2794,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "7885c9dec1dbc9a9c2ef52c4b8dd7d0cdc6f8f1bdf99b34a368ca601de599376"
+content-hash = "e1ca7dcc513e7f315adc21252580dbcf7239942f9ddd21ec63ffc8d45cd74534"

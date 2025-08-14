@@ -1,16 +1,13 @@
-#version: '3'
+version: '3'
 
 services:
   fastapi:
     build:
       context: .
       dockerfile: Dockerfile
-    image: massivecapybara/corid_api:latest
+    # image: massivecapybara/corid_api:latest
     ports:
       - "8000:8000"
-      - "9100:9100"   # 🖨️ Порт первого принтера
-      - "9101:9101"   # 🖨️ Порт второго принтера 
-      - "9102:9102"   
     # volumes:
     #   - .:/app
     depends_on:
@@ -23,7 +20,32 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    command: gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --log-level info --error-logfile - --access-logfile -
+    command: gunicorn main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --log-level info --error-logfile - --access-logfile -
+  # modbus_worker:
+  #   build:
+  #     context: . 
+  #     dockerfile: Dockerfile.modbus_worker
+  #   image: modbus-worker:latest 
+  #   container_name: modbus_worker 
+  #   env_file:
+  #     - development.env 
+  #   depends_on:
+  #     - postgres 
+
+  #   restart: unless-stopped 
+  scanner_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.scanner_worker
+    restart: always
+    container_name: scanner_worker
+    volumes:
+      - .:/app
+    # network_mode: "host"
+    env_file:
+      - development.env
+    depends_on:
+      - postgres
 
   redis:
     image: redis:alpine

@@ -72,21 +72,21 @@ class PatientClinicStatus(enum.Enum):
 
 # Типы макроархива для параметров кейса
 class MacroArchive(enum.Enum):
-    ESS = "ESS - без остатка"
-    RSS = "RSS - остаток"
+    ESS = "ESS - без залишку"
+    RSS = "RSS - залишок"
 
 
 # Типы декальцинации для параметров кейса
 class DecalcificationType(enum.Enum):
-    ABSENT = "Отсутствует"
+    ABSENT = "Відсутня"
     EDTA = "EDTA"
-    ACIDIC = "Кислотная"
+    ACIDIC = "Кислотна"
 
 
 # Типы образцов для параметров кейса
 class SampleType(enum.Enum):
-    NATIVE = "Нативный биоматериал"
-    BLOCKS = "Блоки/Стекла"
+    NATIVE = "Нативний біоматеріал"
+    BLOCKS = "Блоки/Скельця"
 
 
 # Типы материалов (исследований) для параметров кейса
@@ -99,7 +99,7 @@ class MaterialType(enum.Enum):
     S = "Second Opinion"
     A = "Autopsy"
     EM = "Electron Microscopy"
-    OTHER = "Другое"
+    OTHER = "Інше"
 
 
 # Типы срочности для параметров кейса
@@ -116,19 +116,20 @@ class FixationType(enum.Enum):
     BOUIN = "Bouin"
     ALCOHOL = "Alcohol"
     GLUTARALDEHYDE_2 = "2% Glutaraldehyde"
-    OTHER = "Другое"
+    OTHER = "Інше"
 
 
 # Типы исследований для направления
 class StudyType(enum.Enum):
-    CYTOLOGY = "цитология"
-    HISTOPATHOLOGY = "патогистология"
-    IMMUNOHISTOCHEMISTRY = "иммуногистохимия"
+    CYTOLOGY = "Цитологія"
+    HISTOPATHOLOGY = "Патогістологія"
+    IMMUNOHISTOCHEMISTRY = "Імуногістохімія"
     FISH_CISH = "FISH/CISH"
     CB = "Cellblock"
     S = "Second Opinion"
     A = "Autopsy"
     EM = "Electron Microscopy"
+    OTHER = "Інше"
 
 
 # Типы окрашивания для стёкол
@@ -231,6 +232,9 @@ class User(Base):
     )
     blood_pressure_measurements = relationship(
         "BloodPressureMeasurement", back_populates="user", cascade="all, delete-orphan"
+    )
+    ecg_measurements = relationship(
+        "ECGMeasurement", back_populates="user", cascade="all, delete-orphan"
     )
 
     # Индексы
@@ -656,6 +660,8 @@ class Glass(Base):
     staining = Column(Enum(StainingType), nullable=True)
     glass_data = Column(LargeBinary, nullable=True)
     is_printed = Column(Boolean, nullable=True, default=False)
+    scan_url = Column(String, nullable=True)
+    preview_url = Column(String, nullable=True)
     cassette = relationship("Cassette", back_populates="glass")
 
 
@@ -1064,5 +1070,22 @@ class EnergeticSchedule(Base):
             f"is_manual_mode={self.is_manual_mode})>"
         )
 
+
+
+class ECGMeasurement(Base):
+    __tablename__ = "ecg_measurements"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=func.now(),
+        comment="Дата и время сохранения записи в БД",
+    )
+    file_data = Column(LargeBinary, nullable=False) 
+    file_name = Column(String, nullable=True) 
+
+    user = relationship("User", back_populates="ecg_measurements")
 
 # Base.metadata.create_all(bind=engine)

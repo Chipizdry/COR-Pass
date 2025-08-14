@@ -4,7 +4,7 @@
 .modal {
     display: none;
     position: fixed;
-    z-index: 9000; 
+    z-index: 9000;
     top: 50%;
     left: 50%;
     background: radial-gradient(circle, #ffffff, #f1e9fc, #fcf7f2);
@@ -17,7 +17,7 @@
     flex-direction: column;
     display: flex;
     justify-content: center;
-    align-items: center; 
+    align-items: center;
 }
 
 .modal-header {
@@ -71,43 +71,43 @@
     font-size: 14px;
     cursor: pointer;
     color: #7B43F2;
-    margin: 0px; 
+    margin: 0px;
 }
 
- 
+
 .cards-scroll-area {
     overflow-y: auto;
     flex-grow: 1;
     padding: 5px;
     max-height: 190px;
 }
-  
+
   /* Стилизация полосы прокрутки */
   .cards-scroll-area::-webkit-scrollbar {
     width: 10px;
   }
-  
+
   .cards-scroll-area::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 10px;
   }
-  
+
   .cards-scroll-area::-webkit-scrollbar-thumb {
     background-color: #a383d2;
     border-radius: 10px;
     border: 2px solid #f1f1f1;
   }
-  
+
   .cards-scroll-area::-webkit-scrollbar-thumb:hover {
     background-color: #8259bb;
   }
-  
+
   /* Отступ снизу для красоты */
   .cards-container {
     padding-bottom: 20px;
   }
 
-  
+
 .modal-button:hover {
     background-color: #B1A1DA;
 }
@@ -132,10 +132,10 @@
     flex: 1; /* занимает доступное пространство */
     padding-right: 30px;
 }
-  
+
   .session-delete-button:hover {
     background-color: #5e32c5;
-   
+
   }
 .recovery-btn {
     background-color: white;
@@ -271,8 +271,8 @@
 }
 
 .form-group input[type="email"],
-             input[type="text"],
-             input[type="date"] {
+.form-group input[type="text"],
+.form-group input[type="date"] {
   /*  width: 100%; */
     padding: 10px;
     margin-bottom: 10px;
@@ -357,7 +357,7 @@
 }
 
 .additional-fields .input-wrapper {
-   
+
         position: relative;
         max-width: 200px;
 
@@ -572,12 +572,12 @@
     font-family: sans-serif;
     background-color: #f9f9f9;
   }
-  
+
   .setting {
     justify-content: space-between;
     align-items: center;
   }
-  
+
   .switch-label {
     display: flex;
     justify-content: space-between;
@@ -586,7 +586,7 @@
     width: 190px;
     align-items: center;
   }
-  
+
   /* Стилизация тумблера */
   .switch {
     position: relative;
@@ -594,13 +594,13 @@
     width: 50px;
     height: 24px;
   }
-  
+
   .switch input {
     opacity: 0;
     width: 0;
     height: 0;
   }
-  
+
   .slider {
     position: absolute;
     cursor: pointer;
@@ -612,7 +612,7 @@
     border-radius: 24px;
     transition: 0.4s;
   }
-  
+
   .slider:before {
     position: absolute;
     content: "";
@@ -624,11 +624,11 @@
     border-radius: 50%;
     transition: 0.4s;
   }
-  
+
   .switch input:checked + .slider {
     background-color: #4CAF50;
   }
-  
+
   .switch input:checked + .slider:before {
     transform: translateX(26px);
   }
@@ -674,7 +674,7 @@
 .recovery-display {
     display: flex;
     flex-direction: column;
-    align-items: center; 
+    align-items: center;
     justify-content: center;
     text-align: center;
     margin-top: 15px;
@@ -685,7 +685,7 @@
    padding: 5px;
    margin-top: 5px;
    display: none;
-   align-items: center; 
+   align-items: center;
    justify-content: center;
   }
 
@@ -722,7 +722,7 @@
     overflow: hidden;
     align-items: center;
   }
-  
+
   .tab-button {
     /* flex: 1; */
     border: none;
@@ -738,7 +738,7 @@
     justify-content: center;
     width: 220px;
   }
-  
+
   .tab-button.active {
     background-color: #ffffff;
     color: #291161;
@@ -746,27 +746,27 @@
     /* box-shadow: 0 0 0 2px #7f69bd; */
     width: 240px;
   }
-  
+
   .tab-button:hover:not(.active) {
     background-color: rgba(127, 105, 189, 0.05); /* лёгкий фиолетовый намёк на hover */
   }
-  
+
   .tab-content {
     display: none;
     margin-top: 20px;
   }
-  
+
   .tab-content.active {
     display: block;
   }
 
-  
+
 #SaveSettingsButton {
     position: absolute;
     bottom: 10px;
     left: 50%;
     transform: translateX(-50%);
-    background-color: #7B43F2; 
+    background-color: #7B43F2;
     color: white;
     padding: 10px 20px;
     border-radius: 12px;
@@ -777,7 +777,7 @@
 #SaveSettingsButton:hover  {
     background-color: #5e32c5;
   }
-  
+
 #SaveSettingsButton:active  {
     background-color: #5F41B2;
     transform: translateX(-50%) translateY(2px);
@@ -836,7 +836,7 @@
 .password-strength-strong {
     background-color: #007bff;
 }
-  
+
 
 /* Стили для кнопок в разделе восстановления */
 .recovery-actions {

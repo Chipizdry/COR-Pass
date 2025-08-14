@@ -393,7 +393,7 @@ async def print_all_sample_cassettes(
     for cassette_db in cassettes_to_update:
         cassette_data = CassettePrinting(
             printer_ip=data.printer_ip,
-            model_id=data.model_id,
+            number_models_id=data.number_models_id,
             clinic_name=data.clinic_name,
             hooper=data.hooper,
             cassete_id=cassette_db.id,

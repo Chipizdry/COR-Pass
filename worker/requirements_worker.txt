@@ -1,0 +1,15 @@
+asyncpg==0.30.0
+annotated-types==0.7.0
+loguru==0.7.2
+pymodbus==3.9.2
+python-dotenv==1.0.1
+SQLAlchemy==2.0.31
+greenlet==3.0.3
+pydantic==2.8.2
+pydantic-settings==2.3.4
+pydantic_core==2.20.1
+typing_extensions==4.12.2
+typer==0.12.3
+tzdata==2024.2
+email_validator==2.2.0
+fastapi==0.111.0

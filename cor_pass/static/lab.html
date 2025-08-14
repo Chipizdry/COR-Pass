@@ -223,7 +223,7 @@
                 </div>
                 <div class="commentsWrapper df fdc">
                     <div class="commentsWrapperTop">
-                        Макроописание
+                        Макроопис
                     </div>
                     <textarea id="sampleMacroDescription"></textarea>
                     <button class="commentsWrapperButton">Зберегти</button>
@@ -1120,7 +1120,7 @@
                         <div class="cassetteComment" data-help-text="Коментар">
                             <img src="./assets/${currentCassette.comment?.length ? "commentActive" : "comment"}.svg" alt="comment">
                         </div>
-                        <div class="cassettePrint" data-help-text="Друг касети"><img src="./assets/${currentCassette.is_printed ? "printActive" : "print"}.svg" alt="print"></div>
+                        <div class="cassettePrint" data-help-text="Друк касети"><img src="./assets/${currentCassette.is_printed ? "printActive" : "print"}.svg" alt="print"></div>
                     </div>
                 </div>
             </div>
@@ -1226,7 +1226,7 @@
         <div class="glassItemPicker">
             ${currentGlass.glass_number} <span class="glassPaintValue">${currentPrint.short}</span>
         </div>
-        <div class="glassItemPaint" style="cursor: pointer">
+        <div class="glassItemPaint" style="cursor: pointer" data-help-text="Роздрукувати скельце">
             <img src="./assets/${currentGlass.is_printed ? "printActive" : "print"}.svg" alt="print">
         </div>
         `;

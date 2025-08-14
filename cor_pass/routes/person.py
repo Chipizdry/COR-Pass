@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, HTTPException, Depends, UploadFile, status
+from fastapi import APIRouter, File, HTTPException, Depends, UploadFile, status, BackgroundTasks
 from datetime import datetime, timedelta, timezone
 from cor_pass.database.db import get_db
 from cor_pass.services import redis_service
@@ -9,12 +9,14 @@ from cor_pass.services.image_validation import validate_image_file
 from cor_pass.services.ip2_location import get_ip_geolocation
 from cor_pass.services.qr_code import generate_qr_code
 from cor_pass.services.recovery_file import generate_recovery_file
-from cor_pass.services.email import send_email_code_with_qr
+from cor_pass.services.email import send_email_code_with_qr, send_feedback_email, send_proposal_email
 from cor_pass.database.models import User
 from cor_pass.services.access import user_access
 from loguru import logger
 from cor_pass.schemas import (
     DeleteMyAccount,
+    FeedbackProposalsScheema,
+    FeedbackRatingScheema,
     PasswordStorageSettings,
     MedicalStorageSettings,
     EmailSchema,
@@ -642,7 +644,7 @@ async def upsert_user_profile_endpoint(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated"
         )
-    if profile_data.birth_date.year != current_user.birth:
+    if profile_data.birth_date and profile_data.birth_date.year != current_user.birth:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Пользователь указал не верный год рождения (год рождения должен совпадать с указанным ранее в cor-id)",
@@ -756,3 +758,44 @@ async def get_profile_photo_base64_endpoint(
     photo_data_url = f"data:{photo_data[1]};base64,{encoded_photo}"
 
     return JSONResponse(content={"photo_data_url": photo_data_url})
+
+
+@router.post("/feedback/rate", 
+             dependencies=[Depends(RateLimiter(times=5, seconds=60))],
+             status_code=status.HTTP_200_OK)
+async def submit_feedback(
+    feedback: FeedbackRatingScheema,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(auth_service.get_current_user)
+):
+    """
+    Принимает обратную связь от пользователя и отправляет её на почту отдела маркетинга.
+    """
+    background_tasks.add_task(
+        send_feedback_email,
+        feedback=feedback,
+        user_cor_id=current_user.cor_id,
+        user_email=current_user.email
+    )
+    
+    return {"message": "Спасибо за ваш отзыв! Он был успешно отправлен."}
+
+@router.post("/feedback/proposal", 
+             dependencies=[Depends(RateLimiter(times=5, seconds=60))],
+             status_code=status.HTTP_200_OK)
+async def submit_proposal(
+    feedback: FeedbackProposalsScheema,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(auth_service.get_current_user)
+):
+    """
+    Принимает предложение от пользователя и отправляет её на почту отдела маркетинга.
+    """
+    background_tasks.add_task(
+        send_proposal_email,
+        feedback=feedback,
+        user_cor_id=current_user.cor_id,
+        user_email=current_user.email
+    )
+    
+    return {"message": "Спасибо за ваше предложение! Мы рассмотрим его и свяжемся с Вами при необходимости"}

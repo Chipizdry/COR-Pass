@@ -9,6 +9,7 @@ from fastapi import UploadFile
 
 from cor_pass.config.config import settings
 from loguru import logger
+from cor_pass.schemas import FeedbackProposalsScheema, FeedbackRatingScheema
 from cor_pass.services.qr_code import generate_qr_code
 from cor_pass.services.recovery_file import generate_recovery_file
 
@@ -142,3 +143,59 @@ async def send_email_code_with_temp_pass(
         logger.debug(f"Sending email to {email} with temp_pass done!")
     except ConnectionErrors as err:
         print(err)
+
+
+async def send_feedback_email(
+    feedback: FeedbackRatingScheema,
+    user_cor_id: str,
+    user_email: EmailStr,
+):
+    """
+    Отправляет email с обратной связью, используя FastMail library.
+    """
+    
+    template_body = {
+        "rating": feedback.rating,
+        "comment": feedback.comment,
+        "user_cor_id": user_cor_id,
+        "user_email": user_email,
+    }
+    
+    message = MessageSchema(
+        subject="Новый отзыв от пользователя",
+        recipients=[settings.marketing_email], 
+        template_body=template_body,
+        subtype=MessageType.html, 
+    )
+    
+    fm = FastMail(conf)
+    
+
+    await fm.send_message(message, template_name="feedback.html") 
+
+async def send_proposal_email(
+    feedback: FeedbackProposalsScheema,
+    user_cor_id: str,
+    user_email: EmailStr,
+):
+    """
+    Отправляет email с обратной связью, используя FastMail library.
+    """
+    
+    template_body = {
+        "proposal": feedback.proposal,
+        "user_cor_id": user_cor_id,
+        "user_email": user_email,
+    }
+    
+    message = MessageSchema(
+        subject="Новое предложение от пользователя",
+        recipients=[settings.marketing_email], 
+        template_body=template_body,
+        subtype=MessageType.html, 
+    )
+    
+    fm = FastMail(conf)
+    
+
+    await fm.send_message(message, template_name="proposal.html") 

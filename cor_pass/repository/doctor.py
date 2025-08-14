@@ -22,6 +22,7 @@ from cor_pass.database.models import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from cor_pass.repository.case import get_patient_list_cases
 from cor_pass.repository.patient import get_patient_by_corid
 from cor_pass.repository.person import get_user_by_corid
 from cor_pass.schemas import (
@@ -400,6 +401,8 @@ async def get_patients_with_optional_status(
             if clinic_patient_status
             else None
         )
+
+        list_cases = await get_patient_list_cases(db=db, patient_id=patient.patient_cor_id)
         patient_response = PatientResponseForGetPatients(
             id=patient.id,
             patient_cor_id=patient.patient_cor_id,
@@ -414,9 +417,10 @@ async def get_patients_with_optional_status(
             change_date=patient.change_date if patient else None,
             doctor_status=status_for_doctor,
             clinic_status=status_for_clinic,
+            cases = list_cases
         )
         result.append(patient_response)
-
+ 
     response = GetAllPatientsResponce(patients=result, total_count=total_count)
     return response
 

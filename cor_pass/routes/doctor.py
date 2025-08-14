@@ -272,7 +272,7 @@ async def get_doctor_patients(
         limit=limit
     )
     return response
-
+ 
 
 @router.get(
     "/patients/{patient_cor_id}",
@@ -582,7 +582,6 @@ async def update_microdescription(
             status_code=status.HTTP_404_NOT_FOUND, detail="Case not found"
         )
     return db_case
-
 
 @router.get(
     "/patients/{patient_id}/excision-details",

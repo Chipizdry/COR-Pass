@@ -14,7 +14,7 @@ PRINTER_IP = "192.168.154.209"
 
 
 class LabelData(BaseModel):
-    model_id: int
+    number_model_id: int
     content: str
     uuid: str
 

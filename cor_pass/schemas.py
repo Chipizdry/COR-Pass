@@ -42,8 +42,8 @@ class UserModel(BaseModel):
 
     @field_validator("user_sex")
     def user_sex_must_be_m_or_f(cls, v):
-        if v not in ["M", "F"]:
-            raise ValueError('user_sex must be "M" or "F"')
+        if v not in ["M", "F", "*"]:
+            raise ValueError('user_sex must be "M" or "F" or "*" (other)')
         return v
 
 
@@ -966,6 +966,13 @@ class Case(BaseModel):
     is_printed_glass: Optional[bool]
     is_printed_qr: Optional[bool]
 
+
+    class Config:
+        from_attributes = True
+
+class CaseWithOwner(Case):
+    is_case_owner: Optional[bool]
+
     class Config:
         from_attributes = True
 
@@ -1339,6 +1346,11 @@ class FirstCaseReferralDetailsSchema(BaseModel):
     class Config:
         from_attributes = True
 
+class FirstCaseReferralDetailsWithOwner(FirstCaseReferralDetailsSchema):
+    is_case_owner: Optional[bool]
+
+    class Config:
+        from_attributes = True
 
 class DoctorSignatureBase(BaseModel):
     signature_name: Optional[str] = None
@@ -1454,8 +1466,8 @@ class FinalReportResponseSchema(BaseModel):
 
 
 class PatientFinalReportPageResponse(BaseModel):
-    all_cases: Optional[List[Case]] = None
-    last_case_details: Optional[Case] = None
+    all_cases: Optional[List[CaseWithOwner]] = None
+    last_case_details: Optional[CaseWithOwner] = None
     case_owner: Optional[CaseOwnerResponse]
     report_details: Optional[FinalReportResponseSchema]
 
@@ -1464,7 +1476,7 @@ class PatientFinalReportPageResponse(BaseModel):
 
 
 class CaseFinalReportPageResponse(BaseModel):
-    case_details: Case
+    case_details: CaseWithOwner
     case_owner: Optional[CaseOwnerResponse]
     report_details: Optional[FinalReportResponseSchema]
 
@@ -1473,10 +1485,10 @@ class CaseFinalReportPageResponse(BaseModel):
 
 
 class PatientCasesWithReferralsResponse(BaseModel):
-    all_cases: List[Case]
-    case_details: Optional[Case]
+    all_cases: List[CaseWithOwner]
+    case_details: Optional[CaseWithOwner]
     case_owner: Optional[CaseOwnerResponse]
-    first_case_direction: Optional[FirstCaseReferralDetailsSchema] = None
+    first_case_direction: Optional[FirstCaseReferralDetailsWithOwner] = None
 
     class Config:
         from_attributes = True
@@ -1500,10 +1512,16 @@ class FirstCaseGlassDetailsSchema(BaseModel):
     class Config:
         from_attributes = True
 
+class FirstCaseGlassDetailsSchemaWithOwner(FirstCaseGlassDetailsSchema):
+    is_case_owner: Optional[bool]
+
+    class Config:
+        from_attributes = True
+
 
 class PatientGlassPageResponse(BaseModel):
-    all_cases: List[Case]
-    first_case_details_for_glass: Optional[FirstCaseGlassDetailsSchema] = None
+    all_cases: List[CaseWithOwner]
+    first_case_details_for_glass: Optional[FirstCaseGlassDetailsSchemaWithOwner] = None
     case_owner: Optional[CaseOwnerResponse]
     report_details: Optional[FinalReportResponseSchema]
 
@@ -1561,10 +1579,15 @@ class LastCaseExcisionDetailsSchema(BaseModel):
     class Config:
         from_attributes = True
 
+class LastCaseExcisionDetailsSchemaWithOwner(LastCaseExcisionDetailsSchema):
+    is_case_owner: Optional[bool]
+
+    class Config:
+        from_attributes = True
 
 class PatientExcisionPageResponse(BaseModel):
-    all_cases: List[Case]
-    last_case_details_for_excision: Optional[LastCaseExcisionDetailsSchema] = None
+    all_cases: List[CaseWithOwner]
+    last_case_details_for_excision: Optional[LastCaseExcisionDetailsSchemaWithOwner] = None
     case_owner: Optional[CaseOwnerResponse]
 
     class Config:
@@ -1573,7 +1596,7 @@ class PatientExcisionPageResponse(BaseModel):
 
 class SingleCaseExcisionPageResponse(BaseModel):
 
-    case_details_for_excision: Optional[LastCaseExcisionDetailsSchema] = None
+    case_details_for_excision: Optional[LastCaseExcisionDetailsSchemaWithOwner] = None
     case_owner: Optional[CaseOwnerResponse]
 
     class Config:
@@ -1684,6 +1707,7 @@ class PatientResponseForGetPatients(BaseModel):
     change_date: Optional[datetime] = None
     doctor_status: Optional[PatientStatus] = None
     clinic_status: Optional[PatientClinicStatus] = None
+    cases: Optional[List] = None
 
 
 class GetAllPatientsResponce(BaseModel):
@@ -1751,8 +1775,8 @@ class SignReportRequest(BaseModel):
 
 
 class PatientTestReportPageResponse(BaseModel):
-    all_cases: List[Case]
-    last_case_for_report: Optional[Case]
+    all_cases: List[CaseWithOwner]
+    last_case_for_report: Optional[CaseWithOwner]
     case_owner: Optional[CaseOwnerResponse]
     report_details: Optional[ReportResponseSchema]
     all_glasses_for_last_case: Optional[FirstCaseTestGlassDetailsSchema] = None
@@ -1951,6 +1975,19 @@ class TonometrIncomingData(BaseModel):
     results_list: List[IndividualResult] = Field(..., alias="results")
 
 
+
+# Модели для ЭКГ
+
+class ECGMeasurementResponse(BaseModel):
+    id: str 
+    user_id: str
+    created_at: datetime
+    file_name: str
+
+    class Config:
+        from_attributes = True 
+
+
 # Модели для опроса инвертора
 
 
@@ -2124,7 +2161,7 @@ class EnergeticScheduleResponse(BaseModel):
 
 class RegisterWriteRequest(BaseModel):
     slave_id: int
-    register: int
+    register_number: int
     value: int
 
 
@@ -2162,7 +2199,7 @@ class SearchCaseDetailsSimple(BaseModel):
 
 class GeneralPrinting(BaseModel):
     printer_ip: str
-    model_id: int
+    number_models_id: int
     clinic_name: str
     hooper: str
     # printing: bool
@@ -2186,7 +2223,7 @@ class GlassResponseForPrinting(BaseModel):
 
 class CassettePrinting(BaseModel):
     printer_ip: str
-    model_id: int
+    number_models_id: int
     clinic_name: str
     hooper: str
     cassete_id: str
@@ -2211,3 +2248,13 @@ class PrintRequest(BaseModel):
     """Модель для запроса на печать."""
     printer_ip: str
     labels: List[PrintLabel]
+
+
+class FeedbackRatingScheema(BaseModel):
+    rating: int = Field(..., ge=1, le=5, description="Оценка от 1 до 5")
+    comment: str = Field(...,min_length=2,max_length=800, description="Комментарий до 800 символов")
+
+
+
+class FeedbackProposalsScheema(BaseModel):
+    proposal: str = Field(...,min_length=2,max_length=800, description="Предложения")

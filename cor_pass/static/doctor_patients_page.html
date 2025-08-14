@@ -195,7 +195,7 @@
         <div class="additional-fields">
             <div class="input-wrapper">
                 <label for="patientEmail">Имейл</label>
-                <input type="text" id="patientEmail" name="patientEmail" required>
+                <input type="text" id="patientEmail" name="patientEmail">
             </div>
             <div class="input-wrapper">
                 <label for="patientPhone">Телефон</label>
@@ -508,7 +508,7 @@
         const addressField = document.getElementById('address');
 
         const fields = [surnameField, firstNameField, middleNameField, birthDateField, emailField, phoneNumberField, addressField];
-        const requiredFields = [surnameField, firstNameField, birthDateField, emailField];
+        const requiredFields = [surnameField, firstNameField, birthDateField];
 
         let isValid = true;
 

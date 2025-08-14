@@ -553,7 +553,7 @@ async def get_solarchargers_status(request: Request):
                     ("pv_power_2", 3726, 1, False),
                     ("pv_power_3", 3727, 1, False),
                 ]
-
+ 
                 # Все нужные адреса
                 needed_regs = [3700, 3701, 3702, 3703, 3724, 3725, 3726, 3727]
                 min_reg = min(needed_regs)
@@ -671,7 +671,7 @@ async def write_register(request_data: RegisterWriteRequest, request: Request):
         
         # Записываем значение в регистр
         result = await client.write_register(
-            address=request_data.register,
+            address=request_data.register_number,
             value=request_data.value,
             slave=request_data.slave_id
         )
@@ -679,11 +679,11 @@ async def write_register(request_data: RegisterWriteRequest, request: Request):
         if result.isError():
             raise HTTPException(status_code=500, detail="Ошибка записи регистра")
             
-        return {"status": "success", "register": request_data.register, "value": request_data.value}
+        return {"status": "success", "register": request_data.register_number, "value": request_data.value}
         
     except Exception as e:
         register_modbus_error()
-        logger.error(f"❗ Ошибка записи регистра {request_data.register}", exc_info=e)
+        logger.error(f"❗ Ошибка записи регистра {request_data.register_number}", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
 
 

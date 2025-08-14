@@ -147,10 +147,6 @@
                     batteryRectV.setAttribute('fill', fillColor);
                     batteryRectH.setAttribute('fill', fillColor);
                     
-
-
-                    // Определяем параметры анимации
-                    let animVFrom, animVTo, animHFrom, animHTo;
                     // Управляем анимацией в зависимости от направления потока
                     if (clampedPower < 0) {
                         // Разряд - поток вниз по вертикали и влево по горизонтали
@@ -170,54 +166,6 @@
                         batteryAnimV.setAttribute('to', '0,0');
                         batteryAnimH.setAttribute('from', '0,0');
                         batteryAnimH.setAttribute('to', '0,0');
-                    }
-
-
-                     // Для мобильных устройств создаем новые элементы анимации
-                             
-                    if (isMobile()) {
-                        // Удаляем старые анимации
-                        batteryAnimV.remove();
-                        batteryAnimH.remove();
-                        
-                        // Создаем новые элементы анимации
-                        const newAnimV = document.createElementNS('http://www.w3.org/2000/svg', 'animateTransform');
-                        newAnimV.setAttribute('id', 'batteryFlowAnimV');
-                        newAnimV.setAttribute('attributeName', 'patternTransform');
-                        newAnimV.setAttribute('type', 'translate');
-                        newAnimV.setAttribute('from', animVFrom);
-                        newAnimV.setAttribute('to', animVTo);
-                        newAnimV.setAttribute('dur', '1s');
-                        newAnimV.setAttribute('repeatCount', 'indefinite');
-                        
-                        const newAnimH = document.createElementNS('http://www.w3.org/2000/svg', 'animateTransform');
-                        newAnimH.setAttribute('id', 'batteryFlowAnimH');
-                        newAnimH.setAttribute('attributeName', 'patternTransform');
-                        newAnimH.setAttribute('type', 'translate');
-                        newAnimH.setAttribute('from', animHFrom);
-                        newAnimH.setAttribute('to', animHTo);
-                        newAnimH.setAttribute('dur', '1s');
-                        newAnimH.setAttribute('repeatCount', 'indefinite');
-                        
-                        // Добавляем новые анимации к паттернам
-                        document.getElementById('flowBatteryV').appendChild(newAnimV);
-                        document.getElementById('flowBatteryH').appendChild(newAnimH);
-                        
-                        // Принудительно запускаем анимации
-                        setTimeout(() => {
-                            newAnimV.beginElement();
-                            newAnimH.beginElement();
-                        }, 50);
-                    } else {
-                        // Для десктопов просто обновляем атрибуты
-                        batteryAnimV.setAttribute('from', animVFrom);
-                        batteryAnimV.setAttribute('to', animVTo);
-                        batteryAnimH.setAttribute('from', animHFrom);
-                        batteryAnimH.setAttribute('to', animHTo);
-                        
-                        // Перезапускаем анимации
-                        batteryAnimV.beginElement();
-                        batteryAnimH.beginElement();
                     }
                 }
             }
@@ -674,7 +622,7 @@ async function writeRegister() {
             },
             body: JSON.stringify({
                 slave_id: parseInt(slaveId),
-                register: parseInt(register),
+                register_number: parseInt(register),
                 value: parseInt(value)
             })
         });

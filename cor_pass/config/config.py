@@ -48,6 +48,14 @@ class Settings(BaseSettings):
     allowed_redirect_urls: list = json.loads(os.getenv("ALLOWED_REDIRECT_URLS", "[]"))
     lawyer_accounts: list = json.loads(os.getenv("LAWYER_ACCOUNTS", "[]"))
     allowed_hosts: list = json.loads(os.getenv("ALLOWED_HOSTS", "[]"))
+    marketing_email: str = "MARKETING_EMAIL"
+    smb_user: str = "SMB_USER"
+    smb_pass: str = "SMB_PASS"
+    smb_server_ip: str ="SMB_SERVER_IP"
+    smb_share: str ="SMB_SHARE"
+    remote_name: str ="REMOTE_NAME"
+    scan_interval_seconds: int = 60
+    base_path: str = "BASE_PATH"
 
     class Config:
 

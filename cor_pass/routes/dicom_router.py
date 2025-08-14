@@ -505,3 +505,6 @@ def handle_compressed_dicom(file_path):
     except Exception as e:
         print(f"[ERROR] Ошибка обработки сжатого DICOM: {e}")
         return None
+
+
+
