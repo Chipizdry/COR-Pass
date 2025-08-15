@@ -190,4 +190,139 @@ document.getElementById('panel-close-btn').addEventListener('click', () => {
 });
 
 
-  
+
+
+function enableAreaSelection(viewer) {
+    if (!viewer) {
+        console.error("Viewer is not defined");
+        return;
+    }
+
+    // Ждём пока появится canvas
+    const renderedCanvas = () => viewer.drawer?.canvas || viewer.canvas;
+    if (!renderedCanvas()) {
+        viewer.addOnceHandler("tile-loaded", () => enableAreaSelection(viewer));
+        return;
+    }
+
+    // Блокируем навигацию
+    viewer.setMouseNavEnabled(false);
+
+    const containerEl = viewer.container;
+    const capture = document.createElement("div");
+    const box = document.createElement("div");
+
+    Object.assign(capture.style, {
+        position: "fixed",
+        background: "transparent",
+        zIndex: "2147483646",
+        pointerEvents: "auto",
+        touchAction: "none",
+        cursor: "crosshair"
+    });
+
+    Object.assign(box.style, {
+        position: "fixed",
+        border: "2px dashed red",
+        background: "rgba(255,0,0,0.12)",
+        pointerEvents: "none",
+        zIndex: "2147483647",
+        display: "none"
+    });
+
+    document.body.appendChild(capture);
+    document.body.appendChild(box);
+
+    function positionCapture() {
+        const r = containerEl.getBoundingClientRect();
+        capture.style.left = r.left + "px";
+        capture.style.top = r.top + "px";
+        capture.style.width = r.width + "px";
+        capture.style.height = r.height + "px";
+    }
+    positionCapture();
+
+    let selecting = false;
+    let sX = 0, sY = 0;
+
+    function onDown(e) {
+        if (e.button !== 0) return;
+        selecting = true;
+        sX = e.clientX;
+        sY = e.clientY;
+        box.style.left = sX + "px";
+        box.style.top = sY + "px";
+        box.style.width = "0px";
+        box.style.height = "0px";
+        box.style.display = "block";
+    }
+
+    function onMove(e) {
+        if (!selecting) return;
+        const x = Math.min(sX, e.clientX);
+        const y = Math.min(sY, e.clientY);
+        const w = Math.abs(e.clientX - sX);
+        const h = Math.abs(e.clientY - sY);
+        box.style.left = x + "px";
+        box.style.top = y + "px";
+        box.style.width = w + "px";
+        box.style.height = h + "px";
+    }
+
+    function onUp(e) {
+        if (!selecting) return cleanup();
+        selecting = false;
+        box.style.display = "none";
+
+        const canvas = renderedCanvas();
+        const canvasRect = canvas.getBoundingClientRect();
+
+        const viewerRect = containerEl.getBoundingClientRect();
+        const x1 = Math.max(viewerRect.left, Math.min(sX, e.clientX));
+        const y1 = Math.max(viewerRect.top, Math.min(sY, e.clientY));
+        const x2 = Math.min(viewerRect.right, Math.max(sX, e.clientX));
+        const y2 = Math.min(viewerRect.bottom, Math.max(sY, e.clientY));
+
+        const w = Math.max(0, x2 - x1);
+        const h = Math.max(0, y2 - y1);
+        if (w < 5 || h < 5) return cleanup();
+
+        const scaleX = canvas.width / canvasRect.width;
+        const scaleY = canvas.height / canvasRect.height;
+
+        const sx = Math.round((x1 - canvasRect.left) * scaleX);
+        const sy = Math.round((y1 - canvasRect.top) * scaleY);
+        const sw = Math.round(w * scaleX);
+        const sh = Math.round(h * scaleY);
+
+        try {
+            const out = document.createElement("canvas");
+            out.width = sw;
+            out.height = sh;
+            out.getContext("2d").drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+
+            const a = document.createElement("a");
+            a.href = out.toDataURL("image/png");
+            a.download = "selected_area.png";
+            a.click();
+        } catch (err) {
+            alert("Ошибка: canvas tainted (CORS).");
+        }
+
+        cleanup();
+    }
+
+    function cleanup() {
+        viewer.setMouseNavEnabled(true);
+        capture.remove();
+        box.remove();
+        window.removeEventListener("resize", positionCapture);
+        window.removeEventListener("scroll", positionCapture, true);
+    }
+
+    capture.addEventListener("mousedown", onDown);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("resize", positionCapture);
+    window.addEventListener("scroll", positionCapture, true);
+}

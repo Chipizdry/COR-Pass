@@ -190,10 +190,6 @@
  
  <div class="svs-metadata-panel" style="position: absolute; right: 0; top: 0; width: 350px; height: 100%; overflow: auto; background-color: rgba(255, 255, 255);">
   
-  <!-- Toolbar 
-  <div class="svs-toolbar" style="z-index: 10000; display: flex; gap: 5px;">
-    <button  class="tool-btn close-btn">×</button>
-  </div>-->
   <div style="display: flex; justify-content: space-between; align-items: center;">
 
     <div class="modal-header">     
@@ -205,6 +201,7 @@
     
   </div>
   <div id="svs-metadata-content"></div>
+  <button id="select-area-btn" style="margin:5px;">📷 Выделить область</button>
 </div>
 
 <button id="expand-panel-btn" class="tool-btn"><</button>
@@ -325,7 +322,7 @@ function formatFileSize(bytes) {
   makeModalDraggable('Dicom_upload_modal');
   document.getElementById('DcmViewerFrame').classList.add('hidden');
 
- 
+  document.getElementById('select-area-btn').addEventListener('click', enableAreaSelection);
   
   collapseBtn.addEventListener('click', function() {
     metadataPanel.style.transition = 'transform 0.3s ease';
@@ -560,6 +557,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
 });
+
+
+
 </script>
 
 </body>
