@@ -180,7 +180,7 @@ function handleClickDown() {
 
 
 
-document.querySelector('.close-btn').addEventListener('click', () => {
+document.getElementById('panel-close-btn').addEventListener('click', () => {
     viewer.destroy();
  
     const svsViewerDiv = document.getElementById('svs-fullscreen-viewer');

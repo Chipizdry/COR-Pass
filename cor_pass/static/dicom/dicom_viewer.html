@@ -190,12 +190,19 @@
  
  <div class="svs-metadata-panel" style="position: absolute; right: 0; top: 0; width: 350px; height: 100%; overflow: auto; background-color: rgba(255, 255, 255);">
   
-  <!-- Toolbar -->
+  <!-- Toolbar 
   <div class="svs-toolbar" style="z-index: 10000; display: flex; gap: 5px;">
-    <button class="tool-btn close-btn">×</button>
-  </div>
+    <button  class="tool-btn close-btn">×</button>
+  </div>-->
   <div style="display: flex; justify-content: space-between; align-items: center;">
-    <h3>Slide Metadata</h3>
+
+    <div class="modal-header">     
+      <div class="modal-buttons">
+          <button id= "panel-close-btn" class="modal-button close" >✖</button>
+      </div>       
+      <h3>Slide Metadata</h3> 
+    </div>  
+    
   </div>
   <div id="svs-metadata-content"></div>
 </div>

@@ -187,6 +187,7 @@ background: transparent;
   width: 100%;
   border-collapse: collapse;
   margin: 10px 0;
+  font-size: 13px;
 }
 
 .metadata-table th, .metadata-table td {
@@ -551,17 +552,17 @@ transition: transform 0.3s ease, width 0.3s ease, opacity 0.3s ease;
 
 
 .metadata-info-container {
-width: 300px;
-height: 250px;
-display: flex;
-flex-direction: column;
-gap: 10px;
-border-radius: 20px;
-border: 1px solid rgba(0, 0, 0, 0.1);
-padding: 20px;
-background: rgba(255, 255, 255, 0.4);
-backdrop-filter: blur(10px);
-margin-bottom: 20px;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  margin-bottom: 20px;
 }
 
 .metadata-grid {
