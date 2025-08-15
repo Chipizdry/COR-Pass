@@ -322,7 +322,13 @@ function formatFileSize(bytes) {
   makeModalDraggable('Dicom_upload_modal');
   document.getElementById('DcmViewerFrame').classList.add('hidden');
 
-  document.getElementById('select-area-btn').addEventListener('click', enableAreaSelection);
+  document.getElementById('select-area-btn').addEventListener('click', () => {
+    if (viewer) {
+        enableAreaSelection(viewer);
+    } else {
+        alert("Сначала откройте SVS");
+    }
+});
   
   collapseBtn.addEventListener('click', function() {
     metadataPanel.style.transition = 'transform 0.3s ease';

@@ -670,6 +670,7 @@ function updateSliders(volumeInfo) {
         viewer.addHandler('zoom', updateNavigator);
         viewer.addHandler('pan', updateNavigator);
         viewer.addHandler('tile-loaded', updateNavigator);
+       
       });
   
       viewer.addHandler('tile-loaded', (event) => {
