@@ -467,7 +467,7 @@
                     <label><input type="radio" name="mode" value="4" onchange="setMode(this)"> Off</label>
                 </div>
               </div>
-                <div class="register-test-container">
+      <!--         <div class="register-test-container">
                  <h3>Тестирование регистров Modbus</h3>
                     <div class="register-test-form">
                         <div class="control-group">
@@ -496,7 +496,7 @@
                         </div>
                         <button onclick="writeRegister()" class="btn">Записать</button>
                     </div> 
-                </div>         
+                </div>      -->     
 
               <div style="margin: 12px 0;">
                 <label for="gridLimitingSwitch" style="font-weight: bold;">Ограничение отдачи в сеть</label>
@@ -505,6 +505,7 @@
                   <span class="slider"></span>
                 </label>
               </div>
+              <button onclick="openRegistersModal()" class="btn" style="margin-top: 20px;">Регистры Modbus</button>
               <div class="ess-settings-display">
                 <h4>ESS расширенные настройки</h4>
                 <table>
@@ -743,15 +744,57 @@
                 </template>
             </div>
 
-          <!-- Модальное окно чтения регистров -->
+                    <!-- Модальное окно чтения регистров -->
             <div id="RegistersModal" class="modal" style="display:none;">
                 <div class="modal-header">
                     <div class="modal-buttons">
-                      <button class="modal-button close" data-action="close" id="closeRegistersModal">✖</button>
-                     </div>
-                     <h3 style="margin-top:30; color:#291161;font-size: 17px;">Результаты чтения регистров</h3>
-                 </div> 
-                 <div id="register_results_output" class="modal-results"></div>
+                        <button class="modal-button close" data-action="close" id="closeRegistersModal">✖</button>
+                    </div>
+                    <h3>Тестирование регистров Modbus</h3>
+                </div>
+                
+                <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Первая строка с тремя полями -->
+                    <div style="display: flex; gap: 20px; width: 100%;">
+                        <div style="flex: 1; min-width: 0;">
+                            <label for="slave_id" style="display: block; margin-bottom: 5px;">Slave UID:</label>
+                            <input type="number" id="slave_id" value="100" min="1" max="247" style="width: 100%; box-sizing: border-box;">
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <label for="start_reg" style="display: block; margin-bottom: 5px;">Начальный:</label>
+                            <input type="number" id="start_reg" value="800" min="0" max="65535" style="width: 100%; box-sizing: border-box;">
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <label for="end_reg" style="display: block; margin-bottom: 5px;">Конечный:</label>
+                            <input type="number" id="end_reg" value="830" min="0" max="65535" style="width: 100%; box-sizing: border-box;">
+                        </div>
+                    </div>
+                    
+                    <!-- Кнопка тестирования по центру -->
+                    <div style="display: flex; justify-content: center;">
+                        <button onclick="testRegisters()" class="btn" style="margin: 0 auto;">Тестировать</button>
+                    </div>
+                    
+                    <!-- Вторая строка с двумя полями -->
+                    <div style="display: flex; gap: 10px; width: 100%;">
+                        <div style="flex: 1; min-width: 0;">
+                            <label for="register_to_write" style="display: block; margin-bottom: 5px;">Регистр:</label>
+                            <input type="number" id="register_to_write" min="0" max="65535" style="width: 100%; box-sizing: border-box;">
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <label for="register_value" style="display: block; margin-bottom: 5px;">Значение:</label>
+                            <input type="number" id="register_value" min="0" max="65535" style="width: 100%; box-sizing: border-box;">
+                        </div>
+                    </div>
+                    
+                    <!-- Кнопка записи по центру -->
+                    <div style="display: flex; justify-content: center;">
+                        <button onclick="writeRegister()" class="btn" style="margin: 0 auto;">Записать</button>
+                    </div>
+                </div>
+                
+                <h3 style="margin: 20px 15px 10px; color:#291161;font-size: 17px;">Результаты чтения регистров</h3>
+                <div id="register_results_output" class="modal-results" style="margin: 0 15px 15px;"></div>
             </div>
 
         <script>

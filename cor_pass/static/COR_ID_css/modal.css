@@ -62,7 +62,7 @@
 .modal-button {
     width: 25px;
     height: 25px;
-    background-color: #f0f0f0;
+    background-color: #ffffff;
     border: 1px solid #7B43F2;
     border-radius: 7px;
     display: flex;
@@ -109,7 +109,7 @@
 
 
 .modal-button:hover {
-    background-color: #B1A1DA;
+    background-color: #fefefe;
 }
 
 

@@ -41,7 +41,7 @@ services:
     container_name: scanner_worker
     volumes:
       - .:/app
-    # network_mode: "host"
+    network_mode: "host"
     env_file:
       - development.env
     depends_on:

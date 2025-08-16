@@ -566,6 +566,23 @@ function updateConnectionIndicator(errorCount) {
 
 
 
+// Функция для открытия модального окна регистров
+function openRegistersModal() {
+    const modal = document.getElementById('RegistersModal');
+    modal.style.display = 'flex';
+    
+    // Сброс значений полей при открытии
+    document.getElementById('slave_id').value = 100;
+    document.getElementById('start_reg').value = 800;
+    document.getElementById('end_reg').value = 830;
+    document.getElementById('register_to_write').value = '';
+    document.getElementById('register_value').value = '';
+    document.getElementById('register_results_output').textContent = '';
+    
+    // Убедимся, что модальное окно можно перетаскивать
+    makeModalDraggable('RegistersModal');
+}
+
 async function testRegisters() {
     const slaveId = document.getElementById('slave_id').value;
     const startReg = document.getElementById('start_reg').value;
