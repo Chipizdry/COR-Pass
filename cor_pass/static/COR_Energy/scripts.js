@@ -565,7 +565,6 @@ function updateConnectionIndicator(errorCount) {
 }
 
 
-
 // Функция для открытия модального окна регистров
 function openRegistersModal() {
     const modal = document.getElementById('RegistersModal');
@@ -577,7 +576,11 @@ function openRegistersModal() {
     document.getElementById('end_reg').value = 830;
     document.getElementById('register_to_write').value = '';
     document.getElementById('register_value').value = '';
-    document.getElementById('register_results_output').textContent = '';
+    
+    // Скрываем блок результатов
+    const output = document.getElementById('register_results_output');
+    output.textContent = '';
+    output.style.display = 'none';
     
     // Убедимся, что модальное окно можно перетаскивать
     makeModalDraggable('RegistersModal');
@@ -594,10 +597,9 @@ async function testRegisters() {
     }
     
     // Показываем загрузку
-    const modal = document.getElementById('RegistersModal');
     const output = document.getElementById('register_results_output');
     output.textContent = "Тестирование...";
-    modal.style.display = "block";
+    output.style.display = 'block';
     
     try {
         const response = await fetch(`/api/modbus/test_dynamic_ess_registers?start=${startReg}&end=${endReg}&unit_id=${slaveId}`);
@@ -614,7 +616,6 @@ async function testRegisters() {
     }
 }
 
-
 async function writeRegister() {
     const slaveId = document.getElementById('slave_id').value;
     const register = document.getElementById('register_to_write').value;
@@ -626,10 +627,9 @@ async function writeRegister() {
     }
     
     // Показываем загрузку
-    const modal = document.getElementById('RegistersModal');
     const output = document.getElementById('register_results_output');
     output.textContent = "Запись регистра...";
-    modal.style.display = "block";
+    output.style.display = 'block';
     
     try {
         const response = await fetch(`/api/modbus/write_register`, {
