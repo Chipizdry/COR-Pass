@@ -16,6 +16,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from fastapi_limiter import FastAPILimiter
 
+from cor_pass.routes.excel_router import router as excel_router
 
 from cor_pass.repository.cerbo_service import (
     # cerbo_collection_task,
@@ -307,6 +308,7 @@ app.include_router(cerbo_routes.router, prefix="/api")
 app.include_router(energy_managers.router, prefix="/api")
 app.include_router(blood_pressures.router, prefix="/api")
 app.include_router(label_printer.router, prefix="/api")
+app.include_router(excel_router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run(

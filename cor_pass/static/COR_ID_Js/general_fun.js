@@ -25,6 +25,7 @@ const modalConfigs = {
     SolarPanelModal: { width: '350px', height: '550px', top: 'auto', left: 'auto' },
     RegistersModal: { width: '350px', height: 'auto', top: '50px', left: 'auto' },
     inverterModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
+    ExcelModal: { width: '350px', height: '550px', top: 'auto', left: 'auto' },
 };
 
 //Функция получения токена

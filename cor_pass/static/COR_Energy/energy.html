@@ -23,7 +23,7 @@
     <script src="/static/COR_Energy/chart.js"></script>
     <script src="/static/COR_Energy/timetable.js"></script>
     <script src="/static/COR_ID_Js/general_fun.js"></script>
-  
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <!-- Подключаем библиотеку Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -467,36 +467,7 @@
                     <label><input type="radio" name="mode" value="4" onchange="setMode(this)"> Off</label>
                 </div>
               </div>
-      <!--         <div class="register-test-container">
-                 <h3>Тестирование регистров Modbus</h3>
-                    <div class="register-test-form">
-                        <div class="control-group">
-                            <label for="slave_id">Slave UID:</label>
-                            <input type="number" id="slave_id" value="100" min="1" max="247">
-                        </div>
-                        <div class="control-group">
-                            <label for="start_reg">Начальный регистр:</label>
-                            <input type="number" id="start_reg" value="800" min="0" max="65535">
-                        </div>
-                        <div class="control-group">
-                            <label for="end_reg">Конечный регистр:</label>
-                            <input type="number" id="end_reg" value="830" min="0" max="65535">
-                        </div>
-                        <button onclick="testRegisters()" class="btn">Тестировать</button>
-                    </div>
-
-                    <div class="register-test-form">
-                        <div class="control-group">
-                            <label for="register_to_write">Регистр:</label>
-                            <input type="number" id="register_to_write" min="0" max="65535">
-                        </div>
-                        <div class="control-group">
-                            <label for="register_value">Значение:</label>
-                            <input type="number" id="register_value" min="0" max="65535">
-                        </div>
-                        <button onclick="writeRegister()" class="btn">Записать</button>
-                    </div> 
-                </div>      -->     
+     
 
               <div style="margin: 12px 0;">
                 <label for="gridLimitingSwitch" style="font-weight: bold;">Ограничение отдачи в сеть</label>
@@ -506,6 +477,7 @@
                 </label>
               </div>
               <button onclick="openRegistersModal()" class="btn" style="margin-top: 20px;">Регистры Modbus</button>
+              <button id="process-excel-btn">Карта регистров</button>
               <div class="ess-settings-display">
                 <h4>ESS расширенные настройки</h4>
                 <table>
@@ -795,6 +767,23 @@
                 </div>
                
             </div>
+
+
+                    <!-- Модальное окно карты регистров-->
+            <div id="ExcelModal" class="modal"  style="display:none;">
+
+                <div class="modal-header">
+                    <div class="modal-buttons">
+                        <button class="modal-button close" data-action="close" id="closeExelModal">✖</button>
+                    </div>
+                    <h3>Регистры Modbus</h3>
+                </div>
+                <div class="modal-content">
+                    <div id="modal-loader" class="loader"></div>
+                    <div id="excel-modal-content"></div>
+                </div>
+            </div>
+
 
         <script>
 // Глобальные переменные
