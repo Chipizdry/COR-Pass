@@ -43,6 +43,10 @@ async function loadDataForTimeRange(range) {
             startDate = new Date(now.getTime() - 3600000);
             intervals = 120;
             break;
+        case '3h': 
+            startDate = new Date(now.getTime() - 3 * 3600000);
+            intervals = 360;
+            break;    
         case '6h': 
             startDate = new Date(now.getTime() - 6 * 3600000);
             intervals = 360;
@@ -65,7 +69,7 @@ async function loadDataForTimeRange(range) {
             break;
         case '30d': 
             startDate = new Date(now.getTime() - 30 * 24 * 3600000);
-            intervals = 120;
+            intervals = 240;
             break;
         default: return;
     }
