@@ -826,4 +826,5 @@ footer {
     border: 1px solid #ddd;
     max-width: 320px;
     font-size: 12px;
+    max-height: 400px;
 }

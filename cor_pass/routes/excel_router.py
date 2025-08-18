@@ -45,9 +45,6 @@ async def process_register_map():
             <div class="table-container">
                 {html_table}
             </div>
-            <button class="download-btn" onclick="window.location.href='/api/excel/download-register-map/'">
-                Download Processed File
-            </button>
         </div>
         """
         
