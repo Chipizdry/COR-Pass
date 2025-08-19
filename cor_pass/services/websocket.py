@@ -1,11 +1,16 @@
 import asyncio
+from typing import Optional
 from fastapi import WebSocket
+import sqlalchemy as sa
 from sqlalchemy import delete, select
-from cor_pass.database.models import CorIdAuthSession, AuthSessionStatus
-from datetime import datetime, timedelta
-
+from cor_pass.database.models import CorIdAuthSession, AuthSessionStatus, DoctorSignatureSession
+from datetime import datetime, timedelta, timezone
+from sqlalchemy.orm import sessionmaker
 from cor_pass.database.db import async_session_maker
 from loguru import logger
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from cor_pass.services.websocket_events_manager import websocket_events_manager
 
 active_connections: dict[str, WebSocket] = {}
 
@@ -54,7 +59,101 @@ async def check_session_timeouts():
                 await db.rollback()
             finally:
                 await asyncio.sleep(60)
+                
+async def expire_sessions_task(db_factory):
+    while True:
+        async with db_factory() as db:
+            now = datetime.now(timezone.utc)
+            q = await db.execute(
+                sa.select(DoctorSignatureSession).where(
+                    DoctorSignatureSession.status == "pending",
+                    DoctorSignatureSession.expires_at < now
+                )
+            )
+            expired = q.scalars().all()
+            for sess in expired:
+                sess.status = "expired"
+                await websocket_events_manager.broadcast_event({
+                    "event_type": "signature_status",
+                    "session_token": sess.session_token,
+                    "status": "expired"
+                })
+            await db.commit()
+        await asyncio.sleep(60)
 
+
+# Доп функции для сессий подписания 
+DEEP_LINK_SCHEME = "coreid://sign" 
+SESSION_TTL_MINUTES = 15
+
+
+async def _load_session(db: AsyncSession, session_token: str) -> Optional[DoctorSignatureSession]:
+    q = sa.select(DoctorSignatureSession).where(DoctorSignatureSession.session_token == session_token)
+    res = await db.execute(q)
+    return res.scalar_one_or_none()
+
+
+def _is_expired(sess: DoctorSignatureSession) -> bool:
+    now = datetime.now(timezone.utc)
+    # если expires_at без таймзоны, считаем как UTC
+    exp = sess.expires_at.replace(tzinfo=timezone.utc) if sess.expires_at.tzinfo is None else sess.expires_at
+    return exp < now
+
+
+async def _broadcast_status(session_token: str, status: str) -> None:
+    await websocket_events_manager.broadcast_event(
+        {
+            "event_type": "signature_status",
+            "session_token": session_token,
+            "status": status,
+            "ts": datetime.now(timezone.utc).isoformat(),
+        }
+    )
+
+
+def register_signature_expirer(app, db_sessionmaker):
+    """
+    Запускает фоновую задачу, которая проверяет и удаляет истекшие подписи.
+    db_sessionmaker — это sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
+    """
+    @app.on_event("startup")
+    async def _start_expirer():
+        # Запускаем задачу, передавая sessionmaker напрямую
+        app.state._signature_expirer_task = asyncio.create_task(
+            _expire_pending_sessions_forever(db_sessionmaker)
+        )
+
+    @app.on_event("shutdown")
+    async def _stop_expirer():
+        task: asyncio.Task = getattr(app.state, "_signature_expirer_task", None)
+        if task:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
+
+
+async def _expire_pending_sessions_forever(db_sessionmaker: sessionmaker):
+    """
+    Пример фоновой задачи, которая бесконечно проверяет и удаляет истекшие подписи.
+    """
+    while True:
+        try:
+            async with db_sessionmaker() as db: 
+                await _expire_pending_sessions(db)
+        except Exception as e:
+            print("Ошибка в expirer:", e)
+        await asyncio.sleep(60)  # проверяем каждые 60 секунд
+
+async def _expire_pending_sessions(db: AsyncSession):
+    """
+    Удаление истекших подписей
+    """
+    # Пример:
+    # await db.execute(delete(Signatures).where(Signatures.expires_at < datetime.utcnow()))
+    # await db.commit()
+    pass
 
 async def cleanup_auth_sessions():
     """Асинхронная фоновая задача для удаления старых сессий авторизации."""

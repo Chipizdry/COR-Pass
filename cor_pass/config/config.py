@@ -56,6 +56,7 @@ class Settings(BaseSettings):
     remote_name: str ="REMOTE_NAME"
     scan_interval_seconds: int = 60
     base_path: str = "BASE_PATH"
+    smb_enabled: bool = False
 
     class Config:
 

@@ -468,11 +468,11 @@
         return caseNewNODE
     }
     const glassTemplate = (currentGlass, activeGlass, caseOwner) => {
-        const fileUrl = currentGlass?.file_url || "/cases/attachments/eb0f5825-f15e-40d2-bd2c-373690995a87"
+        const fileUrl = currentGlass?.preview_url;
         const caseIsClosed = currentCase.grossing_status === "COMPLETED";
         const activeGlassIds = activeGlass.map(({id}) => id)
         const glassNewNODE = document.createElement('div');
-        glassNewNODE.classList = `glassWrapper ${activeGlassIds.includes(currentGlass.id) ? "active" : ""} ${!fileUrl ? "disabled" : ""}`;
+        glassNewNODE.classList = `glassWrapper ${activeGlassIds.includes(currentGlass.id) ? "active" : ""} ${(!fileUrl || !caseOwner?.is_case_owner || caseIsClosed) ? "disabled" : ""}`;
 
         glassNewNODE.innerHTML = `
             <div class="glassWrapperImg">
@@ -482,17 +482,21 @@
             </div>
         `;
 
-        getImages(fileUrl)
-            .then(blob => {
-                if(!blob){
-                    return;
-                }
-
-                const imgNODE = document.createElement('img');
-                imgNODE.src = URL.createObjectURL(blob);
-                imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
-                glassNewNODE.querySelector('.glassWrapperImg').append(imgNODE);
+        if(fileUrl){
+            fetch(`${API_BASE_URL}/api/glasses/${currentGlass.id}/preview`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                },
             })
+                .then(res => res.blob())
+                .then((blob) => {
+                    const imgNODE = document.createElement('img');
+                    imgNODE.src = URL.createObjectURL(blob);
+                    imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
+                    glassNewNODE.querySelector('.glassWrapperImg').append(imgNODE);
+                })
+        }
 
         if (caseOwner?.is_case_owner && !caseIsClosed) {
             glassNewNODE.addEventListener("click", () => {

@@ -16,13 +16,10 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from fastapi_limiter import FastAPILimiter
 
-from cor_pass.routes.excel_router import router as excel_router
 
 from cor_pass.repository.cerbo_service import (
-    # cerbo_collection_task,
     close_modbus_client,
     create_modbus_client,
-    # energetic_schedule_task,
 )
 from cor_pass.routes import auth, person
 from cor_pass.database.db import get_db, async_session_maker
@@ -52,7 +49,8 @@ from cor_pass.routes import (
     energy_managers,
     cerbo_routes,
     blood_pressures,
-    label_printer,
+    ecg_measurements,
+    excel_router
 )
 from cor_pass.config.config import settings
 from cor_pass.services.ip2_location import initialize_ip2location
@@ -62,7 +60,7 @@ from fastapi.responses import JSONResponse
 from collections import defaultdict
 from jose import JWTError, jwt
 
-from cor_pass.services.websocket import check_session_timeouts, cleanup_auth_sessions
+from cor_pass.services.websocket import check_session_timeouts, cleanup_auth_sessions, register_signature_expirer
 
 from cor_pass.services.logger import setup_logging
 
@@ -134,19 +132,11 @@ app = FastAPI(
     redoc_url="/redoc" if settings.app_env == "development" else None,
 )
 
-# app = FastAPI()
 app.mount("/static", StaticFiles(directory="cor_pass/static"), name="static")
-
 
 origins = settings.allowed_redirect_urls
 
-
 PrometheusFastApiInstrumentator().instrument(app).expose(app, "/metrics")
-
-
-# @app.get("/metrics")
-# async def metrics():
-#     return Response(generate_latest(), media_type="text/plain")
 
 
 # Пример метрик
@@ -261,17 +251,14 @@ async def custom_identifier(request: Request) -> str:
 # Событие при старте приложения
 @app.on_event("startup")
 async def startup():
-    print("------------- STARTUP --------------")
     logger.info("------------- STARTUP --------------")
     await FastAPILimiter.init(redis_client, identifier=custom_identifier)
     asyncio.create_task(check_session_timeouts())
     asyncio.create_task(cleanup_auth_sessions())
+    register_signature_expirer(app, async_session_maker)
     initialize_ip2location()
     if settings.app_env == "development":
         await create_modbus_client(app)
-        # asyncio.create_task(cerbo_collection_task(app))
-        # asyncio.create_task(energetic_schedule_task(async_session_maker=async_session_maker, app=app))
-    # asyncio.create_task(cerbo_GX.read_modbus_and_cache())
 
 
 @app.on_event("shutdown")
@@ -307,8 +294,8 @@ app.include_router(lab_assistants.router, prefix="/api")
 app.include_router(cerbo_routes.router, prefix="/api")
 app.include_router(energy_managers.router, prefix="/api")
 app.include_router(blood_pressures.router, prefix="/api")
-app.include_router(label_printer.router, prefix="/api")
-app.include_router(excel_router, prefix="/api")
+app.include_router(ecg_measurements.router, prefix="/api")
+app.include_router(excel_router.router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run(

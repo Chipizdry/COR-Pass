@@ -771,6 +771,7 @@ class Glass(GlassBase):
     id: str
     cassette_id: str
     is_printed: Optional[bool]
+    preview_url: Optional[str]
 
     class Config:
         from_attributes = True
@@ -1609,6 +1610,7 @@ class GlassTestModelScheema(BaseModel):
     glass_number: int
     cassette_id: str
     staining: Optional[str] = None
+    preview_url: Optional[str]
 
 
 class CassetteTestForGlassPage(BaseModel):
@@ -2258,3 +2260,26 @@ class FeedbackRatingScheema(BaseModel):
 
 class FeedbackProposalsScheema(BaseModel):
     proposal: str = Field(...,min_length=2,max_length=800, description="Предложения")
+
+
+class InitiateSignatureRequest(BaseModel):
+    # doctor_cor_id: str = Field(..., description="COR-ID доктора, который подписывает")
+    diagnosis_id: str = Field(..., description="ID диагноза, который будет подписан")
+    doctor_signature_id: Optional[str] = Field(None, description="ID подписи")
+
+
+class InitiateSignatureResponse(BaseModel):
+    session_token: str
+    deep_link: str
+    expires_at: datetime
+
+
+class ActionRequest(BaseModel):
+    session_token: str
+    status: SessionLoginStatus
+
+
+class StatusResponse(BaseModel):
+    session_token: str
+    status: str
+    expires_at: datetime

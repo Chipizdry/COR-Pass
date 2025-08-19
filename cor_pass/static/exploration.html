@@ -292,11 +292,6 @@
     const setReport = (currentReport, caseOwner) => {
         explorationContentNODE.innerHTML = ``;
         const doctorDiagnoses = currentReport.doctor_diagnoses;
-        currentReport.attached_glasses = currentReport.attached_glasses.map(data => ({
-            ...data,
-            file_url: "/cases/attachments/eb0f5825-f15e-40d2-bd2c-373690995a87"
-        }))
-
         const caseOwnerDiagnosis = doctorDiagnoses.find(({doctor}) => doctor.doctor_id === caseOwner?.doctor_id)
         const {immunohistochemicalProfile, molecularGeneticProfile, pathomorphologicalDiagnosis} = doctorDiagnoses
             .reduce((doctorDiagnosesData, reportData) => {
@@ -494,26 +489,27 @@
             </div>
         `
 
-        const allFiles = [
-            ...currentReport.attached_glasses.map(({file_url}) => file_url),
-            ...doctorDiagnoses.map(({signature}) => signature?.doctor_signature?.signature_scan_data)
-        ]
 
-        Promise.all(allFiles.map(getImages))
+        const glassFiles = currentReport.attached_glasses
+        const doctorFiles = doctorDiagnoses.map(({signature}) => signature?.doctor_signature?.signature_scan_data);
+
+
+        Promise.all([...glassFiles.map(getGlassImages), ...doctorFiles.map(getImages)])
             .then(filesBlob => {
                 const glassFiles = filesBlob.slice(0, currentReport.attached_glasses.length)
                 const doctorFiles = filesBlob.slice(currentReport.attached_glasses.length)
 
+                console.log(glassFiles, "glassFiles")
+
                 glassFiles.forEach((blob) => {
+                    if(!blob){
+                        return;
+                    }
                     const attachedGlassesReportNODE = document.querySelector('#attachedGlassesReport');
                     const imgNODE = document.createElement('img');
-
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        imgNODE.src = e.target.result; // ✅ base64 строка
-                        attachedGlassesReportNODE.appendChild(imgNODE);
-                    };
-                    reader.readAsDataURL(blob);
+                    imgNODE.src = URL.createObjectURL(blob);
+                    imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
+                    attachedGlassesReportNODE.appendChild(imgNODE);
                 })
 
                 doctorFiles.forEach((blob, index) => {

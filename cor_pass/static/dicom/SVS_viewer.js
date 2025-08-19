@@ -326,3 +326,5 @@ function enableAreaSelection(viewer) {
     window.addEventListener("resize", positionCapture);
     window.addEventListener("scroll", positionCapture, true);
 }
+
+

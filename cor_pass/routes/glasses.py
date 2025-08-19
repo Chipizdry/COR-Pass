@@ -1,3 +1,5 @@
+import asyncio
+from io import BytesIO
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 import httpx
@@ -16,7 +18,7 @@ from typing import List
 
 from cor_pass.services.access import doctor_access
 from loguru import logger
-
+from cor_pass.config.config import settings
 from cor_pass.services.glass_and_cassette_printing import print_labels
 
 router = APIRouter(prefix="/glasses", tags=["Glass"])
@@ -106,24 +108,71 @@ async def change_glass_printing_status(
         return updated_glass
 
 
+# @router.get(
+#     "/{glass_id}/preview",
+#     dependencies=[Depends(doctor_access)],
+# )
+# async def get_glass_preview(glass_id: str, db: AsyncSession = Depends(get_db)):
+#     """
+#     Получает PNG-превью для стекла по его ID.
+#     """
+#     db_glass = await glass_service.get_glass_preview_png(db=db, glass_id=glass_id)
+#     if db_glass is None:
+#         logger.error(f"Стекло или preview_url не найдены для ID {glass_id}")
+#         raise HTTPException(status_code=404, detail="Glass or preview URL not found")
+
+#     try:
+#         buf = await glass_service.fetch_png_from_smb(db_glass.preview_url)
+#         buf.seek(0)
+#         logger.debug(f"Успешно возвращено превью для стекла {glass_id}")
+#         return StreamingResponse(buf, media_type="image/png")
+#     except Exception as e:
+#         logger.error(f"Ошибка при получении превью для стекла {glass_id}: {str(e)}")
+#         raise HTTPException(status_code=500, detail=f"Error fetching preview: {str(e)}")
+    
+
+
+# Путь к заглушному PNG-файлу
+PLACEHOLDER_PATH = "cor_pass/static/assets/dummy_glass.png"
+
 @router.get(
     "/{glass_id}/preview",
     dependencies=[Depends(doctor_access)],
 )
 async def get_glass_preview(glass_id: str, db: AsyncSession = Depends(get_db)):
     """
-    Получает PNG-превью для стекла по его ID.
+    Получает PNG-превью для стекла по его ID. Возвращает заглушный PNG при ошибке.
     """
     db_glass = await glass_service.get_glass_preview_png(db=db, glass_id=glass_id)
     if db_glass is None:
         logger.error(f"Стекло или preview_url не найдены для ID {glass_id}")
         raise HTTPException(status_code=404, detail="Glass or preview URL not found")
+    
+    if not settings.smb_enabled:
+        logger.debug(f"SMB отключён, возвращаем заглушный PNG для стекла {glass_id}")
+        try:
+            with open(PLACEHOLDER_PATH, "rb") as f:
+                placeholder_buf = BytesIO(f.read())
+                placeholder_buf.seek(0)
+                return StreamingResponse(placeholder_buf, media_type="image/png")
+        except FileNotFoundError:
+            logger.error(f"Заглушный файл {PLACEHOLDER_PATH} не найден")
+            raise HTTPException(status_code=500, detail="Placeholder PNG not found")
 
     try:
         buf = await glass_service.fetch_png_from_smb(db_glass.preview_url)
         buf.seek(0)
         logger.debug(f"Успешно возвращено превью для стекла {glass_id}")
         return StreamingResponse(buf, media_type="image/png")
+    except asyncio.TimeoutError as e:
+        logger.error(f"Таймаут при получении превью для стекла {glass_id}: {str(e)}")
+        with open(PLACEHOLDER_PATH, "rb") as f:
+            placeholder_buf = BytesIO(f.read())
+            placeholder_buf.seek(0)
+            return StreamingResponse(placeholder_buf, media_type="image/png")
     except Exception as e:
         logger.error(f"Ошибка при получении превью для стекла {glass_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error fetching preview: {str(e)}")
+        with open(PLACEHOLDER_PATH, "rb") as f:
+            placeholder_buf = BytesIO(f.read())
+            placeholder_buf.seek(0)
+            return StreamingResponse(placeholder_buf, media_type="image/png")

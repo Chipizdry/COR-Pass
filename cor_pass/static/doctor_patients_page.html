@@ -117,6 +117,7 @@
                         <th data-field="id">COR ID</th>
                         <th data-field="age">Возраст</th>
                         <th data-field="gender">Пол</th>
+                        <th data-field="date">Дослідження</th>
                         <th data-field="date">Дата изменения</th>
                         <th data-field="status">Статус</th>
                         <th style="width:32px"></th>
@@ -288,6 +289,7 @@
         const roles = decodeToken(getToken())?.roles
         tbody.innerHTML = "";
         patientsData.forEach(r => {
+            console.log(r, "r")
             const tr = document.createElement("tr");
             tr.innerHTML = `
             <td style="display:flex;align-items:center;background:var(--clr-surface-alt);">
@@ -296,6 +298,7 @@
             <td>${r.patient_cor_id}</td>
             <td>${r.age ? `${r.age} лет` : ""}</td>
             <td>${r.sex === "M" ? "Мужской" : "Женский"}</td>
+            <td>${r.cases.length > 1 ? `${r.cases[0]} ...` : r.cases.length === 1 ? `${r.cases[0]}` : ""}</td>
             <td>${new Date(r.change_date).toLocaleDateString()}</td>
             <td><span class="status">${r.status ? `<span class="status-dot"></span>${r.status}</span>` : ""}</td>
             <td class="ellipsis">⋮</td>`;
@@ -559,7 +562,7 @@
         };
 
         if(checkToken()){
-            fetch('https://dev-corid.cor-medical.ua/api/doctor/patients/register-new', {
+            fetch('/api/doctor/patients/register-new', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

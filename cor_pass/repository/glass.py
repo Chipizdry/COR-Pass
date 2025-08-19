@@ -1,9 +1,11 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, time
+import time as t
 from io import BytesIO
 import os
 import socket
 import tempfile
+from threading import Timer
 from fastapi import HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,9 +46,9 @@ async def get_glass_preview_png(db: AsyncSession, glass_id: str):
     glass = result.scalars().first()
     if glass is None:
         return None
-    if not glass.preview_url:
-        logger.error(f"preview_url не задан для стекла с ID {glass_id}")
-        return None
+    # if not glass.preview_url:
+    #     logger.error(f"preview_url не задан для стекла с ID {glass_id}")
+    #     return None
     logger.debug(f"Найдено стекло с ID {glass_id}, preview_url: {glass.preview_url}")
     return glass
 
@@ -102,12 +104,68 @@ async def fetch_file_from_smb(path: str) -> str:
 
     return await loop.run_in_executor(None, _read_file)
 
+
+async def fetch_file_from_smb_with_timeout(path: str) -> str:
+    """
+    Загружает файл с SMB-сервера во временный файл и возвращает путь к нему.
+    """
+    loop = asyncio.get_running_loop()
+
+    def _read_file():
+        conn = SMBConnection(
+            settings.smb_user,
+            settings.smb_pass,
+            my_name=socket.gethostname(),
+            remote_name=settings.remote_name,
+            use_ntlm_v2=True,
+            is_direct_tcp=True,
+        )
+        if not conn.connect(settings.smb_server_ip, 445):
+            logger.error(f"Не удалось подключиться к SMB-серверу {settings.smb_server_ip}")
+            raise RuntimeError("Failed to connect to SMB server")
+
+
+        prefix = f"\\\\{settings.smb_server_ip}\\{settings.smb_share}\\"
+        if path.startswith(prefix):
+            relative_path = path[len(prefix):].strip("/\\")
+        else:
+            relative_path = path.strip("/\\")
+
+        logger.debug(f"Загрузка файла с SMB: {relative_path}")
+
+        try:
+            file_info = conn.getAttributes(settings.smb_share, relative_path)
+            filesize = getattr(file_info, "file_size", None)
+            if filesize is None:
+                logger.error(f"Не удалось получить размер файла для {relative_path}")
+                raise ValueError("Cannot get filesize from SMB file_info")
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
+                start_time = datetime.now()
+                conn.retrieveFile(settings.smb_share, relative_path, temp_file)
+                temp_file.flush()
+                logger.debug(f"Время загрузки файла: {datetime.now() - start_time} секунд")
+
+                temp_file.seek(0, os.SEEK_END)
+                file_size = temp_file.tell()
+                if file_size != filesize:
+                    logger.error(f"Ожидалось {filesize} байт, но записано {file_size} байт")
+                    raise RuntimeError(f"Expected {filesize} bytes, but wrote {file_size} bytes")
+                
+                return temp_file.name
+        finally:
+            conn.close()
+
+
+    return await loop.run_in_executor(None, _read_file)
+
+
 async def fetch_png_from_smb(path: str) -> BytesIO:
     """
     Загружает PNG-файл с SMB-сервера и возвращает его содержимое в BytesIO.
     """
     try:
-        temp_file_path = await fetch_file_from_smb(path)
+        temp_file_path = await fetch_file_from_smb_with_timeout(path)
         try:
             with open(temp_file_path, "rb") as f:
                 buf = BytesIO(f.read())

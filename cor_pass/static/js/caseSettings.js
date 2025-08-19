@@ -6,11 +6,11 @@ document.addEventListener("DOMContentLoaded", (event) => {
             title: "Макроархів",
             data: [
                 {
-                    id: "ESS - без остатка",
+                    id: "ESS - без залишку",
                     name: "ESS - без залишку"
                 },
                 {
-                    id: "RSS - остаток",
+                    id: "RSS - залишок",
                     name: "RSS - залишок"
                 },
             ]
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
             title: "Декальцінація",
             data: [
                 {
-                    id: "Отсутствует",
+                    id: "Відсутня",
                     name: "Відсутня"
                 },
                 {
@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
                     name: "EDTA"
                 },
                 {
-                    id: "Кислотная",
+                    id: "Кислотна",
                     name: "Кислотна"
                 },
             ],
@@ -36,12 +36,12 @@ document.addEventListener("DOMContentLoaded", (event) => {
             title: "Тип зразків",
             data: [
                 {
-                    id: "Нативный биоматериал",
+                    id: "Нативний біоматеріал",
                     name: "Нативний біоматеріал"
                 },
                 {
-                    id: "Блоки/Стекла",
-                    name: "Блоки/скельця"
+                    id: "Блоки/Скельця",
+                    name: "Блоки/Скельця"
                 },
             ],
         },

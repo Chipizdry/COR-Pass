@@ -235,11 +235,12 @@
   </div>  
 </div>
 
+  <script src="/static/dicom/dicom_viewer.js"></script>  
   <script src="/static/dicom/SVS_viewer.js"></script>
   <script src="/static/dicom/openseadragon.min.js"></script>
   <script src="/static/COR_ID_Js/translation.js"></script>  
   <script src="/static/COR_ID_Js/general_fun.js"></script> 
-  <script src="/static/dicom/dicom_viewer.js"></script>  
+ 
  
  
   <script>
@@ -567,6 +568,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 </script>
-
+<script>
+  // Автоматическая загрузка SVS по glass_id при открытии страницы
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM fully loaded and parsed');
+    
+    // Получаем glass_id из параметров URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const glassId = urlParams.get('glass_id');
+    
+    console.log('URL params:', Array.from(urlParams.entries()));
+    console.log('Glass ID from URL:', glassId);
+    
+    // Проверяем доступность функции
+    console.log('openSVSByGlassId available:', typeof openSVSByGlassId);
+    
+    // Если передан glass_id, автоматически запускаем загрузку SVS
+    if (glassId) {
+        console.log('Auto-loading SVS for glass_id:', glassId);
+        
+        // Ждем немного для инициализации всех компонентов
+        setTimeout(() => {
+            console.log('Calling openSVSByGlassId...');
+            if (typeof openSVSByGlassId === 'function') {
+                openSVSByGlassId(glassId);
+            } else {
+                console.error('openSVSByGlassId is not a function!');
+            }
+        }, 1000);
+    } else {
+        console.log('No glass_id parameter found in URL');
+    }
+});
+  </script>
 </body>
 </html>

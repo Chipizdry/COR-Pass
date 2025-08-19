@@ -158,6 +158,7 @@ class Grossing_status(enum.Enum):
     PROCESSING = "PROCESSING"
     COMPLETED = "COMPLETED"
     CREATED = "CREATED"
+    IN_SIGNING_STATUS = "IN_SIGNING_STATUS"
 
 
 class User(Base):
@@ -1087,5 +1088,19 @@ class ECGMeasurement(Base):
     file_name = Column(String, nullable=True) 
 
     user = relationship("User", back_populates="ecg_measurements")
+
+
+class DoctorSignatureSession(Base):
+    __tablename__ = "doctor_signature_sessions"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    session_token = Column(String, unique=True, nullable=False)
+    doctor_cor_id = Column(String(36), nullable=False)
+    diagnosis_id = Column(String(36), nullable=False)
+    doctor_signature_id = Column(String(36), nullable=True)
+    status = Column(String, default="pending")  # pending/approved/rejected/expired
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime,nullable=False,default=func.now())
+
 
 # Base.metadata.create_all(bind=engine)

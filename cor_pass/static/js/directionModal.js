@@ -69,6 +69,10 @@ document.addEventListener("DOMContentLoaded", (event) => {
                         id: "FISH/CISH",
                         label: "NGS"
                     },
+                    {
+                        id: "Інше",
+                        label: "Інше"
+                    },
                 ]
             },
             {

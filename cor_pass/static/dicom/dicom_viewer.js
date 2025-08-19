@@ -368,8 +368,21 @@ function updateSliders(volumeInfo) {
       }
 
 
-      async function handleSVS(token) {
+      async function handleSVS(token, glassId = null) {
         try {
+
+            // Если передан glass_id, используем специальный endpoint
+              if (glassId) {
+                const response = await fetch(`/api/svs/${glassId}/svs`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!response.ok) throw new Error('Failed to load SVS by glass_id');
+                
+                const result = await response.json();
+                console.log("SVS processed:", result);
+            }
+
             // Load preview image
             const previewResponse = await fetch('/api/svs/preview_svs', {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -425,45 +438,6 @@ function updateSliders(volumeInfo) {
     }      
 
 
-
-/*
-
-    function generateSvsMetadataHTML(svsMetadata) {
-      return `
-          <div class="metadata-section">
-              <h4>Basic Information</h4>
-              <div class="metadata-grid">
-                  <div class="metadata-item"><span class="metadata-label">Filename:</span> ${svsMetadata.filename}</div>
-                  <div class="metadata-item"><span class="metadata-label">Dimensions:</span> ${svsMetadata.dimensions.width.toLocaleString()} × ${svsMetadata.dimensions.height.toLocaleString()} px</div>
-                  <div class="metadata-item"><span class="metadata-label">Levels:</span> ${svsMetadata.dimensions.levels}</div>
-                  <div class="metadata-item"><span class="metadata-label">MPP:</span> ${svsMetadata.basic_info.mpp}</div>
-                  <div class="metadata-item"><span class="metadata-label">Magnification:</span> ${svsMetadata.basic_info.magnification}x</div>
-                  <div class="metadata-item"><span class="metadata-label">Scan Date:</span> ${svsMetadata.basic_info.scan_date}</div>
-                  <div class="metadata-item"><span class="metadata-label">Scanner:</span> ${svsMetadata.basic_info.scanner}</div>
-              </div>
-          </div>
-  
-          <div class="metadata-section">
-              <h4>Level Details</h4>
-              <table class="metadata-table">
-                  <thead><tr><th>Level</th><th>Downsample</th><th>Dimensions</th></tr></thead>
-                  <tbody>
-                      ${svsMetadata.levels.map((lvl, i) => `
-                          <tr><td>${i}</td><td>${lvl.downsample.toFixed(1)}</td><td>${lvl.width.toLocaleString()} × ${lvl.height.toLocaleString()}</td></tr>
-                      `).join('')}
-                  </tbody>
-              </table>
-          </div>
-  
-          <div class="metadata-section">
-              <details class="technical-metadata">
-                  <summary>Technical Metadata</summary>
-                  <pre>${svsMetadata.full_properties ? Object.entries(svsMetadata.full_properties).map(([k, v]) => `${k}: ${v}`).join('\n') : 'No technical metadata available.'}</pre>
-              </details>
-          </div>
-      `;
-  }
-  */
 
   function generateSvsMetadataHTML(svsMetadata) {
     return `
@@ -843,3 +817,57 @@ document.querySelectorAll('.dicom-buttons').forEach(btn => {
     openDicomFullscreen(targetPlane.replace('canvas-', ''));
   });
 });
+
+
+
+
+
+window.openSVSByGlassId = async function(glassId) {
+  const token = getToken();
+  const statusText = document.getElementById('upload-status');
+  const progressBar = document.getElementById('progress-bar');
+
+  // Скрываем модальное окно загрузки DICOM
+  document.getElementById('Dicom_upload_modal').style.display = 'none';
+  
+  prepareUIBeforeUpload();
+  statusText.textContent = 'Загрузка SVS файла...';
+  progressBar.style.width = '0%';
+  progressBar.textContent = '0%';
+  document.getElementById('loading-spinner')?.style?.setProperty("display", "block");
+
+  try {
+      checkToken();
+      
+      // Вызываем ваш бэкенд-роут для обработки SVS по glass_id
+      const response = await fetch(`/api/svs/${glassId}/svs`, {
+          method: "GET",
+          headers: {
+              'Authorization': `Bearer ${token}`,
+          },
+      });
+
+      if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      progressBar.style.width = '100%';
+      progressBar.textContent = '100%';
+      statusText.textContent = result.message;
+
+      // После успешной обработки сразу открываем полноэкранный SVS просмотрщик
+      await openFullscreenSVS();
+
+  } catch (err) {
+      console.error('Ошибка загрузки SVS:', err);
+      statusText.textContent = `Error: ${err.message}`;
+      progressBar.style.background = '#f44336';
+      if (err.message.includes('401')) {
+          showTokenExpiredModal();
+      }
+  } finally {
+      document.getElementById('loading-spinner')?.style?.setProperty("display", "none");
+  }
+}
