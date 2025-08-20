@@ -568,6 +568,7 @@ function updateSliders(volumeInfo) {
 
   async function openFullscreenSVS() {
     const token = getToken();
+    if (!checkToken()) return;
     const svsViewerDiv = document.getElementById('svs-fullscreen-viewer');
     svsViewerDiv.classList.remove('hidden');
     svsViewerDiv.classList.add('visible');
@@ -607,6 +608,7 @@ function updateSliders(volumeInfo) {
           minLevel: 0,
           maxLevel: levelsCount - 1,
           getTileUrl: (level, x, y) => {
+            if (!checkToken()) return;
             // Преобразуем уровень OpenSeadragon в инвертированный уровень SVS
             const svsLevel = (levelsCount - 1) - level;
             return `/api/svs/tile?level=${svsLevel}&x=${x}&y=${y}&tile_size=${tileSize}`;
@@ -636,6 +638,18 @@ function updateSliders(volumeInfo) {
         springStiffness: 5.0,
         imageLoaderLimit: 5
       });
+
+      
+    // Обработчик ошибок загрузки тайлов
+    viewer.addHandler('tile-load-failed', (event) => {
+      console.error('[tile-load-failed] Ошибка загрузки тайла:', event);
+      
+      // Проверяем, не истек ли токен
+      if (event.exception && (event.exception.status === 401 || event.exception.status === 403)) {
+        checkToken(); // Вызовет окно авторизации
+      }
+    });
+
   
       viewer.addHandler('open', () => {
         console.log('[openFullscreenSVS] Viewer открыт');
@@ -668,8 +682,14 @@ function updateSliders(volumeInfo) {
       }
   
     } catch (error) {
+      
       console.error('[openFullscreenSVS] Ошибка:', error);
       document.getElementById('upload-status').textContent = `Ошибка загрузки: ${error}`;
+
+       // Проверяем токен при общей ошибке
+    if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Токен')) {
+      checkToken();
+    }
     }
   }
 
@@ -820,24 +840,37 @@ document.querySelectorAll('.dicom-buttons').forEach(btn => {
 
 
 
-
-
 window.openSVSByGlassId = async function(glassId) {
   const token = getToken();
   const statusText = document.getElementById('upload-status');
   const progressBar = document.getElementById('progress-bar');
+  const dicomModal = document.getElementById('Dicom_upload_modal');
 
-  // Скрываем модальное окно загрузки DICOM
-  document.getElementById('Dicom_upload_modal').style.display = 'none';
+  // Показываем прогресс-бар перед началом загрузки
+  progressBar.style.display = 'block';
+  progressBar.style.width = '0%';
+  progressBar.textContent = '0%';
+  progressBar.style.background = '#4CAF50';
+  
+  // Не скрываем модальное окно полностью, а показываем только прогресс
+  dicomModal.style.display = 'block';
+  document.querySelector('.upload-instructions').style.display = 'none';
+  document.getElementById('dicom-upload').style.display = 'none';
+  document.querySelector('.dicom-upload-container button').style.display = 'none';
   
   prepareUIBeforeUpload();
   statusText.textContent = 'Загрузка SVS файла...';
-  progressBar.style.width = '0%';
-  progressBar.textContent = '0%';
   document.getElementById('loading-spinner')?.style?.setProperty("display", "block");
 
   try {
       checkToken();
+      
+      // Функция для обновления прогресса
+      const updateProgress = (percent) => {
+          progressBar.style.width = percent + '%';
+          progressBar.textContent = percent + '%';
+          statusText.textContent = `Загрузка: ${percent}%`;
+      };
       
       // Вызываем ваш бэкенд-роут для обработки SVS по glass_id
       const response = await fetch(`/api/svs/${glassId}/svs`, {
@@ -851,14 +884,23 @@ window.openSVSByGlassId = async function(glassId) {
           throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      // Если сервер поддерживает прогресс, можно использовать EventSource
+      // Или имитировать прогресс, если сервер не предоставляет его
+      for (let i = 0; i <= 100; i += 10) {
+          updateProgress(i);
+          await new Promise(resolve => setTimeout(resolve, 200));
+      }
+
       const result = await response.json();
       
-      progressBar.style.width = '100%';
-      progressBar.textContent = '100%';
+      updateProgress(100);
       statusText.textContent = result.message;
 
       // После успешной обработки сразу открываем полноэкранный SVS просмотрщик
       await openFullscreenSVS();
+
+      // Теперь скрываем модальное окно
+      dicomModal.style.display = 'none';
 
   } catch (err) {
       console.error('Ошибка загрузки SVS:', err);
