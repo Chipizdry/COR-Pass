@@ -21,6 +21,7 @@ from cor_pass.services.auth import auth_service
 from cor_pass.database.models import User
 from pydicom import config
 from loguru import logger
+from scipy.ndimage import zoom
 
 pydicom.config.settings.reading_validation_mode = pydicom.config.RAISE
 
@@ -107,7 +108,6 @@ def load_volume(user_cor_id: str):
 
             required_attrs = ["ImagePositionPatient", "ImageOrientationPatient", "pixel_array"]
             if all(hasattr(ds, attr) for attr in required_attrs):
-                # Отбрасываем Siemens localizer / scout
                 desc = getattr(ds, "SeriesDescription", "").lower()
                 img_type = [s.lower() for s in getattr(ds, "ImageType", [])]
                 if "localizer" in desc or "localizer" in img_type:
@@ -186,7 +186,19 @@ def load_volume(user_cor_id: str):
     volume = np.stack(resized_slices)
     logger.debug(f"[INFO] Загружено срезов: {len(volume)}")
 
-    return volume, example_ds
+    # --- пересэмплирование в изотропный воксель ---
+    ps = [float(x) for x in example_ds.PixelSpacing]  # [y, x]
+    st = float(example_ds.SliceThickness)
+    spacing = np.array([st, ps[0], ps[1]])  # [z, y, x]
+    new_spacing = min(spacing)
+    zoom_factors = spacing / new_spacing
+    volume_iso = zoom(volume, zoom_factors, order=1)  # линейная интерполяция
+    logger.debug(f"[INFO] Том пересэмплирован до изотропного вокселя: {new_spacing:.3f} мм")
+
+    return volume_iso, example_ds
+
+
+
 
 @router.get("/viewer", response_class=HTMLResponse)
 def get_viewer(current_user: User = Depends(auth_service.get_current_user)):
