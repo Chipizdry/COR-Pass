@@ -223,8 +223,8 @@ function enableAreaSelection(viewer) {
 
     Object.assign(box.style, {
         position: "fixed",
-        border: "2px dashed red",
-        background: "rgba(255,0,0,0.12)",
+        border: "4px dashed red",
+        background: "rgba(255,255,255,0.12)",
         pointerEvents: "none",
         zIndex: "2147483647",
         display: "none"

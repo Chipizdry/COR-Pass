@@ -280,7 +280,7 @@ async def main_worker_entrypoint():
 
     await asyncio.gather(
         cerbo_collection_task_worker(), 
-        energetic_schedule_task_worker(async_session_maker=async_session_maker)
+        # energetic_schedule_task_worker(async_session_maker=async_session_maker)
     )
 
 if __name__ == "__main__":

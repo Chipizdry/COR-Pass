@@ -63,7 +63,6 @@ def check_dicom_support():
 def load_volume(user_cor_id: str):
     logger.debug("[INFO] Загружаем том из DICOM-файлов...")
 
-    # Чтение всех файлов
     user_dicom_dir = os.path.join(DICOM_ROOT_DIR, user_cor_id)
     if not os.path.exists(user_dicom_dir):
         raise HTTPException(
@@ -80,17 +79,12 @@ def load_volume(user_cor_id: str):
     datasets = []
     for path in dicom_paths:
         try:
-            # Пробуем разные методы чтения файла
             ds = None
-            read_attempts = [
-                lambda: pydicom.dcmread(path),  # Стандартное чтение
-                lambda: pydicom.dcmread(path, force=True),  # Принудительное чтение
-                lambda: pydicom.dcmread(
-                    path, force=True, defer_size=1024
-                ),  # Чтение с ограничением
-            ]
-
-            for attempt in read_attempts:
+            for attempt in [
+                lambda: pydicom.dcmread(path),
+                lambda: pydicom.dcmread(path, force=True),
+                lambda: pydicom.dcmread(path, force=True, defer_size=1024),
+            ]:
                 try:
                     ds = attempt()
                     break
@@ -101,109 +95,91 @@ def load_volume(user_cor_id: str):
                 logger.debug(f"[WARN] Не удалось прочитать файл {path}")
                 continue
 
-            # Попытка декомпрессии если файл сжат
             if hasattr(ds, "file_meta") and hasattr(ds.file_meta, "TransferSyntaxUID"):
                 if ds.file_meta.TransferSyntaxUID.is_compressed:
                     try:
-                        ds.decompress()  # Автоматический выбор декомпрессора
+                        ds.decompress()
                     except Exception as decompress_error:
-                        print(
+                        logger.debug(
                             f"[WARN] Не удалось декомпрессировать {path}: {decompress_error}"
                         )
                         continue
 
-            # Проверка необходимых атрибутов
-            required_attrs = [
-                "ImagePositionPatient",
-                "ImageOrientationPatient",
-                "pixel_array",
-            ]
+            required_attrs = ["ImagePositionPatient", "ImageOrientationPatient", "pixel_array"]
             if all(hasattr(ds, attr) for attr in required_attrs):
+                # Отбрасываем Siemens localizer / scout
+                desc = getattr(ds, "SeriesDescription", "").lower()
+                img_type = [s.lower() for s in getattr(ds, "ImageType", [])]
+                if "localizer" in desc or "localizer" in img_type:
+                    logger.debug(f"[INFO] Пропущен локализатор {path}")
+                    continue
+
                 datasets.append((ds, path))
             else:
-                logger.debug(
-                    f"[WARN] Файл {path} не содержит необходимых DICOM-тегов. Пропущен."
-                )
-                logger.debug(
-                    f"       Найдены теги: {[attr for attr in required_attrs if hasattr(ds, attr)]}"
-                )
+                logger.debug(f"[WARN] {path} не содержит нужных DICOM-тегов")
 
         except Exception as e:
-            logger.debug(f"[WARN] Пропущен файл {path} из-за ошибки чтения: {str(e)}")
+            logger.debug(f"[WARN] Пропущен {path} из-за ошибки: {str(e)}")
             continue
 
     if not datasets:
         raise RuntimeError("Нет подходящих DICOM-файлов с ImagePositionPatient.")
 
-    # Определение нормали к срезу из ориентации
-    orientation = datasets[0][0].ImageOrientationPatient
+    # --- группировка по SeriesInstanceUID ---
+    from collections import defaultdict
+    series_dict = defaultdict(list)
+    for ds, path in datasets:
+        series_dict[ds.SeriesInstanceUID].append((ds, path))
+
+    # Берём серию с максимальным количеством срезов
+    selected_series = max(series_dict.values(), key=len)
+
+    # --- сортировка ---
+    orientation = selected_series[0][0].ImageOrientationPatient
     normal = np.cross(orientation[:3], orientation[3:])
 
-    # Сортировка по проекции позиции на нормаль
-    datasets.sort(key=lambda item: np.dot(item[0].ImagePositionPatient, normal))
+    def sort_key(item):
+        ds, _ = item
+        try:
+            return float(np.dot(ds.ImagePositionPatient, normal))
+        except Exception:
+            return float(getattr(ds, "InstanceNumber", 0))
 
-    slices = []
-    shapes = []
+    selected_series.sort(key=sort_key)
+
+    # --- формируем объём ---
+    slices, shapes = [], []
     example_ds = None
 
-    for ds, path in datasets:
+    for ds, path in selected_series:
         try:
-            # Получаем pixel_array с обработкой возможных ошибок
-            if not hasattr(ds, "pixel_array"):
-                logger.debug(
-                    f"[WARN] Файл {path} не содержит pixel_array после декомпрессии"
-                )
-                continue
-
             arr = ds.pixel_array.astype(np.float32)
-
-            # Применяем Rescale Slope/Intercept если они есть
             if hasattr(ds, "RescaleSlope") and hasattr(ds, "RescaleIntercept"):
                 try:
-                    slope = (
-                        float(ds.RescaleSlope)
-                        if isinstance(
-                            ds.RescaleSlope, (str, pydicom.multival.MultiValue)
-                        )
-                        else ds.RescaleSlope
-                    )
-                    intercept = (
-                        float(ds.RescaleIntercept)
-                        if isinstance(
-                            ds.RescaleIntercept, (str, pydicom.multival.MultiValue)
-                        )
-                        else ds.RescaleIntercept
-                    )
+                    slope = float(ds.RescaleSlope)
+                    intercept = float(ds.RescaleIntercept)
                     arr = arr * slope + intercept
                 except Exception as e:
-                    print(
-                        f"[WARN] Ошибка применения RescaleSlope/Intercept в {path}: {e}"
-                    )
+                    logger.debug(f"[WARN] Ошибка Rescale в {path}: {e}")
 
             slices.append(arr)
             shapes.append(arr.shape)
-
             if example_ds is None:
                 example_ds = ds
-
         except Exception as e:
-            logger.debug(f"[ERROR] Ошибка обработки {os.path.basename(path)}: {e}")
+            logger.debug(f"[ERROR] Ошибка обработки {path}: {e}")
             continue
 
     if not slices:
         raise RuntimeError("Не удалось загрузить ни одного среза.")
 
-    # Приведение всех к одной форме
     shape_counter = Counter(shapes)
     target_shape = shape_counter.most_common(1)[0][0]
-    logger.debug(f"[INFO] Приведение всех срезов к форме {target_shape}")
+    logger.debug(f"[INFO] Приведение срезов к форме {target_shape}")
 
     resized_slices = [
-        (
-            resize(slice_, target_shape, preserve_range=True).astype(np.float32)
-            if slice_.shape != target_shape
-            else slice_
-        )
+        resize(slice_, target_shape, preserve_range=True).astype(np.float32)
+        if slice_.shape != target_shape else slice_
         for slice_ in slices
     ]
 
@@ -211,7 +187,6 @@ def load_volume(user_cor_id: str):
     logger.debug(f"[INFO] Загружено срезов: {len(volume)}")
 
     return volume, example_ds
-
 
 @router.get("/viewer", response_class=HTMLResponse)
 def get_viewer(current_user: User = Depends(auth_service.get_current_user)):
