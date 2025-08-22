@@ -21,7 +21,6 @@ from cor_pass.services.auth import auth_service
 from cor_pass.database.models import User
 from pydicom import config
 from loguru import logger
-from scipy.ndimage import zoom
 
 pydicom.config.settings.reading_validation_mode = pydicom.config.RAISE
 
@@ -64,6 +63,7 @@ def check_dicom_support():
 def load_volume(user_cor_id: str):
     logger.debug("[INFO] Загружаем том из DICOM-файлов...")
 
+    # Чтение всех файлов
     user_dicom_dir = os.path.join(DICOM_ROOT_DIR, user_cor_id)
     if not os.path.exists(user_dicom_dir):
         raise HTTPException(
@@ -80,12 +80,17 @@ def load_volume(user_cor_id: str):
     datasets = []
     for path in dicom_paths:
         try:
+            # Пробуем разные методы чтения файла
             ds = None
-            for attempt in [
-                lambda: pydicom.dcmread(path),
-                lambda: pydicom.dcmread(path, force=True),
-                lambda: pydicom.dcmread(path, force=True, defer_size=1024),
-            ]:
+            read_attempts = [
+                lambda: pydicom.dcmread(path),  # Стандартное чтение
+                lambda: pydicom.dcmread(path, force=True),  # Принудительное чтение
+                lambda: pydicom.dcmread(
+                    path, force=True, defer_size=1024
+                ),  # Чтение с ограничением
+            ]
+
+            for attempt in read_attempts:
                 try:
                     ds = attempt()
                     break
@@ -96,108 +101,116 @@ def load_volume(user_cor_id: str):
                 logger.debug(f"[WARN] Не удалось прочитать файл {path}")
                 continue
 
+            # Попытка декомпрессии если файл сжат
             if hasattr(ds, "file_meta") and hasattr(ds.file_meta, "TransferSyntaxUID"):
                 if ds.file_meta.TransferSyntaxUID.is_compressed:
                     try:
-                        ds.decompress()
+                        ds.decompress()  # Автоматический выбор декомпрессора
                     except Exception as decompress_error:
-                        logger.debug(
+                        print(
                             f"[WARN] Не удалось декомпрессировать {path}: {decompress_error}"
                         )
                         continue
 
-            required_attrs = ["ImagePositionPatient", "ImageOrientationPatient", "pixel_array"]
+            # Проверка необходимых атрибутов
+            required_attrs = [
+                "ImagePositionPatient",
+                "ImageOrientationPatient",
+                "pixel_array",
+            ]
             if all(hasattr(ds, attr) for attr in required_attrs):
-                desc = getattr(ds, "SeriesDescription", "").lower()
-                img_type = [s.lower() for s in getattr(ds, "ImageType", [])]
-                if "localizer" in desc or "localizer" in img_type:
-                    logger.debug(f"[INFO] Пропущен локализатор {path}")
-                    continue
-
                 datasets.append((ds, path))
             else:
-                logger.debug(f"[WARN] {path} не содержит нужных DICOM-тегов")
+                logger.debug(
+                    f"[WARN] Файл {path} не содержит необходимых DICOM-тегов. Пропущен."
+                )
+                logger.debug(
+                    f"       Найдены теги: {[attr for attr in required_attrs if hasattr(ds, attr)]}"
+                )
 
         except Exception as e:
-            logger.debug(f"[WARN] Пропущен {path} из-за ошибки: {str(e)}")
+            logger.debug(f"[WARN] Пропущен файл {path} из-за ошибки чтения: {str(e)}")
             continue
 
     if not datasets:
         raise RuntimeError("Нет подходящих DICOM-файлов с ImagePositionPatient.")
 
-    # --- группировка по SeriesInstanceUID ---
-    from collections import defaultdict
-    series_dict = defaultdict(list)
-    for ds, path in datasets:
-        series_dict[ds.SeriesInstanceUID].append((ds, path))
-
-    # Берём серию с максимальным количеством срезов
-    selected_series = max(series_dict.values(), key=len)
-
-    # --- сортировка ---
-    orientation = selected_series[0][0].ImageOrientationPatient
+    # Определение нормали к срезу из ориентации
+    orientation = datasets[0][0].ImageOrientationPatient
     normal = np.cross(orientation[:3], orientation[3:])
 
-    def sort_key(item):
-        ds, _ = item
-        try:
-            return float(np.dot(ds.ImagePositionPatient, normal))
-        except Exception:
-            return float(getattr(ds, "InstanceNumber", 0))
+    # Сортировка по проекции позиции на нормаль
+    datasets.sort(key=lambda item: np.dot(item[0].ImagePositionPatient, normal))
 
-    selected_series.sort(key=sort_key)
-
-    # --- формируем объём ---
-    slices, shapes = [], []
+    slices = []
+    shapes = []
     example_ds = None
 
-    for ds, path in selected_series:
+    for ds, path in datasets:
         try:
+            # Получаем pixel_array с обработкой возможных ошибок
+            if not hasattr(ds, "pixel_array"):
+                logger.debug(
+                    f"[WARN] Файл {path} не содержит pixel_array после декомпрессии"
+                )
+                continue
+
             arr = ds.pixel_array.astype(np.float32)
+
+            # Применяем Rescale Slope/Intercept если они есть
             if hasattr(ds, "RescaleSlope") and hasattr(ds, "RescaleIntercept"):
                 try:
-                    slope = float(ds.RescaleSlope)
-                    intercept = float(ds.RescaleIntercept)
+                    slope = (
+                        float(ds.RescaleSlope)
+                        if isinstance(
+                            ds.RescaleSlope, (str, pydicom.multival.MultiValue)
+                        )
+                        else ds.RescaleSlope
+                    )
+                    intercept = (
+                        float(ds.RescaleIntercept)
+                        if isinstance(
+                            ds.RescaleIntercept, (str, pydicom.multival.MultiValue)
+                        )
+                        else ds.RescaleIntercept
+                    )
                     arr = arr * slope + intercept
                 except Exception as e:
-                    logger.debug(f"[WARN] Ошибка Rescale в {path}: {e}")
+                    print(
+                        f"[WARN] Ошибка применения RescaleSlope/Intercept в {path}: {e}"
+                    )
 
             slices.append(arr)
             shapes.append(arr.shape)
+
             if example_ds is None:
                 example_ds = ds
+
         except Exception as e:
-            logger.debug(f"[ERROR] Ошибка обработки {path}: {e}")
+            logger.debug(f"[ERROR] Ошибка обработки {os.path.basename(path)}: {e}")
             continue
 
     if not slices:
         raise RuntimeError("Не удалось загрузить ни одного среза.")
 
+    # Приведение всех к одной форме
     shape_counter = Counter(shapes)
     target_shape = shape_counter.most_common(1)[0][0]
-    logger.debug(f"[INFO] Приведение срезов к форме {target_shape}")
+    logger.debug(f"[INFO] Приведение всех срезов к форме {target_shape}")
 
     resized_slices = [
-        resize(slice_, target_shape, preserve_range=True).astype(np.float32)
-        if slice_.shape != target_shape else slice_
+        (
+            resize(slice_, target_shape, preserve_range=True).astype(np.float32)
+            if slice_.shape != target_shape
+            else slice_
+        )
         for slice_ in slices
     ]
 
     volume = np.stack(resized_slices)
     logger.debug(f"[INFO] Загружено срезов: {len(volume)}")
 
-    # --- пересэмплирование в изотропный воксель ---
-    ps = [float(x) for x in example_ds.PixelSpacing]  # [y, x]
-    st = float(example_ds.SliceThickness)
-    spacing = np.array([st, ps[0], ps[1]])  # [z, y, x]
-    new_spacing = min(spacing)
-    zoom_factors = spacing / new_spacing
-    volume_iso = zoom(volume, zoom_factors, order=1)  # линейная интерполяция
-    logger.debug(f"[INFO] Том пересэмплирован до изотропного вокселя: {new_spacing:.3f} мм")
-
-    return volume_iso, example_ds
-
-
+    return volume, example_ds
 
 
 @router.get("/viewer", response_class=HTMLResponse)
@@ -240,10 +253,25 @@ def reconstruct(
     try:
         volume, ds = load_volume(str(current_user.cor_id))
 
-        # Получаем spacing
-        ps = ds.PixelSpacing if hasattr(ds, "PixelSpacing") else [1, 1]
-        st = float(ds.SliceThickness) if hasattr(ds, "SliceThickness") else 1.0
+        # === Безопасное чтение PixelSpacing ===
+        try:
+            ps = getattr(ds, "PixelSpacing", [1.0, 1.0])
+            if not (isinstance(ps, (list, tuple)) and len(ps) >= 2):
+                ps = [1.0, 1.0]
+            ps = [float(x) if x not in (None, "") else 1.0 for x in ps]
+        except Exception as e:
+            logger.warning(f"PixelSpacing отсутствует или некорректен: {e}")
+            ps = [1.0, 1.0]
 
+        # === Безопасное чтение SliceThickness ===
+        try:
+            st_raw = getattr(ds, "SliceThickness", None)
+            st = float(st_raw) if st_raw not in (None, "") else 1.0
+        except Exception as e:
+            logger.warning(f"SliceThickness отсутствует или некорректен: {e}")
+            st = 1.0
+
+        # === Выбор среза ===
         if plane == "axial":
             img = volume[np.clip(index, 0, volume.shape[0] - 1), :, :]
             spacing_x, spacing_y = ps
@@ -258,7 +286,7 @@ def reconstruct(
         else:
             raise HTTPException(status_code=400, detail="Invalid plane")
 
-        # Windowing
+        # === Применение оконного преобразования ===
         if mode == "auto":
             img = apply_window(img, ds)
         elif mode == "window":
@@ -281,20 +309,19 @@ def reconstruct(
                         else float(ds.WindowWidth)
                     )
                 )
-                img_min = wc - ww / 2
-                img_max = wc + ww / 2
+                img_min, img_max = wc - ww / 2, wc + ww / 2
                 img = np.clip(img, img_min, img_max)
                 img = ((img - img_min) / (img_max - img_min + 1e-5)) * 255
                 img = img.astype(np.uint8)
             except Exception as e:
-                print(f"Window level error, fallback to raw: {e}")
+                logger.warning(f"Ошибка в window mode, fallback на raw: {e}")
                 img = ((img - img.min()) / (img.max() - img.min() + 1e-5)) * 255
                 img = img.astype(np.uint8)
         elif mode == "raw":
             img = ((img - img.min()) / (img.max() - img.min() + 1e-5)) * 255
             img = img.astype(np.uint8)
 
-        # Преобразуем в изображение и добавляем паддинг (512x512 канва)
+        # === Преобразование в PNG ===
         img_pil = Image.fromarray(img).convert("L")
         img_pil = ImageOps.pad(
             img_pil,
@@ -311,7 +338,6 @@ def reconstruct(
 
     except Exception as e:
         import traceback
-
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -440,36 +466,59 @@ def get_metadata(current_user: User = Depends(auth_service.get_current_user)):
         volume, ds = load_volume(str(current_user.cor_id))
         depth, height, width = volume.shape
 
-        spacing = ds.PixelSpacing if hasattr(ds, "PixelSpacing") else [1.0, 1.0]
-        slice_thickness = (
-            float(ds.SliceThickness) if hasattr(ds, "SliceThickness") else 1.0
-        )
+        # Безопасно получаем spacing и slice_thickness
+        spacing = getattr(ds, "PixelSpacing", [1.0, 1.0])
+        if isinstance(spacing, (list, tuple)) and len(spacing) >= 2:
+            spacing_x, spacing_y = float(spacing[1]), float(spacing[0])
+        else:
+            spacing_x, spacing_y = 1.0, 1.0
+
+        slice_thickness = None
+        try:
+            slice_thickness = float(getattr(ds, "SliceThickness", 1.0))
+        except Exception as e:
+            logger.warning(f"SliceThickness отсутствует или некорректен: {e}")
+            slice_thickness = 1.0
+
+        # Безопасный доступ к тегам
+        def safe_get(attr, default="N/A"):
+            try:
+                value = getattr(ds, attr, default)
+                if value is None or value == "":
+                    return default
+                return str(value)
+            except Exception as e:
+                logger.warning(f"Ошибка доступа к {attr}: {e}")
+                return default
 
         metadata = {
             "shape": {"depth": depth, "height": height, "width": width},
             "spacing": {
-                "x": float(spacing[1]),
-                "y": float(spacing[0]),
+                "x": spacing_x,
+                "y": spacing_y,
                 "z": slice_thickness,
             },
             "study_info": {
-                "StudyInstanceUID": getattr(ds, "StudyInstanceUID", "N/A"),
-                "SeriesInstanceUID": getattr(ds, "SeriesInstanceUID", "N/A"),
-                "Modality": getattr(ds, "Modality", "N/A"),
-                "StudyDate": getattr(ds, "StudyDate", "N/A"),
-                "PatientName": str(getattr(ds, "PatientName", "N/A")),
-                "PatientBirthDate": getattr(ds, "PatientBirthDate", "N/A"),
-                "Manufacturer": getattr(ds, "Manufacturer", "N/A"),
-                "DeviceModel": getattr(ds, "ManufacturerModelName", "N/A"),
-                "KVP": getattr(ds, "KVP", "N/A"),
-                "XRayTubeCurrent": getattr(ds, "XRayTubeCurrent", "N/A"),
-                "Exposure": getattr(ds, "Exposure", "N/A"),
+                "StudyInstanceUID": safe_get("StudyInstanceUID"),
+                "SeriesInstanceUID": safe_get("SeriesInstanceUID"),
+                "Modality": safe_get("Modality"),
+                "StudyDate": safe_get("StudyDate"),
+                "PatientName": safe_get("PatientName"),
+                "PatientBirthDate": safe_get("PatientBirthDate"),
+                "Manufacturer": safe_get("Manufacturer"),
+                "DeviceModel": safe_get("ManufacturerModelName"),
+                "KVP": safe_get("KVP"),
+                "XRayTubeCurrent": safe_get("XRayTubeCurrent"),
+                "Exposure": safe_get("Exposure"),
             },
         }
 
         return metadata
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Ошибка при получении метаданных: {e}")
 
 
 def handle_compressed_dicom(file_path):
@@ -492,6 +541,5 @@ def handle_compressed_dicom(file_path):
     except Exception as e:
         print(f"[ERROR] Ошибка обработки сжатого DICOM: {e}")
         return None
-
 
 
