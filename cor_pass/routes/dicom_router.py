@@ -59,11 +59,69 @@ def check_dicom_support():
         logger.debug(f"{name} ({uid}): {'✓' if handler else '✗'}")
 
 
+
+
+def sort_by_image_position(datasets):
+    """
+    Универсальная сортировка срезов по нормали к ImageOrientationPatient.
+    Работает для всех производителей.
+    """
+    orientation = datasets[0][0].ImageOrientationPatient
+    normal = np.cross(orientation[:3], orientation[3:])
+    datasets.sort(key=lambda item: np.dot(item[0].ImagePositionPatient, normal))
+    return datasets
+
+
+def process_siemens_dicom(datasets):
+    """
+    Обработка Siemens DICOM:
+    - Разбиваем на группы по ImageOrientationPatient
+    - Сортируем каждую группу отдельно
+    - Возвращаем словарь {orientation: slices}
+    """
+    logger.debug("[INFO] Обработка Siemens DICOM...")
+
+    groups = {}
+    for ds, path in datasets:
+        try:
+            orient = tuple(round(float(x), 4) for x in ds.ImageOrientationPatient)
+        except Exception:
+            continue
+
+        if orient not in groups:
+            groups[orient] = []
+        groups[orient].append((ds, path))
+
+    logger.debug(f"[INFO] Siemens: найдено групп ориентаций: {len(groups)}")
+
+    result = {}
+    for orient, slices in groups.items():
+        # вычисляем нормаль
+        row, col = np.array(orient[:3]), np.array(orient[3:])
+        normal = np.cross(row, col)
+
+        slices.sort(key=lambda item: np.dot(item[0].ImagePositionPatient, normal))
+        result[orient] = slices
+
+        logger.debug(f"[INFO] Группа {orient}: {len(slices)} срезов")
+
+    return result
+
+
+def process_default_dicom(datasets):
+    """
+    Универсальная обработка для всех остальных вендоров.
+    """
+    logger.debug("[INFO] Обработка DICOM по умолчанию...")
+    return sort_by_image_position(datasets)
+
+
+
+
 @lru_cache(maxsize=16)
 def load_volume(user_cor_id: str):
     logger.debug("[INFO] Загружаем том из DICOM-файлов...")
 
-    # Чтение всех файлов
     user_dicom_dir = os.path.join(DICOM_ROOT_DIR, user_cor_id)
     if not os.path.exists(user_dicom_dir):
         raise HTTPException(
@@ -80,16 +138,12 @@ def load_volume(user_cor_id: str):
     datasets = []
     for path in dicom_paths:
         try:
-            # Пробуем разные методы чтения файла
             ds = None
             read_attempts = [
-                lambda: pydicom.dcmread(path),  # Стандартное чтение
-                lambda: pydicom.dcmread(path, force=True),  # Принудительное чтение
-                lambda: pydicom.dcmread(
-                    path, force=True, defer_size=1024
-                ),  # Чтение с ограничением
+                lambda: pydicom.dcmread(path),
+                lambda: pydicom.dcmread(path, force=True),
+                lambda: pydicom.dcmread(path, force=True, defer_size=1024),
             ]
-
             for attempt in read_attempts:
                 try:
                     ds = attempt()
@@ -101,18 +155,16 @@ def load_volume(user_cor_id: str):
                 logger.debug(f"[WARN] Не удалось прочитать файл {path}")
                 continue
 
-            # Попытка декомпрессии если файл сжат
             if hasattr(ds, "file_meta") and hasattr(ds.file_meta, "TransferSyntaxUID"):
                 if ds.file_meta.TransferSyntaxUID.is_compressed:
                     try:
-                        ds.decompress()  # Автоматический выбор декомпрессора
+                        ds.decompress()
                     except Exception as decompress_error:
-                        print(
+                        logger.warning(
                             f"[WARN] Не удалось декомпрессировать {path}: {decompress_error}"
                         )
                         continue
 
-            # Проверка необходимых атрибутов
             required_attrs = [
                 "ImagePositionPatient",
                 "ImageOrientationPatient",
@@ -120,97 +172,86 @@ def load_volume(user_cor_id: str):
             ]
             if all(hasattr(ds, attr) for attr in required_attrs):
                 datasets.append((ds, path))
-            else:
-                logger.debug(
-                    f"[WARN] Файл {path} не содержит необходимых DICOM-тегов. Пропущен."
-                )
-                logger.debug(
-                    f"       Найдены теги: {[attr for attr in required_attrs if hasattr(ds, attr)]}"
-                )
-
         except Exception as e:
-            logger.debug(f"[WARN] Пропущен файл {path} из-за ошибки чтения: {str(e)}")
+            logger.warning(f"[WARN] Пропущен файл {path}: {str(e)}")
             continue
 
     if not datasets:
         raise RuntimeError("Нет подходящих DICOM-файлов с ImagePositionPatient.")
 
-    # Определение нормали к срезу из ориентации
-    orientation = datasets[0][0].ImageOrientationPatient
-    normal = np.cross(orientation[:3], orientation[3:])
+    # === Выбор обработчика по вендору ===
+    manufacturer = getattr(datasets[0][0], "Manufacturer", "").upper()
+    logger.debug(f"[INFO] Производитель: {manufacturer}")
 
-    # Сортировка по проекции позиции на нормаль
-    datasets.sort(key=lambda item: np.dot(item[0].ImagePositionPatient, normal))
+    if "SIEMENS" in manufacturer:
+        grouped = process_siemens_dicom(datasets)
+        volumes = {}
+        example_ds = None
+        for orient, slices in grouped.items():
+            arrs, shapes = [], []
+            for ds, path in slices:
+                arr = ds.pixel_array.astype(np.float32)
+                if hasattr(ds, "RescaleSlope") and hasattr(ds, "RescaleIntercept"):
+                    try:
+                        arr = arr * float(ds.RescaleSlope) + float(ds.RescaleIntercept)
+                    except:
+                        pass
+                arrs.append(arr)
+                shapes.append(arr.shape)
+                if example_ds is None:
+                    example_ds = ds
 
-    slices = []
-    shapes = []
-    example_ds = None
+            # Выравниваем размеры
+            target_shape = Counter(shapes).most_common(1)[0][0]
+            resized = [
+                resize(a, target_shape, preserve_range=True).astype(np.float32)
+                if a.shape != target_shape else a
+                for a in arrs
+            ]
+            volumes[orient] = np.stack(resized)
 
-    for ds, path in datasets:
-        try:
-            # Получаем pixel_array с обработкой возможных ошибок
-            if not hasattr(ds, "pixel_array"):
-                logger.debug(
-                    f"[WARN] Файл {path} не содержит pixel_array после декомпрессии"
-                )
+        logger.debug(f"[INFO] Siemens: собрали {len(volumes)} групп")
+        return volumes, example_ds
+
+    else:
+        # === Default path для остальных производителей ===
+        datasets = process_default_dicom(datasets)
+        slices, shapes = [], []
+        example_ds = None
+
+        for ds, path in datasets:
+            try:
+                arr = ds.pixel_array.astype(np.float32)
+                if hasattr(ds, "RescaleSlope") and hasattr(ds, "RescaleIntercept"):
+                    try:
+                        slope, intercept = float(ds.RescaleSlope), float(ds.RescaleIntercept)
+                        arr = arr * slope + intercept
+                    except Exception as e:
+                        logger.warning(f"[WARN] Ошибка RescaleSlope/Intercept: {e}")
+                slices.append(arr)
+                shapes.append(arr.shape)
+                if example_ds is None:
+                    example_ds = ds
+            except Exception as e:
+                logger.error(f"[ERROR] Ошибка обработки {path}: {e}")
                 continue
 
-            arr = ds.pixel_array.astype(np.float32)
+        if not slices:
+            raise RuntimeError("Не удалось загрузить ни одного среза.")
 
-            # Применяем Rescale Slope/Intercept если они есть
-            if hasattr(ds, "RescaleSlope") and hasattr(ds, "RescaleIntercept"):
-                try:
-                    slope = (
-                        float(ds.RescaleSlope)
-                        if isinstance(
-                            ds.RescaleSlope, (str, pydicom.multival.MultiValue)
-                        )
-                        else ds.RescaleSlope
-                    )
-                    intercept = (
-                        float(ds.RescaleIntercept)
-                        if isinstance(
-                            ds.RescaleIntercept, (str, pydicom.multival.MultiValue)
-                        )
-                        else ds.RescaleIntercept
-                    )
-                    arr = arr * slope + intercept
-                except Exception as e:
-                    print(
-                        f"[WARN] Ошибка применения RescaleSlope/Intercept в {path}: {e}"
-                    )
-
-            slices.append(arr)
-            shapes.append(arr.shape)
-
-            if example_ds is None:
-                example_ds = ds
-
-        except Exception as e:
-            logger.debug(f"[ERROR] Ошибка обработки {os.path.basename(path)}: {e}")
-            continue
-
-    if not slices:
-        raise RuntimeError("Не удалось загрузить ни одного среза.")
-
-    # Приведение всех к одной форме
-    shape_counter = Counter(shapes)
-    target_shape = shape_counter.most_common(1)[0][0]
-    logger.debug(f"[INFO] Приведение всех срезов к форме {target_shape}")
-
-    resized_slices = [
-        (
+        target_shape = Counter(shapes).most_common(1)[0][0]
+        resized_slices = [
             resize(slice_, target_shape, preserve_range=True).astype(np.float32)
-            if slice_.shape != target_shape
-            else slice_
-        )
-        for slice_ in slices
-    ]
+            if slice_.shape != target_shape else slice_
+            for slice_ in slices
+        ]
+        volume = np.stack(resized_slices)
+        logger.debug(f"[INFO] Загружено срезов: {len(volume)}")
+        return volume, example_ds
 
-    volume = np.stack(resized_slices)
-    logger.debug(f"[INFO] Загружено срезов: {len(volume)}")
 
-    return volume, example_ds
+
+
 
 
 @router.get("/viewer", response_class=HTMLResponse)
@@ -251,34 +292,26 @@ def reconstruct(
     current_user: User = Depends(auth_service.get_current_user),
 ):
     try:
-        volume, ds = load_volume(str(current_user.cor_id))
+        volume_data, ds = load_volume(str(current_user.cor_id))
 
-        # === Безопасное чтение PixelSpacing ===
-        try:
-            ps = getattr(ds, "PixelSpacing", [1.0, 1.0])
-            if not (isinstance(ps, (list, tuple)) and len(ps) >= 2):
-                ps = [1.0, 1.0]
-            ps = [float(x) if x not in (None, "") else 1.0 for x in ps]
-        except Exception as e:
-            logger.warning(f"PixelSpacing отсутствует или некорректен: {e}")
-            ps = [1.0, 1.0]
+        # Siemens: если volume_data — словарь, выбираем ориентацию с максимальным числом срезов
+        if isinstance(volume_data, dict):
+            orient, volume = max(volume_data.items(), key=lambda x: x[1].shape[0])
+            logger.debug(f"Siemens: выбрана ориентация {orient}, срезов: {volume.shape[0]}")
+        else:
+            volume = volume_data
 
-        # === Безопасное чтение SliceThickness ===
-        try:
-            st_raw = getattr(ds, "SliceThickness", None)
-            st = float(st_raw) if st_raw not in (None, "") else 1.0
-        except Exception as e:
-            logger.warning(f"SliceThickness отсутствует или некорректен: {e}")
-            st = 1.0
+        # Безопасное чтение PixelSpacing и SliceThickness
+        ps = getattr(ds, "PixelSpacing", [1.0, 1.0])
+        ps = [float(x) if x not in (None, "") else 1.0 for x in ps]
+        st = float(getattr(ds, "SliceThickness", 1.0) or 1.0)
 
-        # === Выбор среза ===
+        # Выбор среза в зависимости от плоскости
         if plane == "axial":
             img = volume[np.clip(index, 0, volume.shape[0] - 1), :, :]
             spacing_x, spacing_y = ps
         elif plane == "sagittal":
-            img = np.flip(
-                volume[:, :, np.clip(index, 0, volume.shape[2] - 1)], axis=(0, 1)
-            )
+            img = np.flip(volume[:, :, np.clip(index, 0, volume.shape[2] - 1)], axis=(0, 1))
             spacing_x, spacing_y = st, ps[0]
         elif plane == "coronal":
             img = np.flip(volume[:, np.clip(index, 0, volume.shape[1] - 1), :], axis=0)
@@ -291,41 +324,33 @@ def reconstruct(
             img = apply_window(img, ds)
         elif mode == "window":
             try:
-                wc = (
-                    window_center
-                    if window_center is not None
-                    else (
-                        float(ds.WindowCenter[0])
-                        if isinstance(ds.WindowCenter, pydicom.multival.MultiValue)
-                        else float(ds.WindowCenter)
-                    )
+                wc = window_center if window_center is not None else (
+                    float(ds.WindowCenter[0])
+                    if isinstance(ds.WindowCenter, pydicom.multival.MultiValue)
+                    else float(ds.WindowCenter)
                 )
-                ww = (
-                    window_width
-                    if window_width is not None
-                    else (
-                        float(ds.WindowWidth[0])
-                        if isinstance(ds.WindowWidth, pydicom.multival.MultiValue)
-                        else float(ds.WindowWidth)
-                    )
+                ww = window_width if window_width is not None else (
+                    float(ds.WindowWidth[0])
+                    if isinstance(ds.WindowWidth, pydicom.multival.MultiValue)
+                    else float(ds.WindowWidth)
                 )
                 img_min, img_max = wc - ww / 2, wc + ww / 2
                 img = np.clip(img, img_min, img_max)
                 img = ((img - img_min) / (img_max - img_min + 1e-5)) * 255
                 img = img.astype(np.uint8)
             except Exception as e:
-                logger.warning(f"Ошибка в window mode, fallback на raw: {e}")
+                logger.warning(f"Ошибка window mode, fallback на raw: {e}")
                 img = ((img - img.min()) / (img.max() - img.min() + 1e-5)) * 255
                 img = img.astype(np.uint8)
         elif mode == "raw":
             img = ((img - img.min()) / (img.max() - img.min() + 1e-5)) * 255
             img = img.astype(np.uint8)
 
-        # === Преобразование в PNG ===
+        # === Преобразование в PNG с подгонкой размера ===
         img_pil = Image.fromarray(img).convert("L")
         img_pil = ImageOps.pad(
             img_pil,
-            (512, 512),
+            (size, size),
             method=Image.Resampling.BICUBIC,
             color=0,
             centering=(0.5, 0.5),
@@ -340,6 +365,8 @@ def reconstruct(
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+    
+
 
 
 @router.post("/upload")
@@ -446,58 +473,73 @@ async def upload_dicom_files(
 
 @router.get("/volume_info")
 def get_volume_info(current_user: User = Depends(auth_service.get_current_user)):
+    """
+    Возвращает информацию о загруженном томе: количество срезов, ширину и высоту.
+    Работает для Siemens (где volume_data — словарь ориентаций) и других производителей.
+    """
     try:
-        print(f"Loading volume for user cor_id: {current_user.cor_id}")  # Логирование
-        volume, ds = load_volume(str(current_user.cor_id))
-        print(f"Volume shape: {volume.shape}")  # Логирование
+        volume_data, ds = load_volume(str(current_user.cor_id))
+
+        if isinstance(volume_data, dict):
+            # Для Siemens: выбираем ориентацию с максимальным числом срезов
+            orient, volume = max(volume_data.items(), key=lambda x: x[1].shape[0])
+        else:
+            volume = volume_data
+
         return {
             "slices": volume.shape[0],
-            "width": volume.shape[1],
-            "height": volume.shape[2],
+            "width": volume.shape[2],   # np.stack формат: (slices, height, width)
+            "height": volume.shape[1],
         }
+
     except Exception as e:
-        print(f"Error in volume_info: {str(e)}")  # Логирование
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Ошибка get_volume_info: {e}")
+        raise HTTPException(status_code=500, detail=f"Ошибка получения информации о томе: {e}")
 
 
 @router.get("/metadata")
 def get_metadata(current_user: User = Depends(auth_service.get_current_user)):
+    """
+    Возвращает метаданные DICOM тома, включая размеры, spacing, толщину среза и Study/Patient info.
+    Работает для Siemens и других производителей.
+    """
     try:
-        volume, ds = load_volume(str(current_user.cor_id))
+        volume_data, ds = load_volume(str(current_user.cor_id))
+
+        if isinstance(volume_data, dict):
+            orient, volume = max(volume_data.items(), key=lambda x: x[1].shape[0])
+        else:
+            volume = volume_data
+
         depth, height, width = volume.shape
 
-        # Безопасно получаем spacing и slice_thickness
+        # Безопасное получение spacing и slice_thickness
         spacing = getattr(ds, "PixelSpacing", [1.0, 1.0])
         if isinstance(spacing, (list, tuple)) and len(spacing) >= 2:
-            spacing_x, spacing_y = float(spacing[1]), float(spacing[0])
+            spacing_x, spacing_y = float(spacing[0]), float(spacing[1])
         else:
             spacing_x, spacing_y = 1.0, 1.0
 
-        slice_thickness = None
         try:
             slice_thickness = float(getattr(ds, "SliceThickness", 1.0))
-        except Exception as e:
-            logger.warning(f"SliceThickness отсутствует или некорректен: {e}")
+        except Exception:
             slice_thickness = 1.0
 
-        # Безопасный доступ к тегам
+        # Удобная функция безопасного получения атрибута
         def safe_get(attr, default="N/A"):
             try:
                 value = getattr(ds, attr, default)
                 if value is None or value == "":
                     return default
-                return str(value)
-            except Exception as e:
-                logger.warning(f"Ошибка доступа к {attr}: {e}")
+                if isinstance(value, pydicom.valuerep.PersonName):
+                    return str(value)
+                return value
+            except Exception:
                 return default
 
         metadata = {
             "shape": {"depth": depth, "height": height, "width": width},
-            "spacing": {
-                "x": spacing_x,
-                "y": spacing_y,
-                "z": slice_thickness,
-            },
+            "spacing": {"x": spacing_x, "y": spacing_y, "z": slice_thickness},
             "study_info": {
                 "StudyInstanceUID": safe_get("StudyInstanceUID"),
                 "SeriesInstanceUID": safe_get("SeriesInstanceUID"),
@@ -516,8 +558,7 @@ def get_metadata(current_user: User = Depends(auth_service.get_current_user)):
         return metadata
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Ошибка get_metadata: {e}")
         raise HTTPException(status_code=500, detail=f"Ошибка при получении метаданных: {e}")
 
 
