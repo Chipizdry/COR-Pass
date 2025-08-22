@@ -15,12 +15,14 @@ import zipfile
 import shutil
 from typing import List
 from collections import Counter
-from skimage.transform import resize
 from collections import Counter
 from cor_pass.services.auth import auth_service
 from cor_pass.database.models import User
 from pydicom import config
 from loguru import logger
+import matplotlib.pyplot as plt
+import base64
+
 
 pydicom.config.settings.reading_validation_mode = pydicom.config.RAISE
 
@@ -59,6 +61,82 @@ def check_dicom_support():
         logger.debug(f"{name} ({uid}): {'✓' if handler else '✗'}")
 
 
+
+@router.get("/siemens_orientation_overview", response_class=HTMLResponse)
+def siemens_orientation_overview(current_user: User = Depends(auth_service.get_current_user)):
+    """
+    Визуализация всех групп ориентаций Siemens DICOM с количеством срезов.
+    """
+    try:
+        volume_data, ds = load_volume(str(current_user.cor_id))
+
+        if not isinstance(volume_data, dict):
+            return HTMLResponse("<h3>Том не Siemens или нет групп ориентаций.</h3>")
+
+        # Собираем данные для визуализации
+        orientations = []
+        slice_counts = []
+
+        for orient, slices in volume_data.items():
+            orientations.append(str(orient))
+            slice_counts.append(slices.shape[0])
+
+        # Построение графика
+        plt.figure(figsize=(10, 6))
+        plt.bar(range(len(slice_counts)), slice_counts, tick_label=orientations)
+        plt.xticks(rotation=90)
+        plt.ylabel("Количество срезов")
+        plt.title("Группы ориентаций Siemens DICOM")
+
+        buf = BytesIO()
+        plt.tight_layout()
+        plt.savefig(buf, format="png")
+        plt.close()
+        buf.seek(0)
+
+        img_base64 = base64.b64encode(buf.read()).decode("utf-8")
+        html_content = f"""
+        <html>
+            <head><title>Siemens Orientation Overview</title></head>
+            <body>
+                <h2>Siemens DICOM Orientation Groups</h2>
+                <img src="data:image/png;base64,{img_base64}" />
+            </body>
+        </html>
+        """
+        return HTMLResponse(html_content)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+def interpolate_siemens_volume(volumes_dict, target_shape=None):
+    """
+    volumes_dict: dict {orientation: np.array(depth, height, width)}
+    target_shape: tuple (depth, height, width) для окончательной интерполяции
+    Возвращает интерполированный том.
+    """
+    # Выбираем ориентацию с максимальным количеством срезов
+    orient, vol = max(volumes_dict.items(), key=lambda x: x[1].shape[0])
+
+    depth, height, width = vol.shape
+
+    if target_shape is None:
+        target_shape = (depth, height, width)
+
+    # Интерполяция в 3D: order=3 -> бикубическая
+    vol_resized = resize(
+        vol,
+        output_shape=target_shape,
+        order=3,               # cubic
+        preserve_range=True,
+        anti_aliasing=True
+    ).astype(np.float32)
+
+    return vol_resized
 
 
 def sort_by_image_position(datasets):
@@ -201,16 +279,28 @@ def load_volume(user_cor_id: str):
                 if example_ds is None:
                     example_ds = ds
 
-            # Выравниваем размеры
+            # Выравниваем размеры срезов до одинакового shape
             target_shape = Counter(shapes).most_common(1)[0][0]
             resized = [
-                resize(a, target_shape, preserve_range=True).astype(np.float32)
+                resize(a, target_shape, preserve_range=True, order=3).astype(np.float32)
                 if a.shape != target_shape else a
                 for a in arrs
             ]
-            volumes[orient] = np.stack(resized)
 
-        logger.debug(f"[INFO] Siemens: собрали {len(volumes)} групп")
+            # === Бикубическая интерполяция по оси Z ===
+            vol_3d = np.stack(resized)
+            target_depth = vol_3d.shape[0]  # Можно задать другое число срезов
+            vol_3d_interpolated = resize(
+                vol_3d,
+                output_shape=(target_depth, target_shape[0], target_shape[1]),
+                order=3,
+                preserve_range=True,
+                anti_aliasing=True,
+            ).astype(np.float32)
+
+            volumes[orient] = vol_3d_interpolated
+
+        logger.debug(f"[INFO] Siemens: собрали {len(volumes)} групп с бикубической интерполяцией")
         return volumes, example_ds
 
     else:
@@ -248,7 +338,6 @@ def load_volume(user_cor_id: str):
         volume = np.stack(resized_slices)
         logger.debug(f"[INFO] Загружено срезов: {len(volume)}")
         return volume, example_ds
-
 
 
 
