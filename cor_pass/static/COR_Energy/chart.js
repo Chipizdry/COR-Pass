@@ -217,6 +217,58 @@ async function loadEnergyDataForTimeRange(range, objectName = null) {
 }
 
 
+
+
+async function loadEnergyDataForCustomRange(startDate, endDate, objectName = null) {
+    try {
+        isLoading = true;
+        document.getElementById('loadingIndicator').style.display = 'inline';
+
+        const durationDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
+        let intervals = Math.ceil(durationDays); // по одному интервалу в день
+
+        const formatDateForAPI = (date) => date.toISOString().replace(/\.\d{3}Z$/, '');
+        const params = new URLSearchParams({
+            start_date: formatDateForAPI(startDate),
+            end_date: formatDateForAPI(endDate),
+            intervals: intervals
+        });
+
+        if (objectName) params.append('object_name', objectName);
+
+        const url = `/api/modbus/measurements/energy/?${params.toString()}`;
+        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail || 'Ошибка при загрузке данных');
+        }
+
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            const chartData = data.map(item => ({
+                interval: item.interval_start,
+                solar: item.solar_energy_kwh,
+                load: item.load_energy_kwh,
+                grid: item.grid_energy_kwh,
+                battery: item.battery_energy_kwh
+            }));
+            updateBarChart(chartData);
+        }
+    } catch (error) {
+        console.error('Error loading custom energy data:', error);
+        alert(`Ошибка загрузки данных: ${error.message}`);
+    } finally {
+        isLoading = false;
+        document.getElementById('loadingIndicator').style.display = 'none';
+    }
+}
+
+
+
+
+
 function initChartTypeControl() {
     const chartTypeSelect = document.getElementById('chartTypeSelect');
     if (!chartTypeSelect) return; // если вдруг элемент не найден
@@ -397,7 +449,14 @@ function initTimeRangeControl() {
         }
         
         stopChartUpdates();
-        fetchAveragedMeasurements(startDate, endDate);
+      //  fetchAveragedMeasurements(startDate, endDate);
+
+        if (currentChartType === 'line') {
+            fetchAveragedMeasurements(startDate, endDate);
+        } else if (currentChartType === 'bar') {
+            loadEnergyDataForCustomRange(startDate, endDate);
+        }
+
     });
     
     // Запускаем режим реального времени по умолчанию
