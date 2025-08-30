@@ -826,6 +826,29 @@
 
 
             let scheduleEnabled = true;
+
+            const lineTimeRanges = [
+                { value: 'realtime', label: 'В реальном времени' },
+                { value: '1h', label: 'Последний час' },
+                { value: '3h', label: 'Последние 3 часа' },
+                { value: '6h', label: 'Последние 6 часов' },
+                { value: '12h', label: 'Последние 12 часов' },
+                { value: '24h', label: 'Последние 24 часа' },
+                { value: '3d', label: 'Последние 3 дня' },
+                { value: '7d', label: 'Последние 7 дней' },
+                { value: '30d', label: 'Последние 30 дней' },
+                { value: 'custom', label: 'Выбрать даты...' }
+            ];
+
+            const barTimeRanges = [
+                { value: '1d', label: 'За сутки (почасово)' },
+                { value: '7d', label: 'За неделю (посуточно)' },
+                { value: '30d', label: 'За месяц (посуточно)' },
+                { value: 'custom', label: 'Выбрать даты...' }
+            ];
+
+
+
             let schedulePeriods = [
                 // Пример данных
                 {

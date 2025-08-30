@@ -175,8 +175,8 @@
             
               // Функция для обновления индикатора нагрузки
               function updateLoadIndicator(powerKw) {
-                const maxWidth = 2000;  // Максимальная ширина индикатора (в SVG)
-                const maxPower = 150;   // Максимальная мощность (кВт)
+                const maxWidth = 1900;  // Максимальная ширина индикатора (в SVG)
+                const maxPower = 160;   // Максимальная мощность (кВт)
             
                 // Ограничиваем мощность
                 powerKw = Math.min(Math.max(powerKw, 0), maxPower);
