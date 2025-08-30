@@ -228,14 +228,11 @@ function initChartTypeControl() {
         stopChartUpdates();
 
         // Уничтожаем оба графика, если они есть
-        if (powerChart) {
-            powerChart.destroy();
-            powerChart = null;
-        }
-        if (energyChart) {
-            energyChart.destroy();
-            energyChart = null;
-        }
+        if (powerChart) { powerChart.destroy(); powerChart = null; }
+        if (energyChart) { energyChart.destroy(); energyChart = null;}
+
+        // обновляем селектор периодов под выбранный тип
+        updateTimeRangeOptions(currentChartType);
 
         if (currentChartType === 'line') {
             initPowerChart();   // заново создаём line chart
@@ -312,6 +309,27 @@ function updateBarChart(chartData) {
 
 
 
+function updateTimeRangeOptions(chartType) {
+    const timeRangeSelect = document.getElementById('timeRangeSelect');
+    if (!timeRangeSelect) return;
+
+    // очищаем старые опции
+    timeRangeSelect.innerHTML = '';
+
+    const ranges = chartType === 'line' ? lineTimeRanges : barTimeRanges;
+
+    ranges.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.value;
+        opt.textContent = r.label;
+        timeRangeSelect.appendChild(opt);
+    });
+
+    // выбираем первую опцию по умолчанию
+    timeRangeSelect.value = ranges[0].value;
+}
+
+
 function initTimeRangeControl() {
     // Установим текущую дату в кастомных полях
     const now = new Date();
@@ -330,6 +348,7 @@ function initTimeRangeControl() {
         document.querySelector('.time-display').style.display = isRealtime ? 'block' : 'none';
         document.getElementById('customDateRange').style.display = isCustom ? 'flex' : 'none';
         
+        /*
         if (isRealtime) {
             startLiveUpdates();
         } else if (isCustom) {
@@ -339,7 +358,27 @@ function initTimeRangeControl() {
             // Загружаем данные для выбранного диапазона
             stopChartUpdates();
             loadDataForTimeRange(this.value);
+        }  */
+
+        if (currentChartType === 'line') {
+            if (isRealtime) {
+                startLiveUpdates();
+            } else if (isCustom) {
+                stopChartUpdates();
+            } else {
+                stopChartUpdates();
+                loadDataForTimeRange(this.value);
+            }
+        } else if (currentChartType === 'bar') {
+            if (isCustom) {
+                stopChartUpdates();
+            } else {
+                currentBarTimeRange = this.value;
+                loadEnergyDataForTimeRange(currentBarTimeRange);
+            }
         }
+
+
     });
     
     // Обработчик для кастомного диапазона

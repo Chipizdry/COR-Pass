@@ -823,7 +823,7 @@
 
             let energyChart = null;
             let currentChartType = 'line';
-
+            let currentBarTimeRange = '1d'; // по умолчанию сутки
 
             let scheduleEnabled = true;
 
@@ -841,9 +841,9 @@
             ];
 
             const barTimeRanges = [
-                { value: '1d', label: 'За сутки (почасово)' },
-                { value: '7d', label: 'За неделю (посуточно)' },
-                { value: '30d', label: 'За месяц (посуточно)' },
+                { value: '1d', label: 'За сутки' },
+                { value: '7d', label: 'За неделю' },
+                { value: '30d', label: 'За месяц ' },
                 { value: 'custom', label: 'Выбрать даты...' }
             ];
 
