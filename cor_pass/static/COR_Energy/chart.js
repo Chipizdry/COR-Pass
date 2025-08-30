@@ -219,6 +219,100 @@ async function loadEnergyDataForTimeRange(range, objectName = null) {
 
 
 
+function initChartTypeControl() {
+    if (document.getElementById('chartTypeSelect')) return;
+
+    const control = document.createElement('div');
+    control.className = 'chart-type-control';
+    control.innerHTML = `
+        <label>Тип графика:</label>
+        <select id="chartTypeSelect">
+            <option value="line">Мощности (линия)</option>
+            <option value="bar">Энергия (столбцы)</option>
+        </select>
+    `;
+    document.querySelector('.chart-controls').prepend(control);
+
+    document.getElementById('chartTypeSelect').addEventListener('change', function() {
+        currentChartType = this.value;
+        stopChartUpdates();
+
+        if (currentChartType === 'line') {
+            // включаем старый режим с averaged
+            startChartUpdates();
+        } else if (currentChartType === 'bar') {
+            // грузим данные энергии
+            loadEnergyDataForTimeRange('7d'); // по умолчанию неделя
+        }
+    });
+}
+
+
+function updateBarChart(chartData) {
+    const ctx = document.getElementById('powerChart').getContext('2d');
+
+    if (energyChart) {
+        energyChart.destroy();
+    }
+
+    energyChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: chartData.map(d => new Date(d.interval).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit' })),
+            datasets: [
+                {
+                    label: 'Солнечная энергия (кВт·ч)',
+                    data: chartData.map(d => d.solar),
+                    backgroundColor: 'rgba(255, 206, 86, 0.7)'
+                },
+                {
+                    label: 'Нагрузка (кВт·ч)',
+                    data: chartData.map(d => d.load),
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)'
+                },
+                {
+                    label: 'Сеть (кВт·ч)',
+                    data: chartData.map(d => d.grid),
+                    backgroundColor: 'rgba(255, 99, 132, 0.7)'
+                },
+                {
+                    label: 'Батарея (кВт·ч)',
+                    data: chartData.map(d => d.battery),
+                    backgroundColor: 'rgba(153, 102, 255, 0.7)'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.raw.toFixed(2)} кВт·ч`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true
+                },
+                y: {
+                    stacked: false,
+                    title: {
+                        display: true,
+                        text: 'Энергия (кВт·ч)'
+                    }
+                }
+            }
+        }
+    });
+}
+
+
+
 function initTimeRangeControl() {
     // Установим текущую дату в кастомных полях
     const now = new Date();
@@ -671,12 +765,19 @@ async function startChartUpdates() {
     initPowerChart();
     initPageSlider();
     initTimeRangeControl();
+    initChartTypeControl(); // переключатель
     
     // Инициализация массива измерений
     allMeasurements = new Array(100);
     
     // Запуск режима реального времени
-    startLiveUpdates();
+    //startLiveUpdates();
+
+    if (currentChartType === 'line') {
+        startLiveUpdates();
+    } else if (currentChartType === 'bar') {
+        loadEnergyDataForTimeRange('7d');
+    }
 }
 
 function startLiveUpdates() {
