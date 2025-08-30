@@ -129,6 +129,96 @@ async function loadDataForTimeRange(range) {
 
 
 
+// Функция для загрузки энергетических данных по временному диапазону
+async function loadEnergyDataForTimeRange(range, objectName = null) {
+    const now = new Date();
+    let startDate;
+    let intervals = 24; // по умолчанию почасово за сутки
+
+    switch(range) {
+        case '1d': // почасово за сутки
+            startDate = new Date(now.getTime() - 24 * 3600000);
+            intervals = 24;
+            break;
+        case '7d': // посуточно за неделю
+            startDate = new Date(now.getTime() - 7 * 24 * 3600000);
+            intervals = 7;
+            break;
+        case '30d': // посуточно за месяц
+            startDate = new Date(now.getTime() - 30 * 24 * 3600000);
+            intervals = 30;
+            break;
+        default:
+            console.error('Неверный диапазон:', range);
+            return;
+    }
+
+    try {
+        isLoading = true;
+        document.getElementById('loadingIndicator').style.display = 'inline';
+
+        // форматируем даты без миллисекунд
+        const formatDateForAPI = (date) => {
+            return date.toISOString().replace(/\.\d{3}Z$/, '');
+        };
+
+        const params = new URLSearchParams({
+            start_date: formatDateForAPI(startDate),
+            end_date: formatDateForAPI(now),
+            intervals: intervals
+        });
+
+        if (objectName) {
+            params.append('object_name', objectName);
+        }
+
+        const url = `/api/modbus/measurements/energy/?${params.toString()}`;
+        // console.log('Fetching energy data from:', url);
+
+        const response = await fetch(url, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            let errorData;
+            try {
+                errorData = await response.json();
+            } catch (e) {
+                errorData = { detail: response.statusText };
+            }
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        // console.log('Energy data received:', data);
+
+        if (data && data.length > 0) {
+            // Формируем данные для графика (bar chart)
+            const chartData = data.map(item => ({
+                interval: item.interval_start,        // подпись по оси X
+                solar: item.solar_energy_kwh,         // энергия солнца
+                load: item.load_energy_kwh,           // нагрузка
+                grid: item.grid_energy_kwh,           // сеть
+                battery: item.battery_energy_kwh      // батарея
+            }));
+
+            // Передаём в функцию обновления диаграммы
+            updateBarChart(chartData);
+        }
+    } catch (error) {
+        console.error('Error loading energy data:', error);
+        alert(`Ошибка загрузки данных: ${error.message}`);
+    } finally {
+        isLoading = false;
+        document.getElementById('loadingIndicator').style.display = 'none';
+    }
+}
+
+
+
+
 function initTimeRangeControl() {
     // Установим текущую дату в кастомных полях
     const now = new Date();

@@ -1272,3 +1272,80 @@ async def get_averaged_measurements_service(
         ))
 
     return averaged_results    
+
+
+
+
+async def get_energy_measurements_service(
+    db: AsyncSession,
+    object_name: Optional[str],
+    start_date: datetime,
+    end_date: datetime,
+    intervals: int = 24
+) -> List[dict]:
+    if not start_date or not end_date:
+        raise ValueError("Необходимо указать start_date и end_date")
+
+    # Загружаем все измерения
+    query = (
+        select(CerboMeasurement)
+        .where(CerboMeasurement.measured_at >= start_date,
+               CerboMeasurement.measured_at <= end_date)
+        .order_by(CerboMeasurement.measured_at.asc())
+    )
+    if object_name:
+        query = query.where(CerboMeasurement.object_name == object_name)
+
+    result = await db.execute(query)
+    all_measurements = result.scalars().all()
+
+    if len(all_measurements) < 2:
+        return []
+
+    # Делим период на интервалы
+    interval_size = (end_date - start_date) / intervals
+    grouped = [[] for _ in range(intervals)]
+
+    for m in all_measurements:
+        idx = min(int((m.measured_at - start_date) / interval_size), intervals - 1)
+        grouped[idx].append(m)
+
+    results = []
+
+    # Считаем энергию по каждому интервалу
+    for i, measurements in enumerate(grouped):
+        if len(measurements) < 2:
+            continue
+
+        interval_start = start_date + i * interval_size
+        interval_end = interval_start + interval_size
+
+        solar_energy = 0.0
+        load_energy = 0.0
+        grid_energy = 0.0
+        battery_energy = 0.0
+
+        for j in range(1, len(measurements)):
+            prev = measurements[j - 1]
+            curr = measurements[j]
+            delta_h = (curr.measured_at - prev.measured_at).total_seconds() / 3600.0
+
+            if prev.solar_total_pv_power is not None:
+                solar_energy += (prev.solar_total_pv_power / 1000.0) * delta_h
+            if prev.inverter_total_ac_output is not None:
+                load_energy += (prev.inverter_total_ac_output / 1000.0) * delta_h
+            if prev.ess_total_input_power is not None:
+                grid_energy += (prev.ess_total_input_power / 1000.0) * delta_h
+            if prev.general_battery_power is not None:
+                battery_energy += (prev.general_battery_power / 1000.0) * delta_h
+
+        results.append({
+            "interval_start": interval_start,
+            "interval_end": interval_end,
+            "solar_energy_kwh": round(solar_energy, 3),
+            "load_energy_kwh": round(load_energy, 3),
+            "grid_energy_kwh": round(grid_energy, 3),
+            "battery_energy_kwh": round(battery_energy, 3)
+        })
+
+    return results

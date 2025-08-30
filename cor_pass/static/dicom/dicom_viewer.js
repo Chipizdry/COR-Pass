@@ -169,6 +169,9 @@ function prepareUIBeforeUpload() {
   }
 
 
+
+  
+
 async function update(plane, callback) {
   if (!isDicomLoaded) { return;}
     const idx = parseInt(document.getElementById(plane).value);

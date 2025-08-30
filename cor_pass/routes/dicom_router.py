@@ -1,3 +1,6 @@
+
+
+
 from fastapi import APIRouter, Depends, Query, HTTPException, UploadFile, File, status
 from fastapi.responses import StreamingResponse, HTMLResponse
 import os
@@ -671,5 +674,4 @@ def handle_compressed_dicom(file_path):
     except Exception as e:
         print(f"[ERROR] Ошибка обработки сжатого DICOM: {e}")
         return None
-
 

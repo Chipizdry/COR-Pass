@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from typing import List, Optional
-from cor_pass.repository.cerbo_service import BATTERY_ID, ESS_UNIT_ID, INVERTER_ID, REGISTERS, create_schedule, decode_signed_16, decode_signed_32, delete_schedule, get_all_schedules, get_device_measurements_paginated,get_averaged_measurements_service, get_modbus_client, get_schedule_by_id, register_modbus_error, update_schedule
+from cor_pass.repository.cerbo_service import BATTERY_ID, ESS_UNIT_ID, INVERTER_ID, REGISTERS, create_schedule, decode_signed_16, decode_signed_32, delete_schedule, get_all_schedules, get_device_measurements_paginated,get_averaged_measurements_service,get_energy_measurements_service, get_modbus_client, get_schedule_by_id, register_modbus_error, update_schedule
 from cor_pass.schemas import CerboMeasurementResponse, DVCCMaxChargeCurrentRequest, EnergeticScheduleBase, EnergeticScheduleCreate, EnergeticScheduleResponse, EssAdvancedControl, GridLimitUpdate, InverterPowerPayload, PaginatedResponse, RegisterWriteRequest, VebusSOCControl
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -757,6 +757,33 @@ async def get_averaged_measurements(
     except Exception as e:
         logger.error(f"Ошибка при получении усреднённых измерений: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
+
+
+
+
+
+@router.get(
+    "/measurements/energy/",
+    summary="Энергетический баланс по интервалам",
+    description="Считает энергию (кВт·ч) по каждому интервалу времени: солнце, нагрузка, сеть, батарея",
+    tags=["Measurements"]
+)
+async def get_energy_measurements(
+    object_name: Optional[str] = Query(None, description="Фильтр по имени объекта"),
+    start_date: datetime = Query(..., description="Начальная дата периода (ISO 8601)"),
+    end_date: datetime = Query(..., description="Конечная дата периода (ISO 8601)"),
+    intervals: int = Query(24, gt=0, description="Количество интервалов (например 24 → почасово, 30 → посуточно за месяц)"),
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        return await get_energy_measurements_service(db, object_name, start_date, end_date, intervals)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Ошибка при расчёте энергии: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
 
 
 
