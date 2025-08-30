@@ -218,7 +218,6 @@ async function loadEnergyDataForTimeRange(range, objectName = null) {
 
 
 
-
 function initChartTypeControl() {
     if (document.getElementById('chartTypeSelect')) return;
 
@@ -235,14 +234,30 @@ function initChartTypeControl() {
 
     document.getElementById('chartTypeSelect').addEventListener('change', function() {
         currentChartType = this.value;
+
+        // сначала всё останавливаем
         stopChartUpdates();
 
+            // Уничтожаем оба графика, если они есть
+        if (powerChart) {
+            powerChart.destroy();
+            powerChart = null;
+        }
+        if (energyChart) {
+            energyChart.destroy();
+            energyChart = null;
+        }
+
+
         if (currentChartType === 'line') {
-            // включаем старый режим с averaged
-            startChartUpdates();
+            initPowerChart();   // заново создаём line chart
+            startLiveUpdates(); // включаем live режим
         } else if (currentChartType === 'bar') {
-            // грузим данные энергии
-            loadEnergyDataForTimeRange('7d'); // по умолчанию неделя
+            if (powerChart) {
+                powerChart.destroy(); // убираем старый line chart
+                powerChart = null;
+            }
+            loadEnergyDataForTimeRange('7d'); // рисуем bar chart
         }
     });
 }
