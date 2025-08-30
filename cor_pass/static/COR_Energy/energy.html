@@ -385,6 +385,13 @@
                         <input type="datetime-local" id="endDate">
                         <button id="applyCustomRange">Применить</button>
                     </div>
+
+                    <div class="chart-type-control">
+                        <select id="chartTypeSelect">
+                            <option value="line">Мощности (линия)</option>
+                            <option value="bar">Энергия (столбцы)</option>
+                        </select>
+                    </div>
                     <!-- Блок пагинации (только для реального времени) -->
                     <div class="pages-control" style="display: none;">
                         <label>Страниц на экран:</label>
@@ -817,7 +824,7 @@
             let energyChart = null;
             let currentChartType = 'line';
 
-            
+
             let scheduleEnabled = true;
             let schedulePeriods = [
                 // Пример данных

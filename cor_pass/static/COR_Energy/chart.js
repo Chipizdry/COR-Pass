@@ -217,28 +217,17 @@ async function loadEnergyDataForTimeRange(range, objectName = null) {
 }
 
 
-
 function initChartTypeControl() {
-    if (document.getElementById('chartTypeSelect')) return;
+    const chartTypeSelect = document.getElementById('chartTypeSelect');
+    if (!chartTypeSelect) return; // если вдруг элемент не найден
 
-    const control = document.createElement('div');
-    control.className = 'chart-type-control';
-    control.innerHTML = `
-        <label>Тип графика:</label>
-        <select id="chartTypeSelect">
-            <option value="line">Мощности (линия)</option>
-            <option value="bar">Энергия (столбцы)</option>
-        </select>
-    `;
-    document.querySelector('.chart-controls').prepend(control);
-
-    document.getElementById('chartTypeSelect').addEventListener('change', function() {
+    chartTypeSelect.addEventListener('change', function() {
         currentChartType = this.value;
 
         // сначала всё останавливаем
         stopChartUpdates();
 
-            // Уничтожаем оба графика, если они есть
+        // Уничтожаем оба графика, если они есть
         if (powerChart) {
             powerChart.destroy();
             powerChart = null;
@@ -248,16 +237,11 @@ function initChartTypeControl() {
             energyChart = null;
         }
 
-
         if (currentChartType === 'line') {
             initPowerChart();   // заново создаём line chart
             startLiveUpdates(); // включаем live режим
         } else if (currentChartType === 'bar') {
-            if (powerChart) {
-                powerChart.destroy(); // убираем старый line chart
-                powerChart = null;
-            }
-            loadEnergyDataForTimeRange('7d'); // рисуем bar chart
+            loadEnergyDataForTimeRange('1d'); // рисуем bar chart
         }
     });
 }
