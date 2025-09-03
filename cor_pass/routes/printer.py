@@ -15,6 +15,14 @@ router = APIRouter(prefix="/printer", tags=["Printer"])
 # 1) RAW-печать по TCP:9100
 # =========================
 
+class CodePrintRequest(BaseModel):
+    data: str = Field(..., description="Данные для QR или штрих-кода")
+    protocol: str = Field("ZPL", description="Протокол: ZPL | EPL | TSPL")
+    printer_ip: str = Field(..., description="IP-адрес принтера")
+    port: int = Field(9100, description="TCP порт")
+    timeout: int = Field(10, description="Таймаут соединения")
+
+
 class ProtocolPrintRequest(BaseModel):
     text: str = Field(..., min_length=1, description="Текст для печати")
     protocol: str = Field("ZPL", description="Протокол: ZPL | EPL | TSPL")
@@ -71,7 +79,35 @@ class EthernetPrinter:
 
         return self.send(cmd.encode("utf-8"))
 
+class EthernetPrinter(EthernetPrinter):  # расширяем существующий класс
+    def print_barcode(self, data: str, protocol: str = "ZPL") -> bool:
+        """
+        Печать штрих-кода или QR-кода.
+        :param data: строка с данными для кода
+        :param protocol: ZPL | EPL | TSPL
+        """
+        protocol = protocol.upper()
+        if protocol == "ZPL":
+            # Пример печати QR-кода и Code128 в ZPL
+            # QR-код
+            cmd = f"^XA^FO50,50^BQN,2,5^FDLA,{data}^FS^XZ"
+            # Для штрих-кода Code128 можно использовать:
+            # cmd = f"^XA^FO50,50^BCN,100,Y,N,N^FD{data}^FS^XZ"
+        elif protocol == "EPL":
+            # EPL поддерживает только Code128 / Code39
+            # Пример Code128
+            cmd = f"N\r\nB50,50,0,1,2,50,100,\"{data}\"\r\nP1\r\n"
+        elif protocol == "TSPL":
+            # TSPL печатает QR-код и Code128
+            # QR-код
+            cmd = f"SIZE 80 mm,40 mm\r\nCLS\r\nQRCODE 100,100,L,5,A,0,\"{data}\"\r\nPRINT 1\r\n"
+            # Для Code128:
+            # cmd = f"SIZE 80 mm,40 mm\r\nCLS\r\nBARCODE 50,50,\"128\",100,1,0,2,2,\"{data}\"\r\nPRINT 1\r\n"
+        else:
+            logger.error(f"Неизвестный протокол для печати кода: {protocol}")
+            return False
 
+        return self.send(cmd.encode("utf-8"))
 
 
 DEFAULT_RAW_PRINTER_IP = "192.168.154.98"  # IDPRT ID2X по сети
@@ -101,6 +137,18 @@ def print_with_protocol(req: ProtocolPrintRequest):
         "printer_ip": req.printer_ip,
     }
 
+
+
+
+@router.post("/print_code")
+def print_code(req: CodePrintRequest):
+    printer = EthernetPrinter(req.printer_ip, req.port, req.timeout)
+    success = printer.print_barcode(req.data, req.protocol)
+    return {
+        "status": "ok" if success else "error",
+        "protocol": req.protocol,
+        "printer_ip": req.printer_ip,
+    }
 
 # =======================================
 # 2) Существующие HTTP-принтеры (порт 8080)
