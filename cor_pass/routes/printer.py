@@ -1,3 +1,5 @@
+
+
 import socket
 import asyncio
 import platform
@@ -13,13 +15,12 @@ router = APIRouter(prefix="/printer", tags=["Printer"])
 # 1) RAW-печать по TCP:9100
 # =========================
 
-class RawTextPrintRequest(BaseModel):
-    text: str = Field(..., min_length=1)
-    printer_ip: str | None = None
-    port: int = 9100
-    timeout: int = 10
-    encoding: str = "utf-8"
-    newline: str = "\n"   # некоторые принтеры любят '\r\n'
+class ProtocolPrintRequest(BaseModel):
+    text: str = Field(..., min_length=1, description="Текст для печати")
+    protocol: str = Field("ZPL", description="Протокол: ZPL | EPL | TSPL")
+    printer_ip: str = Field(..., description="IP-адрес принтера")
+    port: int = Field(9100, description="TCP порт (по умолчанию 9100)")
+    timeout: int = Field(10, description="Таймаут соединения в секундах")
 
 class EthernetPrinter9100:
     def __init__(self, host: str, port: int = 9100, timeout: int = 10):
@@ -57,12 +58,13 @@ class EthernetPrinter:
             return False
 
     def print_protocol(self, text: str, protocol: str = "ZPL") -> bool:
-        if protocol.upper() == "ZPL":
+        protocol = protocol.upper()
+        if protocol == "ZPL":
             cmd = f"^XA^FO50,50^A0N,40,40^FD{text}^FS^XZ"
-        elif protocol.upper() == "EPL":
-            cmd = f"N\nA50,50,0,4,1,1,N,\"{text}\"\nP1\n"
-        elif protocol.upper() == "TSPL":
-            cmd = f"SIZE 80 mm,40 mm\nCLS\nTEXT 100,100,\"3\",0,1,1,\"{text}\"\nPRINT 1\n"
+        elif protocol == "EPL":
+            cmd = f"N\r\nA50,50,0,4,1,1,N,\"{text}\"\r\nP1\r\n"
+        elif protocol == "TSPL":
+            cmd = f"SIZE 80 mm,40 mm\r\nCLS\r\nTEXT 100,100,\"3\",0,1,1,\"{text}\"\r\nPRINT 1\r\n"
         else:
             logger.error(f"Неизвестный протокол: {protocol}")
             return False
@@ -70,25 +72,11 @@ class EthernetPrinter:
         return self.send(cmd.encode("utf-8"))
 
 
+
+
 DEFAULT_RAW_PRINTER_IP = "192.168.154.98"  # IDPRT ID2X по сети
 
-@router.post("/raw/print_text")
-def print_text_raw(req: RawTextPrintRequest):
-    host = req.printer_ip or DEFAULT_RAW_PRINTER_IP
-    try:
-        printer = EthernetPrinter9100(host, req.port, req.timeout)
-        printer.print_text(req.text, encoding=req.encoding, newline=req.newline)
-        return {"status": "ok"}
-    except Exception as e:
-        logger.error(f"Raw print error to {host}:{req.port}: {e}")
-        raise HTTPException(status_code=502, detail=f"Raw print failed: {e}")
 
-def _tcp_connect(ip: str, port: int, timeout: float) -> bool:
-    try:
-        with socket.create_connection((ip, port), timeout=timeout):
-            return True
-    except Exception:
-        return False
 
 @router.get("/raw/check")
 async def check_raw_printer(
@@ -103,15 +91,15 @@ async def check_raw_printer(
 
 
 @router.post("/print_protocol")
-def print_with_protocol(data: dict):
-    text = data.get("text", "")
-    protocol = data.get("protocol", "ZPL")
-    printer_ip = data.get("printer_ip", "192.168.154.98")
+def print_with_protocol(req: ProtocolPrintRequest):
+    printer = EthernetPrinter(req.printer_ip, req.port, req.timeout)
+    success = printer.print_protocol(req.text, req.protocol)
 
-    printer = EthernetPrinter(printer_ip)
-    success = printer.print_protocol(text, protocol)
-
-    return {"status": "ok" if success else "error", "protocol": protocol}
+    return {
+        "status": "ok" if success else "error",
+        "protocol": req.protocol,
+        "printer_ip": req.printer_ip,
+    }
 
 
 # =======================================
