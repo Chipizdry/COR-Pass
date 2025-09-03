@@ -8,6 +8,9 @@
             document.getElementById('State_Of_Сharge').value = initialSocValue;
             document.getElementById('socSliderValue').textContent = initialSocValue;
         });
+
+       
+
         initChartTypeControl();
             // Инициализация графика мощности
         initPowerChart();

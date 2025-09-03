@@ -6,6 +6,7 @@ from uuid import uuid4
 from loguru import logger
 from cor_pass.database.db import async_session_maker
 from cor_pass.schemas import FullDeviceMeasurementCreate
+
 from worker.modbus_client import (
     create_modbus_client_singleton,
     get_modbus_client_singleton, 
@@ -35,6 +36,10 @@ COLLECTION_INTERVAL_SECONDS = 2
 SCHEDULE_CHECK_INTERVAL_SECONDS = 3
 
 current_active_schedule_id: Optional[str] = None
+
+
+
+
 
 async def set_inverter_parameters(
     grid_feed_w: int, battery_level_percent: int, charge_battery_value: int
@@ -295,3 +300,11 @@ if __name__ == "__main__":
             logger.info("Modbus Worker stopped by user.")
         except Exception as e:
             logger.error(f"Modbus Worker crashed: {e}", exc_info=True)
+
+
+
+
+
+
+
+
