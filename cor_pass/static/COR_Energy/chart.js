@@ -298,7 +298,6 @@ function initChartTypeControl() {
     });
 }
 
-
 function updateBarChart(chartData) {
     const ctx = document.getElementById('powerChart').getContext('2d');
 
@@ -306,10 +305,32 @@ function updateBarChart(chartData) {
         energyChart.destroy();
     }
 
+    // Определяем формат даты
+    let dateFormatter;
+    const intervalsCount = chartData.length;
+
+    if (intervalsCount <= 24) {
+        // почасовые данные
+        dateFormatter = (d) => new Date(d).toLocaleTimeString('ru-RU', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Europe/Moscow'
+        });
+    } else {
+        // суточные данные
+        dateFormatter = (d) => new Date(d).toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            timeZone: 'Europe/Moscow'
+        });
+    }
+
+    const labels = chartData.map(d => dateFormatter(d.interval));
+
     energyChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: chartData.map(d => new Date(d.interval).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit' })),
+            labels: labels,
             datasets: [
                 {
                     label: 'Солнечная энергия (кВт·ч)',
@@ -319,7 +340,7 @@ function updateBarChart(chartData) {
                 {
                     label: 'Нагрузка (кВт·ч)',
                     data: chartData.map(d => d.load),
-                    backgroundColor: 'rgba(54, 162, 235, 0.7)'
+                    backgroundColor: 'rgba(75, 192, 192, 1)'
                 },
                 {
                     label: 'Сеть (кВт·ч)',
@@ -403,18 +424,6 @@ function initTimeRangeControl() {
         document.querySelector('.time-display').style.display = isRealtime ? 'block' : 'none';
         document.getElementById('customDateRange').style.display = isCustom ? 'flex' : 'none';
         
-        /*
-        if (isRealtime) {
-            startLiveUpdates();
-        } else if (isCustom) {
-            // Останавливаем обновления в реальном времени
-            stopChartUpdates();
-        } else {
-            // Загружаем данные для выбранного диапазона
-            stopChartUpdates();
-            loadDataForTimeRange(this.value);
-        }  */
-
         if (currentChartType === 'line') {
             if (isRealtime) {
                 startLiveUpdates();
