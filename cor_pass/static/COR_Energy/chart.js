@@ -298,6 +298,9 @@ function initChartTypeControl() {
     });
 }
 
+
+
+
 function updateBarChart(chartData) {
     const ctx = document.getElementById('powerChart').getContext('2d');
 
@@ -305,27 +308,14 @@ function updateBarChart(chartData) {
         energyChart.destroy();
     }
 
-    // Определяем формат даты
-    let dateFormatter;
-    const intervalsCount = chartData.length;
+    if (!chartData || chartData.length === 0) return;
 
-    if (intervalsCount <= 24) {
-        // почасовые данные
-        dateFormatter = (d) => new Date(d).toLocaleTimeString('ru-RU', {
-            hour: '2-digit',
-            minute: '2-digit',
-            timeZone: 'Europe/Moscow'
-        });
-    } else {
-        // суточные данные
-        dateFormatter = (d) => new Date(d).toLocaleDateString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            timeZone: 'Europe/Moscow'
-        });
-    }
+    const startDate = new Date(chartData[0].interval);
+    const endDate = new Date(chartData[chartData.length - 1].interval);
 
-    const labels = chartData.map(d => dateFormatter(d.interval));
+    const labels = chartData.map(d => 
+        formatDateLabel(d.interval, startDate, endDate, 'bar')
+    );
 
     energyChart = new Chart(ctx, {
         type: 'bar',
@@ -368,15 +358,10 @@ function updateBarChart(chartData) {
                 }
             },
             scales: {
-                x: {
-                    stacked: true
-                },
+                x: { stacked: true },
                 y: {
                     stacked: false,
-                    title: {
-                        display: true,
-                        text: 'Энергия (кВт·ч)'
-                    }
+                    title: { display: true, text: 'Энергия (кВт·ч)' }
                 }
             }
         }
@@ -635,29 +620,25 @@ function initPageSlider() {
 
 // Функция для обработки данных измерений
 function processMeasurementsData(measurements) {
-    if (!measurements) return { labels: [], loadPower: [], solarPower: [], batteryPower: [], essTotalInputPower: [] };
+    if (!measurements) return { labels: [], loadPower: [], solarPower: [], batteryPower: [], essTotalInputPower: [], soc: [] };
     
-    // Сортируем по возрастанию времени (старые данные сначала)
     const sortedMeasurements = [...measurements].sort((a, b) => 
-        new Date(a.measured_at) - new Date(b.measured_at));
-    
+        new Date(a.measured_at) - new Date(b.measured_at)
+    );
+
     const labels = [];
-    const soc =[];
+    const soc = [];
     const loadPower = [];
     const solarPower = [];
     const batteryPower = [];
     const essTotalInputPower = [];
-    
-    sortedMeasurements.forEach(measurement => {
-        const date = new Date(measurement.measured_at + 'Z');
-        const timeStr = date.toLocaleTimeString('ru-RU', { 
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            timeZone: 'Europe/Moscow'
-        });
 
-        labels.push(timeStr);
+    const totalDurationMs = new Date(sortedMeasurements.at(-1)?.measured_at) - new Date(sortedMeasurements[0]?.measured_at);
+
+    sortedMeasurements.forEach(measurement => {
+        labels.push(
+            formatDateLabel(measurement.measured_at, totalDurationMs, sortedMeasurements.length, 'line')
+        );
         loadPower.push(Math.round(measurement.inverter_total_ac_output / 10) / 100);
         solarPower.push(Math.round(measurement.solar_total_pv_power / 10) / 100);
         batteryPower.push(Math.round(measurement.general_battery_power / 10) / 100);
@@ -665,8 +646,9 @@ function processMeasurementsData(measurements) {
         soc.push(measurement.soc);
     });
 
-    return { labels, loadPower, solarPower, batteryPower, essTotalInputPower,soc };
+    return { labels, loadPower, solarPower, batteryPower, essTotalInputPower, soc };
 }
+
 
 // Функция для инициализации графика
 function initPowerChart() {
@@ -682,13 +664,13 @@ function initPowerChart() {
             labels: [],
             datasets: [
                 {
-                    label: 'Нагрузка(кВт)',
+                    label: 'Нагрузка (кВт)',
                     data: [],
                     borderColor: 'rgba(75, 192, 192, 1)',
                     backgroundColor: 'rgba(75, 192, 192, 0.2)',
                     borderWidth: 2,
                     pointRadius: 0,
-                    yAxisID: 'y' // Основная ось Y
+                    yAxisID: 'y'
                 },
                 {
                     label: 'Солнечная генерация (кВт)',
@@ -709,7 +691,7 @@ function initPowerChart() {
                     yAxisID: 'y'
                 },
                 {
-                    label: 'Входная мощность ESS(кВт)',
+                    label: 'Входная мощность ESS (кВт)',
                     data: [],
                     borderColor: 'rgba(255, 99, 132, 1)',
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',
@@ -724,9 +706,9 @@ function initPowerChart() {
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     borderWidth: 2,
                     pointRadius: 0,
-                    yAxisID: 'soc-y', // Ось для SOC
-                    borderDash: [5, 5], // Пунктирная линия
-                    hidden: false // Показываем по умолчанию
+                    yAxisID: 'soc-y',
+                    borderDash: [5, 5],
+                    hidden: false
                 }
             ]
         },
@@ -738,11 +720,9 @@ function initPowerChart() {
                     type: 'category',
                     title: {
                         display: true,
-                        text: 'Время'
+                        text: 'Время / Дата' // изменено: общее название
                     },
-                    grid: {
-                        display: false
-                    }
+                    grid: { display: false }
                 },
                 y: {
                     title: {
@@ -751,9 +731,7 @@ function initPowerChart() {
                     },
                     min: -20,
                     max: 20,
-                    ticks: {
-                        stepSize: 5
-                    },
+                    ticks: { stepSize: 5 },
                     position: 'left'
                 },
                 'soc-y': {
@@ -763,24 +741,18 @@ function initPowerChart() {
                     },
                     min: 0,
                     max: 100,
-                    ticks: {
-                        stepSize: 10
-                    },
+                    ticks: { stepSize: 10 },
                     position: 'right',
-                    grid: {
-                        drawOnChartArea: false // Не показываем сетку для SOC
-                    }
+                    grid: { drawOnChartArea: false }
                 }
             },
             plugins: {
-                legend: {
-                    position: 'top',
-                },
+                legend: { position: 'top' },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
                             let label = context.dataset.label || '';
-                            if (label.includes('SOC')) {
+                            if (label.includes('Батарея (%)')) { // изменено: проверяем по названию
                                 return `${label}: ${context.raw}%`;
                             }
                             return `${label}: ${context.raw.toFixed(2)} кВт`;
@@ -959,4 +931,63 @@ function formatDateTimeLocal(date) {
     const minutes = String(date.getMinutes()).padStart(2, '0');
     
     return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+
+
+
+// Унифицированный форматтер для дат/времени
+function formatDateLabel(dateStr, startDate, endDate, chartType = 'line') {
+    const date = new Date(dateStr + (dateStr.endsWith('Z') ? '' : 'Z')); // приводим к UTC, если без Z
+    const totalDurationMs = endDate - startDate;
+    const totalHours = totalDurationMs / (1000 * 60 * 60);
+
+    if (chartType === 'line') {
+        // для линейных графиков
+        if (totalHours <= 24) {
+            // в пределах суток — время
+            return date.toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZone: 'Europe/Moscow'
+            });
+        } else {
+            // больше суток — дата + время
+            return date.toLocaleDateString('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'Europe/Moscow'
+            });
+        }
+    }
+
+    if (chartType === 'bar') {
+        if (totalHours <= 48) {
+            // до 2 суток → часы
+            return date.toLocaleTimeString('ru-RU', {
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'Europe/Moscow'
+            });
+        } else if (totalHours <= 24 * 31) {
+            // до месяца → день.месяц
+            return date.toLocaleDateString('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                timeZone: 'Europe/Moscow'
+            });
+        } else {
+            // больше месяца → месяц.год
+            return date.toLocaleDateString('ru-RU', {
+                month: '2-digit',
+                year: 'numeric',
+                timeZone: 'Europe/Moscow'
+            });
+        }
+    }
+
+    return date.toISOString();
 }
