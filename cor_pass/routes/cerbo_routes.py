@@ -594,6 +594,50 @@ async def get_solarchargers_status(request: Request):
         register_modbus_error()
         logger.error("❗️ Общая ошибка при опросе MPPT", exc_info=e)
         raise HTTPException(status_code=500, detail="Modbus ошибка")
+    
+
+
+
+@router.get("/solarchargers_sum")
+async def get_solarchargers_current_sum(request: Request):
+    """
+    Чтение регистров 3730 с MPPT для всех UID и суммирование их значений
+    """
+    try:
+        client = request.app.state.modbus_client
+        slave_ids = list(range(1, 14)) + [100]
+
+        results = {}
+        total_power = 0  # Суммарное значение регистров 3730
+
+        for slave in slave_ids:
+            try:
+                res = await client.read_input_registers(address=3730, count=1, slave=slave)
+
+                if res.isError() or not hasattr(res, "registers"):
+                    results[f"charger_{slave}"] = None
+                    logger.warning(f"⚠️ Ошибка чтения регистра 3730 у slave {slave}")
+                else:
+                    value = res.registers[0]
+                    results[f"charger_{slave}"] = value
+                    total_power += value
+
+            except Exception as e:
+                results[f"charger_{slave}"] = {"error": str(e)}
+                logger.warning(f"⚠️ Исключение при чтении slave {slave}: {e}")
+
+        # Добавляем суммарное значение
+        results["total_PV_Power"] = total_power
+
+        return results
+
+    except Exception as e:
+        register_modbus_error()
+        logger.error("❗️ Общая ошибка при опросе регистров 3730", exc_info=e)
+        raise HTTPException(status_code=500, detail="Modbus ошибка")
+
+
+
 
 
 @router.get("/dynamic_ess_settings")
