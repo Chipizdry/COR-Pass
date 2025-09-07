@@ -550,9 +550,9 @@ async function fetchSolarChargerStatus() {
         }
 
         // Установка общей суммы из данных API (вместо самостоятельного расчета)
-        const totalPowerFromAPI = data.total_pv_power || 0;
-        document.getElementById('totalAllPower').innerText = totalPowerFromAPI.toFixed(2);
-        updateSolarPowerIndicator(totalPowerFromAPI);
+      //  const totalPowerFromAPI = data.total_pv_power || 0;
+     //   document.getElementById('totalAllPower').innerText = totalPowerFromAPI.toFixed(2);
+      //  updateSolarPowerIndicator(totalPowerFromAPI);
 
     } catch (error) {
         console.error('❗ Ошибка при получении данных:', error);
@@ -561,6 +561,34 @@ async function fetchSolarChargerStatus() {
             '<div class="error-message">Ошибка загрузки данных</div>';
     }
 }
+
+
+async function fetchSolarChargersSum() {
+    try {
+        const response = await fetch('/api/modbus/solarchargers_sum', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ошибка HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const totalPowerFromAPI = data.total_PV_Power || 0;
+        document.getElementById('totalAllPower').innerText = totalPowerFromAPI.toFixed(2);
+        updateSolarPowerIndicator(totalPowerFromAPI);
+
+        return data;
+    } catch (error) {
+        console.error("⚠️ Ошибка при вызове /solarchargers_sum:", error);
+        return null;
+    }
+}
+
 
 
 async function fetchDynamicEssSettings() {

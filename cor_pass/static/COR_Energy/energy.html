@@ -1062,13 +1062,14 @@ function getCurrentTimeFormatted() {
      setInterval(() => {
         tick++;
         
-        if (tick % 13 === 0) fetchSolarChargerStatus();
+        if (tick % 33 === 0) fetchSolarChargerStatus();
         if (tick % 3 === 0) fetchInverterPowerStatus();
         if (tick % 4 === 0) fetchEssAcStatus();
         if (tick % 5 === 0) fetchVebusStatus();
         if (tick % 6 === 0) fetchEss();
         if (tick % 7 === 0) fetchEssAdvancedSettings();
         if (tick % 9 === 0) fetchStatus();
+        if (tick % 10 === 0) fetchSolarChargersSum();
         if (tick % 30 === 0) checkConnectionStatus();
         if (tick % 11 === 0) fetchDynamicEssSettings();
         if (tick >= 60) tick = 0;
@@ -1082,6 +1083,7 @@ function getCurrentTimeFormatted() {
         fetchVebusStatus(); 
         fetchEssAdvancedSettings();
         fetchSolarChargerStatus();
+        fetchSolarChargersSum();
         checkConnectionStatus();
         fetchDynamicEssSettings();
     </script>
