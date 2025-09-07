@@ -139,18 +139,36 @@ async function loadEnergyDataForTimeRange(range, objectName = null) {
     let intervals = 24; // по умолчанию почасово за сутки
 
     switch(range) {
+        case 'today': // за сегодня
+            startDate = new Date(now);
+            startDate.setHours(0, 0, 0, 0); // 00:00 сегодня
+            intervals = 24; // по часам
+            break;
+
+        case 'this_week': // за эту неделю
+            startDate = new Date(now);
+            const day = startDate.getDay(); // 0 (вс) ... 6 (сб)
+            const diff = (day === 0 ? -6 : 1) - day; // вычисляем понедельник
+            startDate.setDate(startDate.getDate() + diff);
+            startDate.setHours(0, 0, 0, 0); // 00:00 понедельника
+            intervals = 7; // по дням
+            break;
+
         case '1d': // почасово за сутки
             startDate = new Date(now.getTime() - 24 * 3600000);
             intervals = 24;
             break;
+
         case '7d': // посуточно за неделю
             startDate = new Date(now.getTime() - 7 * 24 * 3600000);
             intervals = 7;
             break;
+
         case '30d': // посуточно за месяц
             startDate = new Date(now.getTime() - 30 * 24 * 3600000);
             intervals = 30;
             break;
+
         default:
             console.error('Неверный диапазон:', range);
             return;
@@ -160,11 +178,7 @@ async function loadEnergyDataForTimeRange(range, objectName = null) {
         isLoading = true;
         document.getElementById('loadingIndicator').style.display = 'inline';
 
-        // форматируем даты без миллисекунд
-        const formatDateForAPI = (date) => {
-            return date.toISOString().replace(/\.\d{3}Z$/, '');
-        };
-
+        const formatDateForAPI = (date) => date.toISOString().replace(/\.\d{3}Z$/, '');
         const params = new URLSearchParams({
             start_date: formatDateForAPI(startDate),
             end_date: formatDateForAPI(now),
@@ -176,38 +190,23 @@ async function loadEnergyDataForTimeRange(range, objectName = null) {
         }
 
         const url = `/api/modbus/measurements/energy/?${params.toString()}`;
-        // console.log('Fetching energy data from:', url);
-
-        const response = await fetch(url, {
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
+        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
 
         if (!response.ok) {
-            let errorData;
-            try {
-                errorData = await response.json();
-            } catch (e) {
-                errorData = { detail: response.statusText };
-            }
+            const errorData = await response.json().catch(() => ({ detail: response.statusText }));
             throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
-        // console.log('Energy data received:', data);
 
         if (data && data.length > 0) {
-            // Формируем данные для графика (bar chart)
             const chartData = data.map(item => ({
-                interval: item.interval_start,        // подпись по оси X
-                solar: item.solar_energy_kwh,         // энергия солнца
-                load: item.load_energy_kwh,           // нагрузка
-                grid: item.grid_energy_kwh,           // сеть
-                battery: item.battery_energy_kwh      // батарея
+                interval: item.interval_start,
+                solar: item.solar_energy_kwh,
+                load: item.load_energy_kwh,
+                grid: item.grid_energy_kwh,
+                battery: item.battery_energy_kwh
             }));
-
-            // Передаём в функцию обновления диаграммы
             updateBarChart(chartData);
         }
     } catch (error) {

@@ -377,7 +377,7 @@
                             <option value="bar">Энергия (столбцы)</option>
                         </select>
                     </div>
-                    
+
                     <label>Период:</label>
                     <select id="timeRangeSelect">
                         <option value="realtime">В реальном времени</option>
@@ -847,6 +847,8 @@
             ];
 
             const barTimeRanges = [
+                { value: 'today', label: 'За сегодня' },
+                { value: 'this_week', label: 'За эту неделю' },
                 { value: '1d', label: 'За сутки' },
                 { value: '7d', label: 'За неделю' },
                 { value: '30d', label: 'За месяц ' },
