@@ -830,3 +830,15 @@ footer {
     font-size: 12px;
     max-height: 400px;
 }
+
+
+.totals-container {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0 20px 0;
+    gap: 15px;
+}
+
+.hidden {
+    display: none !important;
+  }

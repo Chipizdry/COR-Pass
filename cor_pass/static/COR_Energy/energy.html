@@ -27,9 +27,9 @@
     <script src="/static/COR_ID_Js/general_fun.js"></script>
     <script src="/static/COR_Energy/xlsx.full.min.js"></script>
     <script src="/static/COR_Energy/chart.min.js"></script>
-    <script src="/static/COR_Energy/eruda.min.js"></script>
+  <!-- <script src="/static/COR_Energy/eruda.min.js"></script>
 
-    <script>eruda.init();</script>  
+    <script>eruda.init();</script>  --> 
 
 </head>
 <body>
@@ -412,7 +412,25 @@
                     </div>
                 </div>
                 
-                
+                <!-- Контейнер для суммарных энергий -->
+                <div id="energyTotals" class="totals-container">
+                    <div class="total-box">
+                        <label>Солнечная генерация:</label>
+                        <span id="totalSolar">0</span> кВт·ч
+                    </div>
+                    <div class="total-box">
+                        <label>Нагрузка:</label>
+                        <span id="totalLoad">0</span> кВт·ч
+                    </div>
+                    <div class="total-box">
+                        <label>Импорт сети:</label>
+                        <span id="totalGridImport">0</span> кВт·ч
+                    </div>
+                    <div class="total-box">
+                        <label>Экспорт сети:</label>
+                        <span id="totalGridExport">0</span> кВт·ч
+                    </div>
+                </div>
                
                 
                 <div class="time-range-slider-container" style="display: none;">

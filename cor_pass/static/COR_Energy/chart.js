@@ -132,6 +132,7 @@ async function loadDataForTimeRange(range) {
 
 
 
+
 // Функция для загрузки энергетических данных по временному диапазону
 async function loadEnergyDataForTimeRange(range, objectName = null) {
     const now = new Date();
@@ -139,32 +140,32 @@ async function loadEnergyDataForTimeRange(range, objectName = null) {
     let intervals = 24; // по умолчанию почасово за сутки
 
     switch(range) {
-        case 'today': // за сегодня
+        case 'today':
             startDate = new Date(now);
-            startDate.setHours(0, 0, 0, 0); // 00:00 сегодня
-            intervals = 24; // по часам
+            startDate.setHours(0, 0, 0, 0);
+            intervals = 24;
             break;
 
-        case 'this_week': // за эту неделю
+        case 'this_week':
             startDate = new Date(now);
-            const day = startDate.getDay(); // 0 (вс) ... 6 (сб)
-            const diff = (day === 0 ? -6 : 1) - day; // вычисляем понедельник
+            const day = startDate.getDay();
+            const diff = (day === 0 ? -6 : 1) - day;
             startDate.setDate(startDate.getDate() + diff);
-            startDate.setHours(0, 0, 0, 0); // 00:00 понедельника
-            intervals = 7; // по дням
+            startDate.setHours(0, 0, 0, 0);
+            intervals = 7;
             break;
 
-        case '1d': // почасово за сутки
+        case '1d':
             startDate = new Date(now.getTime() - 24 * 3600000);
             intervals = 24;
             break;
 
-        case '7d': // посуточно за неделю
+        case '7d':
             startDate = new Date(now.getTime() - 7 * 24 * 3600000);
             intervals = 7;
             break;
 
-        case '30d': // посуточно за месяц
+        case '30d':
             startDate = new Date(now.getTime() - 30 * 24 * 3600000);
             intervals = 30;
             break;
@@ -178,7 +179,10 @@ async function loadEnergyDataForTimeRange(range, objectName = null) {
         isLoading = true;
         document.getElementById('loadingIndicator').style.display = 'inline';
 
-        const formatDateForAPI = (date) => date.toISOString().replace(/\.\d{3}Z$/, '');
+        const formatDateForAPI = (date) => {
+            return date.toISOString().replace(/\.\d{3}Z$/, '');
+        };
+
         const params = new URLSearchParams({
             start_date: formatDateForAPI(startDate),
             end_date: formatDateForAPI(now),
@@ -190,32 +194,59 @@ async function loadEnergyDataForTimeRange(range, objectName = null) {
         }
 
         const url = `/api/modbus/measurements/energy/?${params.toString()}`;
-        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+
+        const response = await fetch(url, {
+            headers: { 'Accept': 'application/json' }
+        });
 
         if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+            let errorData;
+            try {
+                errorData = await response.json();
+            } catch (e) {
+                errorData = { detail: response.statusText };
+            }
             throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
+        // console.log('Energy data received:', data);
 
-        if (data && data.length > 0) {
-            const chartData = data.map(item => ({
+        if (data && data.intervals && data.intervals.length > 0) {
+            // Формируем данные для графика
+            const chartData = data.intervals.map(item => ({
                 interval: item.interval_start,
                 solar: item.solar_energy_kwh,
                 load: item.load_energy_kwh,
                 grid: item.grid_energy_kwh,
                 battery: item.battery_energy_kwh
             }));
+
+            // Рисуем график
             updateBarChart(chartData);
+
+            // Выводим итоговые значения
+            if (data.totals) {
+                updateTotalsDisplay(data.totals);
+            }
         }
     } catch (error) {
-        console.error('Error loading energy data:', error);
+        console.error('Ошибка загрузки энергетических данных:', error);
         alert(`Ошибка загрузки данных: ${error.message}`);
     } finally {
         isLoading = false;
         document.getElementById('loadingIndicator').style.display = 'none';
     }
+}
+
+
+// Функция для обновления итогов
+function updateTotalsDisplay(totals) {
+    document.getElementById('totalSolar').innerText = totals.solar_energy_total + ' кВт·ч';
+    document.getElementById('totalLoad').innerText = totals.load_energy_total + ' кВт·ч';
+    document.getElementById('totalGridImport').innerText = totals.grid_import_total + ' кВт·ч';
+    document.getElementById('totalGridExport').innerText = totals.grid_export_total + ' кВт·ч';
+  //  document.getElementById('totalBattery').innerText = totals.battery_energy_total + ' кВт·ч';
 }
 
 
@@ -390,6 +421,7 @@ function updateTimeRangeOptions(chartType) {
 }
 
 
+
 function initTimeRangeControl() {
     // Установим текущую дату в кастомных полях
     const now = new Date();
@@ -409,6 +441,7 @@ function initTimeRangeControl() {
         document.getElementById('customDateRange').style.display = isCustom ? 'flex' : 'none';
         
         if (currentChartType === 'line') {
+           // document.getElementById('energyTotals').style.display = 'none';
             if (isRealtime) {
                 startLiveUpdates();
             } else if (isCustom) {
@@ -418,6 +451,7 @@ function initTimeRangeControl() {
                 loadDataForTimeRange(this.value);
             }
         } else if (currentChartType === 'bar') {
+          //  document.getElementById('energyTotals').style.display = 'block';
             if (isCustom) {
                 stopChartUpdates();
             } else {
@@ -458,6 +492,7 @@ function initTimeRangeControl() {
     // Запускаем режим реального времени по умолчанию
     startLiveUpdates();
 }
+
 
 async function fetchAveragedMeasurements(startDate, endDate) {
     try {

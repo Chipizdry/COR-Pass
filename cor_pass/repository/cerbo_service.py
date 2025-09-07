@@ -1282,7 +1282,7 @@ async def get_energy_measurements_service(
     start_date: datetime,
     end_date: datetime,
     intervals: int = 24
-) -> List[dict]:
+) -> dict:
     if not start_date or not end_date:
         raise ValueError("Необходимо указать start_date и end_date")
 
@@ -1300,7 +1300,7 @@ async def get_energy_measurements_service(
     all_measurements = result.scalars().all()
 
     if len(all_measurements) < 2:
-        return []
+        return {"intervals": [], "totals": {}}
 
     # Делим период на интервалы
     interval_size = (end_date - start_date) / intervals
@@ -1311,6 +1311,13 @@ async def get_energy_measurements_service(
         grouped[idx].append(m)
 
     results = []
+
+    # Итоговые суммы
+    total_solar = 0.0
+    total_load = 0.0
+    total_grid_import = 0.0
+    total_grid_export = 0.0
+    total_battery = 0.0
 
     # Считаем энергию по каждому интервалу
     for i, measurements in enumerate(grouped):
@@ -1336,6 +1343,11 @@ async def get_energy_measurements_service(
                 load_energy += (prev.inverter_total_ac_output / 1000.0) * delta_h
             if prev.ess_total_input_power is not None:
                 grid_energy += (prev.ess_total_input_power / 1000.0) * delta_h
+                # Считаем суммарный импорт и экспорт
+                if prev.ess_total_input_power >= 0:
+                    total_grid_import += (prev.ess_total_input_power / 1000.0) * delta_h
+                else:
+                    total_grid_export += abs((prev.ess_total_input_power / 1000.0) * delta_h)
             if prev.general_battery_power is not None:
                 battery_energy += (prev.general_battery_power / 1000.0) * delta_h
 
@@ -1348,4 +1360,18 @@ async def get_energy_measurements_service(
             "battery_energy_kwh": round(battery_energy, 3)
         })
 
-    return results
+        # Накопление итогов для солнечной энергии и нагрузки
+        total_solar += solar_energy
+        total_load += load_energy
+        total_battery += battery_energy
+
+    return {
+        "intervals": results,
+        "totals": {
+            "solar_energy_total": round(total_solar, 3),
+            "load_energy_total": round(total_load, 3),
+            "grid_import_total": round(total_grid_import, 3),
+            "grid_export_total": round(total_grid_export, 3),
+            "battery_energy_total": round(total_battery, 3),
+        }
+    }
