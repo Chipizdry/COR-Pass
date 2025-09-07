@@ -842,3 +842,14 @@ footer {
 .hidden {
     display: none !important;
   }
+
+
+  .apply-button {
+    padding: 10px;
+    margin: 0px 0;
+    background-color: #7527B2;
+    color: white;
+    cursor: pointer;
+    max-width: 90px;
+    height: 35px;
+}

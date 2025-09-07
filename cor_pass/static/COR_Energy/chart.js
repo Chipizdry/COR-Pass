@@ -441,7 +441,7 @@ function initTimeRangeControl() {
         document.getElementById('customDateRange').style.display = isCustom ? 'flex' : 'none';
         
         if (currentChartType === 'line') {
-           // document.getElementById('energyTotals').style.display = 'none';
+            document.getElementById('energyTotals').classList.add('hidden');  // 🔹 всегда скрываем в line
             if (isRealtime) {
                 startLiveUpdates();
             } else if (isCustom) {
@@ -451,7 +451,7 @@ function initTimeRangeControl() {
                 loadDataForTimeRange(this.value);
             }
         } else if (currentChartType === 'bar') {
-          //  document.getElementById('energyTotals').style.display = 'block';
+            document.getElementById('energyTotals').classList.remove('hidden'); // 🔹 показываем в bar
             if (isCustom) {
                 stopChartUpdates();
             } else {
@@ -462,6 +462,8 @@ function initTimeRangeControl() {
 
 
     });
+
+
     
     // Обработчик для кастомного диапазона
     document.getElementById('applyCustomRange').addEventListener('click', function() {
@@ -492,6 +494,9 @@ function initTimeRangeControl() {
     // Запускаем режим реального времени по умолчанию
     startLiveUpdates();
 }
+
+
+
 
 
 async function fetchAveragedMeasurements(startDate, endDate) {
