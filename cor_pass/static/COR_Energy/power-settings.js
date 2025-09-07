@@ -556,7 +556,7 @@ async function fetchSolarChargerStatus() {
 
     } catch (error) {
         console.error('❗ Ошибка при получении данных:', error);
-        // Можно добавить отображение ошибки в интерфейсе
+        // Отображение ошибки в интерфейсе
         document.getElementById('solarTableContainer').innerHTML = 
             '<div class="error-message">Ошибка загрузки данных</div>';
     }
@@ -581,6 +581,22 @@ async function fetchSolarChargersSum() {
         const totalPowerFromAPI = data.total_PV_Power || 0;
         document.getElementById('totalAllPower').innerText = totalPowerFromAPI.toFixed(2);
         updateSolarPowerIndicator(totalPowerFromAPI);
+
+
+        
+
+         // ✅ Итоги по каждому устройству
+         for (const [chargerId, value] of Object.entries(data)) {
+            if (chargerId === "total_PV_Power") continue;
+
+            // Находим DOM-элемент по chargerId (я добавлю data-атрибут в первой функции)
+            const el = document.querySelector(`[data-charger="${chargerId}"] .device-total`);
+            if (el) {
+                el.innerText = value !== null ? value : '—';
+            }
+        }
+
+
 
         return data;
     } catch (error) {
