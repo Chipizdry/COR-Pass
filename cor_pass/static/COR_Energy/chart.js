@@ -691,7 +691,7 @@ function initPowerChart() {
                     yAxisID: 'y'
                 },
                 {
-                    label: 'Входная мощность ESS (кВт)',
+                    label: 'Электросеть(кВт)',
                     data: [],
                     borderColor: 'rgba(255, 99, 132, 1)',
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',

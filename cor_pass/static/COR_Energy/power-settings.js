@@ -552,11 +552,6 @@ async function fetchSolarChargerStatus() {
             container.appendChild(clone);
         }
 
-        // Если нужно, можно выводить общий итог из status API:
-        // const totalPowerFromAPI = data.total_pv_power || 0;
-        // document.getElementById('totalAllPower').innerText = totalPowerFromAPI.toFixed(2);
-        // updateSolarPowerIndicator(totalPowerFromAPI);
-
     } catch (error) {
         console.error('❗ Ошибка при получении данных:', error);
         document.getElementById('solarTableContainer').innerHTML =

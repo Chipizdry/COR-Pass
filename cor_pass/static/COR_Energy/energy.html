@@ -371,6 +371,13 @@
             <!-- Блок управления периодом -->
             <div class="chart-controls">
                 <div class="time-range-control">
+                    <div class="chart-type-control">
+                        <select id="chartTypeSelect">
+                            <option value="line">Мощности (линия)</option>
+                            <option value="bar">Энергия (столбцы)</option>
+                        </select>
+                    </div>
+                    
                     <label>Период:</label>
                     <select id="timeRangeSelect">
                         <option value="realtime">В реальном времени</option>
@@ -390,12 +397,7 @@
                         <button id="applyCustomRange">Применить</button>
                     </div>
 
-                    <div class="chart-type-control">
-                        <select id="chartTypeSelect">
-                            <option value="line">Мощности (линия)</option>
-                            <option value="bar">Энергия (столбцы)</option>
-                        </select>
-                    </div>
+                    
                     <!-- Блок пагинации (только для реального времени) -->
                     <div class="pages-control" style="display: none;">
                         <label>Страниц на экран:</label>
