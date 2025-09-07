@@ -497,7 +497,6 @@ async function fetchSolarChargerStatus() {
         }
 
         const data = await response.json();
-        // console.log('✅ Принятые данные (сырье):', data);
 
         const container = document.getElementById('solarTableContainer');
         container.innerHTML = ''; // Очистка
@@ -506,18 +505,21 @@ async function fetchSolarChargerStatus() {
 
         // Обрабатываем каждый контроллер
         for (const [chargerId, values] of Object.entries(data)) {
-            // Пропускаем поле с общей суммой (оно будет обработано отдельно)
-            if (chargerId === "total_pv_power") continue;
+            if (chargerId === "total_pv_power") continue; // общий итог отдельно
 
             let chargerTotalPower = 0;
             const clone = template.content.cloneNode(true);
+            const table = clone.querySelector("table");
+
+            // Вешаем data-charger для будущего обновления
+            table.setAttribute("data-charger", chargerId);
 
             // Заголовок устройства
             clone.querySelector('.charger-title').innerText = chargerId.toUpperCase();
 
             const tbody = clone.querySelector('.table-body');
 
-            // Обрабатываем каждый PV вход (0-3)
+            // Обрабатываем каждый PV вход (0–3)
             for (let i = 0; i < 4; i++) {
                 const voltage = values[`pv_voltage_${i}`];
                 const power = values[`pv_power_${i}`];
@@ -544,32 +546,31 @@ async function fetchSolarChargerStatus() {
                 tbody.appendChild(row);
             }
 
-            // Установка итогов по устройству
+            // Итог по устройству (из status API)
             clone.querySelector('.device-total').innerText = chargerTotalPower.toFixed(2);
+
             container.appendChild(clone);
         }
 
-        // Установка общей суммы из данных API (вместо самостоятельного расчета)
-      //  const totalPowerFromAPI = data.total_pv_power || 0;
-     //   document.getElementById('totalAllPower').innerText = totalPowerFromAPI.toFixed(2);
-      //  updateSolarPowerIndicator(totalPowerFromAPI);
+        // Если нужно, можно выводить общий итог из status API:
+        // const totalPowerFromAPI = data.total_pv_power || 0;
+        // document.getElementById('totalAllPower').innerText = totalPowerFromAPI.toFixed(2);
+        // updateSolarPowerIndicator(totalPowerFromAPI);
 
     } catch (error) {
         console.error('❗ Ошибка при получении данных:', error);
-        // Отображение ошибки в интерфейсе
-        document.getElementById('solarTableContainer').innerHTML = 
+        document.getElementById('solarTableContainer').innerHTML =
             '<div class="error-message">Ошибка загрузки данных</div>';
     }
 }
 
 
+// ✅ Загружаем итоги по каждому устройству и общий итог
 async function fetchSolarChargersSum() {
     try {
         const response = await fetch('/api/modbus/solarchargers_sum', {
             method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
+            headers: { 'Content-Type': 'application/json' }
         });
 
         if (!response.ok) {
@@ -578,25 +579,20 @@ async function fetchSolarChargersSum() {
 
         const data = await response.json();
 
+        // Общая мощность по всем устройствам
         const totalPowerFromAPI = data.total_PV_Power || 0;
         document.getElementById('totalAllPower').innerText = totalPowerFromAPI.toFixed(2);
         updateSolarPowerIndicator(totalPowerFromAPI);
 
-
-        
-
-         // ✅ Итоги по каждому устройству
-         for (const [chargerId, value] of Object.entries(data)) {
+        // Итоги по каждому устройству
+        for (const [chargerId, value] of Object.entries(data)) {
             if (chargerId === "total_PV_Power") continue;
 
-            // Находим DOM-элемент по chargerId (я добавлю data-атрибут в первой функции)
             const el = document.querySelector(`[data-charger="${chargerId}"] .device-total`);
             if (el) {
-                el.innerText = value !== null ? value : '—';
+                el.innerText = value !== null ? parseFloat(value).toFixed(2) : '—';
             }
         }
-
-
 
         return data;
     } catch (error) {
@@ -604,7 +600,6 @@ async function fetchSolarChargersSum() {
         return null;
     }
 }
-
 
 
 async function fetchDynamicEssSettings() {
