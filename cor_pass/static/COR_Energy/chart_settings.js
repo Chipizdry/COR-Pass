@@ -3,15 +3,29 @@
 
 
 
+
 // Функция для сохранения настроек графика в localStorage
 function saveChartSettings() {
+    const chartType = currentChartType;
+    const currentRangeType = document.getElementById('timeRangeSelect').value;
+
     const settings = {
-        chartType: currentChartType,
-        LineTimeRange: document.getElementById('timeRangeSelect').value,
-        BarTimeRange: currentBarTimeRange
+        chartType,
+        currentRangeType
     };
-    localStorage.setItem('chartSettings', JSON.stringify(settings));
-    console.log('Chart settings saved:', settings);
+
+    if (currentRangeType === "custom") {
+        settings.customStartDate = document.getElementById("startDate").value;
+        settings.customEndDate = document.getElementById("endDate").value;
+    } else {
+        if (chartType === "line") {
+            settings.lineTimeRange = currentRangeType;
+        } else if (chartType === "bar") {
+            settings.barTimeRange = currentRangeType;
+        }
+    }
+
+    localStorage.setItem("chartSettings", JSON.stringify(settings));
 }
 
 

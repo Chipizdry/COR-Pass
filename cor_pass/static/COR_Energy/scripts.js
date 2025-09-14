@@ -11,13 +11,16 @@
 
        
 
-        initChartTypeControl();
-            // Инициализация графика мощности
+            // Инициализация графика и элементов управления
+        initPageSlider();
+        initTimeRangeControl();
+        initChartTypeControl(); // переключатель
+
         initPowerChart();
-        
-        startChartUpdates();
+ 
 
-
+        // Инициализация массива измерений
+        allMeasurements = new Array(100);
 
         makeModalDraggable('batteryModal');
         makeModalDraggable('RegistersModal');

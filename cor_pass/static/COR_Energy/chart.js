@@ -633,6 +633,8 @@ window.addEventListener('beforeunload', () => {
 
 // Запускаем при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
+
+    /*
      // Инициализация графика и элементов управления
      initPageSlider();
      initTimeRangeControl();
@@ -640,6 +642,7 @@ document.addEventListener('DOMContentLoaded', () => {
      
      // Инициализация массива измерений
      allMeasurements = new Array(100);
+     */
 });
 
 // Добавляем стили для нового элемента управления
