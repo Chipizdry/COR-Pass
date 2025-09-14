@@ -1368,10 +1368,10 @@ async def get_energy_measurements_service(
     return {
         "intervals": results,
         "totals": {
-            "solar_energy_total": round(total_solar, 3),
-            "load_energy_total": round(total_load, 3),
-            "grid_import_total": round(total_grid_import, 3),
-            "grid_export_total": round(total_grid_export, 3),
-            "battery_energy_total": round(total_battery, 3),
+            "solar_energy_total": round(total_solar, 0),
+            "load_energy_total": round(total_load, 0),
+            "grid_import_total": round(total_grid_import, 0),
+            "grid_export_total": round(total_grid_export, 0),
+            "battery_energy_total": round(total_battery, 0),
         }
     }

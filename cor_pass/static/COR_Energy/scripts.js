@@ -17,6 +17,8 @@
         
         startChartUpdates();
 
+
+
         makeModalDraggable('batteryModal');
         makeModalDraggable('RegistersModal');
         makeModalDraggable('loadSettingsModal');
@@ -689,12 +691,12 @@ function checkViewport() {
     const height = window.innerHeight;
     const orientation = width > height ? "landscape" : "portrait";
     
-    console.log(`Viewport: ${width}x${height}, ${orientation}`);
-    console.log(`Device pixel ratio: ${window.devicePixelRatio}`);
+  //  console.log(`Viewport: ${width}x${height}, ${orientation}`);
+  //  console.log(`Device pixel ratio: ${window.devicePixelRatio}`);
     
     // Проверка поддержки анимаций
     const animationSupport = 'animate' in document.createElement('div');
-    console.log(`CSS Animations supported: ${animationSupport}`);
+ //   console.log(`CSS Animations supported: ${animationSupport}`);
   }
   
   window.addEventListener('resize', checkViewport);

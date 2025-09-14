@@ -23,6 +23,8 @@
     <script src="/static/COR_Energy/scripts.js"></script>
     <script src="/static/COR_Energy/power-settings.js"></script>
     <script src="/static/COR_Energy/chart.js"></script>
+    <script src="/static/COR_Energy/line_chart.js"></script>
+    <script src="/static/COR_Energy/chart_settings.js"></script>
     <script src="/static/COR_Energy/timetable.js"></script>
     <script src="/static/COR_ID_Js/general_fun.js"></script>
     <script src="/static/COR_Energy/xlsx.full.min.js"></script>
@@ -366,6 +368,11 @@
             <!-- Контейнер для графика -->
             <div id="chartContainer">
                 <canvas id="powerChart"></canvas>
+
+                <div id="chartLoadingOverlay" class="chart-loading-overlay" style="display: none;">
+                    <div class="chart-loading-spinner"></div>
+                    <span>Загрузка...</span>
+                </div>
             </div>
             
             <!-- Блок управления периодом -->
@@ -416,19 +423,19 @@
                 <div id="energyTotals" class="totals-container">
                     <div class="total-box">
                         <label>Солнечная генерация:</label>
-                        <span id="totalSolar">0</span> кВт·ч
+                        <span id="totalSolar">0</span>
                     </div>
                     <div class="total-box">
                         <label>Нагрузка:</label>
-                        <span id="totalLoad">0</span> кВт·ч
+                        <span id="totalLoad">0</span>
                     </div>
                     <div class="total-box">
                         <label>Импорт сети:</label>
-                        <span id="totalGridImport">0</span> кВт·ч
+                        <span id="totalGridImport">0</span>
                     </div>
                     <div class="total-box">
                         <label>Экспорт сети:</label>
-                        <span id="totalGridExport">0</span> кВт·ч
+                        <span id="totalGridExport">0</span>
                     </div>
                 </div>
                
@@ -1023,31 +1030,39 @@ document.getElementById('ChargingCurrentSlider').addEventListener('input', funct
 
 <script>
   
-		
- 
-    
-        // Функция для переключения вкладок
-        function openTab(event, tabName) {
-            var i, tabcontent, tabs;
-            
-            // Скрываем все вкладки
-            tabcontent = document.getElementsByClassName("tabcontent");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].classList.remove("active");
-            }
-            
-            // Убираем активный класс с вкладок
-            tabs = document.getElementsByClassName("tab");
-            for (i = 0; i < tabs.length; i++) {
-                tabs[i].classList.remove("active");
-            }
-            
-            // Показываем текущую вкладку
-            document.getElementById(tabName).classList.add("active");
-            event.currentTarget.classList.add("active");
-        }
 
+function openTab(event, tabName) {
+    var i, tabcontent, tabs;
 
+    // Скрываем все вкладки
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].classList.remove("active");
+    }
+
+    // Убираем активный класс с вкладок
+    tabs = document.getElementsByClassName("tab");
+    for (i = 0; i < tabs.length; i++) {
+        tabs[i].classList.remove("active");
+    }
+
+    // Показываем текущую вкладку
+    document.getElementById(tabName).classList.add("active");
+    event.currentTarget.classList.add("active");
+
+    // 🔹 Если открыта вкладка Мониторинг → обновляем графики
+    if (tabName === "monitor") {
+        console.log("Обновление графика (вкладка Мониторинг)");
+       // initChartTypeControl();
+
+        /*
+        if (currentChartType === "line") {
+            startLiveUpdates();
+        } else if (currentChartType === "bar") {
+            loadEnergyDataForTimeRange("7d");
+        } */
+    }
+}
 	
 
 // Функция для получения текущего времени в формате HH:MM:SS
