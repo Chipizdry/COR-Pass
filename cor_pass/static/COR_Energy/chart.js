@@ -612,7 +612,7 @@ function startLiveUpdates() {
                 updateChartData();
             }
         }
-    }, 1000);
+    }, 900);
 }
 
 
@@ -631,19 +631,7 @@ window.addEventListener('beforeunload', () => {
     stopChartUpdates();
 });
 
-// Запускаем при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
 
-    /*
-     // Инициализация графика и элементов управления
-     initPageSlider();
-     initTimeRangeControl();
-     initChartTypeControl(); // переключатель
-     
-     // Инициализация массива измерений
-     allMeasurements = new Array(100);
-     */
-});
 
 // Добавляем стили для нового элемента управления
 const style = document.createElement('style');

@@ -104,7 +104,7 @@ async function loadDataForTimeRange(range) {
 // Функция для инициализации графика
 function initPowerChart() {
     const ctx = document.getElementById('powerChart').getContext('2d');
-    
+    document.getElementById('energyTotals').classList.add('hidden'); 
     if (powerChart) {
         powerChart.destroy();
     }
