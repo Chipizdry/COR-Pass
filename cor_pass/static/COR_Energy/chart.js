@@ -343,6 +343,7 @@ function initTimeRangeControl() {
             }
         } else if (currentChartType === 'bar') {
             document.getElementById('energyTotals').classList.remove('hidden'); // 🔹 показываем в bar
+            document.querySelector('.pages-control').style.display =  'none';
             if (isCustom) {
                 stopChartUpdates();
             } else {
@@ -630,28 +631,5 @@ function stopChartUpdates() {
 window.addEventListener('beforeunload', () => {
     stopChartUpdates();
 });
-
-
-
-// Добавляем стили для нового элемента управления
-const style = document.createElement('style');
-style.textContent = `
-    .pages-control {
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .pages-control label {
-        font-size: 14px;
-        font-weight: bold;
-    }
-    .pages-control select {
-        padding: 5px;
-        border-radius: 4px;
-        border: 1px solid #ccc;
-    }
-`;
-document.head.appendChild(style);
 
 
