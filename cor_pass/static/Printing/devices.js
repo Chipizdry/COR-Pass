@@ -1,8 +1,5 @@
 
 
-
-
-
 function updatePrinterDropdown() {
     const printerInput = document.getElementById('printerIp');
     const datalist = document.getElementById('printerIps');
@@ -20,7 +17,7 @@ function updatePrinterDropdown() {
         availablePrinters.forEach(printer => {
             const option = document.createElement('option');
             option.value = printer.ip_address;
-            option.textContent = `${printer.ip_address}${printer.location ? ` (${printer.location})` : ''}`;
+            option.textContent = `${printer.device_class} | ${printer.ip_address}${printer.location ? ` (${printer.location})` : ''}`;
             option.dataset.type = printer.device_class;
             datalist.appendChild(option);
         });
@@ -112,3 +109,54 @@ function updatePrinterDropdown() {
 
 
 
+
+
+
+
+function updateTestModalByType(type) {
+    // Сначала скрываем всё
+    const allGroups = [
+        'labelText', 'templateNumber', 'hopperNumberContainer',
+        'ClinicCaseNumber', 'GlassCassetteNumber', 'StainingType',
+        'scannerContainer', 'sendLabelButton'
+    ];
+    allGroups.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+
+    // Теперь включаем только нужное
+    switch (type) {
+        case 'GlassPrinter':
+        case 'CassetPrinter':
+            document.getElementById('templateNumber').style.display = 'block';
+            document.getElementById('ClinicCaseNumber').style.display = 'block';
+            document.getElementById('GlassCassetteNumber').style.display = 'block';
+            document.getElementById('StainingType').style.display = 'block';
+            document.getElementById('sendLabelButton').style.display = 'inline-block';
+            break;
+
+        case 'CassetPrinterHopper':
+            document.getElementById('templateNumber').style.display = 'block';
+            document.getElementById('hopperNumberContainer').style.display = 'block';
+            document.getElementById('ClinicCaseNumber').style.display = 'block';
+            document.getElementById('GlassCassetteNumber').style.display = 'block';
+            document.getElementById('StainingType').style.display = 'block';
+            document.getElementById('sendLabelButton').style.display = 'inline-block';
+            break;
+
+        case 'StickerPrinter':
+            document.getElementById('labelText').style.display = 'block';
+            document.querySelector('#testModal button[onclick="sendToPrint()"]').style.display = 'inline-block';
+            break;
+
+        case 'scanner_docs':
+            document.getElementById('scannerContainer').style.display = 'block';
+            document.getElementById('sendLabelButton').style.display = 'inline-block';
+            break;
+
+        default:
+            // ничего не показываем, только IP
+            break;
+    }
+}
