@@ -11,13 +11,14 @@
     <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/styles.css">
     <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/modal.css">
     <link rel="stylesheet" type="text/css" href="/static/Printing/printers.css">
+
     <title>Управление устройствами</title>
     
 </head>
 <body>
 
     <div class="main-container"> 
-        <h1>Управление устройствами печати</h1>   
+        <h1>Управление аппаратным окружением</h1>   
         <div class="print-container">
             <button id="devicesBtn">Устройства и принтеры</button>
             <button id="testBtn">Тест</button>
@@ -50,12 +51,12 @@
             <div class="modal-buttons">
               <button class="modal-button close" data-action="close" id="closetestModal">✖</button>
             </div>
-             <h3 style="margin-top:30; color:#291161;font-size: 17px;">Тест печати</h3>
+             <h3 style="margin-top:30; color:#291161;font-size: 17px;">Тест устройств</h3>
         </div> 
         <div class="modal-content">
            
             <div class="form">
-                <label for="printerIp">IP принтера:</label>
+                <label for="printerIp">IP устройства:</label>
                 <input list="printerIps" id="printerIp" placeholder="Выберите или введите IP" class="combo-input">
                 <datalist id="printerIps">
                     <!-- Опции будут добавлены динамически -->
@@ -64,8 +65,13 @@
 
             <textarea id="labelText"></textarea>
             <button onclick="sendToPrint()">Печать</button>
+            <div id="scannerContainer" style="display:none;">
+                <p>Миниатюра последнего сканирования:</p>
+                <img id="scanPreview" style="max-width:300px; max-height:300px;" alt="Скан не выполнен"/>
+            </div>
 
-            <div class="form">
+
+            <div id="templateNumber" class="form">
                 <label for="deviceId">Шаблон № (0-65535):</label>
                 <input type="number" id="template" min="0" max="65535" required>
             </div>
@@ -76,7 +82,7 @@
             </div>
            
 
-            <div class="field-group">
+            <div id="ClinicCaseNumber"class="field-group">
                 <div class="form-group-test">
                     <label for="clinicId">Clinic ID:</label>
                     <input type="text" id="clinicId" value="FF">
@@ -88,7 +94,7 @@
              
             </div>
         
-            <div class="field-group">
+            <div id="GlassCassetteNumber" class="field-group">
                 <div class="form-group-test">
                     <label for="sampleNumber">Sample:</label>
                     <input type="text" id="sampleNumber" value="A">
@@ -102,7 +108,7 @@
                     <input type="text" id="glassNumber" value="L0">
                 </div>
             </div>    
-            <div class="field-group">    
+            <div id="StainingType" class="field-group">    
                 <div class="form-group-test" style="width:45px;">
                     <label for="staining">Staining:</label>
                     <input type="text" id="staining" value="H&amp;E">
@@ -113,7 +119,7 @@
                     <input type="text" id="patientCorId" value="TDAJ92Z7-1983M">
                 </div>
             </div>
-            <button id="sendLabelButton">Отправить тестовую метку</button>
+            <button id="sendLabelButton">Тестировать</button>
             <div id="testResult" style="margin-top: 15px;"></div>
         </div>
     </div>
@@ -135,7 +141,7 @@
                     <option value="CassetPrinter">Принтер кассет</option>
                     <option value="CassetPrinterHopper">Принтер-хоппер кассет</option>
                     <option value="StickerPrinter">Принтер наклеек</option>
-                    <option value="scanner">Сканер</option>
+                    <option value="scanner_docs">Сканер документов</option>
                     <option value="other">Другое</option>
                 </select>
             </div>
@@ -158,6 +164,7 @@
     </div>
 
     <script src="/static/Printing/printers.js"></script>
+    <script src="/static/Printing/devices.js"></script>
     <script src="/static/COR_ID_Js/translation.js"></script>   
     <script src="/static/COR_ID_Js/general_fun.js"></script>  
     <script>

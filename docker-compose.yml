@@ -10,6 +10,9 @@ services:
       - "8000:8000"
     # volumes:
     #   - .:/app
+    volumes:
+      - D:/Scans:/scans
+      
     depends_on:
       - prometheus
       - postgres  

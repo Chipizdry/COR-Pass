@@ -6,18 +6,22 @@
 from fastapi import APIRouter, Response, HTTPException
 import httpx
 from loguru import logger
+import os
+
+
 
 router = APIRouter(prefix="/scanner", tags=["Scanner"])
 
-# ⚙️ Настрой параметры сканера тут
-SCANNER_IP = "192.168.154.164"   # IP твоего HP ScanJet Pro
-SCANNER_PORT = 8080              # может быть 443 или 80 (если HTTPS — добавь verify=False)
-USERNAME = None                  # если eSCL с паролем — укажи тут
+
+SCANNER_IP = "192.168.154.164"   # IP твоего H ScanJet Pro
+SCANNER_PORT = 8080              # может быть 443 или 80 
+USERNAME = None                  # если  с паролем 
 PASSWORD = None
 
+SAVE_DIR = "/scans"
 
 async def get_client():
-    """Создаёт HTTP-клиент с авторизацией (если нужно)."""
+  
     if USERNAME and PASSWORD:
         return httpx.AsyncClient(auth=(USERNAME, PASSWORD))
     return httpx.AsyncClient()
@@ -71,9 +75,11 @@ async def scan_document():
             raise HTTPException(status_code=500, detail="Ошибка сканирования")
 
 
+
 @router.get("/scan_to_file")
 async def scan_to_file(filename: str = "scan.jpg"):
-    """Сканирование и сохранение в файл."""
+    filepath = os.path.join(SAVE_DIR, filename)
+
     scan_settings = """<?xml version="1.0" encoding="UTF-8"?>
     <scan:ScanSettings xmlns:scan="http://schemas.hp.com/imaging/escl/2011/05/03">
       <scan:InputSource>Platen</scan:InputSource>
@@ -100,10 +106,11 @@ async def scan_to_file(filename: str = "scan.jpg"):
             doc = await client.get(f"http://{SCANNER_IP}:{SCANNER_PORT}{job_url}/NextDocument")
             doc.raise_for_status()
 
-            with open(filename, "wb") as f:
+            os.makedirs(SAVE_DIR, exist_ok=True)  # создаём папку, если нет
+            with open(filepath, "wb") as f:
                 f.write(doc.content)
 
-            return {"message": f"Скан сохранён в {filename}"}
+            return {"message": f"Скан сохранён в {filepath}"}
         except Exception as e:
             logger.error(f"Ошибка сканирования в файл: {e}")
-            raise HTTPException(status_code=500, detail="Ошибка сканирования в файл")
+            raise HTTPException(status_code=500, detail="Ошибка сканирования в файл")  
