@@ -48,7 +48,7 @@ function updateTestModalByType(type) {
     const allGroups = [
         'labelText', 'templateNumber', 'hopperNumberContainer',
         'ClinicCaseNumber', 'GlassCassetteNumber', 'StainingType',
-        'scannerContainer', 'sendLabelButton','testResult'
+        'scannerContainer', 'sendLabelButton','testResult','StickerPrint'
     ];
 
     allGroups.forEach(id => {
@@ -76,12 +76,13 @@ function updateTestModalByType(type) {
             break;
 
         case 'StickerPrinter':
+            show(document.getElementById('StickerPrint'));
             show(document.getElementById('labelText'));
             show(document.querySelector('#testModal button[onclick="sendToPrint()"]'));
             break;
 
         case 'scanner_docs':
-            show(document.getElementById('scannerContainer'));
+           // show(document.getElementById('scannerContainer'));
             show(document.getElementById('sendLabelButton'));
             hide(document.getElementById('templateNumber'));
             hide(document.getElementById('ClinicCaseNumber'));
@@ -129,7 +130,7 @@ function hide(el) {
         // Превращаем ответ (байты JPEG) в картинку
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
-
+        show(document.getElementById('scannerContainer'));
         scanPreview.src = url;
         scanPreview.style.display = 'block';
       

@@ -62,12 +62,14 @@
                     <!-- Опции будут добавлены динамически -->
                 </datalist>
             </div>
+            <div id="StickerPrint">
+                <textarea id="labelText"></textarea>
+                <button id="TestPrinting" onclick="sendToPrint()">Печать</button>
+            </div>
 
-            <textarea id="labelText"></textarea>
-            <button id="TestPrinting" onclick="sendToPrint()">Печать</button>
             <div id="scannerContainer">
                 <p>Результат сканирования:</p>
-                <img id="scanPreview" style="max-width:400px; max-height:400px;"/>
+                <img id="scanPreview" style="max-width:250px; max-height:400px;"/>
             </div>
 
 

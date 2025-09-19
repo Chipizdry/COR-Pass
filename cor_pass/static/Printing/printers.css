@@ -1,7 +1,7 @@
 
 
 .main-container {
-    max-width: 800px;
+    width: 250px;
     margin: 0 auto;
     padding: 20px;
 }
@@ -301,4 +301,21 @@ datalist option {
 
 datalist option:hover {
     background-color: #f5f5f5;
+}
+
+
+#labelText {
+    resize: both;            
+    min-width: 200px;          
+    max-width: 200px;         
+    min-height: 40px;        
+    max-height: 400px;        
+}
+
+#StickerPrint {
+    display: flex;
+    flex-direction: column;     
+    align-items: center;       
+    justify-content: center;     
+    gap: 10px;    
 }
