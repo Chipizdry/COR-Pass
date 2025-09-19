@@ -64,10 +64,10 @@
             </div>
 
             <textarea id="labelText"></textarea>
-            <button onclick="sendToPrint()">Печать</button>
-            <div id="scannerContainer" style="display:none;">
-                <p>Миниатюра последнего сканирования:</p>
-                <img id="scanPreview" style="max-width:300px; max-height:300px;" alt="Скан не выполнен"/>
+            <button id="TestPrinting" onclick="sendToPrint()">Печать</button>
+            <div id="scannerContainer">
+                <p>Результат сканирования:</p>
+                <img id="scanPreview" style="max-width:400px; max-height:400px;"/>
             </div>
 
 
@@ -76,7 +76,7 @@
                 <input type="number" id="template" min="0" max="65535" required>
             </div>
 
-            <div class="form" id="hopperNumberContainer" style="width:70px; display: none;">
+            <div class="form" id="hopperNumberContainer" style="width:70px;">
                 <label for="hopperNumber">Хоппер:</label>
                 <input type="number" id="hopperNumber"  min="0" max="6" required>
             </div>

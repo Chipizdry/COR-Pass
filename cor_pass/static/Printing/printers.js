@@ -489,14 +489,23 @@ function sendToPrint() {
   }
 
 
-// Обработчик для модального окна теста
+
 document.getElementById('sendLabelButton').addEventListener('click', async () => {
     checkToken();
     const testResult = document.getElementById('testResult');
-    
-    // Получаем значения из полей формы
+
     const printerIp = document.getElementById('printerIp').value.trim();
-    const customIpInput = document.getElementById('customPrinterIp');
+    const selectedOption = Array.from(document.getElementById('printerIps').options)
+        .find(opt => opt.value === printerIp);
+
+    const deviceType = selectedOption ? selectedOption.dataset.type : null;
+
+    if (deviceType === 'scanner_docs') {
+        await scanDocument();
+        return; // завершаем, чтобы не идти в печать
+    }
+
+    // --- иначе это принтер ---
     const hopperNumber = document.getElementById('hopperNumber').value.trim();
     const templateId = document.getElementById('template').value;
     const clinicId = document.getElementById('clinicId').value.trim();
@@ -506,16 +515,7 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
     const glassNumber = document.getElementById('glassNumber').value.trim();
     const staining = document.getElementById('staining').value.trim();
     const patientCorId = document.getElementById('patientCorId').value.trim();
-   
-    
-    // Проверка обязательных полей
-    if (!printerIp) {
-        testResult.textContent = 'Ошибка: Не указан IP-адрес принтера';
-        testResult.style.color = 'red';
-        return;
-    }
-    
-    // Проверка валидности номера шаблона
+
     const templateNumber = parseInt(templateId);
     if (isNaN(templateNumber) || templateNumber < 0 || templateNumber > 65535) {
         testResult.textContent = 'Ошибка: Номер шаблона должен быть числом от 0 до 65535';
@@ -523,7 +523,6 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
         return;
     }
 
-    // Формируем строку content из всех параметров
     const content = [
         hopperNumber,
         clinicId,
@@ -535,7 +534,6 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
         patientCorId
     ].join('|');
 
-    console.log("Печать:",content);
-    // Используем универсальную функцию печати
+    console.log("Печать:", content);
     await printLabel(printerIp, templateNumber, content, testResult);
 });
