@@ -48,7 +48,8 @@ function updateTestModalByType(type) {
     const allGroups = [
         'labelText', 'templateNumber', 'hopperNumberContainer',
         'ClinicCaseNumber', 'GlassCassetteNumber', 'StainingType',
-        'scannerContainer', 'sendLabelButton','testResult','StickerPrint'
+        'scannerContainer', 'sendLabelButton','testResult','StickerPrint',
+        'glassNumberForm'
     ];
 
     allGroups.forEach(id => {
@@ -58,6 +59,14 @@ function updateTestModalByType(type) {
 
     switch (type) {
         case 'GlassPrinter':
+            show(document.getElementById('glassNumberForm'));
+            show(document.getElementById('templateNumber'));
+            show(document.getElementById('ClinicCaseNumber'));
+            show(document.getElementById('GlassCassetteNumber'));
+            show(document.getElementById('StainingType'));
+            show(document.getElementById('sendLabelButton'));
+        break;
+
         case 'CassetPrinter':
             show(document.getElementById('templateNumber'));
             show(document.getElementById('ClinicCaseNumber'));
@@ -73,6 +82,7 @@ function updateTestModalByType(type) {
             show(document.getElementById('GlassCassetteNumber'));
             show(document.getElementById('StainingType'));
             show(document.getElementById('sendLabelButton'));
+            hide(document.getElementById('glassNumberForm'));
             break;
 
         case 'StickerPrinter':
