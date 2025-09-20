@@ -825,21 +825,22 @@ function processEnergyDataWithPlaceholders(serverData) {
 function createCompleteIntervals(chartData, startDate, endDate) {
     if (!chartData || chartData.length === 0) return [];
 
-    // Определяем шаг интервала по первым двум точкам
+    // Определяем шаг интервала строго по данным
     const firstInterval = new Date(chartData[0].interval);
     const secondInterval = chartData.length > 1 ? new Date(chartData[1].interval) : null;
 
-    let intervalStepMs = 30 * 60 * 1000; // по умолчанию 30 минут
+    let intervalStepMs;
     if (secondInterval) {
         intervalStepMs = secondInterval - firstInterval;
+    } else {
+        intervalStepMs = 30 * 60 * 1000; // fallback 30 минут
     }
 
     const completeIntervals = [];
-    // 🚀 Вместо округления startDate используем первую точку из данных
+    // 🚀 Начинаем от первого интервала из данных
     let currentTime = new Date(firstInterval);
 
     while (currentTime <= endDate) {
-        // Ищем ближайшую точку к currentTime
         const matchingData = chartData.find(data => {
             const dataTime = new Date(data.interval).getTime();
             return Math.abs(dataTime - currentTime.getTime()) < intervalStepMs / 2;
