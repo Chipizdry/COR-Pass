@@ -588,7 +588,6 @@ async def get_averaged_measurements_service(
     return averaged_results    
 
 
-
 async def get_energy_measurements_service(
     db: AsyncSession,
     object_name: Optional[str],
@@ -612,7 +611,9 @@ async def get_energy_measurements_service(
         intervals.append({
             "start": current_interval_start,
             "end": current_interval_end,
-            "measurements": []
+            "measurements": [],
+            "measurement_count": 0,
+            "has_sufficient_data": False
         })
         current_interval_start = current_interval_end
 
@@ -629,14 +630,12 @@ async def get_energy_measurements_service(
     result = await db.execute(query)
     all_measurements = result.scalars().all()
 
-    if len(all_measurements) < 2:
-        return {"intervals": [], "totals": {}}
-
-    # Распределяем измерения по интервалам
+    # Распределяем измерения по интервалам и считаем количество
     for measurement in all_measurements:
         for interval in intervals:
             if interval["start"] <= measurement.measured_at < interval["end"]:
                 interval["measurements"].append(measurement)
+                interval["measurement_count"] += 1
                 break
 
     results = []
@@ -649,8 +648,22 @@ async def get_energy_measurements_service(
     # Считаем энергию по каждому интервалу
     for interval in intervals:
         measurements = interval["measurements"]
+        
+        # Помечаем интервалы с достаточным количеством данных (≥3 измерений)
+        interval["has_sufficient_data"] = len(measurements) >= 3
+        
         if len(measurements) < 2:
-            # Пропускаем интервалы без данных
+            # Возвращаем интервал с нулевыми значениями, но с информацией о недостатке данных
+            results.append({
+                "interval_start": interval["start"],
+                "interval_end": interval["end"],
+                "solar_energy_kwh": 0.0,
+                "load_energy_kwh": 0.0,
+                "grid_energy_kwh": 0.0,
+                "battery_energy_kwh": 0.0,
+                "measurement_count": interval["measurement_count"],
+                "has_sufficient_data": interval["has_sufficient_data"]
+            })
             continue
 
         solar_energy = 0.0
@@ -683,12 +696,15 @@ async def get_energy_measurements_service(
             "solar_energy_kwh": round(solar_energy, 3),
             "load_energy_kwh": round(load_energy, 3),
             "grid_energy_kwh": round(grid_energy, 3),
-            "battery_energy_kwh": round(battery_energy, 3)
+            "battery_energy_kwh": round(battery_energy, 3),
+            "measurement_count": interval["measurement_count"],
+            "has_sufficient_data": interval["has_sufficient_data"]
         })
 
-        total_solar += solar_energy
-        total_load += load_energy
-        total_battery += battery_energy
+        if interval["has_sufficient_data"]:
+            total_solar += solar_energy
+            total_load += load_energy
+            total_battery += battery_energy
 
     return {
         "intervals": results,
