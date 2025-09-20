@@ -5,13 +5,13 @@
 async function loadEnergyDataForTimeRange(range, objectName = null) {
     const now = new Date();
     let startDate;
-    let intervals = 24; // по умолчанию почасово за сутки
+    let intervalMinutes = 30; // по умолчанию 30 минут
 
     switch(range) {
         case 'today':
             startDate = new Date(now);
             startDate.setHours(0, 0, 0, 0);
-            intervals = 24;
+            intervalMinutes = 30;
             break;
 
         case 'this_week':
@@ -20,22 +20,22 @@ async function loadEnergyDataForTimeRange(range, objectName = null) {
             const diff = (day === 0 ? -6 : 1) - day;
             startDate.setDate(startDate.getDate() + diff);
             startDate.setHours(0, 0, 0, 0);
-            intervals = 7;
+            intervalMinutes = 60 * 24; // 1 день в минутах
             break;
 
         case '1d':
             startDate = new Date(now.getTime() - 24 * 3600000);
-            intervals = 24;
+            intervalMinutes = 30;
             break;
 
         case '7d':
             startDate = new Date(now.getTime() - 7 * 24 * 3600000);
-            intervals = 7;
+            intervalMinutes = 60 * 24; // 1 день в минутах
             break;
 
         case '30d':
             startDate = new Date(now.getTime() - 30 * 24 * 3600000);
-            intervals = 30;
+            intervalMinutes = 60 * 24 * 2; // 2 дня в минутах
             break;
 
         default:
@@ -51,10 +51,11 @@ async function loadEnergyDataForTimeRange(range, objectName = null) {
             return date.toISOString().replace(/\.\d{3}Z$/, '');
         };
 
+
         const params = new URLSearchParams({
             start_date: formatDateForAPI(startDate),
             end_date: formatDateForAPI(now),
-            intervals: intervals
+            interval_minutes: intervalMinutes
         });
 
         if (objectName) {
@@ -62,6 +63,7 @@ async function loadEnergyDataForTimeRange(range, objectName = null) {
         }
 
         const url = `/api/modbus/measurements/energy/?${params.toString()}`;
+        console.log('Fetching energy data with URL:', url);
 
         const response = await fetch(url, {
             headers: { 'Accept': 'application/json' }
@@ -78,9 +80,14 @@ async function loadEnergyDataForTimeRange(range, objectName = null) {
         }
 
         const data = await response.json();
-        // console.log('Energy data received:', data);
+
+        console.log('==== Energy data received ====');
+        console.log('range:', range, 'objectName:', objectName);
+        console.log('raw data:', data);
 
         if (data && data.intervals && data.intervals.length > 0) {
+
+            console.log('Intervals count:', data.intervals.length);
             // Формируем данные для графика
             const chartData = data.intervals.map(item => ({
                 interval: item.interval_start,
@@ -89,6 +96,11 @@ async function loadEnergyDataForTimeRange(range, objectName = null) {
                 grid: item.grid_energy_kwh,
                 battery: item.battery_energy_kwh
             }));
+
+            data.intervals.forEach((i, idx) => {
+                console.log(idx, i.interval_start, i.solar_energy_kwh, i.load_energy_kwh, i.grid_energy_kwh, i.battery_energy_kwh);
+            });
+
 
             // Рисуем график
             updateBarChart(chartData);
@@ -124,16 +136,27 @@ async function loadEnergyDataForCustomRange(startDate, endDate, objectName = nul
         isLoading = true;
         document.getElementById('chartLoadingOverlay').style.display = 'flex';
 
-        const durationDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
-        let intervals = Math.max(1, Math.ceil(durationDays)); // минимум 1 интервал
+        const durationHours = (endDate - startDate) / (1000 * 60 * 60);
+        let intervalMinutes = 30; // по умолчанию 30 минут
+
+        // Автоматически увеличиваем интервал для больших периодов
+        if (durationHours > 24 * 7) { // больше недели
+            intervalMinutes = 60 * 24; // 1 день
+        } else if (durationHours > 24 * 3) { // больше 3 дней
+            intervalMinutes = 60 * 12; // 12 часов
+        } else if (durationHours > 24) { // больше суток
+            intervalMinutes = 60 * 6; // 6 часов
+        } else if (durationHours > 12) { // больше 12 часов
+            intervalMinutes = 60; // 1 час
+        }
 
         const formatDateForAPI = (date) => date.toISOString().replace(/\.\d{3}Z$/, '');
-        
-        // Формируем параметры для query string
-        const params = new URLSearchParams({
+       
+         // Формируем параметры для query string
+         const params = new URLSearchParams({
             start_date: formatDateForAPI(startDate),
             end_date: formatDateForAPI(endDate),
-            intervals: intervals
+            interval_minutes: intervalMinutes
         });
 
         if (objectName) {
@@ -288,6 +311,7 @@ function updateBarChart(chartData) {
         }
     });
 }
+
 
 
 
@@ -633,3 +657,37 @@ window.addEventListener('beforeunload', () => {
 });
 
 
+function formatDateLabel(dateString, startDate, endDate, chartType) {
+    const date = new Date(dateString);
+    
+    if (chartType === 'bar') {
+        const duration = endDate - startDate;
+        const days = duration / (1000 * 60 * 60 * 24);
+        
+        if (days <= 1) {
+            // Для периода до 1 дня: показываем часы и минуты
+            return date.toLocaleTimeString('ru-RU', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        } else if (days <= 7) {
+            // Для периода до недели: показываем день и время
+            return date.toLocaleString('ru-RU', { 
+                day: '2-digit',
+                month: '2-digit',
+                hour: '2-digit'
+            });
+        } else {
+            // Для больших периодов: показываем только дату
+            return date.toLocaleDateString('ru-RU', {
+                day: '2-digit',
+                month: '2-digit'
+            });
+        }
+    }
+    
+    return date.toLocaleTimeString('ru-RU', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+}

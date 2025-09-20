@@ -804,9 +804,7 @@ async def get_averaged_measurements(
 
 
 
-
-@router.get(
-    "/measurements/energy/",
+@router.get( "/measurements/energy/",
     summary="Энергетический баланс по интервалам",
     description="Считает энергию (кВт·ч) по каждому интервалу времени: солнце, нагрузка, сеть, батарея. "
                 "Возвращает интервалы и итоговые значения за период.",
@@ -816,17 +814,18 @@ async def get_energy_measurements(
     object_name: Optional[str] = Query(None, description="Фильтр по имени объекта"),
     start_date: datetime = Query(..., description="Начальная дата периода (ISO 8601)"),
     end_date: datetime = Query(..., description="Конечная дата периода (ISO 8601)"),
-    intervals: int = Query(24, gt=0, description="Количество интервалов (например 24 → почасово)"),
+    interval_minutes: int = Query(30, gt=0, le=60*24*30, description="Длина интервала в минутах (например 30 → 30-минутные интервалы)"),
     db: AsyncSession = Depends(get_db)
 ):
     try:
-        data = await get_energy_measurements_service(db, object_name, start_date, end_date, intervals)
+        data = await get_energy_measurements_service(db, object_name, start_date, end_date, interval_minutes)
         return data
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Ошибка при расчёте энергии: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
+    
 
 
 
