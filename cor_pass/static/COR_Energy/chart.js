@@ -170,11 +170,18 @@ async function loadEnergyDataForCustomRange(startDate, endDate, objectName = nul
         }
 
         const data = await response.json();
-        console.log('Energy data received:', data);
+
+        console.log('==== Energy data received ====');
+     //   console.log('range:', range, 'objectName:', objectName);
+        console.log('raw data:', data);
 
         if (data && data.intervals && data.intervals.length > 0) {
             // Формируем данные для графика
             const chartData = processEnergyDataWithPlaceholders(data);
+            data.intervals.forEach((i, idx) => {
+                console.log(idx, i.interval_start, i.solar_energy_kwh, i.load_energy_kwh, i.grid_energy_kwh, i.battery_energy_kwh);
+            });
+
 
             // Рисуем график
             updateBarChart(chartData);
@@ -230,6 +237,9 @@ function initChartTypeControl() {
     });
 }
 
+
+
+
 function updateBarChart(chartData) {
     const ctx = document.getElementById('powerChart').getContext('2d');
 
@@ -241,81 +251,72 @@ function updateBarChart(chartData) {
 
     const startDate = new Date(chartData[0].interval);
     const endDate = new Date(chartData[chartData.length - 1].interval);
+    const labels = chartData.map(i => formatDateLabel(i.interval, startDate, endDate, 'bar'));
 
-    // Создаем полный набор интервалов (включая пропущенные)
-    const allIntervals = createCompleteIntervals(chartData, startDate, endDate);
-    
-    // Вычисляем среднюю высоту для заглушек
-    const averageHeight = calculateAverageHeight(allIntervals);
-    
-    const labels = allIntervals.map(interval => 
-        formatDateLabel(interval.interval_start, startDate, endDate, 'bar')
-    );
+    // вычисляем опорную высоту для заглушки — небольшой процент от реального максимума
+    let maxVal = 0;
+    chartData.forEach(i => {
+        if (i.has_sufficient_data) {
+            maxVal = Math.max(maxVal,
+                Math.abs(i.solar || 0),
+                Math.abs(i.load || 0),
+                Math.abs(i.grid || 0),
+                Math.abs(i.battery || 0)
+            );
+        }
+    });
+    const placeholderHeight = maxVal > 0 ? Math.max(maxVal * 0.04, 0.1) : 0.1; // минимум 0.1
+
+    // Для реальных данных — оставляем значения, для пропусков — 0
+    const solarData = chartData.map(i => i.has_sufficient_data ? i.solar : 0);
+    const loadData  = chartData.map(i => i.has_sufficient_data ? i.load  : 0);
+    const gridData  = chartData.map(i => i.has_sufficient_data ? i.grid  : 0);
+    const battData  = chartData.map(i => i.has_sufficient_data ? i.battery : 0);
+
+    // Отдельный датасет-заглушка: рисуется только там, где нет данных
+    const placeholderData = chartData.map(i => i.has_sufficient_data ? 0 : placeholderHeight);
 
     energyChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels,
             datasets: [
+                // Заглушки — первый слой (иначе, если поставить в конец, порядок рисования не важен,
+                // т.к. реальные датасеты имеют нули в этих позициях)
+                {
+                    label: 'Нет данных',
+                    data: placeholderData,
+                    backgroundColor: 'rgba(200,200,200,0.6)',
+                    borderColor: 'rgba(150,150,150,0.9)',
+                    borderWidth: 1
+                },
                 {
                     label: 'Солнечная энергия (кВт·ч)',
-                    data: allIntervals.map(interval => 
-                        interval.isPlaceholder ? averageHeight * 0.8 : interval.solar
-                    ),
-                    backgroundColor: allIntervals.map(interval => 
-                        interval.isPlaceholder ? 'rgba(200, 200, 200, 0.5)' : 'rgba(255, 206, 86, 0.7)'
-                    ),
-                    borderColor: allIntervals.map(interval => 
-                        interval.isPlaceholder ? 'rgba(150, 150, 150, 0.8)' : 'rgba(255, 206, 86, 1)'
-                    ),
-                    borderWidth: 1,
-                    barPercentage: 0.8,
-                    categoryPercentage: 0.9
+                    data: solarData,
+                    backgroundColor: 'rgba(255, 206, 86, 0.7)',
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    borderWidth: 1
                 },
                 {
                     label: 'Нагрузка (кВт·ч)',
-                    data: allIntervals.map(interval => 
-                        interval.isPlaceholder ? averageHeight * 0.6 : interval.load
-                    ),
-                    backgroundColor: allIntervals.map(interval => 
-                        interval.isPlaceholder ? 'rgba(200, 200, 200, 0.5)' : 'rgba(75, 192, 192, 0.7)'
-                    ),
-                    borderColor: allIntervals.map(interval => 
-                        interval.isPlaceholder ? 'rgba(150, 150, 150, 0.8)' : 'rgba(75, 192, 192, 1)'
-                    ),
-                    borderWidth: 1,
-                    barPercentage: 0.8,
-                    categoryPercentage: 0.9
+                    data: loadData,
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
                 },
                 {
                     label: 'Сеть (кВт·ч)',
-                    data: allIntervals.map(interval => 
-                        interval.isPlaceholder ? averageHeight * 0.4 : interval.grid
-                    ),
-                    backgroundColor: allIntervals.map(interval => 
-                        interval.isPlaceholder ? 'rgba(200, 200, 200, 0.5)' : 'rgba(255, 99, 132, 0.7)'
-                    ),
-                    borderColor: allIntervals.map(interval => 
-                        interval.isPlaceholder ? 'rgba(150, 150, 150, 0.8)' : 'rgba(255, 99, 132, 1)'
-                    ),
-                    borderWidth: 1,
-                    barPercentage: 0.8,
-                    categoryPercentage: 0.9
+                    data: gridData,
+                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
                 },
                 {
                     label: 'Батарея (кВт·ч)',
-                    data: allIntervals.map(interval => 
-                        interval.isPlaceholder ? averageHeight * 0.2 : interval.battery
-                    ),
-                    backgroundColor: allIntervals.map(interval => 
-                        interval.isPlaceholder ? 'rgba(200, 200, 200, 0.5)' : 'rgba(153, 102, 255, 0.7)'
-                    ),
-                    borderColor: allIntervals.map(interval => 
-                        interval.isPlaceholder ? 'rgba(150, 150, 150, 0.8)' : 'rgba(153, 102, 255, 1)'
-                    ),
-                    borderWidth: 1,
-                    barPercentage: 0.8,
-                    categoryPercentage: 0.9
+                    data: battData,
+                    backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 1
                 }
             ]
         },
@@ -323,59 +324,31 @@ function updateBarChart(chartData) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { 
-                    position: 'top',
-                    labels: {
-                        filter: function(item, chart) {
-                            // Скрываем легенду для заглушек
-                            return !item.text.includes('Заглушка');
-                        }
-                    }
-                },
+                legend: { position: 'top' },
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            const datasetLabel = context.dataset.label || '';
-                            const value = context.raw;
-                            const dataIndex = context.dataIndex;
-                            const interval = allIntervals[dataIndex];
-                            
-                            if (interval && interval.isPlaceholder) {
-                                return `${datasetLabel}: Нет данных`;
+                            const idx = context.dataIndex;
+                            const interval = chartData[idx];
+                            // специальное сообщение для заглушки
+                            if (!interval.has_sufficient_data) {
+                                return `${context.dataset.label}: Нет данных`;
                             }
-                            return `${datasetLabel}: ${value.toFixed(2)} кВт·ч`;
-                        },
-                        afterLabel: function(context) {
-                            const dataIndex = context.dataIndex;
-                            const interval = allIntervals[dataIndex];
-                            if (interval && interval.isPlaceholder) {
-                                return `Пропущенный интервал (${interval.measurement_count || 0} измерений)`;
-                            }
-                            return null;
-                        },
-                        title: function(context) {
-                            const dataIndex = context[0].dataIndex;
-                            const interval = allIntervals[dataIndex];
-                            if (interval && interval.isPlaceholder) {
-                                return 'Нет данных';
-                            }
-                            return context[0].label;
+                            const v = context.raw;
+                            return `${context.dataset.label}: ${Number(v).toFixed(2)} кВт·ч`;
                         }
                     }
                 }
             },
             scales: {
-                x: { 
+                x: {
                     stacked: true,
                     ticks: {
                         maxRotation: 45,
                         minRotation: 45,
                         callback: function(value, index) {
-                            const interval = allIntervals[index];
-                            if (interval && interval.isPlaceholder) {
-                                return '∅'; // Специальный символ для пропущенных интервалов
-                            }
-                            return this.getLabelForValue(value);
+                            const interval = chartData[index];
+                            return interval && !interval.has_sufficient_data ? '∅' : this.getLabelForValue(value);
                         }
                     }
                 },
@@ -388,38 +361,6 @@ function updateBarChart(chartData) {
         }
     });
 }
-
-// Функция для вычисления средней высоты столбцов
-function calculateAverageHeight(intervals) {
-    const validIntervals = intervals.filter(interval => !interval.isPlaceholder);
-    
-    if (validIntervals.length === 0) return 1; // Значение по умолчанию
-    
-    let total = 0;
-    let count = 0;
-    
-    validIntervals.forEach(interval => {
-        if (interval.solar !== null && interval.solar > 0) {
-            total += interval.solar;
-            count++;
-        }
-        if (interval.load !== null && interval.load > 0) {
-            total += interval.load;
-            count++;
-        }
-        if (interval.grid !== null && Math.abs(interval.grid) > 0) {
-            total += Math.abs(interval.grid);
-            count++;
-        }
-        if (interval.battery !== null && Math.abs(interval.battery) > 0) {
-            total += Math.abs(interval.battery);
-            count++;
-        }
-    });
-    
-    return count > 0 ? total / count : 1;
-}
-
 
 
 
@@ -805,63 +746,22 @@ function formatDateLabel(dateString, startDate, endDate, chartType) {
 
 // === Обработка данных от сервера ===
 function processEnergyDataWithPlaceholders(serverData) {
-    if (!serverData || !serverData.intervals || serverData.intervals.length === 0) {
+    if (!serverData || !Array.isArray(serverData.intervals) || serverData.intervals.length === 0) {
         return [];
     }
 
-    // Просто преобразуем интервалы в нужный формат
     return serverData.intervals.map(interval => ({
+    
         interval: interval.interval_start,
         interval_start: interval.interval_start,
-        solar: interval.solar_energy_kwh,
-        load: interval.load_energy_kwh,
-        grid: interval.grid_energy_kwh,
-        battery: interval.battery_energy_kwh,
-        isPlaceholder: false   // всегда реальные данные
+        solar: interval.solar_energy_kwh != null ? Number(interval.solar_energy_kwh) : 0,
+        load: interval.load_energy_kwh != null ? Number(interval.load_energy_kwh) : 0,
+        grid: interval.grid_energy_kwh != null ? Number(interval.grid_energy_kwh) : 0,
+        battery: interval.battery_energy_kwh != null ? Number(interval.battery_energy_kwh) : 0,
+        measurement_count: interval.measurement_count || 0,
+        has_sufficient_data: Boolean(interval.has_sufficient_data)
     }));
 }
 
-// === Достраивание временного ряда с заглушками ===
-function createCompleteIntervals(chartData, startDate, endDate) {
-    if (!chartData || chartData.length === 0) return [];
 
-    // Определяем шаг интервала строго по данным
-    const firstInterval = new Date(chartData[0].interval);
-    const secondInterval = chartData.length > 1 ? new Date(chartData[1].interval) : null;
 
-    let intervalStepMs;
-    if (secondInterval) {
-        intervalStepMs = secondInterval - firstInterval;
-    } else {
-        intervalStepMs = 30 * 60 * 1000; // fallback 30 минут
-    }
-
-    const completeIntervals = [];
-    // 🚀 Начинаем от первого интервала из данных
-    let currentTime = new Date(firstInterval);
-
-    while (currentTime <= endDate) {
-        const matchingData = chartData.find(data => {
-            const dataTime = new Date(data.interval).getTime();
-            return Math.abs(dataTime - currentTime.getTime()) < intervalStepMs / 2;
-        });
-
-        if (matchingData) {
-            completeIntervals.push({ ...matchingData, isPlaceholder: false });
-        } else {
-            completeIntervals.push({
-                interval: currentTime.toISOString(),
-                interval_start: currentTime.toISOString(),
-                solar: null,
-                load: null,
-                grid: null,
-                battery: null,
-                isPlaceholder: true
-            });
-        }
-
-        currentTime = new Date(currentTime.getTime() + intervalStepMs);
-    }
-
-    return completeIntervals;
-}
