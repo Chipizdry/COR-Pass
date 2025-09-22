@@ -587,7 +587,7 @@ async def get_averaged_measurements_service(
 
     return averaged_results    
 
-
+'''
 async def get_energy_measurements_service(
     db: AsyncSession,
     object_name: Optional[str],
@@ -709,6 +709,156 @@ async def get_energy_measurements_service(
     return {
         "intervals": results,
         "totals": {
+            "solar_energy_total": round(total_solar, 0),
+            "load_energy_total": round(total_load, 0),
+            "grid_import_total": round(total_grid_import, 0),
+            "grid_export_total": round(total_grid_export, 0),
+            "battery_energy_total": round(total_battery, 0),
+        }
+    }
+
+
+'''
+
+
+async def get_energy_measurements_service(
+    db: AsyncSession,
+    object_name: Optional[str],
+    start_date: datetime,
+    end_date: datetime,
+    interval_minutes: int = 30
+) -> dict:
+    if not start_date or not end_date:
+        raise ValueError("Необходимо указать start_date и end_date")
+
+  
+ #   rounded_start = start_date.replace(minute=0, second=0, microsecond=0)
+ #   rounded_end = end_date.replace(minute=0, second=0, microsecond=0)
+
+# Округляем: начало вниз до часа, конец вверх до следующего часа
+    rounded_start = start_date.replace(minute=0, second=0, microsecond=0)
+    if end_date.minute == 0 and end_date.second == 0 and end_date.microsecond == 0:
+        rounded_end = end_date
+    else:
+        rounded_end = (end_date.replace(minute=0, second=0, microsecond=0)
+                       + timedelta(hours=1))
+
+    
+    # Создаем интервалы
+    current_interval_start = rounded_start
+    intervals = []
+    while current_interval_start < rounded_end:
+        current_interval_end = current_interval_start + timedelta(minutes=interval_minutes)
+        intervals.append({
+            "start": current_interval_start,
+            "end": current_interval_end,
+            "measurements": [],
+            "measurement_count": 0,
+            "has_sufficient_data": False
+        })
+        current_interval_start = current_interval_end
+
+    # Загружаем все измерения (отсортированы)
+    query = (
+        select(CerboMeasurement)
+        .where(CerboMeasurement.measured_at >= rounded_start,
+               CerboMeasurement.measured_at <= rounded_end)
+        .order_by(CerboMeasurement.measured_at.asc())
+    )
+    if object_name:
+        query = query.where(CerboMeasurement.object_name == object_name)
+
+    result = await db.execute(query)
+    all_measurements = result.scalars().all()
+
+    # Распределяем измерения по интервалам 
+    for measurement in all_measurements:
+        for interval in intervals:
+            if interval["start"] <= measurement.measured_at < interval["end"]:
+                interval["measurements"].append(measurement)
+                interval["measurement_count"] += 1
+                break
+
+    # Подсчёт энергии внутри интервалов
+    results = []
+    for interval in intervals:
+        measurements = interval["measurements"]
+        interval["has_sufficient_data"] = len(measurements) >= 3
+
+        if len(measurements) < 2:
+            results.append({
+                "interval_start": interval["start"],
+                "interval_end": interval["end"],
+                "solar_energy_kwh": 0.0,
+                "load_energy_kwh": 0.0,
+                "grid_energy_kwh": 0.0,
+                "battery_energy_kwh": 0.0,
+                "measurement_count": interval["measurement_count"],
+                "has_sufficient_data": interval["has_sufficient_data"]
+            })
+            continue
+
+        solar_energy = 0.0
+        load_energy = 0.0
+        grid_energy = 0.0
+        battery_energy = 0.0
+
+        for j in range(1, len(measurements)):
+            prev = measurements[j - 1]
+            curr = measurements[j]
+            delta_h = (curr.measured_at - prev.measured_at).total_seconds() / 3600.0
+
+            if prev.solar_total_pv_power is not None:
+                solar_energy += (prev.solar_total_pv_power / 1000.0) * delta_h
+            if prev.inverter_total_ac_output is not None:
+                load_energy += (prev.inverter_total_ac_output / 1000.0) * delta_h
+            if prev.ess_total_input_power is not None:
+                grid_energy += (prev.ess_total_input_power / 1000.0) * delta_h
+            if prev.general_battery_power is not None:
+                battery_energy += (prev.general_battery_power / 1000.0) * delta_h
+
+        results.append({
+            "interval_start": interval["start"],
+            "interval_end": interval["end"],
+            "solar_energy_kwh": round(solar_energy, 3),
+            "load_energy_kwh": round(load_energy, 3),
+            "grid_energy_kwh": round(grid_energy, 3),
+            "battery_energy_kwh": round(battery_energy, 3),
+            "measurement_count": interval["measurement_count"],
+            "has_sufficient_data": interval["has_sufficient_data"]
+        })
+
+    # точные totals как сумма квантов между всеми подряд идущими измерениями 
+    total_solar = 0.0
+    total_load = 0.0
+    total_grid_import = 0.0
+    total_grid_export = 0.0
+    total_battery = 0.0
+
+    for j in range(1, len(all_measurements)):
+        prev = all_measurements[j - 1]
+        curr = all_measurements[j]
+        delta_h = (curr.measured_at - prev.measured_at).total_seconds() / 3600.0
+        if delta_h <= 0:
+            continue
+
+        if prev.solar_total_pv_power is not None:
+            total_solar += (prev.solar_total_pv_power / 1000.0) * delta_h
+        if prev.inverter_total_ac_output is not None:
+            total_load += (prev.inverter_total_ac_output / 1000.0) * delta_h
+        if prev.ess_total_input_power is not None:
+            grid_q = (prev.ess_total_input_power / 1000.0) * delta_h
+            if grid_q >= 0:
+                total_grid_import += grid_q
+            else:
+                total_grid_export += abs(grid_q)
+        if prev.general_battery_power is not None:
+            total_battery += (prev.general_battery_power / 1000.0) * delta_h
+
+    return {
+        "intervals": results,
+        "totals": {
+            # округляем с точностью до 0 знаков — точные интегральные суммы квантов
             "solar_energy_total": round(total_solar, 0),
             "load_energy_total": round(total_load, 0),
             "grid_import_total": round(total_grid_import, 0),

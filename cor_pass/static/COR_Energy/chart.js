@@ -348,7 +348,7 @@ function updateBarChart(chartData) {
                         minRotation: 45,
                         callback: function(value, index) {
                             const interval = chartData[index];
-                            return interval && !interval.has_sufficient_data ? '∅' : this.getLabelForValue(value);
+                            return interval && !interval.has_sufficient_data ? '---' : this.getLabelForValue(value);
                         }
                     }
                 },
