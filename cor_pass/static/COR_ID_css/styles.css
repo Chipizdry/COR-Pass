@@ -387,10 +387,9 @@ input[type="submit"] {
 
 .password-container {
     position: relative;
-    display: flex;
-    align-items: center; /* вертикальное выравнивание по центру */
-    justify-content: center; /* горизонтальное выравнивание (опционально) */
-    min-height: 50px; /* или любая другая высота */
+    align-items: center; 
+    justify-content: center;
+    min-height: 50px;
 }
 
 .password-input {
@@ -421,12 +420,13 @@ input[type="submit"] {
 
 
 #verificationCodeWindow {
-    display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
     margin-top: 20px;
 }
+
+
 input[type="button"].registration-button:hover {
     background-color: #dc56a8;
 }
@@ -604,9 +604,7 @@ select#deviceType:checked {
     background-color: #5B4296; /* Цвет фона выбранной опции */
     color: white;              /* Цвет текста выбранной опции */
 }
-.hidden {
-    display: none;
-}
+
 
 #qrCodeContainer {
     display: flex;

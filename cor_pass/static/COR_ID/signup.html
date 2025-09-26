@@ -3,23 +3,9 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
-    <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="/apple-icon-76x76.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="/apple-icon-114x114.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="/apple-icon-120x120.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="/apple-icon-144x144.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/android-icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
-    <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
-    <meta name="theme-color" content="#ffffff">
     <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/styles.css">
     <title data-translate="signup-title">Регистрация</title>
    
@@ -47,18 +33,7 @@
                     </select>
                 </div>
 
-                <script>
-                    const birthYearSelect = document.getElementById('birth');
-                    const currentYear = new Date().getFullYear();
-                    for (let year = currentYear; year >= 1900; year--) {
-                        const option = document.createElement('option');
-                        option.value = year;
-                        option.textContent = year;
-                        birthYearSelect.appendChild(option);
-                    }
-                </script>
-
-
+             
             <label for="email" data-translate="email-label">Электронная почта:</label>
             <input type="email" id="email" name="email" required>
             <div id="message" class="message"></div>
@@ -73,7 +48,7 @@
             </div>
 
             <div class="password-container hidden">
-                <label for="confirm-password" data-translate="confirm-password-label">Повторите пароль:</label>
+              <!-- <label for="confirm-password" data-translate="confirm-password-label">Повторите пароль:</label> --> 
                 <div class="input-wrapper">
                     <input type="password" id="confirm-password" placeholder="Подтвердите пароль"  data-translate="confirm-password-placeholder" minlength="5" maxlength="21" required>
                     <span id="eyeIcon1" class="eye-icon" onclick="togglePassword('confirm-password', 'eyeIcon1')"></span> 
@@ -83,26 +58,40 @@
             <button type="button" id="registration-button" class="hidden" data-translate="signup-button">Зарегистрироваться</button>
             <button type="button" id="login-button" class="hidden" data-translate="login-button">ВОЙТИ</button>
             <button type="button" id="sendVerifCode"  data-translate="send-code-email">Отправить код на имейл</button>
-            <div id="messageDivErr" data-translate="error-message"style="display: none;"></div>
-            <div id="confirmationMessage" class="confirmationMessage" data-translate="confirmation-message"style="display: none;"></div>
+            <div id="messageDivErr" data-translate="error-message" class="hidden"></div>
+            <div id="confirmationMessage" class="confirmationMessage hidden" data-translate="confirmation-message"></div>
             <div id="verificationCodeWindow" class="hidden">
                 <div class="otp-container">
-                    <input type="text" class="otp-input" maxlength="1" disabled>
-                    <input type="text" class="otp-input" maxlength="1" disabled>
-                    <input type="text" class="otp-input" maxlength="1" disabled>
-                    <input type="text" class="otp-input" maxlength="1" disabled>
-                    <input type="text" class="otp-input" maxlength="1" disabled>
-                    <input type="text" class="otp-input" maxlength="1" disabled>
+                    <input type="text" class="otp-input" maxlength="1">
+                    <input type="text" class="otp-input" maxlength="1">
+                    <input type="text" class="otp-input" maxlength="1">
+                    <input type="text" class="otp-input" maxlength="1">
+                    <input type="text" class="otp-input" maxlength="1">
+                    <input type="text" class="otp-input" maxlength="1">
                 </div>
                 <input type="hidden" id="verificationCodeInput">
                 <input type="button" id="ConfirmationCodeInput" value="Подтвердить" class="hidden" onclick="verifyVerificationCode()" data-translate="confirm-button">
-            </div> 
+            </div>
         </form>
         <div id="messageOk" class="messageOk"></div>
     </div>
   
     <script src="/static/COR_ID_Js/translation.js"></script>   
     <script src="/static/COR_ID_Js/general_fun.js"></script>
+    <script src="/static/COR_ID_Js/signup.js"></script>   
+
+    <script>
+        const birthYearSelect = document.getElementById('birth');
+        const currentYear = new Date().getFullYear();
+        for (let year = currentYear; year >= 1900; year--) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            birthYearSelect.appendChild(option);
+        }
+    </script>
+
+
     <script>
     
 const urlParams = new URLSearchParams(window.location.search);
@@ -256,7 +245,9 @@ if (passwordInput.value.length > 0 || confirmPasswordInput.value.length > 0) {
     passwordInput.addEventListener('input', checkFields);
     confirmPasswordInput.addEventListener('input', checkFields);
 
-    registrationButton.addEventListener('click', () => {
+//Обработчик Кнопки Зарегистрироваться   
+
+registrationButton.addEventListener('click', () => {
     if (passwordInput.value !== confirmPasswordInput.value) {
         console.error('Пароли не совпадают.');
         return;
@@ -283,14 +274,10 @@ if (passwordInput.value.length > 0 || confirmPasswordInput.value.length > 0) {
     formDataJson['user_sex'] = gender;
     formDataJson['birth'] = parseInt(birthYear);
 
-
     const corId = localStorage.getItem('cor_id');
     console.log('COR-ID:', corId); 
     formDataJson['cor_id'] = corId; // Добавляем corId в запрос
-    // } else {
-    //     console.warn('COR-ID отсутствует.');
-    // }
-
+    
     // Отправка данных на сервер
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/api/auth/signup');
@@ -304,16 +291,24 @@ if (passwordInput.value.length > 0 || confirmPasswordInput.value.length > 0) {
                 messageDiv.innerText = translations[userLang]['registrationSuccess'];
                 messageDiv.style.color = 'green';
 
-                registrationButton.style.display = 'none';
-                loginButton.style.display = 'block';
+                // ЗАМЕНА: используем класс hidden вместо style.display
+                registrationButton.classList.add('hidden');
+                loginButton.classList.remove('hidden');
+                
             } else {
                 console.error('Произошла ошибка при регистрации.');
+                // Можно добавить обработку ошибки, например:
+                messageDiv.innerText = translations[userLang]['registration-error'] || 'Ошибка при регистрации';
+                messageDiv.style.color = 'red';
             }
         }
     };
 
     xhr.send(JSON.stringify(formDataJson));
 });
+
+
+
 
     loginButton.addEventListener('click', () => {
         const email = document.getElementById('email').value;
@@ -361,56 +356,6 @@ document.addEventListener('DOMContentLoaded', function() {
 var sendCodeButton = document.getElementById('sendVerifCode');
 sendCodeButton.addEventListener('click', sendVerificationCode);
 
-function sendVerificationCode() {
-const userLang = localStorage.getItem('selectedLanguage');
-var form = document.getElementById("registrationForm");
-var emailInput = form.elements.email;
-var messageDiv = document.getElementById("message");
-var confirmationMessageDiv = document.getElementById("confirmationMessage");
-var messageDivErr = document.getElementById('messageDivErr');
-var email = emailInput.value;
-const gender = document.getElementById('user_sex').value;       
-const birthYear = document.getElementById('birth').value;
-
-        // Проверяем заполнены ли поля
-        if (!gender || !birthYear) {
-            messageDiv.innerText = translations[userLang]["fillAllFields"]; // Сообщение, если поля не заполнены
-            messageDiv.style.color = 'red';
-            return; // Не отправляем запрос, если поля не заполнены
-        }
-
-
-var xhr = new XMLHttpRequest();
-xhr.open("POST", "/api/auth/send_verification_code");
-xhr.setRequestHeader("Content-Type", "application/json");
-xhr.onreadystatechange = function() {
-    if (xhr.readyState === XMLHttpRequest.DONE) {
-        if (xhr.status === 200) {
-            console.log("Код подтверждения отправлен на вашу электронную почту.");
-            confirmationMessageDiv.textContent = translations[userLang]["confirmation-message"];
-            confirmationMessageDiv.style.color = "#5B4296";
-            confirmationMessageDiv.style.display = 'block';
-
-            showVerificationCodeInput();
-            messageDivErr.style.display = 'none';
-            messageDiv.style.display = 'none';
-            document.getElementById('ConfirmationCodeInput').style.display = 'block';
-            document.getElementById('gender-field').style.display = 'none';
-            document.getElementById('birth-year-field').style.display = 'none';
-            startCountdown(sendCodeButton, userLang);
-
-        } else {
-            var error = JSON.parse(xhr.responseText);
-            console.error("Произошла ошибка при отправке кода подтверждения на почту.");
-            messageDiv.innerText = error.detail || "Произошла ошибка при отправке кода подтверждения на почту.";
-            messageDiv.style.color = 'red';
-            confirmationMessageDiv.style.display = 'none';
-        }
-    }
-};
-
-xhr.send(JSON.stringify({ email: email }));
-}
 });
 
 
@@ -433,84 +378,11 @@ const interval = setInterval(function() {
 }, 1000);
 }
 
-function showVerificationCodeInput() {
-    var verificationCodeWindow = document.getElementById("verificationCodeWindow");
-    verificationCodeWindow.style.display = "block";
-    document.querySelector(".otp-container").style.display = "flex";
-}
-
-
-// Функция обновления скрытого поля с кодом
-function updateHiddenInput() {
-    let otpInputs = document.querySelectorAll(".otp-input");
-    let hiddenInput = document.getElementById("verificationCodeInput");
-
-    if (!hiddenInput) {
-        console.error("Ошибка: скрытое поле для кода не найдено.");
-        return;
-    }
-
-    let code = Array.from(otpInputs).map(input => input.value).join("");
-    hiddenInput.value = code;
-}
 
 
 
-function verifyVerificationCode() {
-    const userLang = localStorage.getItem('selectedLanguage');
-    var verificationCodeInput = document.getElementById("verificationCodeInput");
-
-    let hiddenInput = document.getElementById("verificationCodeInput"); // Убедимся, что он есть
-    let otpInputs = document.querySelectorAll(".otp-input");
-
-    // Обновляем значение кода перед проверкой
-    updateHiddenInput();
-
-    var verificationCode = hiddenInput.value;
 
 
-    var emailInput = document.getElementById("email");
-    var confirmationMessageDiv = document.getElementById("confirmationMessage");
-    var email = emailInput.value;
-    var verificationCode = verificationCodeInput.value;
-
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/auth/confirm_email");
-    xhr.setRequestHeader("Content-Type", "application/json");
-
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                //confirmationMessageDiv.innerText = "Ваша почта успешно подтверждена!";
-                confirmationMessageDiv.innerText = translations[userLang]["confirmationMessage"]; 
-                confirmationMessageDiv.style.color = 'green';
-                confirmationMessageDiv.style.display = 'block'; // confirmationMessageDiv.style.display = 'none';                     
-                console.log("Код подтверждения верный.");                     
-                const containers = document.querySelectorAll('.password-container');
-                containers.forEach(container => { container.style.display = 'block'; });
-                document.getElementById('sendVerifCode').style.display = 'none';
-                document.getElementById('registration-button').style.display = 'block';
-                document.getElementById('ConfirmationCodeInput').style.display = 'none';
-                document.getElementById('verificationCodeInput').style.display = 'none';
-                document.getElementById('verificationCodeWindow').style.display = 'none';
-                document.getElementById('message').style.display = 'none';
-            } else {
-                console.error("Неверный код подтверждения.");
-                confirmationMessageDiv.innerText =  translations[userLang]["invalid-code"];
-                confirmationMessageDiv.style.color = 'red';
-                confirmationMessageDiv.style.display = 'block';
-                const containers = document.querySelectorAll('.password-container');
-                containers.forEach(container => { container.style.display = 'none'; });
-                setTimeout(function() {
-                    verificationCodeInput.value = "";
-                    confirmationMessageDiv.innerText = " ";
-                                                    }, 3000);
-            }
-        }
-    };
-
-    xhr.send(JSON.stringify({ email: email, verification_code: verificationCode }));
-}
 </script>
 </body>
 </html>
