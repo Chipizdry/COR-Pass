@@ -1,10 +1,14 @@
 
+
+
+
 async function printLabel(printerIp, templateNumber, content, resultElement = null) {
-     checkToken();
+    checkToken();
+
     if (resultElement) {
         resultElement.textContent = 'Отправка задания на печать...';
         resultElement.style.color = 'black';
-        resultElement.style.display = 'block'; // показать элемент
+        resultElement.style.display = 'block';
     }
 
     const requestData = {
@@ -13,7 +17,7 @@ async function printLabel(printerIp, templateNumber, content, resultElement = nu
             {
                 number_model_id: templateNumber,
                 content: content,
-                uuid: Date.now().toString()  
+                uuid: Date.now().toString()
             }
         ]
     };
@@ -39,11 +43,11 @@ async function printLabel(printerIp, templateNumber, content, resultElement = nu
         if (resultElement) {
             resultElement.textContent = `Задание отправлено (IP: ${printerIp}, Шаблон: ${templateNumber})`;
             resultElement.style.color = 'green';
-            resultElement.style.display = 'block'; // показать
-            setTimeout(() => {
-                resultElement.style.display = 'none';
-            }, 3000);
+            resultElement.style.display = 'block';
         }
+
+        // Всплывающее уведомление
+        showNotification(`Печать успешно отправлена на ${printerIp}`, 'success');
 
         return result;
     } catch (error) {
@@ -52,15 +56,16 @@ async function printLabel(printerIp, templateNumber, content, resultElement = nu
         if (resultElement) {
             resultElement.textContent = 'Ошибка при печати: ' + error.message;
             resultElement.style.color = 'red';
-            resultElement.style.display = 'block'; // показать
-            setTimeout(() => {
-                resultElement.style.display = 'none';
-            }, 3000);
+            resultElement.style.display = 'block';
         }
+
+        // Всплывающее уведомление
+        showNotification(`Ошибка печати (${printerIp}): ${error.message}`, 'error');
 
         throw error;
     }
 }
+
 
 
     // Функция проверки доступности принтера
@@ -488,9 +493,7 @@ function sendToPrint() {
     .then(data => alert("Статус: " + data.status));
   }
 
-
-
-document.getElementById('sendLabelButton').addEventListener('click', async () => {
+  document.getElementById('sendLabelButton').addEventListener('click', async () => {
     checkToken();
     const testResult = document.getElementById('testResult');
 
@@ -502,38 +505,79 @@ document.getElementById('sendLabelButton').addEventListener('click', async () =>
 
     if (deviceType === 'scanner_docs') {
         await scanDocument();
-        return; // завершаем, чтобы не идти в печать
+        return;
     }
 
-    // --- иначе это принтер ---
-    const hopperNumber = document.getElementById('hopperNumber').value.trim();
     const templateId = document.getElementById('template').value;
-    const clinicId = document.getElementById('clinicId').value.trim();
-    const caseCode = document.getElementById('caseCode').value.trim();
-    const sampleNumber = document.getElementById('sampleNumber').value.trim();
-    const cassetteNumber = document.getElementById('cassetteNumber').value.trim();
-    const glassNumber = document.getElementById('glassNumber').value.trim();
-    const staining = document.getElementById('staining').value.trim();
-    const patientCorId = document.getElementById('patientCorId').value.trim();
-
     const templateNumber = parseInt(templateId);
     if (isNaN(templateNumber) || templateNumber < 0 || templateNumber > 65535) {
         testResult.textContent = 'Ошибка: Номер шаблона должен быть числом от 0 до 65535';
         testResult.style.color = 'red';
+        showNotification('Ошибка: неверный номер шаблона', 'error');
         return;
     }
 
-    const content = [
-        hopperNumber,
-        clinicId,
-        caseCode,
-        sampleNumber,
-        cassetteNumber,
-        glassNumber,
-        staining,
-        patientCorId
-    ].join('|');
+    // --- собираем контент в зависимости от типа устройства ---
+    let content = "";
+    switch (deviceType) {
+        case 'GlassPrinter':
+            content = [
+                document.getElementById('clinicId').value.trim(),
+                document.getElementById('caseCode').value.trim(),
+                document.getElementById('sampleNumber').value.trim(),
+                document.getElementById('cassetteNumber').value.trim(),
+                document.getElementById('glassNumber').value.trim(),
+                document.getElementById('staining').value.trim(),
+                document.getElementById('patientCorId').value.trim()
+            ].join('|');
+            break;
 
-    console.log("Печать:", content);
-    await printLabel(printerIp, templateNumber, content, testResult);
+        case 'CassetPrinter':
+            content = [
+                document.getElementById('clinicId').value.trim(),
+                document.getElementById('caseCode').value.trim(),
+                document.getElementById('sampleNumber').value.trim(),
+                document.getElementById('cassetteNumber').value.trim(),
+                document.getElementById('staining').value.trim(),
+                document.getElementById('patientCorId').value.trim()
+            ].join('|');
+            break;
+
+        case 'CassetPrinterHopper':
+            content = [
+                document.getElementById('hopperNumber').value.trim(),
+                document.getElementById('clinicId').value.trim(),
+                document.getElementById('caseCode').value.trim(),
+                document.getElementById('sampleNumber').value.trim(),
+                document.getElementById('cassetteNumber').value.trim(),
+                document.getElementById('staining').value.trim(),
+                document.getElementById('patientCorId').value.trim()
+            ].join('|');
+            break;
+
+        default:
+            testResult.textContent = 'Ошибка: Неизвестный тип устройства';
+            testResult.style.color = 'red';
+            showNotification('Ошибка: неизвестный тип устройства', 'error');
+            return;
+    }
+
+    console.log(`Печать (${deviceType}):`, content);
+
+    // Показ статуса "отправка"
+    testResult.textContent = 'Отправка задания на печать...';
+    testResult.style.color = 'black';
+    testResult.style.display = 'block';
+    showNotification(`Отправка задания на ${printerIp}...`, 'info');
+
+    try {
+        await printLabel(printerIp, templateNumber, content, testResult);
+        testResult.textContent = 'Печать завершена успешно!';
+        testResult.style.color = 'green';
+        showNotification('Печать завершена успешно!', 'success');
+    } catch (err) {
+        testResult.textContent = 'Ошибка при печати: ' + err.message;
+        testResult.style.color = 'red';
+        showNotification(`Ошибка при печати: ${err.message}`, 'error');
+    }
 });

@@ -3,34 +3,31 @@
 
 
 
-from fastapi import APIRouter, Response, HTTPException
+from fastapi import APIRouter, Response, HTTPException, Query
 import httpx
 from loguru import logger
 import os
 
-
-
 router = APIRouter(prefix="/scanner", tags=["Scanner"])
 
-
-SCANNER_IP = "192.168.154.164"   # IP твоего H ScanJet Pro
-SCANNER_PORT = 8080              # может быть 443 или 80 
-USERNAME = None                  # если  с паролем 
+USERNAME = None
 PASSWORD = None
-
 SAVE_DIR = "/scans"
 
+
 async def get_client():
-  
     if USERNAME and PASSWORD:
         return httpx.AsyncClient(auth=(USERNAME, PASSWORD))
     return httpx.AsyncClient()
 
 
 @router.get("/capabilities")
-async def get_capabilities():
+async def get_capabilities(
+    scanner_ip: str = Query(..., description="IP адрес сканера"),
+    scanner_port: int = Query(8080, description="Порт сканера")
+):
     """Показать возможности сканера (форматы, DPI и т.д.)."""
-    url = f"http://{SCANNER_IP}:{SCANNER_PORT}/eSCL/ScannerCapabilities"
+    url = f"http://{scanner_ip}:{scanner_port}/eSCL/ScannerCapabilities"
     async with await get_client() as client:
         try:
             r = await client.get(url, timeout=10)
@@ -42,8 +39,11 @@ async def get_capabilities():
 
 
 @router.get("/scan")
-async def scan_document():
-    """Сканирование и возврат изображения (JPEG)."""
+async def scan_document(
+    scanner_ip: str = Query(..., description="IP адрес сканера"),
+    scanner_port: int = Query(8080, description="Порт сканера")
+):
+    """Сканирование и возврат изображения (JPEG) без сохранения."""
     scan_settings = """<?xml version="1.0" encoding="UTF-8"?>
     <scan:ScanSettings xmlns:scan="http://schemas.hp.com/imaging/escl/2011/05/03">
       <scan:InputSource>Platen</scan:InputSource>
@@ -57,7 +57,7 @@ async def scan_document():
     async with await get_client() as client:
         try:
             r = await client.post(
-                f"http://{SCANNER_IP}:{SCANNER_PORT}/eSCL/ScanJobs",
+                f"http://{scanner_ip}:{scanner_port}/eSCL/ScanJobs",
                 content=scan_settings,
                 headers={"Content-Type": "application/xml"},
                 timeout=20,
@@ -67,7 +67,7 @@ async def scan_document():
             if not job_url:
                 raise HTTPException(status_code=500, detail="Сканер не вернул Location")
 
-            doc = await client.get(f"http://{SCANNER_IP}:{SCANNER_PORT}{job_url}/NextDocument")
+            doc = await client.get(f"http://{scanner_ip}:{scanner_port}{job_url}/NextDocument")
             doc.raise_for_status()
             return Response(content=doc.content, media_type="image/jpeg")
         except Exception as e:
@@ -75,9 +75,12 @@ async def scan_document():
             raise HTTPException(status_code=500, detail="Ошибка сканирования")
 
 
-
 @router.get("/scan_to_file")
-async def scan_to_file(filename: str = "scan.jpg"):
+async def scan_to_file(
+    filename: str = "scan.jpg",
+    scanner_ip: str = Query(..., description="IP адрес сканера"),
+    scanner_port: int = Query(8080, description="Порт сканера")
+):
     filepath = os.path.join(SAVE_DIR, filename)
 
     scan_settings = """<?xml version="1.0" encoding="UTF-8"?>
@@ -93,7 +96,7 @@ async def scan_to_file(filename: str = "scan.jpg"):
     async with await get_client() as client:
         try:
             r = await client.post(
-                f"http://{SCANNER_IP}:{SCANNER_PORT}/eSCL/ScanJobs",
+                f"http://{scanner_ip}:{scanner_port}/eSCL/ScanJobs",
                 content=scan_settings,
                 headers={"Content-Type": "application/xml"},
                 timeout=20,
@@ -103,7 +106,7 @@ async def scan_to_file(filename: str = "scan.jpg"):
             if not job_url:
                 raise HTTPException(status_code=500, detail="Сканер не вернул Location")
 
-            doc = await client.get(f"http://{SCANNER_IP}:{SCANNER_PORT}{job_url}/NextDocument")
+            doc = await client.get(f"http://{scanner_ip}:{scanner_port}{job_url}/NextDocument")
             doc.raise_for_status()
 
             os.makedirs(SAVE_DIR, exist_ok=True)  # создаём папку, если нет
@@ -113,4 +116,5 @@ async def scan_to_file(filename: str = "scan.jpg"):
             return {"message": f"Скан сохранён в {filepath}"}
         except Exception as e:
             logger.error(f"Ошибка сканирования в файл: {e}")
-            raise HTTPException(status_code=500, detail="Ошибка сканирования в файл")  
+            raise HTTPException(status_code=500, detail="Ошибка сканирования в файл")
+

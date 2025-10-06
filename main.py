@@ -25,6 +25,9 @@ from cor_pass.routes import auth, person
 from cor_pass.database.db import get_db, async_session_maker
 from cor_pass.database.redis_db import redis_client
 
+from cor_pass.services.modbus_service import modbus_service
+
+
 from cor_pass.routes import (
     auth,
     records,
@@ -52,7 +55,8 @@ from cor_pass.routes import (
     ecg_measurements,
     excel_router,
     progress_ws ,
-    scanner_router
+    scanner_router,
+    modbus_routes
 )
 from cor_pass.config.config import settings
 from cor_pass.services.ip2_location import initialize_ip2location
@@ -262,12 +266,18 @@ async def startup():
     if settings.app_env == "development":
         await create_modbus_client(app)
 
+         # Подключаемся к Modbus серверу
+        await modbus_service.connect()
+
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
     logger.info("------------- SHUTDOWN --------------")
     await close_modbus_client(app)
 
+ # Закрываем соединение с Modbus
+    await modbus_service.close()
 
 auth_attempts = defaultdict(list)
 blocked_ips = {}
@@ -301,6 +311,7 @@ app.include_router(excel_router.router, prefix="/api")
 app.include_router(progress_ws.router, prefix="/api")
 
 app.include_router(scanner_router.router, prefix="/api")
+app.include_router(modbus_routes.router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run(

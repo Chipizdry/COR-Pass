@@ -25,6 +25,7 @@ COLLECTION_INTERVAL_SECONDS = 2
 
 # Конфигурация Modbus
 MODBUS_IP = "91.203.25.12"
+#MODBUS_IP = "192.168.154.111"
 MODBUS_PORT = 502
 BATTERY_ID = 225  # Основная батарея
 INVERTER_ID = 100  # Инвертор
