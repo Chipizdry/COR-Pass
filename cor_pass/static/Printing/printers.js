@@ -493,6 +493,74 @@ function sendToPrint() {
     .then(data => alert("Статус: " + data.status));
   }
 
+
+
+  async function sendBarcodeToPrint() {
+    checkToken();
+
+    const printerIp = document.getElementById('printerIp').value.trim();
+    const text = document.getElementById('labelText').value.trim();
+    const testResult = document.getElementById('testResult');
+
+    if (!printerIp) {
+        showNotification('Введите или выберите IP принтера!', 'error');
+        return;
+    }
+
+    if (!text) {
+        showNotification('Введите текст для печати!', 'error');
+        return;
+    }
+
+    const requestData = {
+        printer_ip: printerIp,
+        port: 9100,
+        timeout: 10,
+        protocol: "ZPL", // или "EPL"/"TSPL" — в зависимости от твоего принтера
+        text: text
+    };
+
+    testResult.textContent = 'Отправка задания на печать...';
+    testResult.style.color = 'black';
+    testResult.style.display = 'block';
+
+    try {
+        const response = await fetch('/api/printer/print_protocol', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + getToken()
+            },
+            body: JSON.stringify(requestData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Ошибка при печати');
+        }
+
+        const result = await response.json();
+        console.log('Ответ сервера:', result);
+
+        if (result.status === 'ok') {
+            testResult.textContent = 'Печать успешно отправлена!';
+            testResult.style.color = 'green';
+            showNotification(`Печать выполнена на ${printerIp}`, 'success');
+        } else {
+            throw new Error('Принтер не ответил или ошибка протокола');
+        }
+
+    } catch (error) {
+        console.error('Ошибка при печати:', error);
+        testResult.textContent = 'Ошибка печати: ' + error.message;
+        testResult.style.color = 'red';
+        showNotification(`Ошибка печати (${printerIp}): ${error.message}`, 'error');
+    }
+}
+
+
+
+
   document.getElementById('sendLabelButton').addEventListener('click', async () => {
     checkToken();
     const testResult = document.getElementById('testResult');
