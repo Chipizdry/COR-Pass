@@ -17,6 +17,13 @@
 <div class="glassPageWrapper df fdc">
     <div class="header-container">
         <div class="header-row top">
+            <div class="role-container" style="margin-right: 20px">
+                <a href="/static/COR_ID/mainscreen.html" class="role-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 11.6067L11.1031 2.86212C11.2208 2.74732 11.3607 2.65625 11.5146 2.59411C11.6685 2.53198 11.8334 2.5 12 2.5C12.1666 2.5 12.3315 2.53198 12.4854 2.59411C12.6393 2.65625 12.7792 2.74732 12.8969 2.86212L23 11.6067M3.53846 9.40792V20.2633C3.53846 20.946 4.10708 21.5 4.80769 21.5H9.46154V16.1411C9.46154 15.4585 10.0302 14.9045 10.7308 14.9045H13.2692C13.9698 14.9045 14.5385 15.4585 14.5385 16.1411V21.5H19.1923C19.8929 21.5 20.4615 20.946 20.4615 20.2633V9.40792" stroke="#7527B2" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+            </div>
             <div class="search-container">
                 <input type="text" placeholder="Search">
                 <svg class="search-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -30,8 +37,8 @@
                     </svg>
                 </button>
                 <div class="role-toggle">
-                    <button class="role-btn doc active">Лікар</button>
-                    <button class="role-btn lab">Лаборант</button>
+                    <button class="role-btn doc active">Doctor</button>
+                    <button class="role-btn lab">Лікар</button>
                 </div>
             </div>
         </div>
@@ -74,7 +81,7 @@
         </div>
         <div class="middle df fdc">
             <div class="top df aic">
-                Вирізка
+                Grossing
             </div>
             <div class="bottom df ">
                 <div class="tenderloinContent" id="tenderloinContent"></div>
@@ -225,7 +232,7 @@
     }
 
     const setOwnerInfo = (caseOwner) => {
-        const caseIsClosed = currentCase?.grossing_status === "COMPLETED";
+        const caseIsClosed = isCaseIsClosed(currentCase?.grossing_status);
         const hasOwner = caseOwner?.id
         reportOwnerInfoNODE.innerHTML = ""
 

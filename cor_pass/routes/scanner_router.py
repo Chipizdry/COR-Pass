@@ -1,8 +1,5 @@
 
 
-
-
-
 from fastapi import APIRouter, Response, HTTPException, Query
 import httpx
 from loguru import logger

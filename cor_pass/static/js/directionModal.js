@@ -12,6 +12,22 @@ document.addEventListener("DOMContentLoaded", (event) => {
     let uploadedFiles = []
     let currentReferralId = null
 
+    function getExtensionFromBlob(blob) {
+        const mime = blob.type;
+
+        // Simple mapping
+        const mimeToExt = {
+            "image/jpeg": "jpg",
+            "image/png": "png",
+            "image/gif": "gif",
+            "application/pdf": "pdf",
+            "text/plain": "txt",
+            "application/json": "json",
+        };
+
+        return mimeToExt[mime] || "";
+    }
+
     const initUploadArea = () => {
         uploadArea.innerHTML = (
             `<div class="upload-box" id="uploadBox" tabindex="0">
@@ -54,15 +70,15 @@ document.addEventListener("DOMContentLoaded", (event) => {
                 placeholder: "Оберіть вид",
                 selectData: [
                     {
-                        id: "патогистология",
+                        id: "Патогістологія",
                         label: "Патгістологія"
                     },
                     {
-                        id: "иммуногистохимия",
+                        id: "Імуногістохімія",
                         label: "Імуногістохімія"
                     },
                     {
-                        id: "цитология",
+                        id: "Цитологія",
                         label: "Цитологія"
                     },
                     {
@@ -388,7 +404,42 @@ document.addEventListener("DOMContentLoaded", (event) => {
                 showErrorAlert('Заповніть обов"язкові поля!')
             }
         })
+    }
+    const scanCaseDirection = (e) => {
+        document.querySelector('#caseDirectionScan')?.addEventListener('click', (e) => {
+            fetch(`${API_BASE_URL}/api/cases/scan-referral`, {
+                method: "POST",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+            })
+                .then(res => res.blob())
+                .then((blob) => {
+                    uploadArea.innerHTML = ""
 
+                    const imgNODE = document.createElement('img');
+
+                    const fileViewerWrapperNODE = document.createElement('div');
+                    fileViewerWrapperNODE.className ='thumb full';
+
+
+                    imgNODE.src = URL.createObjectURL(blob);
+                    imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
+                    fileViewerWrapperNODE.appendChild(imgNODE);
+                    uploadArea.appendChild(fileViewerWrapperNODE);
+
+
+                    console.log(blob, "blob")
+                    console.log(blob.type, "blob")
+                    const file = new File([blob], `scan-${new Date().getTime()}.${getExtensionFromBlob(blob)}`, {
+                        type: blob.type || "application/octet-stream",
+                        lastModified: Date.now(),
+                    });
+
+                    uploadedFiles = [...uploadedFiles, file]
+                })
+        })
     }
     const dropBoxEventsHandler = () => {
         uploadBox?.addEventListener('click', () => {
@@ -447,6 +498,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     }
 
     submitCaseDirection();
+    scanCaseDirection();
     dropBoxEventsHandler();
     openDirectionModal();
 })

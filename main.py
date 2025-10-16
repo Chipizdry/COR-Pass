@@ -24,10 +24,7 @@ from cor_pass.repository.cerbo_service import (
 from cor_pass.routes import auth, person
 from cor_pass.database.db import get_db, async_session_maker
 from cor_pass.database.redis_db import redis_client
-
-from cor_pass.services.modbus_service import modbus_service
-
-
+from cor_pass.services.websocket_events_manager import websocket_events_manager
 from cor_pass.routes import (
     auth,
     records,
@@ -54,9 +51,11 @@ from cor_pass.routes import (
     blood_pressures,
     ecg_measurements,
     excel_router,
-    progress_ws ,
     scanner_router,
-    modbus_routes
+    medicines,
+    first_aid_kits,
+    support,
+    ophthalmological_prescriptions
 )
 from cor_pass.config.config import settings
 from cor_pass.services.ip2_location import initialize_ip2location
@@ -133,9 +132,9 @@ app = FastAPI(
     title="COR-ID API",
     description=api_description,
     version="1.0.1",
-    openapi_url="/openapi.json" if settings.app_env == "development" else None,
-    docs_url="/docs" if settings.app_env == "development" else None,
-    redoc_url="/redoc" if settings.app_env == "development" else None,
+    openapi_url="/openapi.json" if settings.app_env in ["development", "lab-neuro"] else None,
+    docs_url="/docs" if settings.app_env in ["development", "lab-neuro"] else None,
+    redoc_url="/redoc" if settings.app_env in ["development", "lab-neuro"] else None,
 )
 
 app.mount("/static", StaticFiles(directory="cor_pass/static"), name="static")
@@ -263,12 +262,9 @@ async def startup():
     asyncio.create_task(cleanup_auth_sessions())
     register_signature_expirer(app, async_session_maker)
     initialize_ip2location()
+    await websocket_events_manager.init_redis_listener()
     if settings.app_env == "development":
         await create_modbus_client(app)
-
-         # Подключаемся к Modbus серверу
-        await modbus_service.connect()
-
 
 
 @app.on_event("shutdown")
@@ -276,8 +272,6 @@ async def shutdown_event():
     logger.info("------------- SHUTDOWN --------------")
     await close_modbus_client(app)
 
- # Закрываем соединение с Modbus
-    await modbus_service.close()
 
 auth_attempts = defaultdict(list)
 blocked_ips = {}
@@ -308,10 +302,11 @@ app.include_router(energy_managers.router, prefix="/api")
 app.include_router(blood_pressures.router, prefix="/api")
 app.include_router(ecg_measurements.router, prefix="/api")
 app.include_router(excel_router.router, prefix="/api")
-app.include_router(progress_ws.router, prefix="/api")
-
 app.include_router(scanner_router.router, prefix="/api")
-app.include_router(modbus_routes.router, prefix="/api")
+app.include_router(medicines.router, prefix="/api")
+app.include_router(first_aid_kits.router, prefix="/api")
+app.include_router(support.router, prefix="/api")
+app.include_router(ophthalmological_prescriptions.router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run(

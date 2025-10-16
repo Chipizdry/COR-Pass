@@ -9,6 +9,7 @@ from threading import Timer
 from fastapi import HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from cor_pass.repository.printing_device import get_printing_device_by_device_class, get_printing_device_by_device_identifier
 from cor_pass.schemas import ChangeGlassStaining, Glass as GlassModelScheema, GlassPrinting, GlassResponseForPrinting, PrintLabel
 from typing import Any, Dict, List
 from sqlalchemy.orm import selectinload, joinedload
@@ -425,6 +426,7 @@ async def get_full_glass_info(db: AsyncSession, glass_id: str) -> GlassResponseF
 
     return response
 
+ 
 
 async def print_glass_data(
     data: GlassPrinting, db: AsyncSession, request: Request
@@ -432,24 +434,28 @@ async def print_glass_data(
     db_glass = await get_full_glass_info(db, data.glass_id)
     if db_glass is None:
         raise HTTPException(status_code=404, detail=f"Стекло с ID {data.glass_id} не найдено в базе данных")
-
-    clinic_name = data.clinic_name
+    device = await get_printing_device_by_device_class(db=db, device_class="GlassPrinter")
+    model_id = data.model_id if data.model_id else "8"
+    printer_ip = data.printer_ip if data.printer_ip else device.ip_address
+    clinic_name = data.clinic_name if data.clinic_name else "FF"
     case_code = db_glass.case_code
     sample_number=db_glass.sample_number
     cassette_number=db_glass.cassette_number
     glass_number=db_glass.glass_number
-    staining=db_glass.staining
-    hooper=data.hooper
+    staining= db_models.StainingType(db_glass.staining).abbr()
+    hooper=data.hooper if data.hooper else "?"
     patient_cor_id=db_glass.patient_cor_id
         
     content = f"{clinic_name}|{case_code}|{sample_number}|{cassette_number}|L{glass_number}|{staining}|{hooper}|{patient_cor_id}"
 
     label_to_print = PrintLabel(
-        model_id=data.model_id, 
+        model_id=model_id, 
         content=content,
         uuid=data.glass_id
     )
+    logger.debug(content)
  
-    print_result = await print_labels(printer_ip=data.printer_ip, labels_to_print=[label_to_print], request=request)
+    print_result = await print_labels(printer_ip=printer_ip, labels_to_print=[label_to_print], request=request)
 
     return print_result
+    # return content

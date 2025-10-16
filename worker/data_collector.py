@@ -173,54 +173,44 @@ async def collect_ess_ac_data(
         )
         raise
 
-async def collect_solarchargers_data(
-    modbus_client: AsyncModbusTcpClient, transaction_id: UUID
+# new
+async def get_solarchargers_current_sum(modbus_client: AsyncModbusTcpClient, transaction_id: UUID
 ) -> Dict[str, Any]:
-    """Собирает данные с солнечных зарядных устройств."""
+    """
+    Чтение регистров 3730 с MPPT для всех UID и суммирование их значений
+    """
     try:
-        slave_ids = SOLAR_CHARGER_SLAVE_IDS
-        total_pv_power = 0.0
+        slave_ids = list(range(1, 14)) + [100]
+        results = {}
+        total_power = 0  
+
         for slave in slave_ids:
             try:
-                addresses_info = [
-                    ("pv_voltage_0", 3700, 100, False), ("pv_voltage_1", 3701, 100, False),
-                    ("pv_voltage_2", 3702, 100, False), ("pv_voltage_3", 3703, 100, False),
-                    ("pv_power_0", 3724, 1, False), ("pv_power_1", 3725, 1, False),
-                    ("pv_power_2", 3726, 1, False), ("pv_power_3", 3727, 1, False),
-                ]
-                needed_regs = [info[1] for info in addresses_info]
-                min_reg = min(needed_regs)
-                max_reg = max(needed_regs)
-                count = max_reg - min_reg + 1
-                res = await modbus_client.read_input_registers(
-                    address=min_reg, count=count, slave=slave
-                )
+                res = await modbus_client.read_input_registers(address=3730, count=1, slave=slave)
                 if res.isError() or not hasattr(res, "registers"):
-                    logger.warning(
-                        f"[{transaction_id}] Modbus error or no registers for slave {slave}. Error: {res}",
-                        extra={"slave_id": slave},
-                    )
+                    results[f"charger_{slave}"] = None
+                    logger.warning(f"⚠️ Ошибка чтения регистра 3730 у slave {slave}")
                 else:
-                    regs = res.registers
-                    for field_name, reg_address, scale, is_signed in addresses_info:
-                        idx = reg_address - min_reg
-                        raw = regs[idx]
-                        value = raw 
-                        if field_name.startswith("pv_power_"):
-                            total_pv_power += round(value / scale, 2)
+                    value = res.registers[0]
+                    results[f"charger_{slave}"] = value
+                    total_power += value
+
             except Exception as e:
                 logger.warning(
                     f"[{transaction_id}] Exception while reading slave {slave} data: {e}",
                     exc_info=True,
                     extra={"slave_id": slave},
                 )
-        return {"solar_total_pv_power": round(total_pv_power, 2)}
+
+        return {"solar_total_pv_power": total_power}
+
     except Exception as e:
         register_modbus_error()
         logger.error(
-            f"[{transaction_id}] Overall error during MPPT polling: {e}", exc_info=True
+            f"[{transaction_id}] Overall error during MPPT polling, Общая ошибка при опросе регистров 3730: {e}", exc_info=True
         )
         raise
+
 
 async def get_battery_status(modbus_client: AsyncModbusTcpClient, transaction_id: UUID) -> Dict[str, Any]: 
     """Получает статус батареи (SOC) по Modbus."""

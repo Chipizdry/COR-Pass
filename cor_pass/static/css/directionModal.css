@@ -10,26 +10,77 @@
     }
 }
 
+.modal {
+    overflow: hidden;               
+}
+
+.modalContent {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 80px);
+  overflow: hidden;
+  height: 100%;
+}
+
+.modalContent > .df.gap4 {
+  flex: 1 1 auto;
+  min-height: 0; 
+  display: flex;
+}
+
+.modalCustom.open .modalWrapper {
+    overflow: hidden !important;
+    max-height: calc(100vh - 40px);
+}
+
+.modalWrapper .directorClose {
+  position: absolute;
+  top: 21px;
+  right: 21px;
+  width: 14px;
+  height: 14px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
 .directorModalTop {
     position: relative;
     font-size: 14px;
     margin-bottom: 20px;
     text-align: center;
+    display: flex;
+    column-gap: 28px;                 
 }
 
 .directorModalTop b {
-    color: #9b94d4;
-    font-weight: 400;
+    color: #5B4296;
+    font-weight: 800;
     position: absolute;
     left: 0;
+    top: 0;
 }
 
-.directorModalTop .mid {
-    left: 50%;
-    transform: translateX(-50%);
-    color: #6f66b1;
-    width: max-content;
-    text-align: center;
+.directorTopCol {
+  flex: 1 1 50%;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.directorTopCol.left {
+    font-size: 14px;
+  color: #5B4296;
+  white-space: nowrap;
+  justify-content: flex-end;  
+}
+
+
+.directorTopCol.right {
+  font-size: 16px;
+  color: #B1A1DA;
+  white-space: nowrap;
+  justify-content: flex-start;
 }
 
 
@@ -37,17 +88,21 @@
     flex: 1 1 50%;
     overflow-y: auto;
     padding-right: 12px;
+    margin-right: 28px;
     position: relative;
 }
 
+.directorModalLeft,
+.directorModalRight {
+    max-height: none;
+}
+
 .directorModalLeft::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 2px;
-    height: 100%;
-    background: #d6c9f1;
+    display: none;
+}
+
+.directorModalLeft .directorModalFormGroup:last-child {
+    margin-bottom: 0;
 }
 
 .directorModalRight {
@@ -55,8 +110,19 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    overflow-y: auto;
+    overflow: hidden;
+    padding-left: 12px;
+    min-height: 0;
+    height: auto;
 }
+
+.directorModalRight .upload-box {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+
 
 .directorModalFormGroup {
     margin-bottom: 26px;
@@ -81,6 +147,7 @@
     border-radius: 18px;
     font-size: 16px;
     color: #23155b;
+    height: 56px;
 }
 
 .directorModalFormGroup textarea {
@@ -90,6 +157,18 @@
 
 .directorModalFormGroup  .error {
     border-color: #ff4d4d !important;
+}
+
+.directorModalFormGroup .directorDateInput {
+    text-align: right;
+}
+
+.directorModalFormGroup .directorDateInput::-webkit-datetime-edit {
+    text-align: right;
+}
+
+.directorModalFormGroup .directorDateInput::-webkit-calendar-picker-indicator {
+    margin-left: 6px; 
 }
 
 .directorModalFormGroup-select {
@@ -106,6 +185,7 @@
 .directorModalFormGroup-input .label {
     pointer-events: none;
     color: #a9a4c6;
+    line-height: 56px;
 }
 
 .directorModalFormGroup-input::after {
@@ -199,7 +279,7 @@
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: #ffe7e7;
+    background: #fff; 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -216,17 +296,19 @@
 }
 
 .upload-box span {
-    font-size: 15px;
+    font-size: 18px;
     line-height: 1.3;
+    color: #5B4296;
+    font-weight: 700;
 }
 
 .note {
     font-size: 12px;
-    color: #a599d9;
+    color: #B2AFBA;
 }
 
 .upload-box b {
-    color: #ff5a5a;
+    color: #DF1125;
     text-decoration: underline;
     cursor: pointer;
 }
@@ -259,16 +341,22 @@
 }
 
 .directorModalFooter {
-    padding: 20px 0;
-    display: flex;
-    justify-content: space-between;
+  position: static;          
+  background: transparent;  
+  padding: 28px 0 30px;     
+  display: flex;
+  align-items: center;
+}
+
+.directorModalFooter .btn:last-child {
+  margin-left: auto;
 }
 
 .btn {
-    min-width: 160px;
-    height: 56px;
-    font-size: 17px;
-    font-weight: 400;
+    min-width: 154px;
+    height: 64px;
+    font-size: 18px;
+    font-weight: 600;
     cursor: pointer;
     border-radius: 18px;
     border: 2px solid transparent;
@@ -276,29 +364,30 @@
 }
 
 .btn-primary {
-    background: #6c00ff;
+    background: #7527B2;
     color: #fff;
 }
 
 .btn-primary:hover {
-    background: #5500d1;
+    background: #7527B2;
 }
 
-.btn-outline {
+.btn-outline{
     background: #fff;
-    color: #6c00ff;
-    border-color: #6c00ff;
+    color: #7527B2;
+    border-color: #7527B2;
+    border-width: 1px;    
 }
 
 .btn-outline:hover {
     background: #f0effa;
 }
 
-.directorModalLeft::-webkit-scrollbar, .right::-webkit-scrollbar {
+.directorModalLeft::-webkit-scrollbar {
     width: 6px;
 }
 
-.directorModalLeft::-webkit-scrollbar-thumb, .right::-webkit-scrollbar-thumb {
+.directorModalLeft::-webkit-scrollbar-thumb {
     background: #c5c0e5;
     border-radius: 3px;
 }

@@ -169,9 +169,6 @@ function prepareUIBeforeUpload() {
   }
 
 
-
-  
-
 async function update(plane, callback) {
   if (!isDicomLoaded) { return;}
     const idx = parseInt(document.getElementById(plane).value);
@@ -887,7 +884,8 @@ window.openSVSByGlassId = async function(glassId) {
           throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-    
+      // Если сервер поддерживает прогресс, можно использовать EventSource
+      // Или имитировать прогресс, если сервер не предоставляет его
       for (let i = 0; i <= 100; i += 10) {
           updateProgress(i);
           await new Promise(resolve => setTimeout(resolve, 200));

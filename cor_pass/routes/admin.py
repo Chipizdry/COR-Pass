@@ -15,7 +15,6 @@ from cor_pass.schemas import (
     DiplomaResponse,
     DoctorCreate,
     DoctorCreateResponse,
-    DoctorResponse,
     DoctorWithRelationsResponse,
     FullUserInfoResponse,
     NewUserRegistration,
@@ -37,6 +36,7 @@ from loguru import logger
 from cor_pass.config.config import settings
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
+
 
 
 @router.get(

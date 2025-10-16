@@ -1,3 +1,4 @@
+from datetime import timedelta
 import enum
 import uuid
 from sqlalchemy import (
@@ -21,6 +22,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import declarative_base, relationship, Mapped
 from sqlalchemy.sql.sqltypes import DateTime
 from cor_pass.database.db import engine
+from sqlalchemy.dialects.postgresql import JSONB
 
 Base = declarative_base()
 
@@ -153,6 +155,21 @@ class StainingType(enum.Enum):
     GIEMSA = "Giemsa"
     OTHAR = "Othar"
 
+    def abbr(self) -> str:
+        """Возвращает сокращение для печати"""
+        overrides = {
+            "H&E": "H&E",
+            "PAMS": "PAM",
+            "Othar": "O",
+        }
+        if self.value in overrides:
+            return overrides[self.value]
+
+        parts = self.value.replace("-", " ").replace("'", "").split()
+        abbr = "".join(word[0].upper() for word in parts)
+
+        return abbr[:3]
+
 
 class Grossing_status(enum.Enum):
     PROCESSING = "PROCESSING"
@@ -236,6 +253,13 @@ class User(Base):
     )
     ecg_measurements = relationship(
         "ECGMeasurement", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    first_aid_kits = relationship(
+    "FirstAidKit", back_populates="user", cascade="all, delete-orphan"
+)
+    medicine_schedules = relationship(
+        "MedicineSchedule", back_populates="user", cascade="all, delete-orphan"
     )
 
     # Индексы
@@ -376,6 +400,8 @@ class UserSession(Base):
     user_id = Column(String(36), ForeignKey("users.cor_id"), nullable=False)
     device_type = Column(String(250), nullable=True)
     device_info = Column(String(250), nullable=True)
+    app_id = Column(String(250), nullable=True) # Идентификатор апки
+    device_id = Column(String(250), nullable=True) # айди устройства
     ip_address = Column(String(250), nullable=True)
     device_os = Column(String(250), nullable=True)
     jti = Column(
@@ -397,7 +423,6 @@ class UserSession(Base):
     # Индексы
     __table_args__ = (
         Index("idx_user_sessions_user_id", "user_id"),
-        UniqueConstraint("user_id", "device_info", name="uq_user_device_session"),
     )
 
 
@@ -408,6 +433,8 @@ class CorIdAuthSession(Base):
     email = Column(String(255), index=True, nullable=True)
     cor_id = Column(String(250), index=True, nullable=True)
     session_token = Column(String(36), unique=True, index=True, nullable=False)
+    app_id = Column(String(250), nullable=True)
+    device_id = Column(String(250), nullable=True)
     status = Column(
         Enum(AuthSessionStatus), default=AuthSessionStatus.PENDING, nullable=False
     )
@@ -980,21 +1007,38 @@ class BloodPressureMeasurement(Base):
     )
 
 
+class EnergeticObject(Base):
+    __tablename__ = "energetic_objects"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String, nullable=False, unique=True, comment="Имя/название объекта")
+    description = Column(String, nullable=True, comment="Описание объекта")
+
+    modbus_registers = Column(
+        JSONB,
+        nullable=True,
+        comment="Карта регистров Modbus (динамическая структура в формате JSON)"
+    )
+    is_active = Column(Boolean, default=False, comment="Активен ли фоновый опрос")
+
+    # связи
+    measurements = relationship("CerboMeasurement", back_populates="energetic_object", cascade="all, delete-orphan")
+    schedules = relationship("EnergeticSchedule", back_populates="energetic_object", cascade="all, delete-orphan")
+
+    # def __repr__(self):
+    #     return f"<EnergeticObject(id={self.id}, name='{self.name}')>"
+
+
 class CerboMeasurement(Base):
     __tablename__ = "cerbo_measurements"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    created_at = Column(
-        DateTime,
-        nullable=False,
-        default=func.now(),
-        comment="Дата и время сохранения записи в БД",
+    energetic_object_id = Column(
+        String(36), ForeignKey("energetic_objects.id"), nullable=False, index=True
     )
-    measured_at = Column(
-        DateTime,
-        nullable=False,
-        comment="Дата и время измерения, полученное с устройства",
-    )
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    measured_at = Column(DateTime, nullable=False, comment="Дата и время измерения")
+
     object_name: Column[str] = Column(String, nullable=True, index=True)
 
     # Данные из battery_status
@@ -1008,8 +1052,14 @@ class CerboMeasurement(Base):
 
     # Данные из solarchargers_status
     solar_total_pv_power: Column[float] = Column(Float, nullable=False)
-    
+
     soc: Column[float] = Column(Float, nullable=True)
+
+    energetic_object = relationship("EnergeticObject", back_populates="measurements")
+
+
+
+
 
     def __repr__(self):
         return (
@@ -1022,51 +1072,31 @@ class EnergeticSchedule(Base):
     __tablename__ = "energetic_schedule"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    energetic_object_id = Column(
+        String(36), ForeignKey("energetic_objects.id"), nullable=False, index=True
+    )
 
     # Параметры времени
-    start_time = Column(
-        Time, nullable=False, comment="Время начала работы режима (ЧЧ:ММ)"
-    )
-    duration = Column(
-        Interval,
-        nullable=False,
-        comment="Продолжительность режима (например, 2 часа 30 минут)",
-    )
-    end_time = Column(
-        Time, nullable=False, comment="Время окончания работы режима (ЧЧ:ММ)"
-    )
+    start_time = Column(Time, nullable=False, comment="Время начала работы режима (ЧЧ:ММ)")
+    duration = Column(Interval, nullable=False, comment="Продолжительность режима")
+    end_time = Column(Time, nullable=False, comment="Время окончания работы режима")
 
     # Параметры работы инвертора
-    grid_feed_w = Column(Integer, nullable=False, comment="Параметр отдачи в сеть (Вт)")
-    battery_level_percent = Column(
-        Integer, nullable=False, comment="Целевой уровень батареи (%)"
-    )
+    grid_feed_w = Column(Integer, nullable=False, comment="Отдача в сеть (Вт)")
+    battery_level_percent = Column(Integer, nullable=False, comment="Целевой уровень батареи (%)")
 
     # Статусы расписания
-    is_active = Column(
-        Boolean,
-        nullable=False,
-        default=False,
-        comment="Флаг: активно ли это расписание",
-    )
-    is_manual_mode = Column(
-        Boolean,
-        nullable=False,
-        default=False,
-        comment="Флаг: находится ли инвертор в ручном режиме",
-    )
-    charge_battery_value = Column(
-        Integer,
-        nullable=False,
-        default=300,
-        comment="заряжать батарею в этом режиме с каким то током",
-    )
+    is_active = Column(Boolean, nullable=False, default=False)
+    is_manual_mode = Column(Boolean, nullable=False, default=False)
+    charge_battery_value = Column(Integer, nullable=False, default=300)
+
+    energetic_object = relationship("EnergeticObject", back_populates="schedules")
 
     def __repr__(self):
         return (
-            f"<EnergeticSchedule(id='{self.id}', "
-            f"start_time={self.start_time}, duration={self.duration}, end_time={self.end_time}, "
-            f"grid_feed_kw={self.grid_feed_w}, battery_level_percent={self.battery_level_percent}, "
+            f"<EnergeticSchedule(id='{self.id}', start_time={self.start_time}, "
+            f"duration={self.duration}, end_time={self.end_time}, "
+            f"grid_feed_w={self.grid_feed_w}, battery_level_percent={self.battery_level_percent}, "
             f"charge_battery_value={self.charge_battery_value}, is_active={self.is_active}, "
             f"is_manual_mode={self.is_manual_mode})>"
         )
@@ -1096,11 +1126,207 @@ class DoctorSignatureSession(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     session_token = Column(String, unique=True, nullable=False)
     doctor_cor_id = Column(String(36), nullable=False)
-    diagnosis_id = Column(String(36), nullable=False)
+    diagnosis_id = Column(String(36), nullable=True)
+    ophthalmological_prescription_id = Column(String(36), nullable=True)
     doctor_signature_id = Column(String(36), nullable=True)
     status = Column(String, default="pending")  # pending/approved/rejected/expired
     expires_at = Column(DateTime(timezone=True), nullable=False)
     created_at = Column(DateTime,nullable=False,default=func.now())
+
+
+
+# Аптечка
+
+class FirstAidKit(Base):
+    __tablename__ = "first_aid_kits"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String(100), nullable=False)
+    description = Column(Text, nullable=True)
+    user_cor_id = Column(String(36), ForeignKey("users.cor_id", ondelete="CASCADE"), nullable=False)
+
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+
+
+    medicines = relationship(
+        "FirstAidKitItem", back_populates="first_aid_kit", cascade="all, delete-orphan"
+    )
+    user = relationship("User", back_populates="first_aid_kits")
+
+
+    __table_args__ = (Index("idx_first_aid_kits_user_cor_id", "user_cor_id"),)
+
+
+# Лекарство
+
+class Medicine(Base):
+    __tablename__ = "medicines"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String(255), nullable=False)
+    active_substance = Column(String(255), nullable=True)
+
+    intake_method = Column(String(100), nullable=True)  # перорально, подкожно и т.д.
+
+    # Разные типы параметров в зависимости от метода
+    dosage = Column(Float, nullable=True)        # для перорального
+    unit = Column(String(50), nullable=True)     # мг, мл и т.д.
+    concentration = Column(Float, nullable=True) # для мазей и растворов
+    volume = Column(Float, nullable=True)        # для растворов
+
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+
+    created_by = Column(String(100), nullable=False)
+
+
+    schedules = relationship(
+        "MedicineSchedule", back_populates="medicine", cascade="all, delete-orphan"
+    )
+    first_aid_kits = relationship(
+        "FirstAidKitItem", back_populates="medicine", cascade="all, delete-orphan"
+    )
+
+
+    __table_args__ = (Index("idx_medicines_name", "name"),)
+
+    @property
+    def method_data(self):
+        """Формирует данные о способе приёма лекарства для API."""
+        if self.intake_method == "Oral":
+            return {
+                "intake_method": self.intake_method,
+                "dosage": self.dosage,
+                "unit": self.unit,
+                "concentration": self.concentration,
+                "volume": self.volume,
+            }
+        elif self.intake_method == "Ointment/suppositories":
+            return {
+                "intake_method": self.intake_method,
+                "concentration": self.concentration,
+                "dosage": self.dosage,
+                "unit": self.unit,
+                "volume": self.volume,
+            }
+        elif self.intake_method in ("Intravenous", "Intramuscularly", "Solutions"):
+            return {
+                "intake_method": self.intake_method,
+                "concentration": self.concentration,
+                "volume": self.volume,
+                "dosage": self.dosage,
+                "unit": self.unit,
+            }
+        return None
+
+
+# Наполнение аптечки
+
+class FirstAidKitItem(Base):
+    __tablename__ = "first_aid_kit_items"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    first_aid_kit_id = Column(
+        String(36), ForeignKey("first_aid_kits.id", ondelete="CASCADE"), nullable=False
+    )
+    medicine_id = Column(
+        String(36), ForeignKey("medicines.id", ondelete="CASCADE"), nullable=False
+    )
+    quantity = Column(Integer, default=1, nullable=False)
+    expiration_date = Column(Date, nullable=True)
+
+    created_at = Column(DateTime, nullable=False, default=func.now())
+
+
+    first_aid_kit = relationship("FirstAidKit", back_populates="medicines")
+    medicine = relationship("Medicine", back_populates="first_aid_kits")
+
+
+    __table_args__ = (
+        Index("idx_first_aid_kit_items_kit_id", "first_aid_kit_id"),
+        Index("idx_first_aid_kit_items_medicine_id", "medicine_id"),
+    )
+
+
+# Расписание приема
+
+class MedicineSchedule(Base):
+    __tablename__ = "medicine_schedules"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    medicine_id = Column(
+        String(36), ForeignKey("medicines.id", ondelete="CASCADE"), nullable=False
+    )
+    user_cor_id = Column(String(36), ForeignKey("users.cor_id", ondelete="CASCADE"), nullable=False)
+
+    start_date = Column(Date, nullable=False)
+    duration_days = Column(Integer, nullable=True)
+    times_per_day = Column(Integer, nullable=True)
+    intake_times = Column(JSONB, nullable=True)
+    interval_minutes = Column(Integer, nullable=True)
+    symptomatically = Column(Boolean, nullable=True)
+    notes = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+
+
+    medicine = relationship("Medicine", back_populates="schedules")
+    user = relationship("User", back_populates="medicine_schedules")
+
+    __table_args__ = (
+        Index("idx_medicine_schedules_user_cor_id", "user_cor_id"),
+        Index("idx_medicine_schedules_medicine_id", "medicine_id"),
+    )
+
+# Рецепт на очки
+
+class OphthalmologicalPrescription(Base):
+    __tablename__ = "ophthalmological_prescriptions"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    patient_id = Column(String(36), index=True, nullable=False)
+
+    # ---------- правый глаз (OD) ----------
+    od_sph = Column(Float, nullable=True)
+    od_cyl = Column(Float, nullable=True)
+    od_ax = Column(Float, nullable=True)
+    od_prism = Column(Float, nullable=True)
+    od_base = Column(String(10), nullable=True)
+    od_add = Column(Float, nullable=True)
+
+    # ---------- левый глаз (OS) ----------
+    os_sph = Column(Float, nullable=True)
+    os_cyl = Column(Float, nullable=True)
+    os_ax = Column(Float, nullable=True)
+    os_prism = Column(Float, nullable=True)
+    os_base = Column(String(10), nullable=True)
+    os_add = Column(Float, nullable=True)
+
+    # ---------- Общие параметры ----------
+    glasses_purpose = Column(String(50), nullable=False)
+    glasses_type = Column(String(50), nullable=False)
+
+    issue_date = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    term_months = Column(Float, nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+
+    note = Column(Text, nullable=True)
+
+    doctor_signature_id = Column(
+        String(36), ForeignKey("doctor_signatures.id", ondelete="SET NULL"), nullable=True
+    )
+    signed_at = Column(DateTime(timezone=True), nullable=True)
+
+    doctor_signature = relationship("DoctorSignature", lazy="joined")
+
+    def set_expiration(self):
+        if self.term_months:
+            self.expires_at = self.issue_date + timedelta(days=30 * self.term_months)
+        else:
+            self.expires_at = self.issue_date + timedelta(days=90)
+
 
 
 # Base.metadata.create_all(bind=engine)

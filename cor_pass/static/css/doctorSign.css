@@ -125,3 +125,55 @@
     width: 60%;
     height: 60%;
 }
+.waitingSignatureQRIcon{
+    width: 80px;
+    height: 80px;
+    margin: auto;
+    margin-bottom: 28px;
+}
+.waitingSignatureQRIcon svg{
+    width: 100%;
+    height: 100%;
+}
+.waitingSignatureQRTitle{
+    color: #291161;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 20px;
+}
+.waitingSignatureQRDescription{
+    color: #5B4296;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 28px;
+}
+.waitingSignatureQRLoading{
+    color: #B1A1DA;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 28px;
+}
+#waitingSignature .modalWrapper{
+    max-width: 660px;
+}
+#waitingSignatureQR{
+    display: flex;
+    justify-content: center;
+}
+#waitingSignatureQRBtn{
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+    text-align: center;
+    background: #6C00FF;
+    color: white;
+    width: 230px;
+    margin: auto;
+    margin-top: 30px;
+    border: 1px solid #6C00FF;
+}

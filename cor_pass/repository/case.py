@@ -4,12 +4,15 @@ import re
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Request, UploadFile, status
 from sqlalchemy import and_, func, literal_column, select
+import sqlalchemy
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from cor_pass.repository.cassette import print_cassette_data
 from cor_pass.repository.glass import print_glass_data
 from cor_pass.repository.lawyer import get_doctor
 from cor_pass.repository.patient import get_patient_by_corid
+from cor_pass.repository.printing_device import get_printing_device_by_device_class
+from cor_pass.routes.printer import EthernetPrinter
 from cor_pass.schemas import (
     Case as CaseModelScheema,
     CaseCloseResponse,
@@ -57,6 +60,7 @@ from cor_pass.schemas import (
     SampleTestForGlassPage,
     SingleCaseExcisionPageResponse,
     SingleCaseGlassPageResponse,
+    StatusResponse,
     UpdateCaseCodeResponce,
     CaseCreate,
     UpdateMicrodescription,
@@ -69,6 +73,8 @@ from cor_pass.services.cipher import decrypt_data
 from loguru import logger
 from cor_pass.config.config import settings
 from string import ascii_uppercase
+
+from cor_pass.services.websocket import DEEP_LINK_SCHEME, _is_expired
 
 
 class ErrorCode(str, Enum):
@@ -529,6 +535,13 @@ async def get_single_case_by_case_code(db: AsyncSession, case_code: str) -> db_m
     )
     return result.scalar_one_or_none()
 
+async def get_single_case_by_case_id(db: AsyncSession, case_id: str) -> db_models.Case | None:
+    """Асинхронно получает информацию о кейсе по его case_id."""
+    result = await db.execute(
+        select(db_models.Case).where(db_models.Case.id == case_id)
+    )
+    return result.scalar_one_or_none()
+
 async def delete_cases(db: AsyncSession, case_ids: List[str]) -> Dict[str, Any]:
     """Асинхронно удаляет кейс."""
     deleted_count = 0
@@ -831,6 +844,30 @@ async def upload_attachment(
     await db.commit()
     await db.refresh(db_attachment)
     return db_attachment
+
+async def get_pending_signings_for_report(db: AsyncSession, diagnosis_id: str, doctor_id: str)-> Optional[StatusResponse]:
+    q = sqlalchemy.select(db_models.DoctorSignatureSession).where(db_models.DoctorSignatureSession.diagnosis_id == diagnosis_id)
+    res = await db.execute(q)
+    singning_record = res.scalars().all()
+    for rec in singning_record:
+        if not rec.doctor_cor_id == diagnosis_id:
+            pass
+        status = rec.status
+        if status == "pending" and not _is_expired(rec):
+            deep_link = f"{DEEP_LINK_SCHEME}?session_token={rec.session_token}"
+            return StatusResponse(session_token=rec.session_token, deep_link=deep_link, status=status, expires_at=rec.expires_at)
+
+async def get_pending_signings_for_ophtalmological(db: AsyncSession, ophthalmological_prescription_id: str, doctor_id: str)-> Optional[StatusResponse]:
+    q = sqlalchemy.select(db_models.DoctorSignatureSession).where(db_models.DoctorSignatureSession.ophthalmological_prescription_id == ophthalmological_prescription_id)
+    res = await db.execute(q)
+    singning_record = res.scalars().all()
+    for rec in singning_record:
+        if not rec.doctor_cor_id == ophthalmological_prescription_id:
+            pass
+        status = rec.status
+        if status == "pending" and not _is_expired(rec):
+            deep_link = f"{DEEP_LINK_SCHEME}?session_token={rec.session_token}"
+            return StatusResponse(session_token=rec.session_token, deep_link=deep_link, status=status, expires_at=rec.expires_at)
 
 
 def generate_file_url(file_id: str, case_id: str) -> str:
@@ -2596,15 +2633,22 @@ async def get_patient_final_report_page_data(
                 case_db=last_case_with_relations,
                 current_doctor_id=current_doctor_id,
             )
+    signing_session = None
     if last_case_with_relations:
         case_owner = await get_case_owner(
             db=db, case_id=last_case_with_relations.id, doctor_id=current_doctor_id
         )
+        if report_details.doctor_diagnoses:
+            for dia in report_details.doctor_diagnoses:
+                diagnos_id = dia.id
+                sign_session = await get_pending_signings_for_report(db=db, diagnosis_id=diagnos_id, doctor_id=current_doctor_id)
+                signing_session = sign_session
     return PatientFinalReportPageResponse(
         all_cases=all_cases_schematized,
         last_case_details=last_case_details,
         case_owner=case_owner,
         report_details=report_details,
+        current_signings=signing_session if signing_session else None
     )
 
 
@@ -2878,14 +2922,21 @@ async def get_final_report_by_case_id(
             case_db=last_case_with_relations,
             current_doctor_id=current_doctor_id,
         )
+    signing_session = None
     if last_case_with_relations:
         case_owner = await get_case_owner(
             db=db, case_id=last_case_with_relations.id, doctor_id=current_doctor_id
         )
+        if report_details.doctor_diagnoses:
+            for dia in report_details.doctor_diagnoses:
+                diagnos_id = dia.id
+                sign_session = await get_pending_signings_for_report(db=db, diagnosis_id=diagnos_id, doctor_id=current_doctor_id)
+                signing_session = sign_session
     return CaseFinalReportPageResponse(
         case_details=last_case_details,
         case_owner=case_owner,
         report_details=report_details,
+        current_signings=signing_session if signing_session else None
     )
 
 
@@ -3902,15 +3953,22 @@ async def get_current_cases_final_report_page_data(
                 case_db=last_case_with_relations,
                 current_doctor_id=current_doctor_id,
             )
+    signing_session = None
     if last_case_with_relations:
         case_owner = await get_case_owner(
             db=db, case_id=last_case_with_relations.id, doctor_id=current_doctor_id
         )
+        if report_details.doctor_diagnoses:
+            for dia in report_details.doctor_diagnoses:
+                diagnos_id = dia.id
+                sign_session = await get_pending_signings_for_report(db=db, diagnosis_id=diagnos_id, doctor_id=current_doctor_id)
+                signing_session = sign_session
     return PatientFinalReportPageResponse(
         all_cases=current_cases_list,
         last_case_details=last_case_details,
         case_owner=case_owner,
         report_details=report_details,
+        current_signings=signing_session if signing_session else None
     )
 
 
@@ -4213,6 +4271,47 @@ async def close_case_service(
         new_status=case_to_close.grossing_status.value,
     )
 
+async def auto_close_case_service(
+    db: AsyncSession, diagnosis_entry_id: str, current_doctor: db_models.Doctor
+):
+    """
+    Закрывает кейс автоматически, меняя его grossing_status на COMPLETED.
+    Требует, чтобы
+    все DoctorDiagnosis имели соответствующие подписи.
+    """
+    diagnosis_entry_result = await db.execute(
+        select(db_models.DoctorDiagnosis)
+        .where(db_models.DoctorDiagnosis.id == diagnosis_entry_id)
+        .options(
+            selectinload(db_models.DoctorDiagnosis.doctor),
+            selectinload(db_models.DoctorDiagnosis.signature),
+            selectinload(db_models.DoctorDiagnosis.report)
+                .selectinload(db_models.Report.case)
+                .options(
+                    selectinload(db_models.Case.case_parameters),
+                    selectinload(db_models.Case.report)
+                )
+        )
+    )
+    diagnosis_entry = diagnosis_entry_result.scalar_one_or_none()
+
+    case_db = diagnosis_entry.report.case
+
+    for diagnosis in case_db.report.doctor_diagnoses:
+        if not diagnosis.signature:
+            return None
+    case_db.grossing_status = db_models.Grossing_status.COMPLETED
+    case_db.closing_date = datetime.now()
+
+    db.add(case_db)
+    await db.commit()
+    await db.refresh(case_db)
+    logger.debug("Case closed")
+    return CaseCloseResponse(
+        message="Case closed successfully.",
+        case_id=str(case_db.id),
+        new_status=case_db.grossing_status.value,
+    )
 
 async def get_case_owner(
     db: AsyncSession, case_id: str, doctor_id: str
@@ -4293,7 +4392,7 @@ async def print_all_case_glasses(
     for glass_db in glasses_to_update:
         glass_data = GlassPrinting(
             printer_ip=data.printer_ip,
-            model_id=data.model_id,
+            model_id=data.number_models_id,
             clinic_name=data.clinic_name,
             hooper=data.hooper,
             glass_id=glass_db.id,
@@ -4558,3 +4657,66 @@ async def _update_ancestor_statuses_from_cassette(
     await db.refresh(cassette)
     await db.refresh(sample)
     await db.refresh(case)
+
+
+async def print_case_QR_data(
+    db_case: db_models.Case, db: AsyncSession, request: Request
+):
+    logger.debug(request.base_url)
+    if request.base_url == "http://dev-corid.cor-medical.ua/":
+        logger.debug("Тестовая печать успешна")
+        return {"success": True, "printer_response": "Делаем вид что принтер напечатал"}
+    if request.base_url == "http://localhost:8000/":
+        logger.debug("Тестовая печать на локальном хосте успешна")
+        return {"success": True, "printer_response": "Делаем вид что принтер напечатал"}
+    device = await get_printing_device_by_device_class(db=db, device_class="StickerPrinter")
+    printer_ip = device.ip_address
+    printer_port = 9100
+
+    # patient_cor_id=db_case.patient_id
+    case_code=db_case.case_code
+
+    printing_data=case_code
+    printing_protocol="ZPL"
+    timeout=10
+
+    printer = EthernetPrinter(host=printer_ip, port=printer_port, timeout=timeout)
+    success = printer.print_barcode(data=printing_data, protocol=printing_protocol)
+    if success:
+        return {
+            "success": True,
+            "status": "ok" if success else "error",
+            "protocol": printing_protocol,
+            "printer_ip": printer_ip,
+        }
+    
+async def print_case_code_data(
+    db_case: db_models.Case, db: AsyncSession, request: Request
+):
+    logger.debug(request.base_url)
+    if request.base_url == "http://dev-corid.cor-medical.ua/":
+        logger.debug("Тестовая печать успешна")
+        return {"success": True, "printer_response": "Делаем вид что принтер напечатал"}
+    if request.base_url == "http://localhost:8000/":
+        logger.debug("Тестовая печать на локальном хосте успешна")
+        return {"success": True, "printer_response": "Делаем вид что принтер напечатал"}
+    device = await get_printing_device_by_device_class(db=db, device_class="StickerPrinter")
+    printer_ip = device.ip_address
+    printer_port = 9100
+
+    # patient_cor_id=db_case.patient_id
+    case_code=db_case.case_code
+
+    printing_data=case_code
+    printing_protocol="ZPL"
+    timeout=10
+
+    printer = EthernetPrinter(host=printer_ip, port=printer_port, timeout=timeout)
+    success = printer.print_protocol(text=printing_data, protocol=printing_protocol)
+    if success:
+        return {
+            "success": True,
+            "status": "ok" if success else "error",
+            "protocol": printing_protocol,
+            "printer_ip": printer_ip,
+        }

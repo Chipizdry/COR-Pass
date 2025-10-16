@@ -31,19 +31,17 @@ async def get_device_measurements_paginated(
     db: AsyncSession,
     page: int = 1,
     page_size: int = 10,
-    object_name: Optional[str] = None,
+    object_id: Optional[str] = None,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
 ) -> Tuple[List[CerboMeasurement], int]:
-    """
-    Получает записи CerboMeasurement с пагинацией и необязательными фильтрами.
-    """
+    """Получает записи CerboMeasurement с пагинацией, фильтруя по объекту."""
     query = select(CerboMeasurement)
     count_query = select(func.count()).select_from(CerboMeasurement)
 
-    if object_name:
-        query = query.where(CerboMeasurement.object_name == object_name)
-        count_query = count_query.where(CerboMeasurement.object_name == object_name)
+    if object_id:
+        query = query.where(CerboMeasurement.object_name == object_id)
+        count_query = count_query.where(CerboMeasurement.object_name == object_id)
 
     if start_date:
         query = query.where(CerboMeasurement.measured_at >= start_date)
@@ -54,35 +52,28 @@ async def get_device_measurements_paginated(
         count_query = count_query.where(CerboMeasurement.measured_at <= end_date)
 
     offset = (page - 1) * page_size
-    query = (
-        query.offset(offset)
-        .limit(page_size)
-        .order_by(CerboMeasurement.measured_at.desc())
-    )
+    query = query.offset(offset).limit(page_size).order_by(CerboMeasurement.measured_at.desc())
 
     result = await db.execute(query)
     measurements = result.scalars().all()
 
     total_count_result = await db.execute(count_query)
     total_count = total_count_result.scalar_one()
-
     return measurements, total_count
 
 
 async def create_schedule(
-    db: AsyncSession, schedule_data: EnergeticScheduleCreate
+    db: AsyncSession, object_id: str, schedule_data: EnergeticScheduleCreate
 ) -> EnergeticSchedule:
-    """Создает новое расписание в базе данных."""
+    """Создает новое расписание для конкретного объекта."""
     duration_delta = timedelta(
         hours=schedule_data.duration_hours, minutes=schedule_data.duration_minutes
     )
-
-    temp_start_datetime = datetime.combine(
-        datetime.min.date(), schedule_data.start_time
-    )
+    temp_start_datetime = datetime.combine(datetime.min.date(), schedule_data.start_time)
     calculated_end_time = (temp_start_datetime + duration_delta).time()
 
     db_schedule = EnergeticSchedule(
+        energetic_object_id=object_id,
         start_time=schedule_data.start_time,
         duration=duration_delta,
         end_time=calculated_end_time,
@@ -107,11 +98,12 @@ async def get_schedule_by_id(
     return result.scalars().first()
 
 
-async def get_all_schedules(db: AsyncSession) -> List[EnergeticSchedule]:
-    """Получает все расписания (активные и неактивные), отсортированные по времени начала."""
-    result = await db.execute(
-        select(EnergeticSchedule).order_by(EnergeticSchedule.start_time)
-    )
+async def get_all_schedules(db: AsyncSession, object_id: Optional[str] = None) -> List[EnergeticSchedule]:
+    """Получает все расписания (активные и неактивные), фильтруя по объекту, если нужно."""
+    query = select(EnergeticSchedule).order_by(EnergeticSchedule.start_time)
+    if object_id:
+        query = query.where(EnergeticSchedule.energetic_object_id == object_id)
+    result = await db.execute(query)
     return result.scalars().all()
 
 

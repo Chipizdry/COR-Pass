@@ -578,14 +578,28 @@ async def remove_session(
         encrypted_data=token,
         key=await decrypt_user_key(current_user.unique_cipher_key),
     )
-    event_data = {
-        "channel": "cor-erp-prod",
-        "event_type": "token_blacklisted",
+
+    events = []
+    base_event = {
         "token": session_token,
+        "session_id": session_to_revoke.device_id,
         "reason": "Token explicitly revoked or logged out.",
         "timestamp": datetime.now(timezone.utc).timestamp(),
     }
-    await websocket_events_manager.broadcast_event(event_data)
+    events.append({
+        **base_event,
+        "channel": "cor-erp-prod",
+        "event_type": "token_blacklisted",
+    })
+    if session_to_revoke.device_type == "Desktop":
+        events.append({
+            **base_event,
+            "channel": "cor-task-tracker",
+            "event_type": "token_blacklisted",
+        })
+
+    for event_data in events:
+        await websocket_events_manager.broadcast_event(event_data)
 
     session = await repository_session.delete_session(current_user, db, session_id)
     if session is None:

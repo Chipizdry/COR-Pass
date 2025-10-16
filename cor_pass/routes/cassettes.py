@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-import httpx
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.database.db import get_db
@@ -10,13 +9,11 @@ from cor_pass.schemas import (
     CassetteUpdateComment,
     DeleteCassetteRequest,
     DeleteCassetteResponse,
-    PrintLabel,
 )
 from cor_pass.repository import cassette as cassette_service
-from typing import List
+from typing import List, Optional
 
 from cor_pass.services.access import doctor_access
-from cor_pass.services.glass_and_cassette_printing import print_labels
 
 router = APIRouter(prefix="/cassettes", tags=["Cassette"])
 
@@ -99,15 +96,16 @@ async def delete_cassettes(
 
 @router.patch(
     "/{cassette_id}/printed",
-    response_model=CassetteModelScheema,
+    response_model=Optional[CassetteModelScheema],
     dependencies=[Depends(doctor_access)],
 )
 async def change_glass_printing_status(
     data: CassettePrinting, request: Request, db: AsyncSession = Depends(get_db)
 ):
     """Меняем статус печати кассеты"""
-
     print_result = await cassette_service.print_cassette_data(db=db, data=data, request=request)
+    # if not print_result:
+    #         raise HTTPException(status_code=400, detail="Printing failed")
 
     if print_result and print_result.get("success"):
         updated_cassette = await cassette_service.change_printing_status(

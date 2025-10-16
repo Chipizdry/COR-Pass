@@ -14,7 +14,6 @@
     align-items: center;
     width: 100%;
     flex-wrap: wrap;
-    gap: 10px;
 }
 .header-row.top {
     justify-content: space-between;
@@ -27,22 +26,23 @@
 .search-container {
     position: relative;
     flex: 1;
-    margin-right: 24px;
+    margin-right: 20px;
 }
 .search-container input {
     width: 100%;
     height: 64px;
-    padding: 14px 16px 14px 48px;
-    border: 1px solid white;
+    padding: 12px 20px 12px 48px;
+    border: 1px solid #FFFFFF;
     border-radius: 20px;
     font-size: 16px;
     color: #B1A1DA;
-    background: #FFFFFF;
+    background: rgba(255, 255, 255, .6);
     outline: none !important;
 }
 .search-container input::placeholder {
     font-size: 16px;
     color: #B1A1DA;
+    font-weight: 400;
 }
 .search-container .search-icon {
     position: absolute;
@@ -70,7 +70,7 @@
     cursor: pointer;
 }
 .role-icon.active{
-    background: #7527B2;
+    background: #FFFFFF;
 }
 .role-icon .icon-group {
     width: 24px;
@@ -101,6 +101,7 @@
 .role-toggle .role-btn.active {
     background: #7527B2;
     color: #FFFFFF;
+    font-weight: 700; 
 }
 .role-toggle .role-btn.doc.active, .role-toggle .role-btn.lab.active  {
     background: white;

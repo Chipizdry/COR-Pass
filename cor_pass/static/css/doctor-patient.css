@@ -89,7 +89,7 @@
 
 .main {
     height: 100vh;
-    padding: 20px 20px;
+    padding: 30px;
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -110,7 +110,7 @@
 .actions .search input {
     width: 100%;
     height: 52px;
-    padding: 0 52px;
+    padding: 0 52px;    
     border: none;
     border-radius: 14px;
     background: #ffffff;
@@ -229,7 +229,7 @@
 }
 
 /* у меня сортировка не уезжало вправо , поэтому сделал через второго ребенка */
-.filters-bar > div:nth-child(2) {
+.filters-bar > div:last-child {
     margin-left: auto;
 }
 
@@ -352,9 +352,12 @@ tbody td {
 }
 
 .ellipsis {
-    cursor: pointer;
-    font-size: 20px;
-    color: #5B4296
+  cursor: pointer;
+}
+.ellipsis img {
+  width: 3.75px;
+  height: 16.25px;
+  display: block;
 }
 
 .footer {
@@ -363,7 +366,9 @@ tbody td {
     color: #5B4296;
     font-weight: 700;
     background: #f5f4fb;
+    margin-top: auto;
 }
+
 
 
 #Add_Patient {
@@ -400,6 +405,19 @@ tbody td {
     border-radius: 24px 24px 0 0;
 }
 
+table th:nth-child(2),
+table td:nth-child(2),
+table th:nth-child(3),
+table td:nth-child(3),
+table th:nth-child(4),
+table td:nth-child(4),
+table th:nth-child(5),
+table td:nth-child(5),
+table th:nth-child(6),
+table td:nth-child(6) {
+    width: 220.6px;
+}
+
 /* Иконки */
 .filter .icon,
 .sort .icon {
@@ -418,7 +436,7 @@ tbody td {
 .btn-square {
     width: 52px;
     height: 52px;
-    background-color: #7527B2;
+    background-color: #FFFFFF !important;
     border: none;
     border-radius: 20px;
     display: inline-flex;
@@ -461,3 +479,4 @@ tbody td {
 .add-button:hover {
     background-color: #5f1b91;
 }
+

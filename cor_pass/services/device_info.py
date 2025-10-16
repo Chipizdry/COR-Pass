@@ -6,6 +6,8 @@ def get_device_header(
     x_device_type: str = Header(None, description="X-Device-Type header"),
     x_device_os: str = Header(None, description="X-Device-OS header"),
     x_device_info: str = Header(None, description="X-Device-Info header"),
+    x_app_id: str = Header(None, description="X-App-Id"),
+    x_device_id: str = Header(None, description="X-Device-Id"),
 ) -> dict:
     """
     Получает информацию об устройстве из заголовков.
@@ -20,6 +22,8 @@ def get_device_header(
         "device_type": x_device_type or "Desktop",  # Тип устройства
         "device_info": x_device_info or user_agent,  # Информация об устройстве
         "device_os": x_device_os or "Unknown OS",  # Операционная система
+        "app_id": x_app_id, 
+        "device_id": x_device_id
     }
 
 
@@ -33,6 +37,8 @@ def get_device_info(request: Request) -> dict:
 
     device_type = "Desktop"
     device_os = "Unknown OS"
+    app_id = None
+    device_id = None
 
     is_mobile_app = request.headers.get("X-Device-Type") is not None
 
@@ -40,6 +46,8 @@ def get_device_info(request: Request) -> dict:
         device_type = request.headers.get("X-Device-Type", "Mobile")
         device_os = request.headers.get("X-Device-OS", "Unknown OS")
         device_info = request.headers.get("X-Device-Info", "Unknown device")
+        app_id = request.headers.get("X-App-Id")  # уникальный id приложения
+        device_id = request.headers.get("X-Device-Id")  # уникальный id устройства
     else:
         device_info = user_agent
 
@@ -58,10 +66,12 @@ def get_device_info(request: Request) -> dict:
             device_os = "Linux"
 
     return {
-        "device_type": device_type,  # Тип устройства (Mobile, Desktop и т.д.)
-        "device_info": device_info,  # Информация об устройстве
-        "ip_address": ip_address,  # IP-адрес
-        "device_os": device_os,  # Операционная система
+        "device_type": device_type,   # Тип устройства (Mobile, Desktop и т.д.)
+        "device_info": device_info,   # Информация об устройстве
+        "ip_address": ip_address,     # IP-адрес
+        "device_os": device_os,       # Операционная система
+        "app_id": app_id,             # Уникальный ID приложения (только для мобилок)
+        "device_id": device_id,       # Уникальный ID устройства (только для мобилок)
     }
 
 

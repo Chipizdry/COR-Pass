@@ -1,6 +1,7 @@
 from fastapi import HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from cor_pass.repository.printing_device import get_printing_device_by_device_class
 from cor_pass.schemas import (
     CassettePrinting,
     CassetteResponseForPrinting,
@@ -207,26 +208,35 @@ async def change_printing_status(
 async def get_cassette_full_info(
     db: AsyncSession, cassette_id: str
 ) -> CassetteResponseForPrinting:
+    
+    db_case = None
 
-    result = await db.execute(
-        select(db_models.Cassette)
-        .where(db_models.Cassette.id == cassette_id)
-        .options(selectinload(db_models.Cassette.glass))
-    )
-    db_cassette = result.scalar_one_or_none()
-    if db_cassette:
-
-        sample_result = await db.execute(
-            select(db_models.Sample)
-            .where(db_models.Sample.id == db_cassette.sample_id)
-            .options(selectinload(db_models.Sample.case))
+    cassette_result = await db.execute(
+            select(db_models.Cassette)
+            .where(db_models.Cassette.id == cassette_id)
+            .options(
+                selectinload(db_models.Cassette.sample).selectinload(
+                    db_models.Sample.case
+                )
+            )
         )
-        db_sample = sample_result.scalar_one_or_none()
-        if not db_sample:
-            raise ValueError(f"Семпл с ID {db_cassette.sample_id} не найден")
+    db_cassette = cassette_result.scalar_one_or_none()
+    if not db_cassette:
+        raise ValueError(f"Касету не знайдено")
 
-        db_case = await db.get(db_models.Case, db_sample.case_id)
+    sample_result = await db.execute(
+        select(db_models.Sample)
+        .where(db_models.Sample.id == db_cassette.sample_id)
+        .options(selectinload(db_models.Sample.case))
+    )
+    db_sample = sample_result.scalar_one_or_none()
+    if not db_sample:
+        raise ValueError(f"Семпл с ID {db_cassette.sample_id} не найден")
 
+    db_case_id = db_sample.case_id
+    db_case = await repository_cases.get_single_case(db=db, case_id=db_case_id)
+    db_sample = db_sample
+    db_case = db_case
 
     response = CassetteResponseForPrinting( 
     case_code=db_case.case_code,
@@ -237,30 +247,34 @@ async def get_cassette_full_info(
     return response
 
 
+
 async def print_cassette_data(
     data: CassettePrinting, db: AsyncSession, request: Request
 ):
     db_cassette = await get_cassette_full_info(db=db, cassette_id=data.cassete_id)
     if db_cassette is None:
         raise HTTPException(status_code=404, detail=f"Кассета с ID {data.cassete_id} не найдена в базе данных")
+    device = await get_printing_device_by_device_class(db=db, device_class="CassetPrinter")
+    if device:
+        models_id = data.number_models_id if data.number_models_id else "8"
+        printer_ip = data.printer_ip if data.printer_ip else device.ip_address
+        clinic_name = data.clinic_name if data.clinic_name else "FF"
+        case_code = db_cassette.case_code
+        sample_number=db_cassette.sample_number
+        cassette_number=db_cassette.cassette_number
+        glass_number="-"
+        staining="-"
+        hooper=data.hooper if data.hooper else "?"
+        patient_cor_id=db_cassette.patient_cor_id
+            
+        content = f"{clinic_name}|{case_code}|{sample_number}|{cassette_number}|L{glass_number}|{staining}|{hooper}|{patient_cor_id}"
 
-    clinic_name = data.clinic_name
-    case_code = db_cassette.case_code
-    sample_number=db_cassette.sample_number
-    cassette_number=db_cassette.cassette_number
-    glass_number="-"
-    staining="-"
-    hooper=data.hooper
-    patient_cor_id=db_cassette.patient_cor_id
-        
-    content = f"{clinic_name}|{case_code}|{sample_number}|{cassette_number}|L{glass_number}|{staining}|{hooper}|{patient_cor_id}"
+        label_to_print = PrintLabel(
+            model_id=models_id, 
+            content=content,
+            uuid=data.cassete_id
+        )
 
-    label_to_print = PrintLabel(
-        number_models_id=data.number_models_id, 
-        content=content,
-        uuid=data.cassete_id
-    )
+        print_result = await print_labels(printer_ip=printer_ip, labels_to_print=[label_to_print], request=request)
 
-    print_result = await print_labels(printer_ip=data.printer_ip, labels_to_print=[label_to_print], request=request)
-
-    return print_result
+        return print_result

@@ -1,9 +1,9 @@
-from datetime import timezone
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List
+from typing import List, Optional, Tuple
 
 from typing import List
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 
 from cor_pass.database.models import BloodPressureMeasurement, User
@@ -50,3 +50,53 @@ async def get_measurements(
         .order_by(BloodPressureMeasurement.measured_at.desc())
     )
     return measurements.scalars().all()
+
+
+async def get_measurements_paginated(
+    db: AsyncSession,
+    user_id: str,
+    page: int = 1,
+    page_size: int = 10,
+    period: Optional[str] = None,  # all | week | month | custom
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+) -> Tuple[List[BloodPressureMeasurement], int]:
+    """
+    Возвращает список измерений давления и пульса с пагинацией и фильтрами по времени.
+    """
+
+    query = select(BloodPressureMeasurement).where(BloodPressureMeasurement.user_id == user_id)
+    count_query = select(func.count()).select_from(BloodPressureMeasurement).where(
+        BloodPressureMeasurement.user_id == user_id
+    )
+
+    now = datetime.utcnow()
+
+    # --- фильтрация по периоду ---
+    if period == "week":
+        start_date = now - timedelta(days=7)
+    elif period == "month":
+        start_date = now.replace(day=1)  # с начала месяца
+    elif period == "all":
+        start_date = None
+        end_date = None
+
+    if start_date:
+        query = query.where(BloodPressureMeasurement.measured_at >= start_date)
+        count_query = count_query.where(BloodPressureMeasurement.measured_at >= start_date)
+
+    if end_date:
+        query = query.where(BloodPressureMeasurement.measured_at <= end_date)
+        count_query = count_query.where(BloodPressureMeasurement.measured_at <= end_date)
+
+    # --- пагинация ---
+    offset = (page - 1) * page_size
+    query = query.order_by(BloodPressureMeasurement.measured_at.desc()).offset(offset).limit(page_size)
+
+    result = await db.execute(query)
+    measurements = result.scalars().all()
+
+    total_count_result = await db.execute(count_query)
+    total_count = total_count_result.scalar_one()
+
+    return measurements, total_count

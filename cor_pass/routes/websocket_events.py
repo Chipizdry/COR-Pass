@@ -1,5 +1,5 @@
-import json
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status, HTTPException
+
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from cor_pass.services.websocket_events_manager import websocket_events_manager
 
 from loguru import logger

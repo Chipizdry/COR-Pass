@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="../css/reset.css">
+    <link rel="stylesheet" href="../css/general.css">
+    <link rel="stylesheet" href="./mark-station.css">
+    <title>Document</title>
+</head>
+<body>
+
+<div id="caseDirection" class="caseDirection">
+    <div class="caseDirectionWrapper">
+        <div class="caseDirectionTitle">
+            Направлення
+        </div>
+        <div class="directionFormContainer">
+            <form id="directionForm">
+                <div class="directorModalFormGroup required">
+                    <label htmlfor="research_type">Вид дослідження <span class="req">*</span></label>
+                    <div class="directorModalFormGroup-select">
+                        <div class="directorModalFormGroup-input input-box">
+                            <span class="label" style="color: #a9a4c6">Оберіть вид</span>
+                        </div>
+                        <ul class="directorModalFormGroup-list">
+                            <li class="disabled">Оберіть вид</li>
+                            <li data-v="Патогістологія" class="">
+                                Патгістологія
+                            </li><li data-v="Імуногістохімія" class="">
+                            Імуногістохімія
+                        </li><li data-v="Цитологія" class="">
+                            Цитологія
+                        </li><li data-v="FISH/CISH" class="">
+                            NGS
+                        </li><li data-v="Інше" class="">
+                            Інше
+                        </li>
+                        </ul>
+                        <input type="hidden" id="research_type" value="" name="research_type" required="">
+                    </div>
+                </div>
+
+                <div class="directorModalFormGroup required">
+                    <label htmlfor="container_count">Кількість контейнерів <span class="req">*</span></label>
+                    <input id="container_count" value="" type="number" name="container_count" class="input input-box required" placeholder="0" min="1">
+                </div>
+
+                <div class="directorModalFormGroup ">
+                    <label htmlfor="container_count">Дата забору біоматеріалу </label>
+                    <input id="biomaterial_date" value="" type="date" name="biomaterial_date" class="input input-box " placeholder="" min="1">
+                </div>
+
+                <div class="directorModalFormGroup ">
+                    <label htmlfor="container_count">Медкарта № </label>
+                    <input id="medical_card_number" value="" type="text" name="medical_card_number" class="input input-box " placeholder="" min="1">
+                </div>
+
+                <div class="directorModalFormGroup ">
+                    <label htmlfor="clinical_data">Клінічні дані  </label>
+                    <textarea id="clinical_data" name="clinical_data" placeholder="" class="input input-box"></textarea>
+                </div>
+
+                <div class="directorModalFormGroup ">
+                    <label htmlfor="container_count">Клінічний діагноз </label>
+                    <input id="clinical_diagnosis" value="" type="text" name="clinical_diagnosis" class="input input-box " placeholder="" min="1">
+                </div>
+
+                <div class="directorModalFormGroup ">
+                    <label htmlfor="medical_institution">Медичний заклад </label>
+                    <div class="directorModalFormGroup-select">
+                        <div class="directorModalFormGroup-input input-box">
+                            <span class="label" style="color: #a9a4c6">Оберіть медичний заклад</span>
+                        </div>
+                        <ul class="directorModalFormGroup-list">
+                            <li class="disabled">Оберіть медичний заклад</li>
+                            <li data-v="Феофанія" class="">
+                                Феофанія
+                            </li><li data-v="Інститут раку" class="">
+                            Інститут раку
+                        </li>
+                        </ul>
+                        <input type="hidden" id="medical_institution" value="" name="medical_institution">
+                    </div>
+                </div>
+
+                <div class="directorModalFormGroup ">
+                    <label htmlfor="department">Відділення </label>
+                    <div class="directorModalFormGroup-select">
+                        <div class="directorModalFormGroup-input input-box">
+                            <span class="label" style="color: #a9a4c6">Оберіть відділення</span>
+                        </div>
+                        <ul class="directorModalFormGroup-list">
+                            <li class="disabled">Оберіть відділення</li>
+                            <li data-v="Хірургія" class="">
+                                Хірургія
+                            </li><li data-v="Терапія" class="">
+                            Терапія
+                        </li>
+                        </ul>
+                        <input type="hidden" id="department" value="" name="department">
+                    </div>
+                </div>
+
+                <div class="directorModalFormGroup ">
+                    <label htmlfor="container_count">Лікуючий лікар ПІБ </label>
+                    <input id="attending_doctor" value="" type="text" name="attending_doctor" class="input input-box " placeholder="" min="1">
+                </div>
+
+                <div class="directorModalFormGroup ">
+                    <label htmlfor="container_count">Контакти лікаря </label>
+                    <input id="doctor_contacts" value="" type="text" name="doctor_contacts" class="input input-box " placeholder="+380" min="1">
+                </div>
+
+                <div class="directorModalFormGroup ">
+                    <label htmlfor="container_count">Медична процедура/операція </label>
+                    <input id="medical_procedure" value="" type="text" name="medical_procedure" class="input input-box " placeholder="" min="1">
+                </div>
+            </form>
+        </div>
+        <div id="testQRdiv" style="display: flex; justify-content: center">
+
+        </div>
+        <div class="directorModalFooter">
+            <button class="btn btn-primary" id="caseDirectionSubmit">Зберегти</button>
+            <button class="btn btn-outline" id="caseDirectionScan">Сканувати</button>
+        </div>
+    </div>
+</div>
+
+<script src="../js/alert.js"></script>
+<script src="../js/qrCodeGenerator.js"></script>
+<script src="./mark-station.js"></script>
+
+</body>
+</html>

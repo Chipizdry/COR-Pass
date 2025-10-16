@@ -246,7 +246,6 @@ const signReport = async (currentDiagnosisId) => {
         .then((res) => {
             modalDoctorSignNODE.classList.remove('open')
             initModal()
-            showSuccessAlert('Підписання пройшло успішно')
             return res
         })
 }

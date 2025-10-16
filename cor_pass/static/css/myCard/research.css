@@ -1,0 +1,84 @@
+.researchTop{
+  display: flex;
+  width: 100%;
+}
+
+.researchTop .researchTopItem{
+  padding: 12px;
+  color: #291161;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  background: white;
+  width: 50%;
+  border-bottom: 1px solid #eeecf8;
+}
+
+.researchTop .researchTopItem:last-child{
+  border-left: 1px solid #eeecf8;
+}
+
+.researchButton{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.researchButton .researchButtonText{
+  color: #291161;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.researchButton .researchButtonSvg{
+  color: #291161;
+  font-size: 18px;
+  font-weight: 800;
+  transform: translateY(1px);
+}
+
+.researchContent{
+  padding: 12px 20px;
+  display: flex;
+}
+
+.researchContent .researchContentItem{
+  width: 50%;
+}
+
+.researchList{
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 25px;
+}
+
+.researchList .researchListItem{
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid #FFF;
+  background: rgba(255, 255, 255, 0.40);
+  display: flex;
+  gap: 12px;
+}
+.researchList .researchListItemSvg{
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+}
+
+.researchList .researchListItemTop{
+  color: #5B4296;
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.researchList .researchListItemBottom{
+  color:#5B4296;
+  font-size: 14px;
+}

@@ -5,12 +5,13 @@ from pydantic import (
     Field,
     EmailStr,
     PositiveInt,
+    ValidationInfo,
     computed_field,
     field_validator,
     model_validator,
 )
-from typing import Generic, List, Literal, Optional, TypeVar, Union
-from datetime import datetime, time, timedelta
+from typing import Any, Dict, Generic, List, Literal, Optional, TypeVar, Union
+from datetime import datetime, time, timedelta, timezone
 
 from cor_pass.database.models import (
     AccessLevel,
@@ -35,7 +36,7 @@ from datetime import date
 
 class UserModel(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=6, max_length=20)
+    password: str = Field(min_length=8, max_length=32)
     birth: Optional[int] = Field(None, ge=1945, le=2100)
     user_sex: Optional[str] = Field(None, max_length=1)
     cor_id: Optional[str] = Field(None, max_length=15)
@@ -70,6 +71,8 @@ class ResponseUser(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    session_id: Optional[str] = None
+    device_id: Optional[str] = None
 
 
 class NewUserRegistration(BaseModel):
@@ -102,6 +105,17 @@ class LoginResponseModel(BaseModel):
     session_id: Optional[str] = None
     requires_master_key: bool = False
     message: Optional[str] = None
+    device_id: Optional[str] = None
+
+
+class RecoveryResponseModel(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+    message: Optional[str] = None
+    confirmation: Optional[bool] = False
+    session_id: Optional[str] = None
+    device_id: Optional[str] = None
 
 
 class EmailSchema(BaseModel):
@@ -115,12 +129,12 @@ class VerificationModel(BaseModel):
 
 class ChangePasswordModel(BaseModel):
     email: Optional[str]
-    password: str = Field(min_length=6, max_length=20)
+    password: str = Field(min_length=8, max_length=32)
 
 
 class ChangeMyPasswordModel(BaseModel):
-    old_password: str = Field(min_length=6, max_length=20)
-    new_password: str = Field(min_length=6, max_length=20)
+    old_password: str = Field(min_length=8, max_length=32)
+    new_password: str = Field(min_length=8, max_length=32)
 
 
 class RecoveryCodeModel(BaseModel):
@@ -147,6 +161,8 @@ class UserSessionModel(BaseModel):
     refresh_token: str
     jti: str
     access_token: str
+    app_id: Optional[str] = None
+    device_id: Optional[str] = None
 
 
 class UserSessionResponseModel(BaseModel):
@@ -547,6 +563,7 @@ class DoctorCreateResponse(BaseModel):
 class InitiateLoginRequest(BaseModel):
     email: Optional[EmailStr] = None
     cor_id: Optional[str] = None
+    app_id: Optional[str] = None
 
     @model_validator(mode="before")
     def check_either_email_or_cor_id(cls, data: dict):
@@ -604,6 +621,7 @@ class ConfirmCheckSessionResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    device_id: Optional[str] = None
 
 
 # PATIENTS MODELS
@@ -1115,7 +1133,7 @@ class CreatePrintingDevice(BaseModel):
     location: Optional[str] = Field(None, description="Локация")
 
 
-class ResponcePrintingDevice(BaseModel):
+class ResponsePrintingDevice(BaseModel):
     id: str
     device_class: str
     device_identifier: str
@@ -1372,6 +1390,16 @@ class DoctorSignatureResponse(DoctorSignatureBase):
     class Config:
         from_attributes = True
 
+class DoctorSignatureResponseWithName(BaseModel):
+    doctor_first_name: Optional[str] = None
+    doctor_last_name: Optional[str] = None
+    doctor_id: str
+    signature_scan_data: Optional[str] = None
+    signature_scan_type: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 
 class ReportSignatureSchema(BaseModel):
     id: str
@@ -1401,6 +1429,39 @@ class ReportCreateSchema(ReportBaseSchema):
 class ReportUpdateSchema(ReportBaseSchema):
     pass
 
+class InitiateSignatureRequest(BaseModel):
+    # doctor_cor_id: str = Field(..., description="COR-ID доктора, который подписывает")
+    diagnosis_id: str = Field(..., description="ID диагноза, который будет подписан")
+    doctor_signature_id: Optional[str] = Field(None, description="ID подписи")
+
+
+class InitiateSignatureResponse(BaseModel):
+    session_token: str
+    deep_link: str
+    expires_at: datetime
+    status: Optional[str] = None
+
+
+class ActionRequest(BaseModel):
+    session_token: str
+    status: SessionLoginStatus
+
+
+class StatusResponse(BaseModel):
+    session_token: str
+    status: str
+    deep_link: Optional[str] = None
+    expires_at: datetime
+
+
+class PatientResponseForSigning(BaseModel):
+    patient_cor_id: str
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    last_name: Optional[str] = None
+    birth_date: Optional[date] = None
+    sex: Optional[str] = None
+    age: Optional[int] = None
 
 class DoctorDiagnosisSchema(BaseModel):
     id: str
@@ -1471,6 +1532,7 @@ class PatientFinalReportPageResponse(BaseModel):
     last_case_details: Optional[CaseWithOwner] = None
     case_owner: Optional[CaseOwnerResponse]
     report_details: Optional[FinalReportResponseSchema]
+    current_signings: Optional[StatusResponse] = None
 
     class Config:
         from_attributes = True
@@ -1480,6 +1542,7 @@ class CaseFinalReportPageResponse(BaseModel):
     case_details: CaseWithOwner
     case_owner: Optional[CaseOwnerResponse]
     report_details: Optional[FinalReportResponseSchema]
+    current_signings: Optional[StatusResponse] = None
 
     class Config:
         from_attributes = True
@@ -1997,8 +2060,11 @@ class FullDeviceMeasurementCreate(BaseModel):
     # Общая информация о измерении
     measured_at: datetime = Field(..., description="Время измерения")
     object_name: Optional[str] = Field(
-        None, description="ID устройства, если применимо"
+        None, description="Имя устройства, если применимо"
     )
+    energetic_object_id: str = Field(
+        ..., description="ID обьекта"
+    )  
 
     # агрегированные данные
     general_battery_power: float = Field(
@@ -2122,6 +2188,9 @@ class EnergeticScheduleBase(BaseModel):
 class EnergeticScheduleCreate(EnergeticScheduleBase):
     pass
 
+class EnergeticScheduleCreateForObject(EnergeticScheduleBase):
+    energetic_object_id: str = Field(..., description="ID Энергетического обьекта")
+
 
 class EnergeticScheduleResponse(BaseModel):
 
@@ -2200,17 +2269,17 @@ class SearchCaseDetailsSimple(BaseModel):
     patient_id: str
 
 class GeneralPrinting(BaseModel):
-    printer_ip: str
-    number_models_id: int
-    clinic_name: str
-    hooper: str
+    printer_ip: Optional[str] = None
+    number_models_id: Optional[str] = None
+    clinic_name: Optional[str] = None
+    hooper: Optional[str] = None
     # printing: bool
 
 class GlassPrinting(BaseModel):
-    printer_ip: str
-    model_id: int
-    clinic_name: str
-    hooper: str
+    printer_ip: Optional[str] = None
+    model_id: Optional[str] = None
+    clinic_name: Optional[str] = None
+    hooper: Optional[str] = None
     glass_id: str
     printing: bool
 
@@ -2224,19 +2293,19 @@ class GlassResponseForPrinting(BaseModel):
     patient_cor_id: str
 
 class CassettePrinting(BaseModel):
-    printer_ip: str
-    number_models_id: int
-    clinic_name: str
-    hooper: str
+    printer_ip: Optional[str] = None
+    number_models_id: Optional[int] = None
+    clinic_name: Optional[str] = None
+    hooper: Optional[str] = None
     cassete_id: str
     printing: bool
 
 class CassetteResponseForPrinting(BaseModel):
 
-    case_code: str
+    case_code: Optional[str] = None
     sample_number: str
     cassette_number: str
-    patient_cor_id: str
+    patient_cor_id: Optional[str] = None
 
 
 
@@ -2261,25 +2330,343 @@ class FeedbackRatingScheema(BaseModel):
 class FeedbackProposalsScheema(BaseModel):
     proposal: str = Field(...,min_length=2,max_length=800, description="Предложения")
 
+class UploadGlassSVSResponse(BaseModel):
+    preview_url: str
+    scan_url: str
 
-class InitiateSignatureRequest(BaseModel):
-    # doctor_cor_id: str = Field(..., description="COR-ID доктора, который подписывает")
-    diagnosis_id: str = Field(..., description="ID диагноза, который будет подписан")
-    doctor_signature_id: Optional[str] = Field(None, description="ID подписи")
+class EnergeticObjectBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    modbus_registers: Optional[dict] = None
+    is_active: bool
+
+class EnergeticObjectCreate(EnergeticObjectBase):
+    pass
+
+class EnergeticObjectUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    modbus_registers: Optional[dict] = None
+    is_active: Optional[bool] = None
+
+class EnergeticObjectResponse(EnergeticObjectBase):
+    id: str
+
+    class Config:
+        orm_mode = True
 
 
-class InitiateSignatureResponse(BaseModel):
+class PaginatedBloodPressureResponse(BaseModel):
+    items: List[BloodPressureMeasurementResponse]
+    total: int
+    page: int
+    page_size: int
+
+
+# схемы для лекарств
+
+class UnitEnum(str, Enum):
+    MG = "mg"
+    G = "g"
+    MCG = "mcg"
+    ML = "ml"
+    L = "l"
+    IU = "iu"
+    MG_ML = "mg/ml"
+    PERCENT = "%"
+    MG_M2 = "mg/m2"
+
+
+class OralMedicine(BaseModel):
+    """Пероральный способ — требует дозу и единицу измерения."""
+    intake_method: Literal["Oral"]
+    dosage: float = Field(..., description="Дозировка препарата")
+    unit: UnitEnum = Field(..., description="Одиница измерения (мг, мл и т.д.)")
+    concentration: Optional[float] = None
+    volume: Optional[float] = None
+
+
+
+class OintmentMedicine(BaseModel):
+    """Мази / свечи — требуют концентрацию."""
+    intake_method: Literal["Ointment/suppositories"]
+    concentration: float = Field(..., description="Концентрация активного вещества (%)")
+    dosage: Optional[float] = None
+    unit: Optional[UnitEnum] = None
+    volume: Optional[float] = None
+
+
+class SolutionMedicine(BaseModel):
+    """Растворы, внутривенно, внутримышечно — требуют концентрацию и объем."""
+    intake_method: Literal["Intravenous", "Intramuscularly", "Solutions"]
+    concentration: float = Field(..., description="Концентрация раствора (%)")
+    volume: float = Field(..., description="Объем раствора (мл)")
+    dosage: Optional[float] = None
+    unit: Optional[UnitEnum] = None
+
+
+
+
+class MedicineBase(BaseModel):
+    name: str = Field(..., description="Название препарата")
+    active_substance: Optional[str] = Field(None, description="Действующее вещество")
+
+
+    method_data: Union[OralMedicine, OintmentMedicine, SolutionMedicine]
+
+    class Config:
+        orm_mode = True
+
+
+
+
+class MedicineCreate(MedicineBase):
+    pass
+
+
+class MedicineUpdate(MedicineBase):
+    name: Optional[str] = None
+
+
+
+
+# class MedicineScheduleBase(BaseModel):
+#     start_date: date
+#     duration_days: Optional[int] = Field(None, description="Длительность приема")
+#     times_per_day: Optional[int] = Field(None, description="Кратность в день: 1 раз / 2 раза / 3 раза в день")
+#     intake_times: Optional[List[time]] = Field(None, description="Список времён приёма через запятую: 21:00 / 9:00 / и тд")
+#     interval_minutes: Optional[int] = Field(None, description="Интервал между приемами")
+#     notes: Optional[str] = Field(None, description="Заметка")
+
+
+class MedicineScheduleBase(BaseModel):
+    start_date: date
+    duration_days: Optional[int] = Field(None, description="Длительность приема")
+    times_per_day: Optional[int] = Field(
+        None, description="Кратность в день: 1 раз / 2 раза / 3 раза в день"
+    )
+    intake_times: Optional[List[time]] = Field(
+        None, description="Список времён приёма: 21:00, 9:00 и т.д."
+    )
+    interval_minutes: Optional[int] = Field(
+        None, description="Интервал между приёмами в минутах"
+    )
+    symptomatically: Optional[bool] = Field(False, description="Симптоматический приём")
+    notes: Optional[str] = Field(None, description="Заметка")
+
+
+    @field_validator("intake_times")
+    @classmethod
+    def validate_intake_times(cls, v: Optional[List[time]], info: ValidationInfo):
+        data = info.data or {}  
+        times_per_day = data.get("times_per_day")
+
+        if times_per_day is not None and v is not None:
+            if len(v) != times_per_day:
+                raise ValueError(
+                    f"Количество вхождений часов приема ({len(v)}) должно соответствовать количеству приёмов в день({times_per_day})"
+                )
+
+        # Если times_per_day не указано, но intake_times есть — выставляем автоматически
+        if v is not None and times_per_day is None:
+            data["times_per_day"] = len(v)
+
+        return v
+
+
+    @field_validator("times_per_day")
+    @classmethod
+    def validate_times_per_day(cls, v: Optional[int]):
+        if v is not None and v <= 0:
+            raise ValueError("Количество приемов должно быть больше нуля")
+        return v
+
+    @model_validator(mode="after")
+    def validate_schedule_logic(self):
+        if self.intake_times and self.interval_minutes:
+            raise ValueError(
+                "Нельзя одновременно указывать и времена приема, и интервал между ними"
+            )
+        if not self.intake_times and not self.interval_minutes:
+            raise ValueError(
+                "Нужно указать либо конкретные времена приема, либо интервал между ними"
+            )
+        return self
+
+
+class MedicineScheduleCreate(MedicineScheduleBase):
+    medicine_id: str
+
+
+class MedicineScheduleUpdate(MedicineScheduleBase):
+    pass
+
+
+
+
+class MedicineScheduleRead(MedicineScheduleBase):
+    id: str
+    medicine_id: str
+    # user_cor_id: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class MedicineRead(MedicineBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+    schedules: Optional[List[MedicineScheduleBase]] = []
+
+    class Config:
+        orm_mode = True
+
+
+# схемы для аптечек
+
+
+class FirstAidKitBase(BaseModel):
+    name: str = Field(..., description="Название аптечки")
+    description: Optional[str] = None
+
+
+
+class FirstAidKitCreate(FirstAidKitBase):
+    pass
+
+
+class FirstAidKitUpdate(FirstAidKitBase):
+    name: Optional[str] = None
+
+
+
+
+class FirstAidKitItemBase(BaseModel):
+    medicine_id: str
+    quantity: Optional[int] = 1
+    expiration_date: Optional[date] = None
+
+
+class FirstAidKitItemCreate(FirstAidKitItemBase):
+    # first_aid_kit_id: str
+    pass
+
+
+class FirstAidKitItemUpdate(FirstAidKitItemBase):
+    pass
+
+
+class FirstAidKitItemRead(FirstAidKitItemBase):
+    id: str
+    created_at: datetime
+    medicine: Optional[MedicineRead]
+
+    class Config:
+        orm_mode = True
+
+class FirstAidKitCreateResponse(FirstAidKitBase):
+    id: str
+    # user_id: str
+    created_at: datetime
+    # updated_at: datetime
+    # medicines: Optional[List[FirstAidKitItemRead]] = []
+
+    class Config:
+        orm_mode = True
+
+
+class FirstAidKitRead(FirstAidKitBase):
+    id: str
+    # user_id: str
+    created_at: datetime
+    updated_at: datetime
+    # medicines: Optional[List[FirstAidKitItemRead]] = []
+
+    class Config:
+        orm_mode = True
+
+
+class FirstAidKitItemAddRead(BaseModel):
+    id: str
+    quantity: int
+    expiration_date: Optional[date] = None
+    created_at: datetime
+    medicine: MedicineRead
+    first_aid_kit: FirstAidKitRead
+
+    class Config:
+        orm_mode = True
+
+class SupportReportScheema(BaseModel):
+    product_name: str = Field(...,min_length=2,max_length=20, description="Название продукта")
+    report_text: str = Field(...,min_length=2,max_length=800, description="Текст ошибки")
+
+
+
+
+class OphthalmologicalPrescriptionBase(BaseModel):
+    # Параметры правого глаза (OD)
+    od_sph: Optional[float] = Field(None, description="Sph правого глаза")
+    od_cyl: Optional[float] = Field(None, description="Cyl правого глаза")
+    od_ax: Optional[float] = Field(None, description="Ax правого глаза")
+    od_prism: Optional[float] = Field(None, description="Prism правого глаза")
+    od_base: Optional[str] = Field(None, description="Base правого глаза (Up / Down / In / Out)")
+    od_add: Optional[float] = Field(None, description="Add правого глаза")
+
+    # Параметры левого глаза (OS)
+    os_sph: Optional[float] = Field(None, description="Sph левого глаза")
+    os_cyl: Optional[float] = Field(None, description="Cyl левого глаза")
+    os_ax: Optional[float] = Field(None, description="Ax левого глаза")
+    os_prism: Optional[float] = Field(None, description="Prism левого глаза")
+    os_base: Optional[str] = Field(None, description="Base левого глаза (Up / Down / Medial / Lateral)")
+    os_add: Optional[float] = Field(None, description="Add левого глаза")
+
+    # Общие параметры
+    glasses_purpose: Literal["glasses_for_reading", "glasses_for_distance", "glasses_for_constant_wear"]
+    glasses_type: Literal["monofocal_glasses", "bifocal_glasses", "multifocal_glasses"]
+
+    issue_date: Optional[datetime] = Field(...)
+    term_months: Optional[int] = Field(None, description="Срок действия рецепта в месяцах")
+    note: Optional[str] = Field(None, description="Заметки")
+
+    @field_validator("od_base", "os_base")
+    @classmethod
+    def validate_base_direction(cls, v):
+        allowed = {"Up", "Down", "Medial", "Lateral", None}
+        if v not in allowed:
+            raise ValueError("Base должен быть одним из: Up, Down, Medial, Lateral")
+        return v
+
+
+
+class OphthalmologicalPrescriptionCreate(OphthalmologicalPrescriptionBase):
+    patient_id: str
+    doctor_signature_id: Optional[str] = None
+
+
+class OphthalmologicalPrescriptionUpdate(OphthalmologicalPrescriptionBase):
+    pass
+
+
+class OphthalmologicalPrescriptionRead(OphthalmologicalPrescriptionBase):
+    id: str
+    patient_id: str
+    expires_at: Optional[datetime] = None
+    doctor_signature_id: Optional[str] = None
+    signed_at: Optional[datetime] = None
+    issue_date: datetime
+
+    class Config:
+        orm_mode = True
+
+class OphthalmologicalPrescriptionReadWithSigning(BaseModel):
+    ophthalmological_prescription: OphthalmologicalPrescriptionRead
+    doctor_signing_info: Optional[DoctorSignatureResponseWithName] = None
+    current_signings: Optional[StatusResponse] = None
+
+class WSMessageBase(BaseModel):
     session_token: str
-    deep_link: str
-    expires_at: datetime
-
-
-class ActionRequest(BaseModel):
-    session_token: str
-    status: SessionLoginStatus
-
-
-class StatusResponse(BaseModel):
-    session_token: str
-    status: str
-    expires_at: datetime
+    data: Dict[str, Any]

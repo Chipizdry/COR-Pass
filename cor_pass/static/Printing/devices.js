@@ -92,6 +92,7 @@ function updateTestModalByType(type) {
             break;
 
         case 'scanner_docs':
+           // show(document.getElementById('scannerContainer'));
             show(document.getElementById('sendLabelButton'));
             hide(document.getElementById('templateNumber'));
             hide(document.getElementById('ClinicCaseNumber'));
@@ -117,60 +118,38 @@ function hide(el) {
 
 
 
-async function scanDocument() {
+  async function scanDocument() {
     const testResult = document.getElementById('testResult');
     const scanPreview = document.getElementById('scanPreview');
-    const scannerIp = document.getElementById('printerIp').value; // IP из dropdown
-    const scannerPort = document.getElementById('scannerPort')?.value || 8080;
-
-    if (!scannerIp) {
-        testResult.textContent = 'Выберите сканер из списка!';
-        testResult.style.color = 'red';
-        scanPreview.style.display = 'none';
-        hide(document.getElementById('scannerContainer'));
-        return;
-    }
-
-    // Показываем статус процесса
-    show(testResult);
+    show(document.getElementById('testResult'));
     testResult.textContent = 'Выполняется сканирование...';
     testResult.style.color = 'black';
-    scanPreview.style.display = 'none';
-    hide(document.getElementById('scannerContainer'));
 
     try {
-        const response = await fetch(
-            `/api/scanner/scan?scanner_ip=${encodeURIComponent(scannerIp)}&scanner_port=${scannerPort}`, 
-            {
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + getToken()
-                }
+        const response = await fetch('/api/scanner/scan', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + getToken()
             }
-        );
+        });
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP: ${response.status}`);
         }
 
-        // Превращаем ответ (JPEG) в объект URL для <img>
-        console.log('Запрос на сканирование', scannerIp, scannerPort);
+        // Превращаем ответ (байты JPEG) в картинку
         const blob = await response.blob();
-        console.log('Размер blob:', blob.size);
         const url = URL.createObjectURL(blob);
-
-        // Показываем скан и контейнер
+        show(document.getElementById('scannerContainer'));
         scanPreview.src = url;
         scanPreview.style.display = 'block';
-    
-        show(document.getElementById('scannerContainer'));
+      
+
         testResult.textContent = 'Сканирование завершено!';
         testResult.style.color = 'green';
     } catch (error) {
         console.error('Ошибка при сканировании:', error);
         testResult.textContent = 'Ошибка сканирования: ' + error.message;
         testResult.style.color = 'red';
-        scanPreview.style.display = 'none';
-        hide(document.getElementById('scannerContainer'));
     }
 }

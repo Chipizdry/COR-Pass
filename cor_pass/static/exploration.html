@@ -19,6 +19,13 @@
 <div class="glassPageWrapper df fdc">
     <div class="header-container">
         <div class="header-row top">
+            <div class="role-container" style="margin-right: 20px">
+                <a href="/static/COR_ID/mainscreen.html" class="role-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 11.6067L11.1031 2.86212C11.2208 2.74732 11.3607 2.65625 11.5146 2.59411C11.6685 2.53198 11.8334 2.5 12 2.5C12.1666 2.5 12.3315 2.53198 12.4854 2.59411C12.6393 2.65625 12.7792 2.74732 12.8969 2.86212L23 11.6067M3.53846 9.40792V20.2633C3.53846 20.946 4.10708 21.5 4.80769 21.5H9.46154V16.1411C9.46154 15.4585 10.0302 14.9045 10.7308 14.9045H13.2692C13.9698 14.9045 14.5385 15.4585 14.5385 16.1411V21.5H19.1923C19.8929 21.5 20.4615 20.946 20.4615 20.2633V9.40792" stroke="#7527B2" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+            </div>
             <div class="search-container">
                 <input type="text" placeholder="Search">
                 <svg class="search-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -85,9 +92,6 @@
                     <div class="topActionsItem open" id="printReport">
                         Друкувати дослідження
                     </div>
-                    <div class="topActionsItem" id="closeCase">
-                        Закрити дослідження
-                    </div>
                 </div>
             </div>
             <div class="bottom df ">
@@ -119,10 +123,10 @@
                         </div>
                         <div class="df aic jcc gap4">
                             <div class="doctorSignButton">
-                                Підписати
+                                Sign
                             </div>
                             <div id="openCreateDoctorSign" class="doctorSignButton">
-                                Cтворити підпис
+                                Create signature
                             </div>
                         </div>
                     </div>
@@ -156,6 +160,33 @@
             </div>
         </div>
     </div>
+    <div id="waitingSignature" class="modalCustom">
+        <div class="modalWrapper">
+            <div class="modalContent">
+                <div class="waitingSignatureQRIcon">
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="80" height="80" rx="40" fill="white"/>
+                        <path d="M40.0605 24.2002C41.6475 24.2002 43.0791 25.0459 43.8896 26.4629L56.9111 49.1445C57.3018 49.8145 57.5088 50.5742 57.5088 51.3379C57.5088 53.9648 55.6729 55.8008 53.0459 55.8008H27.0586C24.4316 55.8008 22.5977 53.9648 22.5977 51.3379C22.5996 50.5723 22.8057 49.8184 23.1963 49.1582L36.2139 26.4639C37.041 25.0459 38.4795 24.2002 40.0605 24.2002Z" fill="#DF1125"/>
+                        <path d="M40.0537 47.0483C40.9639 47.0483 41.6768 47.7319 41.6768 48.605C41.6768 49.4624 40.9492 50.1616 40.0537 50.1616C39.1729 50.1616 38.4297 49.4487 38.4297 48.605C38.4297 47.7476 39.1582 47.0483 40.0537 47.0483ZM40.0361 33.3208C40.4325 33.3208 40.79 33.4615 41.041 33.7183C41.2725 33.9546 41.3965 34.2739 41.3896 34.6187L41.1523 43.519C41.1387 44.2729 40.7578 44.6733 40.0527 44.6733C39.3254 44.6732 38.9336 44.2729 38.9189 43.5171L38.6992 34.6021C38.6924 34.2486 38.8097 33.938 39.0371 33.7056C39.2812 33.4576 39.6359 33.3209 40.0361 33.3208Z" fill="white"/>
+                    </svg>
+                </div>
+                <div class="waitingSignatureQRTitle">
+                    Вам необхідно підтвердити дію.
+                </div>
+                <div class="waitingSignatureQRDescription">
+                    Будь ласка, відскануйте QR-код нижче та виконайте всі кроки підтвердження в додатку COR ID
+                </div>
+                <div id="waitingSignatureQR">
+                </div>
+                <div class="waitingSignatureQRLoading">
+                    Очікування...
+                </div>
+                <div id="waitingSignatureQRBtn">
+                    Підписати примусово
+                </div>
+            </div>
+        </div>
+    </div>
     <div style="position: fixed; top: 0; right: 0; bottom: 0; left: 0;pointer-events: none;">
         <div id="qwerty">
 
@@ -163,14 +194,33 @@
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="./js/html2pdf.js"></script>
+<script src="./js/qrCodeGenerator.js"></script>
 <script src="./COR_ID_Js/general_fun.js"></script>
 <script src="./js/general.js"></script>
 <script src="./js/modal.js"></script>
 <script src="./js/alert.js"></script>
 <script src="./js/canvasDraw.js"></script>
 <script src="./js/doctorSignModal.js"></script>
+<script src="./js/websocket.js"></script>
 <script>
+    ws.onmessage = (ev) => {
+        // Some servers send text frames; others may send JSON strings.
+        try {
+            const msg = JSON.parse(ev.data);
+
+            if(msg?.event_type === "signature_status"){
+                document.querySelector('.caseItem.active').click()
+                document.querySelector('#waitingSignature').classList.remove('open')
+                showSuccessAlert('Підписання пройшло успішно')
+            }
+           console.log(msg, "msg")
+        } catch {
+            // Non-JSON payloads
+            console.warn('[ws] non-JSON message:', ev.data);
+        }
+    };
+
     const PATIENT_COR_ID = new URLSearchParams(window.location.search).get('userCorId')
     const INITIAL_CASE_ID = new URLSearchParams(window.location.search).get('caseId')
     const myCorId = decodeTokenJWT(localStorage.getItem('access_token'))?.corid
@@ -184,7 +234,7 @@
     const explorationContentNODE = document.querySelector("#explorationContent");
     const caseLabelNode = document.querySelector('#searchCaseId');
     const doctorSignModalBtnNODE = document.querySelector('#doctorSignModalBtn');
-    const closeCaseBtnNODE = document.querySelector('#closeCase');
+    const waitingSignatureModal = document.querySelector('#waitingSignature');
 
     const changeUrlParams = () => {
         const url = new URL(window.location);
@@ -207,16 +257,6 @@
 
         currentDiagnosis = null;
         doctorSignModalBtnNODE.classList.remove('open')
-    }
-    const showCloseCaseBtn = (currentReport, currentCaseOwner) => {
-        const hasAllSigns = currentReport?.doctor_diagnoses.every(({signature}) => !!signature);
-        const reportIsClose = currentCase?.grossing_status === "COMPLETED";
-
-        if(currentCaseOwner.is_case_owner && hasAllSigns && !reportIsClose){
-            closeCaseBtnNODE.classList.add('open')
-            return;
-        }
-        closeCaseBtnNODE.classList.remove('open')
     }
 
     const caseTemplate = (workCase, isActive) => {
@@ -252,10 +292,11 @@
                 })
                     .then(res => res.json())
                     .then(caseData => {
-                        const {case_details, case_owner, report_details} = caseData;
-                        document.querySelector('.caseItem.active').classList.remove('active')
+                        const {case_details, case_owner, current_signings, report_details} = caseData;
+                        document.querySelector('.caseItem.active')?.classList.remove('active')
                         caseNewNODE.classList.add('active')
-
+                        console.log(case_details, "case_details")
+                        caseNewNODE.querySelector('.caseItemLabel').style.color = getCaseColor(case_details)
 
                         currentCase = case_details;
                         currentReport = report_details;
@@ -264,9 +305,9 @@
 
                         setReport(currentReport, currentCaseOwner)
                         getMyCurrentDiagnosis(currentReport)
-                        showCloseCaseBtn(currentReport, currentCaseOwner)
                         setOwnerInfo(currentCaseOwner)
                         changeUrlParams()
+                        showSignProcessModal(current_signings)
 
                         caseLabelNode.innerHTML = currentCase.case_code
                         caseLabelNode.style.color = getCaseColor(currentCase)
@@ -481,7 +522,7 @@
                     </section>
                 </div>
                 <div class="doc-footer">
-                    <div class="footer-left">
+                      <div class="footer-left">
                         <strong>МЕДИЧНА ДОКУМЕНТАЦІЯ 014/о</strong> Затверджена наказом МОЗ України 29.05.2013 р. № 435
                     </div>
                     <div class="footer-right">Документ створено ПЗ COR-Lab</div>
@@ -519,7 +560,7 @@
                     div.classList = "signoff-section"
                     div.innerHTML = `
                     <div class="signoff-left">
-                        <strong>Лікар: </strong>${currentDoctor.doctor.last_name} ${currentDoctor.doctor.first_name} ${currentDoctor.doctor.middle_name}
+                        <strong>Doctor: </strong>${currentDoctor.doctor.last_name} ${currentDoctor.doctor.first_name} ${currentDoctor.doctor.middle_name}
                     </div>
                     ${currentDoctor.signature ? `<div className="signoff-right"><strong>Дата:</strong> ${new Date(currentDoctor.signature.signed_at).toLocaleDateString()}</div>` : ""}
                     `;
@@ -547,7 +588,7 @@
             })
                 .then(res => res.json())
                 .then(cases => {
-                    const {all_cases, report_details, case_owner, last_case_details} = cases;
+                    const {all_cases, report_details, current_signings, case_owner, last_case_details} = cases;
                     const activeCaseIndex = all_cases.findIndex(({id}) => id === last_case_details.id)
 
                     all_cases.forEach((currentCase, index) => {
@@ -565,9 +606,9 @@
 
                     setReport(currentReport, currentCaseOwner)
                     getMyCurrentDiagnosis(currentReport)
-                    showCloseCaseBtn(currentReport, currentCaseOwner)
                     setOwnerInfo(currentCaseOwner)
                     changeUrlParams()
+                    showSignProcessModal(current_signings)
 
                     caseLabelNode.innerHTML = currentCase.case_code
                     caseLabelNode.style.color = getCaseColor(currentCase)
@@ -588,7 +629,7 @@
         }
     }
     const setOwnerInfo = (caseOwner) => {
-        const caseIsClosed = currentCase?.grossing_status === "COMPLETED";
+        const caseIsClosed = isCaseIsClosed(currentCase?.grossing_status);
         const hasOwner = caseOwner?.id
         reportOwnerInfoNODE.innerHTML = ""
 
@@ -707,47 +748,79 @@
         })
     }
 
+    const signReportImmediately = (sessionToken) => {
+        if(checkToken()){
+            console.log('EVERYTHING FINE')
+            fetch(`${API_BASE_URL}/api/doctor/signing/confirm`, {
+                method: "POST",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    session_token: sessionToken,
+                    "status": "approved"
+                })
+            })
+        }
+    }
+
+    const showSignProcessModal = (report) => {
+        if(report?.session_token && report.status === "pending"){
+            waitingSignatureModal.querySelector('.modalContent').innerHTML = `
+                        <div class="waitingSignatureQRIcon">
+                            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="80" height="80" rx="40" fill="white"/>
+                                <path d="M40.0605 24.2002C41.6475 24.2002 43.0791 25.0459 43.8896 26.4629L56.9111 49.1445C57.3018 49.8145 57.5088 50.5742 57.5088 51.3379C57.5088 53.9648 55.6729 55.8008 53.0459 55.8008H27.0586C24.4316 55.8008 22.5977 53.9648 22.5977 51.3379C22.5996 50.5723 22.8057 49.8184 23.1963 49.1582L36.2139 26.4639C37.041 25.0459 38.4795 24.2002 40.0605 24.2002Z" fill="#DF1125"/>
+                                <path d="M40.0537 47.0483C40.9639 47.0483 41.6768 47.7319 41.6768 48.605C41.6768 49.4624 40.9492 50.1616 40.0537 50.1616C39.1729 50.1616 38.4297 49.4487 38.4297 48.605C38.4297 47.7476 39.1582 47.0483 40.0537 47.0483ZM40.0361 33.3208C40.4325 33.3208 40.79 33.4615 41.041 33.7183C41.2725 33.9546 41.3965 34.2739 41.3896 34.6187L41.1523 43.519C41.1387 44.2729 40.7578 44.6733 40.0527 44.6733C39.3254 44.6732 38.9336 44.2729 38.9189 43.5171L38.6992 34.6021C38.6924 34.2486 38.8097 33.938 39.0371 33.7056C39.2812 33.4576 39.6359 33.3209 40.0361 33.3208Z" fill="white"/>
+                            </svg>
+                        </div>
+                        <div class="waitingSignatureQRTitle">
+                            You need to confirm the action.
+                        </div>
+                        <div class="waitingSignatureQRDescription">
+                            Please scan the QR code below and follow all verification steps in the COR ID app.
+                        </div>
+                        <div id="waitingSignatureQR">
+                        </div>
+                        <div class="waitingSignatureQRLoading">
+                            Expectation...
+                        </div>
+                        <div id="waitingSignatureQRBtn">
+                            Sign forcibly
+                        </div>
+                        `
+            document.querySelector("#doctorSign").classList.remove('open')
+
+            if(report?.deep_link){
+                new QRCode(waitingSignatureModal.querySelector('#waitingSignatureQR'), {
+                    text: report.deep_link,
+                    width: 200,
+                    height: 200,
+                    colorDark: '#291161',   // QR modules (the “dark” squares)
+                    colorLight: '#ffffff',  // background (use 'transparent' if supported)
+                });
+            }
+            waitingSignatureModal.classList.add('open')
+            document.querySelector('#waitingSignatureQRBtn').addEventListener("click", () => {
+                signReportImmediately(report.session_token)
+            })
+        }
+    }
+
     const signReportHandler = () => {
         const doctorSignButtonNODE = document.querySelector('.doctorSignButton');
 
         doctorSignButtonNODE.addEventListener('click', () => {
             signReport(currentDiagnosis?.id)
                 .then(report => {
-                    if(report?.doctor_diagnoses){
-                        currentReport.doctor_diagnoses = report?.doctor_diagnoses
-
-                        setReport(currentReport, currentCaseOwner)
-                        getMyCurrentDiagnosis(currentReport)
-                        showCloseCaseBtn(currentReport, currentCaseOwner)
-                    }
+                    console.log(report, "reportreportreportreport")
+                    showSignProcessModal(report)
                 })
         })
     }
 
-    const closeCaseHandler = () => {
-        closeCaseBtnNODE.addEventListener('click', e => {
-            if(checkToken()){
-               return fetch(`${API_BASE_URL}/api/doctor/cases/${currentCase?.id}/close`, {
-                    method: "PUT",
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                        "Content-Type": "application/json"
-                    },
-                })
-                    .then(res => res.json())
-                    .then(() => {
-                        currentCase.grossing_status = "COMPLETED"
-                        showSuccessAlert('Дослідження закрите успішно!')
-                        closeCaseBtnNODE.classList.remove('open')
 
-                        document.querySelector('#searchCaseId').style.color = getCaseColor({grossing_status: "COMPLETED"})
-                        document.querySelector('.caseItem.active .caseItemLabel').style.color = getCaseColor({grossing_status: "COMPLETED"})
-
-                        setOwnerInfo(currentCaseOwner)
-                    })
-            }
-        })
-    }
 
     const printReportHandler = () => {
         document.querySelector('#printReport').addEventListener('click', () => {
@@ -788,7 +861,6 @@
         printReportHandler()
         setAllCases()
         revertButtonHandler()
-        closeCaseHandler()
         goToCasesHandler()
         showTextareaButton('caseMicroDescription')
         showTextareaButton('casePathohistologicalConclusion')

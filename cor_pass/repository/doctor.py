@@ -5,6 +5,8 @@ from fastapi import APIRouter, HTTPException, UploadFile, status
 from sqlalchemy import asc, desc, func, select
 from typing import List, Optional, Tuple, List
 
+import sqlalchemy
+
 
 from cor_pass.database.models import (
     Certificate,
@@ -12,6 +14,7 @@ from cor_pass.database.models import (
     Diploma,
     Doctor,
     DoctorPatientStatus,
+    DoctorSignatureSession,
     Patient,
     PatientClinicStatus,
     PatientClinicStatusModel,
@@ -28,12 +31,15 @@ from cor_pass.repository.person import get_user_by_corid
 from cor_pass.schemas import (
     DoctorCreate,
     DoctorSignatureResponse,
+    DoctorSignatureResponseWithName,
     GetAllPatientsResponce,
     PatientDecryptedResponce,
     PatientResponseForGetPatients,
+    StatusResponse,
 )
 from cor_pass.services.cipher import decrypt_data
 from cor_pass.config.config import settings
+from cor_pass.services.websocket import _is_expired
 
 
 async def create_doctor(
@@ -424,7 +430,7 @@ async def get_patients_with_optional_status(
     response = GetAllPatientsResponce(patients=result, total_count=total_count)
     return response
 
-
+ 
 async def get_doctor_single_patient_with_status(
     patient_cor_id: str,
     db: AsyncSession,
@@ -736,6 +742,44 @@ async def get_doctor_signatures(
     return response_signatures
 
 
+
+async def get_doctor_signature_by_id(
+    db: AsyncSession,
+    signature_id: str,
+    router: APIRouter,
+) -> DoctorSignatureResponseWithName:
+    """
+    Получает одну подпись врача по ID и возвращает вместе с ФИО врача.
+    """
+    result = await db.execute(
+        select(DoctorSignature, Doctor.first_name, Doctor.last_name)
+        .join(Doctor, Doctor.id == DoctorSignature.doctor_id)
+        .where(DoctorSignature.id == signature_id)
+    )
+    record = result.first()
+
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Doctor signature not found",
+        )
+
+    sig, first_name, last_name = record
+
+    return DoctorSignatureResponseWithName(
+        # id=sig.id,
+        doctor_id=sig.doctor_id,
+        # signature_name=sig.signature_name,
+        signature_scan_data=router.url_path_for(
+            "get_signature_attachment", signature_id=sig.id
+        ),
+        signature_scan_type=sig.signature_scan_type,
+        # is_default=sig.is_default,
+        # created_at=sig.created_at,
+        doctor_first_name=first_name,
+        doctor_last_name=last_name,
+    )
+
 async def set_default_doctor_signature(
     db: AsyncSession, doctor_id: str, signature_id: str, router: APIRouter
 ) -> List[DoctorSignatureResponse]:
@@ -795,3 +839,10 @@ async def get_signature_data(
         select(DoctorSignature).where(DoctorSignature.id == signature_id)
     )
     return result.scalar_one_or_none()
+
+
+async def get_pending_signings(db: AsyncSession, diagnosis_id: str)-> Optional[DoctorSignatureSession]:
+    q = sqlalchemy.select(DoctorSignatureSession).where(DoctorSignatureSession.diagnosis_id == diagnosis_id)
+    res = await db.execute(q)
+    singning_record = res.scalars().all()
+    return singning_record

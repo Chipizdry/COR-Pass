@@ -6,11 +6,14 @@ from sqlalchemy import UUID, delete, func, select, update
 from typing import Any, Dict, List, Optional, Tuple
 from math import ceil
 
-from cor_pass.database.models import CerboMeasurement, EnergeticSchedule
+from cor_pass.database.models import CerboMeasurement, EnergeticObject, EnergeticSchedule
 from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.schemas import (
+    EnergeticObjectCreate,
+    EnergeticObjectUpdate,
     EnergeticScheduleBase,
     EnergeticScheduleCreate,
+    EnergeticScheduleCreateForObject,
     FullDeviceMeasurementCreate,
     FullDeviceMeasurementResponse,
     CerboMeasurementResponse
@@ -25,7 +28,6 @@ COLLECTION_INTERVAL_SECONDS = 2
 
 # Конфигурация Modbus
 MODBUS_IP = "91.203.25.12"
-#MODBUS_IP = "192.168.154.111"
 MODBUS_PORT = 502
 BATTERY_ID = 225  # Основная батарея
 INVERTER_ID = 100  # Инвертор
@@ -240,6 +242,59 @@ async def get_device_measurements_paginated(
     return measurements, total_count
 
 
+async def get_device_measurements_by_object_paginated(
+    db: AsyncSession,
+    page: int = 1,
+    page_size: int = 10,
+    energetic_object_id: Optional[str] = None,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+) -> Tuple[List[CerboMeasurement], int]:
+    """
+    Получает записи измерений инвертора с пагинацией и необязательными фильтрами по ID энергетического обьекта .
+
+    Args:
+        db: Асинхронная сессия базы данных.
+        page: Номер текущей страницы (начиная с 1).
+        page_size: Количество записей на странице.
+        energetic_object_id: Фильтр по ID энергетического объекта.
+        start_date: Необязательный фильтр по начальной дате measured_at.
+        end_date: Необязательный фильтр по конечной дате measured_at.
+
+    Returns:
+        Кортеж, содержащий список объектов CerboMeasurement и общее количество записей.
+    """
+
+    query = select(CerboMeasurement)
+    count_query = select(func.count()).select_from(CerboMeasurement)
+
+    if energetic_object_id:
+        query = query.where(CerboMeasurement.energetic_object_id == energetic_object_id)
+        count_query = count_query.where(CerboMeasurement.energetic_object_id == energetic_object_id)
+
+    if start_date:
+        query = query.where(CerboMeasurement.measured_at >= start_date)
+        count_query = count_query.where(CerboMeasurement.measured_at >= start_date)
+
+    if end_date:
+        query = query.where(CerboMeasurement.measured_at <= end_date)
+        count_query = count_query.where(CerboMeasurement.measured_at <= end_date)
+
+    offset = (page - 1) * page_size
+    query = (
+        query.offset(offset)
+        .limit(page_size)
+        .order_by(CerboMeasurement.measured_at.desc())
+    )
+
+    result = await db.execute(query)
+    measurements = result.scalars().all()
+
+    total_count_result = await db.execute(count_query)
+    total_count = total_count_result.scalar_one()
+
+    return measurements, total_count
+
 async def create_schedule(
     db: AsyncSession, schedule_data: EnergeticScheduleCreate
 ) -> EnergeticSchedule:
@@ -270,6 +325,37 @@ async def create_schedule(
     return db_schedule
 
 
+async def create_schedule_with_energetic_object_id(
+    db: AsyncSession, schedule_data: EnergeticScheduleCreateForObject
+) -> EnergeticSchedule:
+    """
+    Создает новое расписание в базе данных под энергетический обьект.
+    """
+    duration_delta = timedelta(
+        hours=schedule_data.duration_hours, minutes=schedule_data.duration_minutes
+    )
+
+    temp_start_datetime = datetime.combine(
+        datetime.min.date(), schedule_data.start_time
+    )
+    calculated_end_time = (temp_start_datetime + duration_delta).time()
+
+    db_schedule = EnergeticSchedule(
+        start_time=schedule_data.start_time,
+        duration=duration_delta,
+        end_time=calculated_end_time,
+        grid_feed_w=schedule_data.grid_feed_w,
+        battery_level_percent=schedule_data.battery_level_percent,
+        charge_battery_value=schedule_data.charge_battery_value,
+        is_manual_mode=schedule_data.is_manual_mode,
+        energetic_object_id=schedule_data.energetic_object_id
+    )
+    db.add(db_schedule)
+    await db.commit()
+    await db.refresh(db_schedule)
+    return db_schedule
+
+
 async def get_schedule_by_id(
     db: AsyncSession, schedule_id: str
 ) -> Optional[EnergeticSchedule]:
@@ -280,6 +366,16 @@ async def get_schedule_by_id(
         select(EnergeticSchedule).where(EnergeticSchedule.id == schedule_id)
     )
     return result.scalars().first()
+
+
+async def get_all_schedules_by_object_id(db: AsyncSession, energetic_object_id: str) -> List[EnergeticSchedule]:
+    """
+    Получает все расписания (активные и неактивные), отсортированные по времени начала по энергетическому обьекту.
+    """
+    result = await db.execute(
+        select(EnergeticSchedule).where(EnergeticSchedule.energetic_object_id == energetic_object_id).order_by(EnergeticSchedule.start_time)
+    )
+    return result.scalars().all()
 
 
 async def get_all_schedules(db: AsyncSession) -> List[EnergeticSchedule]:
@@ -588,6 +684,138 @@ async def get_averaged_measurements_service(
 
     return averaged_results    
 
+'''
+async def get_energy_measurements_service(
+    db: AsyncSession,
+    object_name: Optional[str],
+    start_date: datetime,
+    end_date: datetime,
+    interval_minutes: int = 30
+) -> dict:
+    if not start_date or not end_date:
+        raise ValueError("Необходимо указать start_date и end_date")
+
+    # Округляем начало и конец до ближайшего часа
+    rounded_start = start_date.replace(minute=0, second=0, microsecond=0)
+    rounded_end = end_date.replace(minute=0, second=0, microsecond=0)
+    
+    # Создаем интервалы с округлением до ровных временных отметок
+    current_interval_start = rounded_start
+    intervals = []
+    
+    while current_interval_start < rounded_end:
+        current_interval_end = current_interval_start + timedelta(minutes=interval_minutes)
+        intervals.append({
+            "start": current_interval_start,
+            "end": current_interval_end,
+            "measurements": [],
+            "measurement_count": 0,
+            "has_sufficient_data": False
+        })
+        current_interval_start = current_interval_end
+
+    # Загружаем все измерения
+    query = (
+        select(CerboMeasurement)
+        .where(CerboMeasurement.measured_at >= rounded_start,
+               CerboMeasurement.measured_at <= rounded_end)
+        .order_by(CerboMeasurement.measured_at.asc())
+    )
+    if object_name:
+        query = query.where(CerboMeasurement.object_name == object_name)
+
+    result = await db.execute(query)
+    all_measurements = result.scalars().all()
+
+    # Распределяем измерения по интервалам и считаем количество
+    for measurement in all_measurements:
+        for interval in intervals:
+            if interval["start"] <= measurement.measured_at < interval["end"]:
+                interval["measurements"].append(measurement)
+                interval["measurement_count"] += 1
+                break
+
+    results = []
+    total_solar = 0.0
+    total_load = 0.0
+    total_grid_import = 0.0
+    total_grid_export = 0.0
+    total_battery = 0.0
+
+    # Считаем энергию по каждому интервалу
+    for interval in intervals:
+        measurements = interval["measurements"]
+        
+        # Помечаем интервалы с достаточным количеством данных (≥3 измерений)
+        interval["has_sufficient_data"] = len(measurements) >= 3
+        
+        if len(measurements) < 2:
+            # Возвращаем интервал с нулевыми значениями, но с информацией о недостатке данных
+            results.append({
+                "interval_start": interval["start"],
+                "interval_end": interval["end"],
+                "solar_energy_kwh": 0.0,
+                "load_energy_kwh": 0.0,
+                "grid_energy_kwh": 0.0,
+                "battery_energy_kwh": 0.0,
+                "measurement_count": interval["measurement_count"],
+                "has_sufficient_data": interval["has_sufficient_data"]
+            })
+            continue
+
+        solar_energy = 0.0
+        load_energy = 0.0
+        grid_energy = 0.0
+        battery_energy = 0.0
+
+        for j in range(1, len(measurements)):
+            prev = measurements[j - 1]
+            curr = measurements[j]
+            delta_h = (curr.measured_at - prev.measured_at).total_seconds() / 3600.0
+
+            if prev.solar_total_pv_power is not None:
+                solar_energy += (prev.solar_total_pv_power / 1000.0) * delta_h
+            if prev.inverter_total_ac_output is not None:
+                load_energy += (prev.inverter_total_ac_output / 1000.0) * delta_h
+            if prev.ess_total_input_power is not None:
+                grid_power = (prev.ess_total_input_power / 1000.0) * delta_h
+                grid_energy += grid_power
+                if grid_power >= 0:
+                    total_grid_import += grid_power
+                else:
+                    total_grid_export += abs(grid_power)
+            if prev.general_battery_power is not None:
+                battery_energy += (prev.general_battery_power / 1000.0) * delta_h
+
+        results.append({
+            "interval_start": interval["start"],
+            "interval_end": interval["end"],
+            "solar_energy_kwh": round(solar_energy, 3),
+            "load_energy_kwh": round(load_energy, 3),
+            "grid_energy_kwh": round(grid_energy, 3),
+            "battery_energy_kwh": round(battery_energy, 3),
+            "measurement_count": interval["measurement_count"],
+            "has_sufficient_data": interval["has_sufficient_data"]
+        })
+
+        if interval["has_sufficient_data"]:
+            total_solar += solar_energy
+            total_load += load_energy
+            total_battery += battery_energy
+
+    return {
+        "intervals": results,
+        "totals": {
+            "solar_energy_total": round(total_solar, 0),
+            "load_energy_total": round(total_load, 0),
+            "grid_import_total": round(total_grid_import, 0),
+            "grid_export_total": round(total_grid_export, 0),
+            "battery_energy_total": round(total_battery, 0),
+        }
+    }
+
+
+'''
 
 
 async def get_energy_measurements_service(
@@ -737,148 +965,40 @@ async def get_energy_measurements_service(
     }
 
 
+# CRUD по энергетическим обьектам / инверторам
 
-'''
+async def create_energetic_object(db: AsyncSession, obj_data: EnergeticObjectCreate) -> EnergeticObject:
+    db_obj = EnergeticObject(**obj_data.model_dump())
+    db.add(db_obj)
+    await db.commit()
+    await db.refresh(db_obj)
+    return db_obj
 
+async def get_energetic_object(db: AsyncSession, object_id: str) -> EnergeticObject | None:
+    result = await db.execute(select(EnergeticObject).where(EnergeticObject.id == object_id))
+    return result.scalars().first()
 
-async def get_energy_measurements_service(
+async def get_all_energetic_objects(db: AsyncSession) -> list[EnergeticObject]:
+    result = await db.execute(select(EnergeticObject))
+    return result.scalars().all()
+
+async def update_energetic_object(
     db: AsyncSession,
-    object_name: Optional[str],
-    start_date: datetime,
-    end_date: datetime,
-    interval_minutes: int = 30
-) -> dict:
-    if not start_date or not end_date:
-        raise ValueError("Необходимо указать start_date и end_date")
+    object_id: str,
+    obj_data: EnergeticObjectUpdate
+) -> EnergeticObject | None:
+    db_obj = await get_energetic_object(db, object_id)
+    if not db_obj:
+        return None
+    update_data = obj_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(db_obj, field, value)
 
-    # Округляем: начало вниз до часа, конец вверх до следующего часа
-    rounded_start = start_date.replace(minute=0, second=0, microsecond=0)
-    if end_date.minute == 0 and end_date.second == 0 and end_date.microsecond == 0:
-        rounded_end = end_date
-    else:
-        rounded_end = (end_date.replace(minute=0, second=0, microsecond=0)
-                       + timedelta(hours=1))
+    await db.commit()
+    await db.refresh(db_obj)
+    return db_obj
 
-    # Создаем интервалы
-    current_interval_start = rounded_start
-    intervals = []
-    while current_interval_start < rounded_end:
-        current_interval_end = current_interval_start + timedelta(minutes=interval_minutes)
-        intervals.append({
-            "start": current_interval_start,
-            "end": current_interval_end,
-            "measurements": [],
-            "measurement_count": 0,
-            "has_sufficient_data": False
-        })
-        current_interval_start = current_interval_end
-
-    # Загружаем все измерения
-    query = (
-        select(CerboMeasurement)
-        .where(CerboMeasurement.measured_at >= rounded_start,
-               CerboMeasurement.measured_at <= rounded_end)
-        .order_by(CerboMeasurement.measured_at.asc())
-    )
-    if object_name:
-        query = query.where(CerboMeasurement.object_name == object_name)
-
-    result = await db.execute(query)
-    all_measurements = result.scalars().all()
-
-    # Распределяем измерения по интервалам
-    for measurement in all_measurements:
-        for interval in intervals:
-            if interval["start"] <= measurement.measured_at < interval["end"]:
-                interval["measurements"].append(measurement)
-                interval["measurement_count"] += 1
-                break
-
-    # Подсчёт энергии внутри интервалов (в Вт⋅ч, переводим в кВт⋅ч в конце)
-    results = []
-    for interval in intervals:
-        measurements = interval["measurements"]
-        interval["has_sufficient_data"] = len(measurements) >= 3
-
-        if len(measurements) < 2:
-            results.append({
-                "interval_start": interval["start"],
-                "interval_end": interval["end"],
-                "solar_energy_kwh": 0.0,
-                "load_energy_kwh": 0.0,
-                "grid_energy_kwh": 0.0,
-                "battery_energy_kwh": 0.0,
-                "measurement_count": interval["measurement_count"],
-                "has_sufficient_data": interval["has_sufficient_data"]
-            })
-            continue
-
-        solar_energy_wh = 0.0
-        load_energy_wh = 0.0
-        grid_energy_wh = 0.0
-        battery_energy_wh = 0.0
-
-        for j in range(1, len(measurements)):
-            prev = measurements[j - 1]
-            curr = measurements[j]
-            delta_h = (curr.measured_at - prev.measured_at).total_seconds() / 3600.0
-
-            if prev.solar_total_pv_power is not None:
-                solar_energy_wh += prev.solar_total_pv_power * delta_h
-            if prev.inverter_total_ac_output is not None:
-                load_energy_wh += prev.inverter_total_ac_output * delta_h
-            if prev.ess_total_input_power is not None:
-                grid_energy_wh += prev.ess_total_input_power * delta_h
-            if prev.general_battery_power is not None:
-                battery_energy_wh += prev.general_battery_power * delta_h
-
-        results.append({
-            "interval_start": interval["start"],
-            "interval_end": interval["end"],
-            "solar_energy_kwh": round(solar_energy_wh / 1000.0, 3),
-            "load_energy_kwh": round(load_energy_wh / 1000.0, 3),
-            "grid_energy_kwh": round(grid_energy_wh / 1000.0, 3),
-            "battery_energy_kwh": round(battery_energy_wh / 1000.0, 3),
-            "measurement_count": interval["measurement_count"],
-            "has_sufficient_data": interval["has_sufficient_data"]
-        })
-
-    # Точные totals
-    total_solar_wh = 0.0
-    total_load_wh = 0.0
-    total_grid_import_wh = 0.0
-    total_grid_export_wh = 0.0
-    total_battery_wh = 0.0
-
-    for j in range(1, len(all_measurements)):
-        prev = all_measurements[j - 1]
-        curr = all_measurements[j]
-        delta_h = (curr.measured_at - prev.measured_at).total_seconds() / 3600.0
-        if delta_h <= 0:
-            continue
-
-        if prev.solar_total_pv_power is not None:
-            total_solar_wh += prev.solar_total_pv_power * delta_h
-        if prev.inverter_total_ac_output is not None:
-            total_load_wh += prev.inverter_total_ac_output * delta_h
-        if prev.ess_total_input_power is not None:
-            grid_q = prev.ess_total_input_power * delta_h
-            if grid_q >= 0:
-                total_grid_import_wh += grid_q
-            else:
-                total_grid_export_wh += abs(grid_q)
-        if prev.general_battery_power is not None:
-            total_battery_wh += prev.general_battery_power * delta_h
-
-    return {
-        "intervals": results,
-        "totals": {
-            "solar_energy_total": round(total_solar_wh / 1000.0, 3),
-            "load_energy_total": round(total_load_wh / 1000.0, 3),
-            "grid_import_total": round(total_grid_import_wh / 1000.0, 3),
-            "grid_export_total": round(total_grid_export_wh / 1000.0, 3),
-            "battery_energy_total": round(total_battery_wh / 1000.0, 3),
-        }
-    }
-
-    '''
+async def delete_energetic_object(db: AsyncSession, object_id: str) -> bool:
+    result = await db.execute(delete(EnergeticObject).where(EnergeticObject.id == object_id))
+    await db.commit()
+    return result.rowcount > 0

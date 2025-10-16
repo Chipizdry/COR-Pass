@@ -9,7 +9,7 @@ from fastapi import UploadFile
 
 from cor_pass.config.config import settings
 from loguru import logger
-from cor_pass.schemas import FeedbackProposalsScheema, FeedbackRatingScheema
+from cor_pass.schemas import FeedbackProposalsScheema, FeedbackRatingScheema, SupportReportScheema
 from cor_pass.services.qr_code import generate_qr_code
 from cor_pass.services.recovery_file import generate_recovery_file
 
@@ -199,3 +199,33 @@ async def send_proposal_email(
     
 
     await fm.send_message(message, template_name="proposal.html") 
+
+
+
+async def send_report_email(
+    report: SupportReportScheema,
+    user_cor_id: str,
+    user_email: EmailStr,
+):
+    """
+    Отправляет email с сообщением о проблеме, используя FastMail library.
+    """
+    
+    template_body = {
+        "product_name": report.product_name,
+        "report_text": report.report_text,
+        "user_cor_id": user_cor_id,
+        "user_email": user_email,
+    }
+    
+    message = MessageSchema(
+        subject="Обнаружена проблема",
+        recipients=["support@cor-int.com"], 
+        template_body=template_body,
+        subtype=MessageType.html, 
+    )
+    
+    fm = FastMail(conf)
+    
+
+    await fm.send_message(message, template_name="report.html") 

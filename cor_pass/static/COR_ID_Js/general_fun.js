@@ -70,11 +70,29 @@ const modalStates = {};
 function closeModal(modalId) {
     console.log(`Закрытие модального окна: ${modalId}`);
     const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = 'none';
-    } else {
+    if (!modal) {
         console.error(`Модальное окно с id "${modalId}" не найдено.`);
+        return;
     }
+    modal.style.display = 'none';
+    const container = modal.closest('.modalCustom');
+    if (container) container.classList.remove('open');
+}
+
+function setupModalCloseByButton() {
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-action="close"]');
+        if (!btn) return;
+
+        const modalRoot = btn.closest('.modal, .sessionsModal');
+
+        if (modalRoot && modalRoot.id) {
+            closeModal(modalRoot.id);
+        } else {
+            const container = btn.closest('.modalCustom');
+            if (container) container.classList.remove('open');
+        }
+    });
 }
 
 
@@ -315,8 +333,10 @@ function updateEyeIcon(eyeIcon, isPasswordHidden) {
     eyeIcon.appendChild(svgIcon);
 }
 // Автоматическая инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', initAllModals);
-
+document.addEventListener('DOMContentLoaded', function () {
+    initAllModals();
+    setupModalCloseByButton();
+});
 
 // Функция для проверки истечения срока действия токена
 function isTokenExpired(token) {

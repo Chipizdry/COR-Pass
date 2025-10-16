@@ -1,4 +1,4 @@
-import asyncio
+
 from datetime import datetime, timedelta, timezone
 import uuid
 from fastapi import (
@@ -11,18 +11,18 @@ from fastapi import (
     Query,
     UploadFile,
     WebSocket,
+    WebSocketDisconnect,
     status,
 )
 
 from fastapi.responses import StreamingResponse
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 
 from cor_pass.database.db import get_db
 from cor_pass.database.models import (
     DoctorSignatureSession,
-    Grossing_status,
+    OphthalmologicalPrescription,
     PatientClinicStatus,
     PatientStatus,
     User,
@@ -35,6 +35,7 @@ from cor_pass.repository.doctor import (
     get_doctor_signatures,
     get_doctor_single_patient_without_doctor_status,
     get_patients_with_optional_status,
+    get_pending_signings,
     get_signature_data,
     set_default_doctor_signature,
     upload_certificate_service,
@@ -48,21 +49,22 @@ from cor_pass.repository.patient import (
     create_patient_linked_to_user,
     create_standalone_patient,
     find_patient,
+    get_patient_by_session_id,
+    get_patient_info_for_signing,
     get_single_patient_by_corid
 
 )
 from cor_pass.schemas import (
     ActionRequest,
     CaseCloseResponse,
-    CaseCreate,
     CaseFinalReportPageResponse,
     CaseIDReportPageResponse,
     ExistingPatientRegistration,
     GetAllPatientsResponce,
-    InitiateSignatureRequest,
     InitiateSignatureResponse,
     PatientCreationResponse,
     PatientFinalReportPageResponse,
+    PatientResponseForSigning,
     PatientTestReportPageResponse,
     ReportAndDiagnosisUpdateSchema,
     ReportResponseSchema,
@@ -392,8 +394,12 @@ async def add_existing_patient_to_doctor(
             status_code=status.HTTP_404_NOT_FOUND, detail="Doctor not found"
         )
     user = await repository_person.get_user_by_corid(cor_id=patient_data.cor_id, db=db)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
     new_patient_data = ExistingPatientRegistration(
-        email=user.email,
+        email=user.email if user else None,
         birth_date=user.birth,
         sex=user.user_sex,
     )
@@ -828,7 +834,7 @@ async def handle_report_and_diagnosis(
 #     return response
 
 
-# Подписать заключение в2
+# Подписать заключение в2, с инициацией сессии подписания 
 @router.post(
     "/diagnosis/{diagnosis_entry_id}/report/sign",
     response_model=InitiateSignatureResponse,
@@ -846,6 +852,7 @@ async def add_signature_to_report_route(
     session_token = uuid.uuid4().hex
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=SESSION_TTL_MINUTES)
     doctor = await get_doctor(doctor_id=user.cor_id, db=db)
+    signing = True
     sess = DoctorSignatureSession(
         session_token=session_token,
         doctor_cor_id=doctor.doctor_id,
@@ -858,12 +865,13 @@ async def add_signature_to_report_route(
     await db.commit()
 
     await case_service.change_case_status_after_signing(db=db, diagnosis_entry_id=diagnosis_entry_id)
-    deep_link = f"{DEEP_LINK_SCHEME}?session_token={session_token}"
+    deep_link = f"{DEEP_LINK_SCHEME}?email={user.email}&sessionToken={session_token}&signing={signing}"
 
     return InitiateSignatureResponse(
         session_token=session_token,
         deep_link=deep_link,
         expires_at=expires_at,
+        status="pending"
     )
 
 
@@ -918,7 +926,7 @@ async def get_patient_final_report_full_page_data_route(
         case_id=case_id,
     )
 
-
+ 
 @router.get(
     "/cases/{case_id}/final-report",
     response_model=CaseFinalReportPageResponse,
@@ -1091,7 +1099,7 @@ async def get_current_cases_final_report_full_page_data_route(
     Этот маршрут возвращает список всех кейсов пациента и данные для формирования финального заключения по последнему кейсу
     """
     doctor = await get_doctor(doctor_id=user.cor_id, db=db)
-    return await case_service.get_current_cases_final_report_page_data(
+    response =  await case_service.get_current_cases_final_report_page_data(
         db=db,
         router=router,
         skip=skip,
@@ -1099,6 +1107,8 @@ async def get_current_cases_final_report_full_page_data_route(
         current_doctor_id=doctor.doctor_id,
         case_id=case_id,
     )
+    
+    return response
 
 
 # Закрытие кейса
@@ -1187,39 +1197,12 @@ async def unified_search(
     raise HTTPException(status_code=404, detail="Patient or Case not found.")
 
 
-# Заявка на подпись
-@router.post("/signing/initiate", response_model=InitiateSignatureResponse)
-async def initiate_signature(body: InitiateSignatureRequest, db: AsyncSession = Depends(get_db), current_user: User = Depends(auth_service.get_current_user)):
-    """
-    1) Создаёт сессию подписи (pending, 15 минут)
-    2) Возвращает токен и диплинк для генерации QR на фронте
-    """
-    session_token = uuid.uuid4().hex
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=SESSION_TTL_MINUTES)
-    doctor = await get_doctor(doctor_id=current_user.cor_id, db=db)
-    sess = DoctorSignatureSession(
-        session_token=session_token,
-        doctor_cor_id=doctor.doctor_id,
-        diagnosis_id=body.diagnosis_id,
-        status="pending",
-        expires_at=expires_at,
-    )
-    db.add(sess)
-    await db.commit()
-
-    deep_link = f"{DEEP_LINK_SCHEME}?session_token={session_token}"
-
-    return InitiateSignatureResponse(
-        session_token=session_token,
-        deep_link=deep_link,
-        expires_at=expires_at,
-    )
 
 
-@router.post("/signing/confirm")
+@router.post("/signing/confirm", tags=["DoctorSigning"])
 async def approve_signature(body: ActionRequest, db: AsyncSession = Depends(get_db), current_user: User = Depends(auth_service.get_current_user)):
     """
-    Вызывается мобильным приложением после диплинка, когда доктор подтверждает.
+    Вызывается мобильным приложением после диплинка для поодтверждения подписания.
     """
     doctor = await get_doctor(doctor_id=current_user.cor_id, db=db)
     sess = await _load_session(db, body.session_token)
@@ -1237,17 +1220,31 @@ async def approve_signature(body: ActionRequest, db: AsyncSession = Depends(get_
         await db.commit()
         await _broadcast_status(sess.session_token, "expired")
         raise HTTPException(status_code=410, detail="Session expired")
+    
     if body.status == SessionLoginStatus.approved.value.lower():
         sess.status = "approved"
         await db.commit()
-        response = await case_service.add_diagnosis_signature(
-        db=db,
-        diagnosis_entry_id=sess.diagnosis_id,
-        doctor_id=doctor.doctor_id,
-        doctor_signature_id=sess.doctor_signature_id,
-        router=router,
-    )
-        await _broadcast_status(sess.session_token, "approved")
+        # Если это офтальмологический рецепт
+        if sess.ophthalmological_prescription_id:
+            prescription = await db.get(OphthalmologicalPrescription, sess.ophthalmological_prescription_id)
+            if prescription:
+                prescription.doctor_signature_id = sess.doctor_signature_id
+                prescription.signed_at = datetime.now(timezone.utc)
+                await db.commit()
+                await _broadcast_status(sess.session_token, "approved")
+
+        # Если это диагноз (старый сценарий)
+        elif sess.diagnosis_id:
+            response = await case_service.add_diagnosis_signature(
+                db=db,
+                diagnosis_entry_id=sess.diagnosis_id,
+                doctor_id=doctor.doctor_id,
+                doctor_signature_id=sess.doctor_signature_id,
+                router=router,
+            )
+            await case_service.auto_close_case_service(db=db, diagnosis_entry_id=sess.diagnosis_id, current_doctor=doctor.doctor_id)
+            await _broadcast_status(sess.session_token, "approved")
+
         return {"status": "approved"}
     else:
         sess.status = "rejected"
@@ -1256,7 +1253,9 @@ async def approve_signature(body: ActionRequest, db: AsyncSession = Depends(get_
         return {"status": "rejected"}
 
 
-@router.get("/signing/status/{session_token}", response_model=StatusResponse)
+@router.get("/signing/status/{session_token}", 
+            response_model=StatusResponse,
+            tags=["DoctorSigning"])
 async def get_status(session_token: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(auth_service.get_current_user)):
     """
     Для fallback-поллинга, если WS недоступен.
@@ -1273,22 +1272,60 @@ async def get_status(session_token: str, db: AsyncSession = Depends(get_db), cur
         status = "expired"
     return StatusResponse(session_token=session_token, status=status, expires_at=sess.expires_at)
 
+@router.get("/signing/status_by_diagnosis/{diagnosis_id}", 
+            response_model=StatusResponse,
+            tags=["DoctorSigning"])
+async def get_status_by_diagnosis_id(diagnosis_id: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(auth_service.get_current_user)):
+    """
+    Проверка пендинг сессий
+    """
+    sesssions = await get_pending_signings(db=db, diagnosis_id=diagnosis_id)
+    doctor = await get_doctor(doctor_id=current_user.cor_id, db=db)
+    if not sesssions:
+        raise HTTPException(status_code=404, detail="Session not found")
+    for sess in sesssions:
+        if not sess.doctor_cor_id == doctor.doctor_id:
+            raise HTTPException(status_code=400, detail="Invalid doctor id")
+        status = sess.status
+        if status == "pending" and not _is_expired(sess):
+            return StatusResponse(session_token=sess.session_token, status=status, expires_at=sess.expires_at)
+        else:
+            raise HTTPException(status_code=404, detail="Pending session not found")
 
-@router.websocket("/ws/signing/{session_token}")
-async def signature_ws(websocket: WebSocket, session_token: str):
-    """
-    Браузер открывает WS на время ожидания подписи.
-    Мы шлём события broadcast'ом, включая session_token в payload.
-    Фронт фильтрует по своему токену.
-    """
+@router.websocket("/ws/signing")
+async def websocket_signing(websocket: WebSocket):
+    """WebSocket для подписчиков канала подписи."""
     connection_id = await websocket_events_manager.connect(websocket)
     try:
-        # Можно периодически пинговать или просто ждать закрытия
         while True:
-            # Ничего не ждём от клиента — просто держим соединение живым
-            await asyncio.sleep(60)
-    except Exception:
-        # клиент сам закрыл вкладку/соединение
-        pass
-    finally:
+            await websocket.receive_text()  
+    except WebSocketDisconnect:
         await websocket_events_manager.disconnect(connection_id)
+    except Exception as e:
+        logger.error(f"Error in ws/signing for {connection_id}: {e}")
+        await websocket_events_manager.disconnect(connection_id)
+
+
+@router.get(
+    "/signing/patient_info",
+    response_model=PatientResponseForSigning,
+    dependencies=[Depends(doctor_access)],
+    status_code=status.HTTP_200_OK,
+    tags=["DoctorSigning"],
+)
+async def get_patient_info_for_cor_id_signing(
+    session_token: str,
+    user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db),
+)-> PatientResponseForSigning:
+    """
+    Возвращаем информацию по пациенту для подтверждения подписи
+    """
+    doctor = await get_doctor(doctor_id=user.cor_id, db=db)
+    sess = await _load_session(db, session_token)
+    if sess.doctor_cor_id != doctor.doctor_id:
+        raise HTTPException(status_code=400, detail="Invalid doctor id")
+    else:
+        patient_cor_id = await get_patient_by_session_id(db=db, diagnosis_entry_id=sess.diagnosis_id)
+        response = await get_patient_info_for_signing(db=db, patient_cor_id=patient_cor_id)
+        return response
