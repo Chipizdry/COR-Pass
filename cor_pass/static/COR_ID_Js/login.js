@@ -73,7 +73,7 @@ document.getElementById('send-recovery-btn').addEventListener('click', async fun
                             const accessToken = result.access_token;
 
                             localStorage.setItem('access_token', result.access_token);
-                          //  localStorage.setItem('refresh_token', result.refresh_token);
+                            localStorage.setItem('refresh_token', result.refresh_token);
                             const url = `/static/COR_ID/mainscreen.html`;
 
                             window.location.href = url;

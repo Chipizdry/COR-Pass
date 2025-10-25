@@ -10,7 +10,7 @@
     <title>User Records</title>
     <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/styles.css">
     <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/modal.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script> --> 
   
 </head>
 <body>
@@ -541,6 +541,7 @@
 
 <script src="/static/COR_ID_Js/translation.js"></script>  
 <script src="/static/COR_ID_Js/general_fun.js"></script>   
+<script src="/static/COR_ID_Js/QrCode.min.js"></script> 
 
     <script>
          const accessToken =getToken();
@@ -622,7 +623,7 @@
         }
         async function fetchCorId() {
             const accessToken =getToken();
-            if (!accessToken) {
+            if (!checkToken()) {
                 console.error("Токен доступа не найден.");
                 document.getElementById('userCorId').textContent = "Ошибка: токен не найден.";
                 return;

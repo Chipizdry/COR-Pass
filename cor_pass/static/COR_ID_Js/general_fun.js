@@ -1,4 +1,6 @@
 
+
+
 const modalConfigs = {
     columnSelectModal: { width: '250px', height:  'auto', top: '300px', left: '200px' },
     corIdModal: { width: '300px', height:  'auto', top: '300px', left: '250px' },
@@ -485,10 +487,10 @@ function getTokenFromURL() {
 
 
 // Функция для проверки истечения токена + проверка ответа сервера
-function checkToken() {
-    const token = getToken(); // Получаем токен из URL
+async function checkToken() {
+    let token = getToken();
+   
     if (!token) {
-        console.warn("Authorization token is missing.");
         showTokenExpiredModal();
         return false;
     }
@@ -496,37 +498,26 @@ function checkToken() {
     const decodedToken = decodeToken(token);
     calculateTokenLifetime(decodedToken);
     if (!decodedToken) {
-        console.error("Failed to decode token.");
         showTokenExpiredModal();
         return false;
     }
 
     if (isTokenExpired(token)) {
-        console.warn("Token has expired.");
-        showTokenExpiredModal();
-        return false;
+        try {
+            const newToken = await refreshAccessToken(); // Ждём обновления
+            if (!newToken) {
+                showTokenExpiredModal();
+                return false;
+            }
+            localStorage.setItem('access_token', newToken);
+            token = newToken;
+        } catch (error) {
+            console.error("Failed to refresh token:", error);
+            showTokenExpiredModal();
+            return false;
+        }
     }
 
-    // Проверяем, авторизован ли пользователь на сервере
-    /*
-    fetch("/api/auth/verify", {
-        method: "GET",
-        headers: {
-            "Authorization": `Bearer ${token}`
-        }
-    })
-    .then(response => {
-        if (response.status === 401) {
-            console.warn("Server responded with 401 Unauthorized.");
-            showTokenExpiredModal();
-        }
-    })
-    .catch(error => {
-        console.error("Auth check failed:", error);
-
-         showTokenExpiredModal();
-    });
-*/
     return true;
 }
 
@@ -544,6 +535,7 @@ function setupTokenCheckOnActions() {
     });
 }
 
+/*
 // Функция для активации перехватчика fetch
 function enableFetchInterceptor() {
     const originalFetch = window.fetch;
@@ -590,7 +582,7 @@ function enableFetchInterceptor() {
         return response;
     };
 }
-
+*/
 
 function goBack(url) {
     // Проверяем токен
@@ -1011,5 +1003,47 @@ async function deleteAccount() {
             console.error(error);
             alert('Произошла ошибка при удалении аккаунта.');
         }
+    }
+}
+
+
+
+async function refreshAccessToken() {
+    const refreshToken = localStorage.getItem('refresh_token');
+    const deviceId = localStorage.getItem('device_id');
+
+    if (!refreshToken || !deviceId) {
+        console.warn("Нет refresh токена или device_id — требуется повторный вход.");
+        showTokenExpiredModal();
+        return;
+    }
+
+    try {
+        const response = await fetch("/api/auth/refresh_token", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${refreshToken}`,
+                "X-Device-Type": "Desktop",
+                "X-App-Id": "Desktop",
+                "X-Device-Id": deviceId
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log("Токен обновлён:", data);
+
+            // Обновляем токены в localStorage
+            localStorage.setItem('access_token', data.access_token);
+            localStorage.setItem('refresh_token', data.refresh_token);
+
+            return data.access_token; // вернём новый токен
+        } else {
+            console.error("Не удалось обновить токен, статус:", response.status);
+            showTokenExpiredModal();
+        }
+    } catch (error) {
+        console.error("Ошибка при обновлении токена:", error);
+        showTokenExpiredModal();
     }
 }

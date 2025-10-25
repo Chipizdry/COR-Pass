@@ -285,7 +285,7 @@ registrationButton.addEventListener('click', () => {
 
     xhr.onreadystatechange = function () {
         if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 201) {
+            if (xhr.status === 200) {
                 const response = JSON.parse(xhr.responseText);
                 console.log('Регистрация прошла успешно.');
                 messageDiv.innerText = translations[userLang]['registrationSuccess'];
