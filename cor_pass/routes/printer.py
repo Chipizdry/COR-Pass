@@ -1,3 +1,8 @@
+
+
+
+
+
 import socket
 import asyncio
 import platform
@@ -107,6 +112,62 @@ class EthernetPrinter(EthernetPrinter):  # расширяем существую
 
         return self.send(cmd.encode("utf-8"))
 
+    
+    def print_custom_label(
+        self,
+        text: str,
+        qr_data: str = None,
+        label_width_mm: int = 80,
+        label_height_mm: int = 40,
+        text_x: int = 50,
+        text_y: int = 50,
+        font: str = "3",  # 1..8 — стандартные шрифты TSPL
+        text_scale_x: int = 1,
+        text_scale_y: int = 1,
+        qr_x: int = 300,
+        qr_y: int = 50,
+        qr_unit_size: int = 5,  # размер QR (1–10)
+        draw_frame: bool = False,
+        frame_margin: int = 10,
+        copies: int = 1,
+    ) -> bool:
+        """
+        Печатает этикетку с настраиваемыми элементами в TSPL.
+        """
+
+        # Начало команды
+        cmd = [
+            f"SIZE {label_width_mm} mm,{label_height_mm} mm",
+            "CLS"  # очистить буфер
+        ]
+
+        # Рамка (если включена)
+        if draw_frame:
+            w = label_width_mm * 8  # 1 мм ≈ 8 точек
+            h = label_height_mm * 8
+            f = frame_margin
+            cmd += [
+                f"BOX {f},{f},{w - f},{h - f},2"  # рамка толщиной 2 точки
+            ]
+
+        # Добавляем текст
+        cmd += [
+            f"TEXT {text_x},{text_y},\"{font}\",0,{text_scale_x},{text_scale_y},\"{text}\""
+        ]
+
+        # QR-код (если указан)
+        if qr_data:
+            cmd += [
+                f"QRCODE {qr_x},{qr_y},L,{qr_unit_size},A,0,\"{qr_data}\""
+            ]
+
+        # Завершение
+        cmd.append(f"PRINT {copies}")
+
+        tspl_command = "\r\n".join(cmd) + "\r\n"
+
+        return self.send(tspl_command.encode("utf-8"))
+    
 
 
 def _tcp_connect(ip, port=9100, timeout=1.5):
@@ -397,6 +458,29 @@ def print_code(req: CodePrintRequest):
         "printer_ip": req.printer_ip,
     }
 
+
+
+@router.post("/print_custom")
+def print_custom_label(
+    ip: str = Query(..., description="IP принтера"),
+    text: str = Query("Пример этикетки"),
+    qr_data: str = Query("https://example.com"),
+):
+    printer = EthernetPrinter(ip)
+    success = printer.print_custom_label(
+        text=text,
+        qr_data=qr_data,
+        draw_frame=True,
+        qr_x=400,
+        qr_y=60,
+        qr_unit_size=6,
+        text_x=60,
+        text_y=20,
+        text_scale_x=2,
+        text_scale_y=2,
+        copies=1
+    )
+    return {"success": success}
 # =======================================
 # 2) Существующие HTTP-принтеры (порт 8080)
 # =======================================
@@ -453,3 +537,5 @@ async def ping_printer(ip: str = Query(..., description="IP-адрес прин�
     except Exception as e:
         logger.error(f"[ping_printer] Ошибка выполнения ping: {e}")
         return {"reachable": False}
+    
+

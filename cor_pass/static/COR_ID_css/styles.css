@@ -650,7 +650,7 @@ select#deviceType:checked {
 .otp-container {
     display: none;
     justify-content: center;
-    gap: 5px;
+    gap: 3px;
     margin: 10px 0;
     width: 200px;
 }
@@ -665,7 +665,7 @@ select#deviceType:checked {
     background-color: #ffffff;
     outline: none;
     transition: border-color 0.3s ease-in-out;
-    max-width: 29px; /* Ограничиваем ширину */
+    max-width: 32px;
 }
 
 .otp-input:focus {
