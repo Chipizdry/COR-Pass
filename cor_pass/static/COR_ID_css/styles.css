@@ -9,23 +9,23 @@ body, html {
     align-items: center;
     font-family: Arial, sans-serif;
     background-image:url('/static/background.jpg');
-    background-size: cover; /* Масштабирует изображение, чтобы оно покрывало весь экран */
-    background-position: center; /* Центрирует изображение */
+    background-size: cover;
+    background-position: center;
     background-repeat: no-repeat;
     background-attachment: fixed;
 }
 
 .container {
-    width: 220px; /* Установите фиксированную ширину контейнера */
+    width: 212px;
     margin: 0 auto;
     padding: 20px;
     border: 1px solid #ccc;
     border-radius: 30px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    background-color: rgba(255, 255, 255, 0.5); /* Белый фон с 70% непрозрачности */
+    background-color: rgba(255, 255, 255, 0.5);
     text-align: center;
     align-items: center;
-    display: flex; /* Включаем Flexbox */
+    display: flex;
     flex-direction: column; /* Элементы располагаются вертикально */
     justify-content: center; /* Выравнивание элементов по центру по вертикали */
 }

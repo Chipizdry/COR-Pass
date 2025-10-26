@@ -285,13 +285,11 @@ registrationButton.addEventListener('click', () => {
 
     xhr.onreadystatechange = function () {
         if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
+            if ((xhr.status === 201)||(xhr.status === 200)) {
                 const response = JSON.parse(xhr.responseText);
                 console.log('Регистрация прошла успешно.');
                 messageDiv.innerText = translations[userLang]['registrationSuccess'];
                 messageDiv.style.color = 'green';
-
-                // ЗАМЕНА: используем класс hidden вместо style.display
                 registrationButton.classList.add('hidden');
                 loginButton.classList.remove('hidden');
                 
@@ -377,10 +375,6 @@ const interval = setInterval(function() {
     }
 }, 1000);
 }
-
-
-
-
 
 
 </script>

@@ -163,18 +163,25 @@
                         batteryAnimV.setAttribute('to', '0,0');
                         batteryAnimH.setAttribute('from', '0,0');
                         batteryAnimH.setAttribute('to', '40,0');
+                        document.getElementById('batteryLineV').style.display = '';
+                        document.getElementById('batteryLineH').style.display = '';
                     } else if (clampedPower > 0) {
                         // Заряд - поток вверх по вертикали и вправо по горизонтали
                         batteryAnimV.setAttribute('from', '0,0');
                         batteryAnimV.setAttribute('to', '0,40');
                         batteryAnimH.setAttribute('from', '40,0');
                         batteryAnimH.setAttribute('to', '0,0');
+                        document.getElementById('batteryLineV').style.display = '';
+                        document.getElementById('batteryLineH').style.display = '';
                     } else {
                         // Нет потока - останавливаем анимацию
                         batteryAnimV.setAttribute('from', '0,0');
                         batteryAnimV.setAttribute('to', '0,0');
                         batteryAnimH.setAttribute('from', '0,0');
                         batteryAnimH.setAttribute('to', '0,0');
+                        document.getElementById('batteryLineV').style.display = 'none';
+                        document.getElementById('batteryLineH').style.display = 'none';
+                        
                     }
                 }
             }
@@ -224,16 +231,15 @@
                         // Есть нагрузка - поток слева направо
                         loadAnim.setAttribute('from', '0,0');
                         loadAnim.setAttribute('to', '40,0');
-                        
+                        document.getElementById('loadFlowLine').style.display = '';
                         // Показываем линию
                         loadLine.style.display = '';
                     } else {
                         // Нет нагрузки - останавливаем анимацию
                         loadAnim.setAttribute('from', '0,0');
                         loadAnim.setAttribute('to', '0,0');
+                        document.getElementById('loadFlowLine').style.display = 'none';
                         
-                        // Можно раскомментировать, если нужно скрывать линию при отсутствии нагрузки
-                        // loadLine.style.display = 'none';
                     }
                 }
             }
@@ -293,11 +299,9 @@
                         solarAnimV.setAttribute('from', '0,0');
                         solarAnimV.setAttribute('to', '0,0');
                         solarAnimH.setAttribute('from', '0,0');
-                        solarAnimH.setAttribute('to', '0,0');
-                        
-                        // Можно раскомментировать, если нужно скрывать линии при отсутствии генерации
-                         document.getElementById('solarLineV').style.display = 'none';
-                         document.getElementById('solarLineH').style.display = 'none';
+                        solarAnimH.setAttribute('to', '0,0'); 
+                        document.getElementById('solarLineV').style.display = 'none';
+                        document.getElementById('solarLineH').style.display = 'none';
                     }
                 }
             }
@@ -357,14 +361,17 @@
                         // Отдача в сеть - поток справа налево
                         flowAnim.setAttribute('from', '40,0');
                         flowAnim.setAttribute('to', '0,0');
+                        document.getElementById('networkFlowLine').style.display = '';
                     } else if (clampedPower > 0) {
                         // Потребление из сети - поток слева направо
                         flowAnim.setAttribute('from', '0,0');
                         flowAnim.setAttribute('to', '40,0');
+                        document.getElementById('networkFlowLine').style.display = '';
                     } else {
                         // Нет потока - останавливаем анимацию
                         flowAnim.setAttribute('from', '0,0');
                         flowAnim.setAttribute('to', '0,0');
+                        document.getElementById('networkFlowLine').style.display = 'none';
                     }
                 }
             

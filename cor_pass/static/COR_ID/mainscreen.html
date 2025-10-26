@@ -662,7 +662,7 @@
             }
         }
 
-
+/*
         
         document.addEventListener('DOMContentLoaded', function() {
             const accessToken =getToken();
@@ -726,6 +726,87 @@
     console.error("Токен не найден.");
 }
 });
+
+*/
+
+document.addEventListener('DOMContentLoaded', function () {
+    const accessToken = getToken();
+    checkToken();
+    fetchCorId();
+    initModalControls('sessionsModal');
+    initAllModals();
+    makeModalDraggable('sessionsModal');
+    enableFetchInterceptor();
+    setupTokenCheckOnActions();
+
+    const adminButtonContainer = document.getElementById('admin-button-container');
+    const corErpButton = document.getElementById('COR-ERP');
+    const energyManagerButton = document.getElementById('EnergyManagerButton');
+    const doctorButton = document.getElementById('Doctor');
+
+    // Сначала скрываем все кнопки по умолчанию
+    corErpButton.classList.add('hidden');
+    energyManagerButton.classList.add('hidden');
+    doctorButton.classList.add('hidden');
+    adminButtonContainer.innerHTML = '';
+
+    if (!accessToken) {
+        console.warn("Токен не найден. По умолчанию — только медицинский раздел.");
+        doctorButton.classList.remove('hidden'); // дефолт — только медицина
+        return;
+    }
+
+    try {
+        const decodedToken = decodeToken(accessToken);
+        console.log("Decoded token:", decodedToken);
+
+        // Если roles нет или пусто — дефолт (только медицина)
+        if (!decodedToken.roles || decodedToken.roles.length === 0) {
+            doctorButton.classList.remove('hidden');
+            return;
+        }
+
+        // Обрабатываем каждую роль
+        decodedToken.roles.forEach(role => {
+            switch (role) {
+                case 'admin':
+                    // Добавляем кнопку Администрирование
+                    const adminButton = document.createElement('button');
+                    adminButton.innerText = 'Администрирование';
+                    adminButton.onclick = () => {
+                        window.location.href = `/static/COR_ID/admin.html`;
+                    };
+                    adminButtonContainer.appendChild(adminButton);
+                    break;
+
+                case 'cor-int':
+                    corErpButton.classList.remove('hidden');
+                    break;
+
+                case 'energy_manager':
+                    energyManagerButton.classList.remove('hidden');
+                    break;
+
+                case 'doctor':
+                    doctorButton.classList.remove('hidden');
+                    break;
+
+                default:
+                    console.log(`Неизвестная роль: ${role}. Применяется дефолт — только медицина.`);
+                    doctorButton.classList.remove('hidden');
+                    break;
+            }
+        });
+    } catch (error) {
+        console.error("Ошибка при расшифровке токена:", error);
+        // Если токен не расшифровался — дефолт
+        doctorButton.classList.remove('hidden');
+    }
+});
+
+
+
+
         const sessionsButton = document.getElementById("Sessions"); // Кнопка "Сессии"
         const modal = document.getElementById("sessionsModal"); // Модальное окно
 

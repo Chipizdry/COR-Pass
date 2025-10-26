@@ -107,7 +107,7 @@
         </div>
     <!-- Модальное окно для восстановления доступа -->
 
-<form id="recovery-form" onsubmit="return false;">    
+
     <div id="recovery_modal" class="modal" style="display:none;">
             <div class="modal-header">          
                 <div class="modal-buttons">
@@ -123,10 +123,13 @@
             <input type="email" id="email-recovery" name="username" required>
 
             <!-- Поле для ввода супер-пароля -->
+
+          <form id="recovery-form" onsubmit="return false;">    
             <div id="super-password-field" style="display:none;">
                 <label for="super-password" data-translate="recovery-modal-super-password-label">Супер-пароль:</label>
                 <input type="password" id="super-password" name="super-password" autocomplete="off">
             </div>
+          </form>  
             <!-- Поле для прикрепления файла восстановления  -->
             <div id="file-upload-field" style="display:none;width: 180px;border-radius: 5px; border: 1px solid #ccc; padding: 10px;">
                 <label for="recovery-file" data-translate="recovery-modal-recovery-file-label">Файл восстановления:</label>
@@ -137,7 +140,7 @@
             <button id="send-recovery-btn" data-translate="recovery-modal-send-btn">Отправить</button>
         </div>
     </div>
-</form>
+
 
 
 <script>
