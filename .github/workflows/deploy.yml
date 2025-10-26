@@ -1,5 +1,3 @@
-
-
 # .github/workflows/deploy.yml
 name: Deploy
 
@@ -13,27 +11,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    # 1️⃣ Клонируем репозиторий с полной историей
     - uses: actions/checkout@v3
       with:
-       fetch-depth: 0
-    # Получаем количество коммитов
+        fetch-depth: 0  # важно для корректного подсчёта коммитов
+
+    # 2️⃣ Получаем номер сборки (количество коммитов в main)
     - name: Get build number
       id: build
-      run: echo "BUILD_NUMBER=$(git rev-list --count HEAD)" >> $GITHUB_ENV
+      run: |
+        BUILD_NUMBER=$(git rev-list --count HEAD)
+        echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+        echo "Build number: $BUILD_NUMBER"
 
-    # Формируем версию
+    # 3️⃣ Формируем версию (например 0.1.<build_number>) и записываем в version.py
     - name: Set version
       id: version
       run: |
         VERSION="0.1.${BUILD_NUMBER}"
         echo "VERSION=${VERSION}" >> $GITHUB_ENV
         echo "__version__='${VERSION}'" > cor_pass/version.py
+        echo "Version file content:"
+        cat cor_pass/version.py
 
-    # Устанавливаем зависимости и билдим проект
+    # 4️⃣ Устанавливаем зависимости
     - name: Install dependencies
       run: pip install -r requirements.txt
 
+    # 5️⃣ Деплой (можно добавить свои команды)
     - name: Deploy
       run: |
-       
         echo "Deploying version $VERSION"
+        # сюда добавьте команду деплоя, например:
+        # ssh user@server "cd /app && git pull && systemctl restart app"
