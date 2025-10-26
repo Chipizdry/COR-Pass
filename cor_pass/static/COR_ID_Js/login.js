@@ -155,6 +155,7 @@ async function loadVersion() {
       const response = await fetch("/version");
       const data = await response.json();
       console.log("Версия сборки:", data.version);
+      localStorage.setItem("Версия сборки:", data.version);
       document.getElementById("app-version").innerText = data.version;
     } catch (err) {
       console.error("Ошибка при получении версии:", err);
