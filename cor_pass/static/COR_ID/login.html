@@ -262,8 +262,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const xhr = new XMLHttpRequest();
             xhr.open("POST", "/api/auth/login");
             xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+       
             xhr.setRequestHeader("X-Device-Type", "Desktop");
             xhr.setRequestHeader("X-App-Id", "Desktop");
+          
 
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === XMLHttpRequest.DONE) {

@@ -535,7 +535,7 @@ function setupTokenCheckOnActions() {
     });
 }
 
-/*
+
 // Функция для активации перехватчика fetch
 function enableFetchInterceptor() {
     const originalFetch = window.fetch;
@@ -582,7 +582,7 @@ function enableFetchInterceptor() {
         return response;
     };
 }
-*/
+
 
 function goBack(url) {
     // Проверяем токен
