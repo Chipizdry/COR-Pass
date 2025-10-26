@@ -662,72 +662,7 @@
             }
         }
 
-/*
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            const accessToken =getToken();
-          checkToken();
-          fetchCorId();
-          initModalControls('sessionsModal');
-          initAllModals();
-          makeModalDraggable('sessionsModal');
-          enableFetchInterceptor();
-          setupTokenCheckOnActions();
 
-        if (accessToken) {
-    try {
-        // Расшифровываем токен
-        const decodedToken = decodeToken(accessToken);
-        console.log("Decoded token:", decodedToken);
-
-        // Проверяем наличие роли admin
-        const isAdmin = decodedToken && Array.isArray(decodedToken.roles) && decodedToken.roles.includes('admin');
-        const adminButtonContainer = document.getElementById('admin-button-container');
-        adminButtonContainer.innerHTML = '';
-        if (isAdmin) {
-            const adminButton = document.createElement('button');
-            adminButton.innerText = 'Администрирование';
-            adminButton.onclick = function() {
-                window.location.href = `/static/COR_ID/admin.html`;
-            };
-            adminButtonContainer.appendChild(adminButton);
-        }
-
-        // Проверяем наличие роли cor-int для кнопки COR-ERP
-        const isCorInt = decodedToken && Array.isArray(decodedToken.roles) && decodedToken.roles.includes('cor-int');
-        const corErpButton = document.getElementById('COR-ERP');
-        if (isCorInt) {
-                corErpButton.classList.remove('hidden'); 
-            } else {
-                corErpButton.classList.add('hidden');   
-            }
-
-           // Проверяем наличие роли Energy_manager для кнопки COR-Energy
-        const isEnergyManager = decodedToken && Array.isArray(decodedToken.roles) && decodedToken.roles.includes('energy_manager');
-        const EnergyManagerButton = document.getElementById('EnergyManagerButton');
-        if (isEnergyManager) {
-            EnergyManagerButton.classList.remove('hidden'); 
-            } else {
-            EnergyManagerButton.classList.add('hidden');   
-            }    
-
-        // Проверяем наличие роли doctor для кнопки Мой кабинет
-        const isDoctor = decodedToken && Array.isArray(decodedToken.roles) && decodedToken.roles.includes('doctor');
-        const DoctorButton = document.getElementById('Doctor');
-        if (isDoctor) {
-                DoctorButton.classList.remove('hidden'); 
-            } else {
-                DoctorButton.classList.add('hidden');   
-            }   
-    } catch (error) {
-        console.error("Ошибка при расшифровке токена:", error);
-    }
-} else {
-    console.error("Токен не найден.");
-}
-});
-
-*/
 
 document.addEventListener('DOMContentLoaded', function () {
     const accessToken = getToken();
