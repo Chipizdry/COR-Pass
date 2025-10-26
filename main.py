@@ -21,6 +21,7 @@ from cor_pass.repository.cerbo_service import (
     close_modbus_client,
     create_modbus_client,
 )
+from cor_pass.version import __version__
 from cor_pass.routes import auth, person
 from cor_pass.database.db import get_db, async_session_maker
 from cor_pass.database.redis_db import redis_client
@@ -194,6 +195,10 @@ def read_root(request: Request):
     with REQUEST_LATENCY.time():
         return FileResponse("cor_pass/static/COR_ID/login.html")
 
+
+@app.get("/version")
+async def get_version():
+    return {"version": __version__}
 
 @app.get("/api/healthchecker")
 async def healthchecker(db: AsyncSession = Depends(get_db)):

@@ -150,4 +150,18 @@ function getDeviceId() {
 }
 
 
+async function loadVersion() {
+    try {
+      const response = await fetch("/version");
+      const data = await response.json();
+      console.log("Версия сборки:", data.version);
+      document.getElementById("app-version").innerText = data.version;
+    } catch (err) {
+      console.error("Ошибка при получении версии:", err);
+      document.getElementById("app-version").innerText = "Не удалось получить версию";
+    }
+  }
+
+  loadVersion();
+
 });

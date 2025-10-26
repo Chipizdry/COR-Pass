@@ -1,0 +1,38 @@
+
+
+# .github/workflows/deploy.yml
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    # Получаем количество коммитов
+    - name: Get build number
+      id: build
+      run: echo "BUILD_NUMBER=$(git rev-list --count HEAD)" >> $GITHUB_ENV
+
+    # Формируем версию
+    - name: Set version
+      id: version
+      run: |
+        VERSION="0.1.${BUILD_NUMBER}"
+        echo "VERSION=${VERSION}" >> $GITHUB_ENV
+        echo "__version__='${VERSION}'" > cor_pass/version.py
+
+    # Устанавливаем зависимости и билдим проект
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
+    - name: Deploy
+      run: |
+       
+        echo "Deploying version $VERSION"
