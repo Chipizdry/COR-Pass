@@ -138,6 +138,7 @@ document.getElementById('send-recovery-btn').addEventListener('click', async fun
 
 
 
+
 // Генерация уникального идентификатора устройства (если его нет)
 function getDeviceId() {
     let deviceId = localStorage.getItem("device_id");
