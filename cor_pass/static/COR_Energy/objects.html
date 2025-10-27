@@ -1,3 +1,282 @@
 
 
 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Energetic Object CRUD</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .status-active {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .status-inactive {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .status-unknown {
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .error {
+            color: #dc3545;
+            text-align: center;
+            padding: 20px;
+            background-color: #f8d7da;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .btn-edit {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-view {
+            background-color: #17a2b8;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Energetic Object CRUD</h1>
+        <div id="loading" class="loading">Загрузка данных...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        <div id="table-container" style="display: none;">
+            <table id="objects-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Название</th>
+                        <th>Описание</th>
+                        <th>Modbus регистры</th>
+                        <th>Статус</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Данные будут загружены через JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Основная функция для загрузки и отображения данных
+        async function loadObjects() {
+            const loadingElement = document.getElementById('loading');
+            const errorElement = document.getElementById('error');
+            const tableContainer = document.getElementById('table-container');
+            const tableBody = document.getElementById('table-body');
+            
+            try {
+                // Показываем индикатор загрузки
+                loadingElement.style.display = 'block';
+                errorElement.style.display = 'none';
+                tableContainer.style.display = 'none';
+                
+                // Выполняем запрос к API
+                const response = await fetch('http://127.0.0.1:8000/api/modbus/', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const objects = await response.json();
+                
+                // Скрываем индикатор загрузки
+                loadingElement.style.display = 'none';
+                
+                // Если данные получены, создаем таблицу
+                if (objects && objects.length > 0) {
+                    renderTable(objects);
+                    tableContainer.style.display = 'block';
+                } else {
+                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Нет данных для отображения</td></tr>';
+                    tableContainer.style.display = 'block';
+                }
+                
+            } catch (error) {
+                // Обработка ошибок
+                loadingElement.style.display = 'none';
+                errorElement.style.display = 'block';
+                errorElement.textContent = `Ошибка при загрузке данных: ${error.message}`;
+                console.error('Error loading objects:', error);
+            }
+        }
+        
+        // Функция для отрисовки таблицы
+        function renderTable(objects) {
+            const tableBody = document.getElementById('table-body');
+            
+            // Очищаем существующие данные
+            tableBody.innerHTML = '';
+            
+            // Создаем строки для каждого объекта
+            objects.forEach(obj => {
+                const row = document.createElement('tr');
+                
+                // Определяем статус активности
+                let statusClass = 'status-unknown';
+                let statusText = 'Неизвестно';
+                
+                if (obj.is_active === true) {
+                    statusClass = 'status-active';
+                    statusText = 'Активен';
+                } else if (obj.is_active === false) {
+                    statusClass = 'status-inactive';
+                    statusText = 'Неактивен';
+                }
+                
+                // Форматируем Modbus регистры
+                const modbusRegisters = obj.modbus_registers 
+                    ? JSON.stringify(obj.modbus_registers)
+                    : 'Нет данных';
+                
+                // Создаем ячейки таблицы
+                row.innerHTML = `
+                    <td>${obj.id}</td>
+                    <td>${obj.name || 'Не указано'}</td>
+                    <td>${obj.description || 'Не указано'}</td>
+                    <td title="${modbusRegisters}">${modbusRegisters.length > 50 ? modbusRegisters.substring(0, 50) + '...' : modbusRegisters}</td>
+                    <td class="${statusClass}">${statusText}</td>
+                    <td class="actions">
+                        <button class="btn btn-view" onclick="viewObject('${obj.id}')">Просмотр</button>
+                        <button class="btn btn-edit" onclick="editObject('${obj.id}')">Редактировать</button>
+                        <button class="btn btn-delete" onclick="deleteObject('${obj.id}')">Удалить</button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Функции для действий (заглушки)
+        function viewObject(id) {
+            alert(`Просмотр объекта с ID: ${id}`);
+            // Здесь можно реализовать переход на страницу просмотра
+        }
+        
+        function editObject(id) {
+            alert(`Редактирование объекта с ID: ${id}`);
+            // Здесь можно реализовать переход на страницу редактирования
+        }
+        
+        function deleteObject(id) {
+            if (confirm('Вы уверены, что хотите удалить этот объект?')) {
+                alert(`Удаление объекта с ID: ${id}`);
+                // Здесь можно реализовать запрос DELETE к API
+            }
+        }
+        
+        // Функция для обновления данных (можно вызвать из консоли или по кнопке)
+        function refreshData() {
+            loadObjects();
+        }
+        
+        // Загружаем данные при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            loadObjects();
+            
+            // Добавляем кнопку обновления (опционально)
+            const refreshButton = document.createElement('button');
+            refreshButton.textContent = 'Обновить данные';
+            refreshButton.style.marginBottom = '20px';
+            refreshButton.style.padding = '10px 15px';
+            refreshButton.style.backgroundColor = '#007bff';
+            refreshButton.style.color = 'white';
+            refreshButton.style.border = 'none';
+            refreshButton.style.borderRadius = '4px';
+            refreshButton.style.cursor = 'pointer';
+            refreshButton.onclick = refreshData;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(refreshButton, container.querySelector('h1').nextSibling);
+        });
+        
+        // Обработка ошибок загрузки страницы
+        window.addEventListener('error', function(e) {
+            console.error('Page error:', e.error);
+        });
+    </script>
+</body>
+</html>
