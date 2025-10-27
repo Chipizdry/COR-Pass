@@ -2339,7 +2339,7 @@ class EnergeticObjectBase(BaseModel):
     name: str
     description: Optional[str] = None
     modbus_registers: Optional[dict] = None
-    is_active: bool
+    is_active: Optional[bool] = None
 
 class EnergeticObjectCreate(EnergeticObjectBase):
     pass
