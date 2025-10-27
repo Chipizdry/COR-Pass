@@ -1,0 +1,84 @@
+.specificMedItem{
+    padding: 12px;
+    cursor: pointer;
+    color: #5B4296;
+    font-size: 18px;
+    font-weight: 400;
+    border: 2px solid #f5f3fb;
+}
+
+.specificMedItem.active{
+    border: 2px solid #7527B2;
+}
+
+.personalInfoBlock{
+    padding: 12px;
+    position: relative;
+}
+
+.personalInfoBlock:before{
+    content: "";
+    display: block;
+    position: absolute;
+    bottom: -1px;
+    height: 1px;
+    border-radius: 23px;
+    background: linear-gradient(90deg, rgba(171, 119, 235, 0.00) 0%, rgba(171, 119, 235, 0.50) 50.27%, rgba(171, 119, 235, 0.00) 100%);
+    width: 100%;
+}
+
+.personalInfoBlock:last-child:before{
+    display: none;
+}
+
+.personalInfoBlockKey{
+    color: #B1A1DA;
+    margin-bottom: 6px;
+}
+.personalInfoBlockValue{
+    color: #5B4296;
+    line-height: 20px;
+}
+
+.centralItem{
+    white-space: nowrap;
+    width: calc(100% / 7);
+    padding: 12px;
+    min-width: 140px;
+    color:#B1A1DA;
+    font-size: 18px;
+    font-weight: 400;
+    border-right: 1px solid #eeecf8;
+    height: 60px;
+    display: flex;
+    align-items: center;
+}
+.centralItem p{
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+.centralItem.active{
+    background: #FFF;
+    color: #291161;
+    font-size: 18px;
+    font-weight: 800;
+}
+.middle{
+    width: calc(100%  - 230px - 255px) !important;
+    min-width: 640px;
+}
+.middle .top{
+    background: #f5f3fb;
+    border-bottom: 1px solid #eeecf8;
+    height: auto !important;
+    padding: 0 !important;
+}
+.bottom{
+    width: 100%;
+}
+.right{
+    width: 230px;
+    min-width: 230px;
+    overflow: auto;
+}

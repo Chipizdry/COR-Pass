@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Optional
 import enum
 import uuid
 from sqlalchemy import (
@@ -18,7 +19,9 @@ from sqlalchemy import (
     func,
     Boolean,
     LargeBinary,
+    DateTime,
 )
+
 from sqlalchemy.orm import declarative_base, relationship, Mapped
 from sqlalchemy.sql.sqltypes import DateTime
 from cor_pass.database.db import engine
@@ -178,6 +181,14 @@ class Grossing_status(enum.Enum):
     IN_SIGNING_STATUS = "IN_SIGNING_STATUS"
 
 
+
+class MedicineIntakeStatus(enum.Enum):
+    PLANNED = "planned"  # Запланированный прием
+    COMPLETED = "completed"  # Прием выполнен
+    SKIPPED = "skipped"  # Пропущен
+    DELAYED = "delayed"  # Отложен
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -260,6 +271,12 @@ class User(Base):
 )
     medicine_schedules = relationship(
         "MedicineSchedule", back_populates="user", cascade="all, delete-orphan"
+    )
+    prescription_files = relationship(
+    "PrescriptionFile", back_populates="user", cascade="all, delete-orphan"
+)
+    medicine_intakes = relationship(
+        "MedicineIntake", back_populates="user", cascade="all, delete-orphan"
     )
 
     # Индексы
@@ -1175,8 +1192,8 @@ class Medicine(Base):
     concentration = Column(Float, nullable=True) # для мазей и растворов
     volume = Column(Float, nullable=True)        # для растворов
 
-    created_at = Column(DateTime, nullable=False, default=func.now())
-    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
 
     created_by = Column(String(100), nullable=False)
 
@@ -1189,7 +1206,43 @@ class Medicine(Base):
     )
 
 
-    __table_args__ = (Index("idx_medicines_name", "name"),)
+class MedicineIntake(Base):
+    """Модель для отслеживания истории приема медикаментов"""
+    __tablename__ = "medicine_intakes"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    schedule_id = Column(String(36), ForeignKey("medicine_schedules.id", ondelete="CASCADE"), nullable=False)
+    user_cor_id = Column(String(36), ForeignKey("users.cor_id", ondelete="CASCADE"), nullable=False)
+    
+    # Запланированная дата и время приема
+    planned_datetime = Column(DateTime(timezone=True), nullable=False)
+    # Фактическая дата и время приема (если был выполнен)
+    actual_datetime = Column(DateTime(timezone=True), nullable=True)
+    # Статус приема (запланирован/выполнен/пропущен/отложен)
+    status = Column(Enum(MedicineIntakeStatus), nullable=False, default=MedicineIntakeStatus.PLANNED)
+    # Комментарий (например, причина пропуска/переноса)
+    notes = Column(Text, nullable=True)
+
+    @property
+    def medicine_name(self) -> str:
+        """Название лекарства"""
+        return self.schedule.medicine.name if self.schedule and self.schedule.medicine else None
+
+    @property
+    def medicine_dosage(self) -> Optional[float]:
+        """Дозировка лекарства"""
+        return self.schedule.medicine.dosage if self.schedule and self.schedule.medicine else None
+
+    @property
+    def medicine_unit(self) -> Optional[str]:
+        """Единица измерения дозировки"""
+        return self.schedule.medicine.unit if self.schedule and self.schedule.medicine else None
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+
+    schedule = relationship("MedicineSchedule", back_populates="intakes")
+    user = relationship("User", back_populates="medicine_intakes")
 
     @property
     def method_data(self):
@@ -1236,7 +1289,7 @@ class FirstAidKitItem(Base):
     quantity = Column(Integer, default=1, nullable=False)
     expiration_date = Column(Date, nullable=True)
 
-    created_at = Column(DateTime, nullable=False, default=func.now())
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
 
 
     first_aid_kit = relationship("FirstAidKit", back_populates="medicines")
@@ -1268,8 +1321,11 @@ class MedicineSchedule(Base):
     symptomatically = Column(Boolean, nullable=True)
     notes = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, nullable=False, default=func.now())
-    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+    # Связь с фактами приема
+    intakes = relationship("MedicineIntake", back_populates="schedule", cascade="all, delete-orphan")
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
 
 
     medicine = relationship("Medicine", back_populates="schedules")
@@ -1326,6 +1382,38 @@ class OphthalmologicalPrescription(Base):
             self.expires_at = self.issue_date + timedelta(days=30 * self.term_months)
         else:
             self.expires_at = self.issue_date + timedelta(days=90)
+
+
+class PrescriptionFile(Base):
+    __tablename__ = "prescription_files"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_cor_id = Column(String(36), ForeignKey("users.cor_id", ondelete="CASCADE"), nullable=False)
+
+    file_name = Column(String(255), nullable=False)
+    file_type = Column(String(50), nullable=False)  # MIME-type
+    file_size_kb = Column(Float, nullable=False)
+    issue_date = Column(DateTime(timezone=True), nullable=True)
+    uploaded_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
+
+    file_data = Column(LargeBinary, nullable=False)
+
+    user = relationship("User", back_populates="prescription_files")
+
+
+class MedicalLaboratory(Base):
+    __tablename__ = "medical_laboratories"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    lab_name = Column(String(255), nullable=True)
+    lab_email = Column(String(255), nullable=True)
+    lab_phone_number = Column(String(255), nullable=True)
+    lab_website = Column(String(255), nullable=True)
+    lab_address = Column(String(255), nullable=True)
+
+    lab_logo_type = Column(String(50), nullable=True)  # MIME-type
+    uploaded_at = Column(DateTime(timezone=True), nullable=True, default=func.now())
+    lab_logo_data = Column(LargeBinary, nullable=True)
 
 
 

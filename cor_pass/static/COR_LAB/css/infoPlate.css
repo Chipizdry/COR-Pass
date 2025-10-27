@@ -1,0 +1,46 @@
+.infoPlate{
+    width: 40px;
+    height: 33px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 2px;
+    border: 1px solid #EFECF8;
+    background: #FFF;
+    color: #5B4296;
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+.infoPlate.qr{
+    border: 1px solid #EFECF8;
+}
+.infoPlate.cassette{
+    border: 1px solid  #B6B2C0;
+    padding-bottom: 9px;
+    position: relative;
+}
+.infoPlate.cassette:before{
+    content: "";
+    position: absolute;
+    display: block;
+    bottom: 9px;
+    width: 100%;
+    left: 0;
+    background: #B6B2C0;
+    height: 1px;
+}
+.infoPlate.glass{
+    border: 1px solid #88C6FF;
+    padding-bottom: 9px;
+    position: relative;
+}
+.infoPlate.glass:before{
+    content: "";
+    position: absolute;
+    display: block;
+    bottom: 0;
+    width: 100%;
+    left: 0;
+    background: #88C6FF;
+    height: 9px;
+}

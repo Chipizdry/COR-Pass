@@ -37,6 +37,7 @@ from cor_pass.routes import (
     doctor,
     websocket,
     device_ws,
+    device_proxy,
     cases,
     samples,
     cassettes,
@@ -56,7 +57,10 @@ from cor_pass.routes import (
     medicines,
     first_aid_kits,
     support,
-    ophthalmological_prescriptions
+    ophthalmological_prescriptions,
+    prescriptions,
+    laboratories,
+    medicine_intakes
 )
 from cor_pass.config.config import settings
 from cor_pass.services.ip2_location import initialize_ip2location
@@ -296,6 +300,7 @@ app.include_router(cassettes.router, prefix="/api")
 app.include_router(glasses.router, prefix="/api")
 app.include_router(websocket.router, prefix="/api")
 app.include_router(device_ws.router, prefix="/api")
+app.include_router(device_proxy.router, prefix="/api")
 app.include_router(dicom_router.router, prefix="/api")
 app.include_router(svs_router.router, prefix="/api")
 app.include_router(printing_device.router, prefix="/api")
@@ -312,6 +317,9 @@ app.include_router(medicines.router, prefix="/api")
 app.include_router(first_aid_kits.router, prefix="/api")
 app.include_router(support.router, prefix="/api")
 app.include_router(ophthalmological_prescriptions.router, prefix="/api")
+app.include_router(prescriptions.router, prefix="/api")
+app.include_router(laboratories.router, prefix="/api")
+app.include_router(medicine_intakes.router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run(

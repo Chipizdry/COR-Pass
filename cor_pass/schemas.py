@@ -18,6 +18,7 @@ from cor_pass.database.models import (
     PatientClinicStatus,
     PatientStatus,
     Status,
+    MedicineIntakeStatus,
     Doctor_Status,
     MacroArchive,
     DecalcificationType,
@@ -2501,7 +2502,77 @@ class MedicineScheduleCreate(MedicineScheduleBase):
 class MedicineScheduleUpdate(MedicineScheduleBase):
     pass
 
+class MedicineScheduleResponse(BaseModel):
+    id: str
+    start_date: date
+    duration_days: Optional[int] 
+    times_per_day: Optional[int]
+    intake_times: Optional[List[time]] 
+    interval_minutes: Optional[int] 
+    symptomatically: Optional[bool] 
+    notes: Optional[str] 
 
+    class Config:
+        from_attributes = True
+
+
+# Схемы для истории приема лекарств
+class MedicineIntakeBase(BaseModel):
+    """Базовая схема приема медикамента"""
+    planned_datetime: datetime = Field(..., description="Запланированное время приема")
+    status: MedicineIntakeStatus = Field(
+        default=MedicineIntakeStatus.PLANNED,
+        description="Статус приема (запланирован/выполнен/пропущен/отложен)"
+    )
+    notes: Optional[str] = Field(None, description="Комментарий к приему")
+
+class MedicineIntakeCreate(MedicineIntakeBase):
+    """Схема для создания записи о приеме"""
+    schedule_id: str = Field(..., description="ID расписания")
+    user_cor_id: str = Field(..., description="ID пользователя")
+
+class MedicineIntakeUpdate(BaseModel):
+    """Схема для обновления записи о приеме"""
+    status: MedicineIntakeStatus = Field(..., description="Новый статус приема")
+    actual_datetime: Optional[datetime] = Field(None, description="Фактическое время приема")
+    notes: Optional[str] = Field(None, description="Комментарий к приему")
+
+class MedicineIntakeResponse(BaseModel):
+    """Схема для ответа с информацией о приеме"""
+    id: str
+    schedule_id: str
+    user_cor_id: str
+    planned_datetime: datetime
+    actual_datetime: Optional[datetime] = None
+    status: MedicineIntakeStatus
+    notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    name: str = Field(alias='medicine_name', description="Название лекарства")
+    dosage: Optional[float] = Field(alias='medicine_dosage', description="Дозировка лекарства")
+    unit: Optional[str] = Field(alias='medicine_unit', description="Единица измерения дозировки")
+    # name: str
+    # medicine_dosage: Optional[float] = None
+    # medicine_unit: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PaginatedMedicineIntakeResponse(BaseModel):
+    """Схема для пагинированного списка приемов лекарств"""
+    items: List[MedicineIntakeResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+class MedicineScheduleWithIntakes(MedicineScheduleResponse):
+    intakes: List[MedicineIntakeResponse] = []
+
+    class Config:
+        from_attributes = True
 
 
 class MedicineScheduleRead(MedicineScheduleBase):
@@ -2519,7 +2590,7 @@ class MedicineRead(MedicineBase):
     id: str
     created_at: datetime
     updated_at: datetime
-    schedules: Optional[List[MedicineScheduleBase]] = []
+    schedules: Optional[List[MedicineScheduleResponse]] = []
 
     class Config:
         orm_mode = True
@@ -2669,4 +2740,60 @@ class OphthalmologicalPrescriptionReadWithSigning(BaseModel):
 
 class WSMessageBase(BaseModel):
     session_token: str
-    data: Dict[str, Any]
+    data: str = Field(..., description="HEX команда в виде строки, например: '090300000000ac485'")
+    
+    @field_validator("data")
+    @classmethod
+    def validate_hex_string(cls, v: str) -> str:
+        # Удаляем пробелы, если они есть
+        v = v.replace(" ", "")
+        # Проверяем, что строка содержит только hex символы
+        if not all(c in "0123456789ABCDEFabcdef" for c in v):
+            raise ValueError("Строка должна содержать только HEX символы")
+        # Проверяем длину (должна быть четной)
+        if len(v) % 2 != 0:
+            raise ValueError("Длина HEX строки должна быть четной")
+        return v
+
+    def get_bytes(self) -> bytes:
+        """Преобразует HEX строку в bytes"""
+        return bytes.fromhex(self.data)
+
+
+class PrescriptionFileBase(BaseModel):
+    file_name: str = Field(..., description="Название файла рецепта")
+    file_type: str = Field(..., description="Тип файла (image/jpeg, image/png, application/pdf)")
+    file_size_kb: float = Field(..., description="Размер файла в килобайтах")
+    issue_date: Optional[datetime] = Field(None, description="Дата выписки рецепта")
+
+class PrescriptionFileRead(PrescriptionFileBase):
+    id: str
+    uploaded_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class LaboratoryBase(BaseModel):
+    lab_name: Optional[str] = Field(None, description="Название лаборатории")
+    lab_email: Optional[EmailStr] = Field(None, description="Email лаборатории")
+    lab_phone_number: Optional[str] = Field(None, description="Телефон лаборатории")
+    lab_website: Optional[str] = Field(None, description="Сайт лаборатории")
+    lab_address: Optional[str] = Field(None, description="Адрес лаборатории")
+
+
+class LaboratoryCreate(LaboratoryBase):
+    pass
+
+
+class LaboratoryUpdate(LaboratoryBase):
+    pass
+
+
+class LaboratoryRead(LaboratoryBase):
+    id: str
+    uploaded_at: Optional[datetime] = None
+    lab_logo_type: Optional[str] = None
+
+    class Config:
+        orm_mode = True

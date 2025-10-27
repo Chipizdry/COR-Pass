@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="./css/reset.css">
+    <link rel="stylesheet" href="./css/general.css">
+    <link rel="stylesheet" href="./css/infoPlate.css">
+    <link rel="stylesheet" href="./css/comments.css">
+    <link rel="stylesheet" href="./css/header.css">
+    <link rel="stylesheet" href="./css/glass.css">
+    <link rel="stylesheet" href="./css/tenderloin.css">
+    <link rel="stylesheet" href="../COR_ID_css/modal.css">
+</head>
+<body>
+
+<div class="glassPageWrapper df fdc">
+    <div class="header-container">
+        <div class="header-row top">
+            <div class="role-container" style="margin-right: 20px">
+                <a href="/static/COR_ID/mainscreen.html" class="role-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1 11.6067L11.1031 2.86212C11.2208 2.74732 11.3607 2.65625 11.5146 2.59411C11.6685 2.53198 11.8334 2.5 12 2.5C12.1666 2.5 12.3315 2.53198 12.4854 2.59411C12.6393 2.65625 12.7792 2.74732 12.8969 2.86212L23 11.6067M3.53846 9.40792V20.2633C3.53846 20.946 4.10708 21.5 4.80769 21.5H9.46154V16.1411C9.46154 15.4585 10.0302 14.9045 10.7308 14.9045H13.2692C13.9698 14.9045 14.5385 15.4585 14.5385 16.1411V21.5H19.1923C19.8929 21.5 20.4615 20.946 20.4615 20.2633V9.40792" stroke="#7527B2" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+            </div>
+            <div class="search-container">
+                <input type="text" placeholder="Search">
+                <svg class="search-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M11.2 5.60001C8.10722 5.60001 5.60001 8.10722 5.60001 11.2C5.60001 14.2928 8.10722 16.8001 11.2 16.8001C12.7087 16.8001 14.0781 16.2035 15.085 15.2333C15.1061 15.2058 15.1292 15.1794 15.1544 15.1543C15.1795 15.1291 15.2059 15.106 15.2334 15.0849C16.2035 14.078 16.8 12.7087 16.8 11.2C16.8 8.10722 14.2928 5.60001 11.2 5.60001ZM16.8256 15.6942C17.8109 14.4624 18.4001 12.9 18.4001 11.2C18.4001 7.22357 15.1765 4 11.2 4C7.22356 4 4 7.22357 4 11.2C4 15.1765 7.22356 18.4001 11.2 18.4001C12.9001 18.4001 14.4625 17.8109 15.6942 16.8255L18.6344 19.7657C18.9468 20.0781 19.4533 20.0781 19.7658 19.7657C20.0782 19.4533 20.0782 18.9467 19.7658 18.6343L16.8256 15.6942Z" fill="#B1A1DA"/>
+                </svg>
+            </div>
+            <div class="role-container">
+                <button class="role-icon" id="goToCases" aria-label="User roles">
+                    <svg class="icon-group" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14.2666 11.1279C16.1699 11.128 17.7128 12.6709 17.7129 14.5742V20.4512C17.7127 20.8636 17.3783 21.1982 16.9658 21.1982H7.03418C6.62172 21.1982 6.28734 20.8636 6.28711 20.4512V14.5742C6.28721 12.6709 7.83002 11.1279 9.7334 11.1279H14.2666ZM5.53516 13.1729C5.38681 13.6154 5.28731 14.0804 5.28711 14.5723H3.44629C2.31795 14.5724 1.40039 15.4908 1.40039 16.6191V19.7979H5.28711V20.4502C5.28711 20.7184 5.35253 20.97 5.46094 21.1973H0.74707C0.334473 21.1973 0 20.8628 0 20.4502V16.6191C0 14.7158 1.54293 13.173 3.44629 13.1729H5.53516ZM20.5537 13.1729C22.457 13.173 24 14.7158 24 16.6191V20.4502C24 20.8628 23.6655 21.1972 23.2529 21.1973H18.5391C18.6475 20.97 18.7129 20.7183 18.7129 20.4502V19.7979H22.5996V16.6191C22.5996 15.4908 21.682 14.5724 20.5537 14.5723H18.7129C18.7127 14.0804 18.6132 13.6154 18.4648 13.1729H20.5537ZM9.7334 12.5283C8.60504 12.5283 7.68662 13.4459 7.68652 14.5742V19.7979H16.3125V14.5742C16.3124 13.4459 15.3949 12.5284 14.2666 12.5283H9.7334ZM4.55273 6.53711C6.13959 6.53711 7.42568 7.82339 7.42578 9.41016C7.42578 10.9971 6.13965 12.2832 4.55273 12.2832C2.96597 12.2831 1.67969 10.997 1.67969 9.41016C1.67979 7.82345 2.96603 6.53721 4.55273 6.53711ZM19.4473 6.53711C21.0339 6.53724 22.3202 7.82347 22.3203 9.41016C22.3203 10.997 21.034 12.2831 19.4473 12.2832C17.8604 12.2832 16.5742 10.9971 16.5742 9.41016C16.5743 7.82339 17.8605 6.53711 19.4473 6.53711ZM4.55273 7.9375C3.74056 7.9376 3.08018 8.59798 3.08008 9.41016C3.08008 10.2225 3.7405 10.8837 4.55273 10.8838C5.36511 10.8838 6.02637 10.2225 6.02637 9.41016C6.02627 8.59792 5.36505 7.9375 4.55273 7.9375ZM19.4473 7.9375C18.6349 7.9375 17.9737 8.59792 17.9736 9.41016C17.9736 10.2225 18.6349 10.8838 19.4473 10.8838C20.2595 10.8837 20.9199 10.2225 20.9199 9.41016C20.9198 8.598 20.2594 7.93763 19.4473 7.9375ZM12 2.80273C13.991 2.80283 15.6053 4.41628 15.6055 6.40723C15.6055 8.39832 13.9911 10.0126 12 10.0127C10.0089 10.0127 8.39453 8.39838 8.39453 6.40723C8.3947 4.41622 10.009 2.80273 12 2.80273ZM12 4.20215C10.7841 4.20215 9.79509 5.19136 9.79492 6.40723C9.79492 7.62323 10.784 8.61328 12 8.61328C13.2159 8.61318 14.2051 7.62317 14.2051 6.40723C14.2049 5.19142 13.2158 4.20225 12 4.20215Z" fill="#7527B2"/>
+                    </svg>
+                </button>
+                <div class="role-toggle">
+                    <button class="role-btn doc active">Doctor</button>
+                    <button class="role-btn lab">Лікар</button>
+                </div>
+            </div>
+        </div>
+        <div class="header-row bottom">
+            <div>
+                <div class="tabs">
+                    <button class="tab medCardPage">Вся медкарта</button>
+                    <button class="tab directionPage">Направлення</button>
+                    <button class="tab tenderloinPage active">Вирізка</button>
+                    <button class="tab glassPage">Скельця</button>
+                    <button class="tab conclusionPage">Заключення</button>
+                    <button class="tab explorationPage">Дослідження</button>
+                </div>
+            </div>
+            <div class="meta-info">
+                <div id="reportOwnerInfo">
+                </div>
+                <div>
+                    <span id="searchCaseId"></span>
+                </div>
+                <div id="userName"></div>
+                <div id="userGender"></div>
+                <div id="userAge"></div>
+            </div>
+        </div>
+    </div>
+    <div class="glassPageContent df jcsb">
+        <div class="left">
+            <div class="top borderRadiusLeft df aic">
+                <div class="glassPageRevert" style="display: none">
+                    <img src="./assets/arrow.svg" alt="arrow">
+                </div>
+                <div>
+                    Поточні кейси
+                </div>
+            </div>
+            <div class="bottom">
+                <div id="caseItems" class="caseItems">
+                </div>
+            </div>
+        </div>
+        <div class="middle df fdc">
+            <div class="top df aic">
+                Grossing
+            </div>
+            <div class="bottom df ">
+                <div class="tenderloinContent" id="tenderloinContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../COR_ID_Js/general_fun.js"></script>
+<script src="./js/general.js"></script>
+<script>
+    const PATIENT_COR_ID = new URLSearchParams(window.location.search).get('userCorId')
+    const INITIAL_CASE_ID = new URLSearchParams(window.location.search).get('caseId')
+
+    let currentCase = null;
+    let currentUserCorId = PATIENT_COR_ID || null;
+
+    const reportOwnerInfoNODE = document.querySelector('#reportOwnerInfo')
+    const caseContentNODE = document.querySelector("#caseItems");
+    const tenderloinContentNODE = document.querySelector("#tenderloinContent");
+    const caseLabelNode = document.querySelector('#searchCaseId');
+
+    const changeUrlParams = () => {
+        const url = new URL(window.location);
+        const params = new URLSearchParams(url.search);
+
+        params.set('caseId', currentCase?.id);
+
+        window.history.replaceState(null, '', `${url.pathname}?${params}`);
+    }
+    const caseTemplate = (workCase, isActive) => {
+        const caseNewNODE = document.createElement('div');
+        caseNewNODE.classList.add('caseItem', 'df', 'aic', 'jcsb', ...(isActive ? ['active'] : []));
+        caseNewNODE.innerHTML = `
+            <div>
+                <div class="caseItemDate">${new Date(workCase.creation_date).toLocaleDateString()}</div>
+                <div class="caseItemLabel" style="color: ${getCaseColor(workCase)}">${workCase.case_code}</div>
+            </div>
+            <div class="caseItemSample df aic jcc">
+                ${workCase.bank_count}
+            </div>
+            <div>
+                <div class="infoPlate cassette">
+                    ${workCase.cassette_count}
+                </div>
+            </div>
+            <div>
+                <div class="infoPlate glass">
+                    ${workCase.glass_count}
+                </div>
+            </div>
+        `;
+
+        caseNewNODE.addEventListener("click", () => {
+            if(checkToken()){
+                fetch(`${API_BASE_URL}/api/doctor/cases/${workCase.id}/excision-details`, {
+                    method: "GET",
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                    },
+                })
+                    .then(res => res.json())
+                    .then(caseData => {
+                        const {case_details_for_excision, case_owner} = caseData;
+                        document.querySelector('.caseItem.active').classList.remove('active')
+                        caseNewNODE.classList.add('active')
+
+                        currentCase = case_details_for_excision
+                        currentUserCorId = case_details_for_excision.patient_cor_id
+
+
+                        caseLabelNode.innerHTML = case_details_for_excision.case_code
+                        caseLabelNode.style.color = getCaseColor(case_details_for_excision)
+
+                        setTenderloin(case_details_for_excision)
+                        setOwnerInfo(case_owner)
+                        changeUrlParams()
+
+                        fetch(`${API_BASE_URL}/api/doctor/patients/${case_details_for_excision.patient_cor_id}`, {
+                            method: "GET",
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                            },
+                        })
+                            .then(res => res.json())
+                            .then(userData => {
+                                document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
+                                document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
+                                document.querySelector('#userAge').innerHTML = `${(userData.age || "")  ? `${userData.age}р` : ''}`;
+
+                            })
+                    })
+            }
+        });
+        return caseNewNODE
+    }
+    const setTenderloin = (currentCase) => {
+        let macroDescription = ""
+        const sampleInfo = currentCase.samples.reduce((sampleInfo, sample) => {
+            if(sample.macro_description){
+                return sampleInfo + (
+                    `
+                    <div class="tenderloinMargin">
+                        <span class="tenderloinSubTitle">Зразок ${sample.sample_number} (${sample.is_archived ? "з архівом" : "без архіва"}):</span>
+                        ${sample.macro_description}
+                    </div>
+                    `
+                )
+            }
+
+            return sampleInfo;
+        }, '')
+        // currentCase.case_parameters.macro_description
+
+        if(currentCase.case_parameters.macro_description || sampleInfo){
+            macroDescription += `<div class="tenderloinTitle">Макроопис</div>`
+            macroDescription += `<div class="tenderloinMargin">${currentCase.case_parameters.macro_description || "-"}</div>`
+            macroDescription += sampleInfo
+        }
+
+
+        tenderloinContentNODE.innerHTML = `
+            <div class="tenderloinTitle">
+                        Загальні параметри вирізки
+                    </div>
+            <div class="df aic" style="margin-bottom: 18px; gap: 16px">
+                <div>
+                    <span class="tenderloinSubTitle">
+                        Декальцінація:
+                    </span>
+                    ${currentCase.case_parameters.decalcification}
+                </div>
+                <div>
+                    <span class="tenderloinSubTitle">
+                        Тип зразків:
+                    </span>
+                    ${currentCase.case_parameters.sample_type}
+                </div>
+                <div>
+                    <span class="tenderloinSubTitle">
+                        Фіксація:
+                    </span>
+                    ${currentCase.case_parameters.fixation}
+                </div>
+            </div>
+            ${macroDescription}
+        `
+    }
+
+    const setOwnerInfo = (caseOwner) => {
+        const caseIsClosed = isCaseIsClosed(currentCase?.grossing_status);
+        const hasOwner = caseOwner?.id
+        reportOwnerInfoNODE.innerHTML = ""
+
+        if (hasOwner) {
+            if (!caseOwner?.is_case_owner || caseIsClosed) {
+                const div = document.createElement('div')
+                div.innerHTML = `Власник: ${getShortName(caseOwner.last_name, caseOwner.first_name, caseOwner.middle_name)}`;
+                div.classList = "caseBtnOwner owner";
+                div.style.marginBottom = 0;
+
+                reportOwnerInfoNODE.append(div)
+            }
+
+            if (caseOwner?.is_case_owner) {
+                const div = document.createElement('div')
+                div.innerText = "Власний кейс";
+                div.classList = "caseBtnOwner my";
+                div.style.marginBottom = 0;
+
+                div.addEventListener('click', (e) => {
+                    if(checkToken()){
+                        fetch(`${API_BASE_URL}/api/cases/${currentCase.id}/release`, {
+                            method: "POST",
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                                "Content-Type": "application/json"
+                            },
+                        })
+                            .then(res => res.json())
+                            .then(({case_owner}) => {
+                                setOwnerInfo(case_owner)
+                                caseLabelNode.style.color = getCaseColor({grossing_status: "CREATED"})
+                                document.querySelector('.caseItem.active .caseItemLabel').style.color = getCaseColor({grossing_status: "CREATED"})
+                            })
+                    }
+                })
+
+                reportOwnerInfoNODE.append(div)
+            }
+        }
+
+        if (!hasOwner && !caseIsClosed) {
+            const div = document.createElement('div')
+            div.classList = "caseBtnOwner"
+            div.innerText = "Забрати кейс"
+
+            div.addEventListener('click', (e) => {
+                if(checkToken()){
+                    fetch(`${API_BASE_URL}/api/cases/${currentCase.id}/take`, {
+                        method: "POST",
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                            "Content-Type": "application/json"
+                        },
+                    })
+                        .then(res => res.json())
+                        .then(({case_owner}) => {
+                            setOwnerInfo(case_owner)
+                            caseLabelNode.style.color = getCaseColor({grossing_status: "PROCESSING"})
+                            document.querySelector('.caseItem.active .caseItemLabel').style.color = getCaseColor({grossing_status: "PROCESSING"})
+                        })
+                }
+            })
+
+            reportOwnerInfoNODE.append(div)
+        }
+    }
+    const setAllCases = () => {
+       if(checkToken()){
+           const currentRoutePart = PATIENT_COR_ID ? `patients/${PATIENT_COR_ID}` : `current_cases`
+           fetch(`${API_BASE_URL}/api/doctor/${currentRoutePart}/excision-details?case_id=${INITIAL_CASE_ID || ""}`, {
+               method: "GET",
+               headers: {
+                   'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+               },
+           })
+               .then(res => res.json())
+               .then(cases => {
+                   const {all_cases, case_owner, last_case_details_for_excision} = cases;
+                   const activeCaseIndex = all_cases.findIndex(({id}) => id === last_case_details_for_excision.id)
+
+                   all_cases.forEach((currentCase, index) => {
+                       caseContentNODE.append(caseTemplate(currentCase, activeCaseIndex === index))
+                   })
+
+                   if(!last_case_details_for_excision){
+                       return;
+                   }
+
+                   currentUserCorId = last_case_details_for_excision.patient_cor_id
+                   currentCase = last_case_details_for_excision;
+                   setTenderloin(last_case_details_for_excision)
+                   setOwnerInfo(case_owner)
+                   changeUrlParams()
+
+                   caseLabelNode.innerHTML = last_case_details_for_excision.case_code
+                   caseLabelNode.style.color = getCaseColor(last_case_details_for_excision)
+
+                   fetch(`${API_BASE_URL}/api/doctor/patients/${last_case_details_for_excision.patient_cor_id}`, {
+                       method: "GET",
+                       headers: {
+                           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                       },
+                   })
+                       .then(res => res.json())
+                       .then(userData => {
+                           document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
+                           document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
+                           document.querySelector('#userAge').innerHTML = `${(userData.age || "")  ? `${userData.age}р` : ''}`;
+
+                       })
+               })
+       }
+    }
+
+    const revertButtonHandler = () => {
+        const revertButtonNODE = document.querySelector('.glassPageRevert');
+        if(PATIENT_COR_ID){
+            revertButtonNODE.style.display = "block"
+        }
+
+        revertButtonNODE?.addEventListener('click', () => {
+            window.location.href = `/static/COR_LAB/tenderloin.html`
+        })
+    }
+    const switchRole = () => {
+        document.querySelector('.role-toggle .role-btn:not(.active)').addEventListener('click', (e) => {
+            window.location.href = `/static/COR_LAB/lab.html?userCorId=${currentUserCorId}`
+        })
+    }
+    const goToTab = () => {
+        document.querySelectorAll(".tabs .tab:not(.active)").forEach(elem => {
+            elem.addEventListener('click', e => {
+                const element = e.currentTarget;
+                let queryString = []
+
+                if(PATIENT_COR_ID){
+                    queryString.push(`userCorId=${PATIENT_COR_ID}`)
+                }
+
+                if(currentCase?.id){
+                    queryString.push(`caseId=${currentCase?.id}`)
+                }
+
+
+                if (element.classList.contains('medCardPage')) {
+                    window.location.href = `/static/COR_LAB/medical-card/pathomorphology/research.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('directionPage')){
+                    window.location.href = `/static/COR_LAB/direction.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('tenderloinPage')){
+                    window.location.href = `/static/COR_LAB/tenderloin.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('glassPage')){
+                    window.location.href = `/static/COR_LAB/glass.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('conclusionPage')){
+                    window.location.href = `/static/COR_LAB/conclusion.html?${queryString.join('&')}`
+                }
+                if(element.classList.contains('explorationPage')){
+                    window.location.href = `/static/COR_LAB/exploration.html?${queryString.join('&')}`
+                }
+            })
+        })
+    }
+    const goToCasesHandler = () => {
+        document.querySelector('#goToCases')?.addEventListener('click', () => {
+            window.location.href = `/static/COR_LAB/doctor_patients_page.html`
+        })
+    }
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", (event) => {
+        goToCasesHandler()
+        goToTab()
+        switchRole()
+        setAllCases()
+        revertButtonHandler()
+        showTextareaButton('caseMicroDescription')
+        showTextareaButton('casePathohistologicalConclusion')
+    });
+</script>
+
+
+</body>
+</html>

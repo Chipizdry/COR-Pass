@@ -1,0 +1,179 @@
+.researchTop{
+  display: flex;
+  width: 100%;
+}
+
+.researchTop .researchTopItem{
+  padding: 12px;
+  color: #291161;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 800;
+  background: white;
+  width: 50%;
+  border-bottom: 1px solid #eeecf8;
+}
+
+.researchTop .researchTopItem:last-child{
+  border-left: 1px solid #eeecf8;
+}
+
+.researchButton{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.researchButton .researchButtonText{
+  color: #291161;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.researchButton .researchButtonSvg{
+  color: #291161;
+  font-size: 18px;
+  font-weight: 800;
+  transform: translateY(1px);
+}
+
+.researchContent{
+  padding: 12px 20px;
+  display: flex;
+}
+
+.researchContent .researchContentItem{
+  width: 50%;
+}
+
+.researchList{
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 25px;
+}
+
+.researchList .researchListItem{
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid #FFF;
+  background: rgba(255, 255, 255, 0.40);
+  display: flex;
+  gap: 12px;
+}
+.researchList .researchListItemSvg{
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+}
+
+.researchList .researchListItemTop{
+  color: #5B4296;
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.researchList .researchListItemBottom{
+  color:#5B4296;
+  font-size: 14px;
+}
+.researchButtonActions{
+  display: flex;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  border: 1px solid #FFF;
+  background: rgba(255, 255, 255, 0.60);
+}
+
+.researchButtonAction{
+  width: 50%;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+}
+.researchButtonAction.active{
+  background: #FFF;
+  box-shadow: 0 0 5.1px 0 #EFF1F9;
+  border-radius: 12px;
+}
+.researchButtonAction:first-child{
+  border-bottom-left-radius: 12px;
+  border-top-left-radius: 12px;
+}
+.researchButtonAction:last-child{
+  border-bottom-right-radius: 12px;
+  border-top-right-radius: 12px;
+}
+.researchActionsContentGraph, .researchActionsContentList{
+  display: none;
+}
+.researchActionsContentGraph.open{
+  display: block;
+}
+.researchActionsContentList.open{
+  display: flex;
+}
+.chartInfo{
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.chartInfoDate{
+  color:#5B4296;
+  font-weight: 400;
+  gap: 12px;
+}
+
+.chartInfoPicker{
+  position: relative;
+}
+.chartInfoPickerValue{
+  white-space: nowrap;
+  min-width: 70px;
+}
+.chartInfoPickerButton{
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 52px;
+  border: 1px solid #FFF;
+  background: rgba(255, 255, 255, 0.60);
+  cursor: pointer;
+}
+.chartInfoPickerButton svg{
+  transition: all .3s;
+}
+.chartInfoPickerButton.open svg:last-child{
+  transform: rotate(180deg);
+}
+.chartInfoPickerBlock{
+  position: absolute;
+  bottom: -10px;
+  transform: translateY(100%);
+  left: 0;
+  border-radius: 12px;
+  border: 1px solid #FFF;
+  background: rgba(255, 255, 255, 0.80);
+  backdrop-filter: blur(20px);
+  padding: 8px;
+  flex-direction: column;
+  gap: 4px;
+  display: none;
+}
+.chartInfoPickerBlock.open{
+  display: flex;
+}
+.chartInfoPickerBlockItem{
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 8px;
+  min-width: 130px;
+}
+.chartInfoPickerBlockItem.active{
+  background: #EFECF8;
+}

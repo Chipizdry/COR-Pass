@@ -1,0 +1,482 @@
+.layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    gap: 24px;
+    background: #EFECF8;
+}
+
+.sidebar {
+    position: fixed; /* Заставляем сайдбар всегда быть фиксированным */
+    top: 0;
+    left: 0;
+    height: 100vh; /* Занимать всю высоту экрана */
+    width: 72px; /* Ширина — как у тебя задано */
+
+    background: #fff;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    padding-top: 24px;
+
+    z-index: 1000; /* чтобы быть поверх контента если надо */
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    flex: 1 1 auto
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px
+}
+
+.nav-btn {
+    all: unset;
+    cursor: pointer;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #7a3cff;
+    display: grid;
+    place-items: center;
+    transition: background .2s
+}
+
+.nav-btn:hover {
+    background: #6934e8
+}
+
+.nav-btn svg {
+    width: 22px;
+    height: 22px;
+    stroke: #fff;
+    stroke-width: 2;
+    fill: none
+}
+
+.nav-label {
+    font-size: 11px;
+    color: #5B4296;
+    text-align: center;
+    width: 72px;
+    line-height: 1.2;
+    font-weight: 500
+}
+
+.profile-wrapper {
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px
+}
+
+.profile {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: url("https://randomuser.me/api/portraits/men/32.jpg") center/cover no-repeat
+}
+
+.main {
+    height: 100vh;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow: visible;
+}
+
+.actions {
+    background: #F7F7FA;
+    border-radius: 20px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+
+/* Инпут на всю ширину контейнера */
+.actions .search input {
+    width: 100%;
+    height: 52px;
+    padding: 0 52px;    
+    border: none;
+    border-radius: 14px;
+    background: #ffffff;
+    font-size: 16px;
+}
+
+
+/* Убираю внешние отступы у кнопок */
+.actions .btn-square,
+.actions .add-button {
+    margin: 0;
+}
+
+
+.search {
+    flex: 1;
+    position: relative
+}
+
+.search input {
+    width: 100%;
+    height: 52px;
+    padding: 0 52px;
+    border-radius: 8px;
+    border: 1px solid #e4e6f0;
+    background: #ffffff;
+    font-size: 15px
+}
+
+.search svg {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    stroke: #5B4296;
+    stroke-width: 2;
+    fill: none;
+    width: 20px;
+    height: 20px
+}
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    height: 52px;
+    padding: 0 30px 0 18px;
+    background: #7a3cff;
+    border: none;
+    border-radius: 20px;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background .2s
+}
+
+.btn-primary:hover {
+    background: #6934e8
+}
+
+
+.icon-circle span {
+    display: block;
+    transform: translateY(-1px)
+}
+
+.filters-bar {
+    background: #F7F7FA;;
+    border: 1px solid white;
+    border-radius: 20px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    min-height: 52px
+}
+
+.filters-bar .filter {
+    background: #ffffff;
+    padding: 12px 18px;
+    display: inline-flex;
+    min-height: 35px;
+    align-items: center;
+    gap: 8px;
+    margin-right: 16px;
+    margin-left: 0;
+    cursor: pointer;
+    font-size: 18px;
+    color: #5B4296;
+    border-radius: 40px;
+}
+
+.filter, .sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    color: #5B4296;
+    margin-left: auto;
+    background: transparent;
+    padding: 0;
+}
+
+#sortLabel {
+    background: rgba(255, 255, 255, 0.60);
+    border: 1px solid #FFF;
+    padding: 12px 18px;
+    min-height: 35px;
+    font-size: 18px;
+    border-radius: 52px;
+    color: #5B4296;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* у меня сортировка не уезжало вправо , поэтому сделал через второго ребенка */
+.filters-bar > div:last-child {
+    margin-left: auto;
+}
+
+
+.filter svg, .sort svg {
+    width: 24px;
+    height: 24px;
+}
+
+.dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e4e6f0;
+    border-radius: 14px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .06);
+    min-width: 220px;
+    display: none;
+    flex-direction: column;
+    z-index: 10
+}
+
+.dropdown.visible {
+    display: flex
+}
+
+.dropdown button {
+    all: unset;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 14px
+}
+
+.dropdown button:hover {
+    background: rgba(0, 0, 0, .04)
+}
+
+.patients_card {
+    border: 1px solid #FFF;
+    background: rgba(255, 255, 255, 0.40);
+    border-radius: 24px;
+    padding: 0;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, .03);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+
+.table-wrapper {
+    position: relative;
+    overflow: auto;
+}
+
+.patients_card table tbody td:nth-child(2) {
+    background: transparent !important;
+}
+
+
+.table-wrapper table {
+    width: 100%;
+    border-collapse: separate;
+    font-size: 16px;
+    border-radius: 24px 24px 0 0;
+    height: 100%;
+    color:#291161;
+}
+.table-wrapper table tbody tr td:nth-child(1){
+   font-weight: 800;
+}
+.table-wrapper table thead{
+    position: sticky;
+    top: 0;
+}
+
+.table-wrapper thead th {
+    background: rgba(255, 255, 255, 0.60);
+    text-align: left;
+    color: #5B4296;
+    padding: 14px 16px;
+    cursor: pointer
+}
+
+tbody tr {
+    border-bottom: 1px solid #e4e6f0;
+    cursor: pointer;
+}
+
+tbody tr:hover {
+    background: rgba(0, 0, 0, .02)
+}
+
+tbody td {
+    padding: 18px 16px;
+    vertical-align: middle;
+    background: transparent;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 12px
+}
+
+.status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #51d07c
+}
+
+.ellipsis {
+  cursor: pointer;
+}
+.ellipsis img {
+  width: 3.75px;
+  height: 16.25px;
+  display: block;
+}
+
+.footer {
+    padding: 12px 16px;
+    font-size: 18px;
+    color: #5B4296;
+    font-weight: 700;
+    background: #f5f4fb;
+    margin-top: auto;
+}
+
+
+
+#Add_Patient {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #7B43F2;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#Add_Patient:hover {
+    background-color: #5e32c5;
+}
+
+#Add_Patient:active {
+    background-color: #5F41B2;
+    transform: translateX(-50%) translateY(2px);
+}
+
+#corIdInput {
+    text-align: center; /* Центрирование текста */
+    width: 100%; /* Чтобы поле занимало всю доступную ширину */
+}
+
+/* Закргулить верхние края таблицы */
+.patients_card table {
+    border-collapse: separate;
+    border-radius: 24px 24px 0 0;
+}
+
+table th:nth-child(2),
+table td:nth-child(2),
+table th:nth-child(3),
+table td:nth-child(3),
+table th:nth-child(4),
+table td:nth-child(4),
+table th:nth-child(5),
+table td:nth-child(5),
+table th:nth-child(6),
+table td:nth-child(6) {
+    width: 220.6px;
+}
+
+/* Иконки */
+.filter .icon,
+.sort .icon {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+}
+
+.filter,
+.sort,
+#sortLabel {
+    font-size: 18px;
+}
+
+/* Квадратная кнопка*/
+.btn-square {
+    width: 52px;
+    height: 52px;
+    background-color: #FFFFFF !important;
+    border: none;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.btn-square img {
+    width: 24px;
+    height: 24px;
+}
+
+.btn-square:hover {
+    background: #6934e8;
+}
+
+/* Фиолетовая кнопка «Добавить пациента» */
+.add-button {
+    padding: 10px;
+    border: 1px solid #7527B2;
+    margin: 10px 0;
+    background-color: #7527B2;
+    color: white;
+    cursor: pointer;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 240px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 18px;
+    transition: background-color 0.3s, transform 0.2s;
+    text-decoration: none;
+}
+
+.add-button:hover {
+    background-color: #5f1b91;
+}
+

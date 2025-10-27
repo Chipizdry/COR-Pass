@@ -1,0 +1,173 @@
+.glassContent{
+    flex-wrap: wrap;
+    height:100%;
+    overflow: auto;
+}
+.glassWrapper{
+    padding: 12px;
+    width: 134px;
+    cursor: pointer;
+    border: 2px solid #f5f4fb;
+    max-height: max-content;
+}
+
+
+.glassWrapper.active{
+    border: 2px solid #5B4296;
+}
+.glassWrapperImg{
+    width: 110px;
+    height: 259px;
+    background: white;
+    position: relative;
+}
+
+.glassWrapperImg img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.glassWrapperImgPreloader{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.glassIcon{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.glassUpload{
+    position: absolute;
+    bottom: 12px;
+    left: 8px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+}
+.glassUpload svg{
+    width: 18px;
+    min-width: 18px;
+    height: 18px;
+    margin-right: 5px;
+}
+.glassUpload div{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    color: #7B43F2;
+    font-size: 14px;
+    font-weight: 600;
+}
+.glassWrapperText {
+    margin-top: 8px;
+    text-align: center;
+    color: #5B4296;
+    font-weight: 800;
+}
+.glassPageWrapper{
+    background: #EFECF8;
+    padding: 30px;
+    height: 100vh;
+}
+.glassPageContent{
+    background: rgba(255, 255, 255, 0.40);
+    margin-top: 20px;
+    flex: 1;
+    overflow: auto;
+    border: 1px solid white;
+}
+.glassPageRevert{
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    transform: rotate(90deg);
+    margin-right: 12px;
+}
+.glassPageRevert img{
+    width: 100%;
+    height: 100%;
+}
+.glassPageContent .top{
+    height: 60px;
+    min-height: 60px;
+    padding: 12px 16px;
+    font-size: 18px;
+    font-weight: 800;
+    color: #291161;
+    background: #FFFFFF;
+}
+.glassPageContent .middle{
+    width: 100%;
+}
+.glassPageContent .bottom{
+    height: calc(100% - 60px);
+    overflow: auto;
+}
+.glassPageContent .left{
+    width: 255px;
+    min-width: 255px;
+}
+
+.caseItem{
+    padding: 12px;
+    border: 1px solid #EFECF8;
+    border-bottom: none;
+    color: #5B4296;
+    cursor: pointer;
+}
+
+.caseItem.active{
+    border: 2px solid #7527B2 !important;
+
+}
+.caseItemDate{
+    font-size: 14px;
+    font-weight: 400;
+    margin-bottom: 6px;
+}
+.caseItemSample{
+    width: 30px;
+    height: 30px;
+    border-radius: 100%;
+    background: #ED1064;
+    color:#FFF;
+    font-weight: 800;
+}
+.caseItemLabel{
+    font-weight: 800;
+}
+
+.caseItem:last-child{
+    border-bottom: 1px solid #EFECF8;
+}
+.infoPlate{
+    margin-bottom: 0;
+}
+
+.topActions{
+    gap: 16px;
+}
+.topActionsItem{
+    cursor: pointer;
+    color: #7B43F2;
+    font-weight: 400;
+    display: none;
+}
+.topActionsItem.open{
+    display: block;
+}
+.caseBtnOwner{
+    color: #7B43F2;
+    font-weight: 400;
+    cursor: pointer;
+}
+.caseBtnOwner.my{
+    color: #49AC26;
+}
+.caseBtnOwner.owner{
+    color: #B2AFBA;
+}

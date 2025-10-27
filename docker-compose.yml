@@ -21,18 +21,21 @@ services:
         max-size: "10m"
         max-file: "3"
     command: gunicorn main:app --workers 1 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --log-level info --error-logfile - --access-logfile -
-  # modbus_worker:
-  #   build:
-  #     context: . 
-  #     dockerfile: Dockerfile.modbus_worker
-  #   image: modbus-worker:latest 
-  #   container_name: modbus_worker 
-  #   env_file:
-  #     - development.env 
-  #   depends_on:
-  #     - postgres 
+  modbus_worker:
+    build:
+      context: . 
+      dockerfile: Dockerfile.modbus_worker
+    image: modbus-worker:latest 
+    container_name: modbus_worker 
+    ports:
+      - "8001:8001"  # WebSocket server для устройств
+    env_file:
+      - development.env 
+    depends_on:
+      - postgres
+      - redis 
 
-  #   restart: unless-stopped 
+    restart: unless-stopped 
   scanner_worker:
     build:
       context: .

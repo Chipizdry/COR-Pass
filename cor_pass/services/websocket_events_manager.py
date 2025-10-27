@@ -142,6 +142,7 @@ class WebSocketEventsManager:
     async def _listen_pubsub(self):
         pubsub = redis_client.pubsub()
         await pubsub.subscribe("ws:broadcast", f"ws:worker:{self.worker_id}")
+        logger.info(f"Subscribed to Redis channels: ws:broadcast, ws:worker:{self.worker_id}")
 
         async for message in pubsub.listen():
             if message["type"] != "message":
@@ -149,12 +150,15 @@ class WebSocketEventsManager:
             try:
                 channel = message["channel"]
                 data = json.loads(message["data"])
+                logger.debug(f"Received message from Redis channel {channel}: {data}")
+                
                 if channel == "ws:broadcast":
                     await self._broadcast_to_local(data)
                 else:
                     # Targeted message
                     connection_id = data["connection_id"]
                     event = data["event"]
+                    logger.debug(f"Processing targeted message for connection {connection_id}")
                     await self._send_to_connection(connection_id, event)
             except Exception as e:
                 logger.error(f"Failed to handle pubsub message: {e}", exc_info=True)
@@ -248,17 +252,22 @@ class WebSocketEventsManager:
 
     async def _send_to_connection(self, connection_id: str, event: Dict):
         """Отправка targeted события конкретному локальному соединению."""
+        logger.debug(f"Attempting to send targeted event to connection {connection_id}")
+        
         conn = self.active_connections.get(connection_id)
         if not conn:
+            logger.warning(f"Connection {connection_id} not found in active_connections")
             return
 
         websocket = conn["websocket"]
         if websocket.client_state != WebSocketState.CONNECTED:
+            logger.warning(f"Connection {connection_id} is not in CONNECTED state")
             await self.disconnect(connection_id)
             return
 
         try:
             await websocket.send_text(json.dumps(event))
+            logger.info(f"✅ Targeted event successfully sent to connection {connection_id}")
         except Exception as e:
             logger.warning(f"Error sending targeted to {connection_id}: {e}")
             await self.disconnect(connection_id)

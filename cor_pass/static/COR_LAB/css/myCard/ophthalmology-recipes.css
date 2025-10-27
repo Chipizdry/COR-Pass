@@ -1,0 +1,227 @@
+.recipesWrapper{
+    padding: 12px;
+}
+.recipesSubmit{
+    color: #FFF;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: 20px;
+    background: #7527B2;
+    width: 220px;
+    padding: 20px;
+    margin: auto;
+}
+.recipesTop{
+    border: 1px solid #FFF;
+    background: rgba(255, 255, 255, 0.40);
+    border-radius: 20px;
+    display: flex;
+    overflow: auto;
+}
+.recipesBottom{
+    border: 1px solid #FFF;
+    background: rgba(255, 255, 255, 0.40);
+    border-radius: 20px;
+    display: flex;
+    overflow: auto;
+    margin-top: 12px;
+}
+.recipesBottomCol{
+    width: 100%;
+}
+.recipesTopCol{
+    width: 100%;
+}
+.recipesBottomTitle{
+    padding: 12px;
+    background: white;
+    overflow: hidden;
+    font-size: 18px;
+    color: #291161;
+    text-align: center;
+    text-overflow: ellipsis;
+    font-weight: 800;
+}
+.recipesTopRow{
+    padding: 12px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.recipesTopRow.white{
+    background: white;
+    overflow: hidden;
+    color: #291161;
+    text-align: center;
+    text-overflow: ellipsis;
+    font-weight: 800;
+}
+.recipesTopGroup{
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 100%;
+}
+.recipesTopGroupSelect{
+    position: absolute;
+    background: white;
+    z-index: 1;
+    padding: 16px;
+    border-radius: 20px;
+    border: 1px solid #FFF;
+    background: rgba(255, 255, 255, 0.80);
+    box-shadow: 0 4px 20px 0 rgba(41, 17, 97, 0.05);
+    backdrop-filter: blur(20px);
+}
+.recipesTopGroupSelectItem{
+    padding: 8px 12px;
+    color: #5B4296;
+    font-size: 16px;
+    font-weight: 400;
+    cursor: pointer;
+    min-width: 130px;
+}
+.recipesTopGroupSelectItem.active{
+    border-radius: 12px;
+    background: #EFECF8;
+}
+.recipesTopGroupImg{
+    cursor: pointer;
+}
+.recipesTopGroup input{
+    background: 0 0;
+    outline: none;
+    color: #B1A1DA;
+    text-align: center;
+    font-size: 16px;
+    width: 65px;
+    border: 0;
+}
+.recipesTopPickerName{
+    min-width: 100px;
+}
+.recipesTopPicker{
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    color: #B1A1DA;
+    font-size: 16px;
+    width: 100%;
+    justify-content: space-between;
+}
+.recipesBottomPicker{
+    padding: 16px;
+}
+.recipesBottomPickerItem{
+    color:#5B4296;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 800;
+    padding: 6px 10px;
+    cursor: pointer;
+    margin-bottom: 4px;
+    border: 1px solid #f9f8fc;
+}
+.recipesBottomPickerItem.active{
+    color: #7527B2;
+    border-radius: 6px;
+    border: 1px solid #7527B2;
+    background: rgba(255, 255, 255, 0.60);
+}
+.recipesBottomPickerItem:last-child{
+    margin-bottom: 0;
+}
+.recipesBottomDate{
+    padding: 16px;
+}
+.recipesBottomInput{
+    padding: 16px;
+}
+.recipesBottomDateGroup{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 20px;
+    border: 1px solid #FFF;
+    background: rgba(255, 255, 255, 0.60);
+    padding: 16px;
+}
+.recipesBottomDateGroup input{
+    width: 100%;
+    background: 0 0;
+    border: 0;
+    outline: none;
+    color: #B1A1DA;
+    font-size: 16px;
+    font-weight: 400;
+    position: relative;
+}
+.recipesBottomInputGroup{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 20px;
+    border: 1px solid #FFF;
+    background: rgba(255, 255, 255, 0.60);
+    padding: 16px;
+    color: #B1A1DA;
+    font-size: 16px;
+    font-weight: 400;
+}
+.recipesBottomInputGroup input{
+    width: 100%;
+    background: 0 0;
+    border: 0;
+    outline: none;
+    color: #B1A1DA;
+    font-size: 16px;
+    font-weight: 400;
+    position: relative;
+}
+.recipesBottomInputGroup input::placeholder{
+    color: #B1A1DA;
+    font-size: 16px;
+    font-weight: 400;
+}
+.recipesBottomDateGroup input[type="date"]::-webkit-inner-spin-button,
+.recipesBottomDateGroup input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+}
+.recipesBottomInputGroup input::-webkit-outer-spin-button,
+.recipesBottomInputGroup input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.recipesBottomDateGroup input[type="date"]::after {
+    content: '';
+    position: absolute;
+    display: block;
+    right: -2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    background: url(../../assets/callendar.svg) center;
+    pointer-events: none;
+}
+.recipesBottomTextarea{
+    padding: 16px;
+}
+.recipesBottomTextareaGroup textarea{
+    border-radius: 20px;
+    border: 1px solid #FFF;
+    background: rgba(255, 255, 255, 0.60);
+    resize: none;
+    width: 100%;
+    height: 230px;
+    padding: 16px;
+    color: #B1A1DA;
+    font-weight: 400;
+    outline: none;
+}
+.recipesBottomTextareaGroup textarea::placeholder{
+    color: #B1A1DA;
+}

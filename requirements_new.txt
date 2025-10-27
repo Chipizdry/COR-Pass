@@ -1,0 +1,12 @@
+gdcm==1.1
+pylibjpeg==2.0.1
+pylibjpeg-libjpeg==2.3.0
+pylibjpeg-openjpeg==2.4.0
+gunicorn==23.0.0
+pysmb==1.2.11
+tqdm==4.67.1
+pandas==2.3.1
+python-dateutil==2.9.0.post0
+pytz==2025.2
+et_xmlfile==2.0.0
+openpyxl==3.1.5

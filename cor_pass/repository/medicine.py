@@ -106,11 +106,56 @@ async def delete_medicine(db: AsyncSession, medicine: Medicine) -> None:
 
 
 
+from datetime import datetime, time, timedelta, date
+from cor_pass.database.models import MedicineIntake, MedicineIntakeStatus
+
+async def _generate_intake_times(schedule: MedicineSchedule) -> List[datetime]:
+    """
+    Генерирует все даты и времена приема лекарств на основе расписания.
+    """
+    intake_datetimes = []
+    current_date = schedule.start_date
+    
+    # Определяем конечную дату
+    if schedule.duration_days:
+        end_date = schedule.start_date + timedelta(days=schedule.duration_days)
+    else:
+        # Если длительность не указана, генерируем на месяц вперед
+        end_date = schedule.start_date + timedelta(days=30)
+
+    while current_date < end_date:
+        # Если указаны конкретные времена приема
+        if schedule.intake_times:
+            for time_str in schedule.intake_times:
+                hour, minute = map(int, time_str.split(':'))
+                intake_time = time(hour, minute)
+                intake_datetime = datetime.combine(current_date, intake_time)
+                intake_datetimes.append(intake_datetime)
+        # Если указан интервал в минутах
+        elif schedule.interval_minutes:
+            current_datetime = datetime.combine(current_date, time.min)
+            while current_datetime.date() == current_date:
+                intake_datetimes.append(current_datetime)
+                current_datetime += timedelta(minutes=schedule.interval_minutes)
+        # Если указано количество приемов в день, равномерно распределяем по дню
+        elif schedule.times_per_day:
+            day_minutes = 24 * 60
+            interval = day_minutes // schedule.times_per_day
+            for i in range(schedule.times_per_day):
+                minutes_from_midnight = i * interval
+                intake_time = (datetime.min + timedelta(minutes=minutes_from_midnight)).time()
+                intake_datetime = datetime.combine(current_date, intake_time)
+                intake_datetimes.append(intake_datetime)
+        
+        current_date += timedelta(days=1)
+    
+    return intake_datetimes
+
 async def create_medicine_schedule(
     db: AsyncSession, body: MedicineScheduleCreate, user: User
 ) -> MedicineSchedule:
     """
-    Создает новое расписание приёма для медикамента.
+    Создает новое расписание приёма для медикамента и генерирует записи о планируемых приемах.
     """
     intake_times = (
         [t.strftime("%H:%M") for t in body.intake_times] if body.intake_times else None
@@ -129,6 +174,10 @@ async def create_medicine_schedule(
     db.add(new_schedule)
     await db.commit()
     await db.refresh(new_schedule)
+
+    from cor_pass.repository.medicine_intakes import generate_schedule_intakes
+    await generate_schedule_intakes(db=db, schedule=new_schedule)
+
     return new_schedule
 
 
@@ -140,6 +189,16 @@ async def get_user_schedules(db: AsyncSession, user: User) -> List[MedicineSched
         select(MedicineSchedule).where(MedicineSchedule.user_cor_id == user.cor_id)
     )
     return result.scalars().all()
+
+
+async def get_user_schedule_by_id(db: AsyncSession, schedule_id: str) -> MedicineSchedule:
+    """
+    Возвращает расписание по id 
+    """
+    result = await db.execute(
+        select(MedicineSchedule).where(MedicineSchedule.id == schedule_id)
+    )
+    return result.scalars().one_or_none()
 
 async def update_schedule(
     db: AsyncSession, schedule_id: str, body: MedicineScheduleUpdate, user: User

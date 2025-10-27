@@ -116,6 +116,7 @@ const translations = {
         "welcome-message": "Приветствуем в COR-ID",
         "doc": "Врач",
         "lab": "Лаборант",
+        "medCardPage": "Вся медкарта",
         "direction": "Направление",
         "tenderloin": "Вырезка",
         "glass": "Стекла",
@@ -161,7 +162,7 @@ const translations = {
         "macrodescription": "Макроскопическое описание: ",
         "microdescription": "Микроскопическое описание: ",
         "macrodes_short": "Макроописание: ",
-        "microdes_short": "Мbкроописание: ",
+        "microdes_short": "Микроописание: ",
         "immunohistochemicalProfile": "Иммуногистохимический профиль: ",
         "molecularGeneticProfile": "Молекулярно-генетический профиль: ",
         "pathomorphologicalDiagnosis": "Патогистологическое заключение: ",
@@ -174,7 +175,8 @@ const translations = {
         "takeCase": "Забрать кейс", 
         "icdCode": "Код ICD",
         "updateReport": "Обновить репорт",
-        "conclusionUpdated": "Заключение успешно обновлено"
+        "conclusionUpdated": "Заключение успешно обновлено",
+        "noReferrals": "У вас нет ни одного направления"
     },
     en: {
         title: "Authorization",
@@ -235,6 +237,7 @@ const translations = {
         "welcome-message": "Welcome to COR-ID",
         "doc": "Doctor",
         "lab": "Lab Assistant",
+        "medCardPage": "Full medical record",
         "direction": "Referral",
         "tenderloin": "Tissue Section",
         "glass": "Slides",
@@ -293,8 +296,8 @@ const translations = {
         "takeCase": "Take Case", 
         "icdCode": "Code ICD",
         "updateReport": "Update Report",
-        "conclusionUpdated": "Conclusion successfully updated"
-
+        "conclusionUpdated": "Conclusion successfully updated",
+        "noReferrals": "You have no referrals"
     },
     zh: {
         title: "授权",
@@ -355,6 +358,7 @@ const translations = {
         "welcome-message": "欢迎来到 COR-ID",
         "doc": "医生",
         "lab": "实验技师",
+        "medCardPage": "完整病历",
         "direction": "转诊单",
         "tenderloin": "组织切片",
         "glass": "载玻片",
@@ -413,7 +417,8 @@ const translations = {
         "takeCase": "领取病例",
         "icdCode": "ICD 编码",
         "updateReport": "更新报告",
-        "conclusionUpdated": "结论已成功更新"
+        "conclusionUpdated": "结论已成功更新",
+        "noReferrals": "您没有任何转诊单"
     },
     uk: {
         title: "Авторизація",
@@ -473,6 +478,7 @@ const translations = {
         "welcome-message": "Вітаємо в COR-ID",
         "doc": "Лікар",
         "lab": "Лаборант",
+        "medCardPage": "Вся медкартка",
         "direction": "Направлення",
         "tenderloin": "Вирізка",
         "glass": "Скельця",
@@ -531,6 +537,7 @@ const translations = {
         "takeCase": "Забрати кейс",
         "icdCode": "Код ICD",
         "updateReport": "Оновити репорт",
-        "conclusionUpdated": "Заключення успішно оновлено"
+        "conclusionUpdated": "Заключення успішно оновлено",
+        "noReferrals": "У вас немає жодного направлення"
     },
 }
