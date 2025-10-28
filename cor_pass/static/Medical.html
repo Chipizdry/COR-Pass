@@ -196,7 +196,7 @@ const accessToken =  getToken();
 console.log("accessToken from localStorage:", getToken());
 document.getElementById('I_am_a_doctor').addEventListener('click', function() {
     if (checkToken()) {
-    window.location.href = '/static/doctor_registration.html' + '?access_token=' + accessToken;   }
+    window.location.href = '/static/doctor_registration.html';   }
 });
 
 document.getElementById('Dicom_viewer').addEventListener('click', function() {
