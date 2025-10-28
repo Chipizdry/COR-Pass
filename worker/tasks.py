@@ -44,10 +44,10 @@ async def set_inverter_parameters(
         return
 
     if settings.app_env == "development":
-        await send_grid_feed_w_command(modbus_client=modbus_client_instance, grid_feed_w=grid_feed_w)
-        await send_vebus_soc_command(modbus_client=modbus_client_instance, battery_level_percent=battery_level_percent)
-        await send_dvcc_max_charge_current_command(modbus_client=modbus_client_instance, charge_battery_value=charge_battery_value)
-
+     #   await send_grid_feed_w_command(modbus_client=modbus_client_instance, grid_feed_w=grid_feed_w)
+      #  await send_vebus_soc_command(modbus_client=modbus_client_instance, battery_level_percent=battery_level_percent)
+      #  await send_dvcc_max_charge_current_command(modbus_client=modbus_client_instance, charge_battery_value=charge_battery_value)
+        pass
 
 async def cerbo_collection_task_worker(object_id: str, object_name: str):
     while True:

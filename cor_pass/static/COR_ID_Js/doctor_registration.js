@@ -119,7 +119,7 @@ function goBack() {
 // Функция для перехода на следующий шаг
 function goForward() {
    const currentStep = getCurrentStep();
-   if (currentStep < 4) { // Предполагаем, что у нас 4 шага
+   if (currentStep < 5) { 
        if (validateCurrentStep(currentStep)) {
        //    saveFormData(currentStep);
            navigateToStep(currentStep + 1);
