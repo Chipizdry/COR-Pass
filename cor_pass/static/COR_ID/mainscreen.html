@@ -649,6 +649,8 @@
                 const corId = await response.json();
                 const userCorIdElement = document.getElementById('userCorId');
                 userCorIdElement.textContent = `${corId}`;
+                extractAndSaveGenderAndBirthYear(corId);
+
                  // Jбработчик клика для отображения QR-кода
                  userCorIdElement.addEventListener('click', () => toggleQrCode(corId));
                  // Jбработчик клика на сам QR-код для его скрытия
@@ -663,6 +665,37 @@
             }
         }
 
+
+        function extractAndSaveGenderAndBirthYear(corId) {
+    try {
+        console.log("Обрабатываем COR-ID:", corId);
+        
+        const match = corId.match(/^(.{9})-(\d{4})([MF])$/);
+        
+        if (match) {
+            const coreId = match[1];        // 1TJF3GDHL
+            const birthYear = match[2];     // 2008
+            const gender = match[3];        // M или F
+            
+            console.log("Извлеченные данные:", { coreId, birthYear, gender });
+            
+            // Сохраняем в localStorage
+            localStorage.setItem('userGender', gender);
+            localStorage.setItem('userBirthYear', birthYear);
+                   
+            console.log("Данные сохранены в localStorage:");
+            console.log("Пол:", localStorage.getItem('userGender'));
+            console.log("Год рождения:", localStorage.getItem('userBirthYear'));
+            
+            
+        } else {
+            console.warn("COR-ID не соответствует ожидаемому формату:", corId);
+        }
+        
+    } catch (error) {
+        console.error("Ошибка при обработке COR-ID:", error);
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function () {
     const accessToken = getToken();

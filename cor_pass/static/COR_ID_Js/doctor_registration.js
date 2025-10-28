@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Показываем первый шаг
      navigateToStep(1);
-   
+     autoFillStep1Fields();
    // Назначаем обработчики для кнопок навигации
    document.querySelectorAll('[data-translate="back-link-text"]').forEach(btn => {
        btn.onclick = goBack;
@@ -738,4 +738,36 @@ function updateProgressBar(currentStep) {
            });
        }
    }
+}
+
+
+// Функция для автозаполнения полей из localStorage
+function autoFillStep1Fields() {
+    console.log("Автозаполнение полей шага 1...");
+    
+    // Получаем данные из localStorage
+    const gender = localStorage.getItem('userGender');
+    const birthYear = localStorage.getItem('userBirthYear');
+    
+    console.log("Данные из localStorage:", { gender, birthYear });
+    
+    // Автозаполнение пола
+    const genderInput = document.getElementById('gender');
+    if (genderInput && gender) {
+        const genderText = gender === 'M' ? 'Мужской' : 'Женский';
+        genderInput.value = genderText;
+        console.log("Поле 'gender' заполнено:", genderText);
+    }
+    
+    // Автозаполнение года рождения
+    const birthYearInput = document.getElementById('birthYear');
+    if (birthYearInput && birthYear) {
+        birthYearInput.value = birthYear;
+        console.log("Поле 'birthYear' заполнено:", birthYear);
+    }
+    
+    // Проверяем результат
+    console.log("Результат автозаполнения:");
+    console.log("gender.value:", genderInput ? genderInput.value : 'не найден');
+    console.log("birthYear.value:", birthYearInput ? birthYearInput.value : 'не найден');
 }
