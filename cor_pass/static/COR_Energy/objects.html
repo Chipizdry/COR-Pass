@@ -68,7 +68,7 @@
                 tableContainer.style.display = 'none';
                 
                 // Выполняем запрос к API
-                const response = await fetch('http://127.0.0.1:8000/api/modbus/', {
+                const response = await fetch('/api/modbus/', {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
@@ -160,21 +160,7 @@
         // Загружаем данные при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
             loadObjects();
-            
-            // Добавляем кнопку обновления (опционально)
-            const refreshButton = document.createElement('button');
-            refreshButton.textContent = 'Обновить данные';
-            refreshButton.style.marginBottom = '20px';
-            refreshButton.style.padding = '10px 15px';
-            refreshButton.style.backgroundColor = '#007bff';
-            refreshButton.style.color = 'white';
-            refreshButton.style.border = 'none';
-            refreshButton.style.borderRadius = '4px';
-            refreshButton.style.cursor = 'pointer';
-            refreshButton.onclick = refreshData;
-            
-            const container = document.querySelector('.container');
-            container.insertBefore(refreshButton, container.querySelector('h1').nextSibling);
+           
         });
         
         // Обработка ошибок загрузки страницы
