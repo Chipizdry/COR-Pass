@@ -157,8 +157,8 @@
 <!-- Модальное окно для второго шага -->
 <div id="step2Modal" class="modal">
     <div class="navigation-container">
-        <button class="link-button" onclick="goBackToStep1()" data-translate="back-link-text">&lt;&lt;назад</button>
-        <button class="link-button" onclick="goForwardToStep3()" data-translate="forward-link-text">вперёд&gt;&gt;</button>
+        <button class="link-button" onclick="goBack()" data-translate="back-link-text">&lt;&lt;назад</button>
+        <button class="link-button" onclick="goForward()" data-translate="forward-link-text">вперёд&gt;&gt;</button>
     </div>
     
     <div class="modal-header">
@@ -231,10 +231,10 @@
         </div>
 
         <div class="form-group">
-            <label for="diplomaFile" style="color:#7f69bd;font-size:13px;">Копия диплома</label>
+            <label for="military_document" style="color:#7f69bd;font-size:13px;">Военно-учётный документ(выписка Резерв+)</label>
             <div class="file-upload-container">
                 <label class="file-upload-button">
-                    <input type="file" id="diplomaFile" name="diplomaFile" style="display: none;">
+                    <input type="file" id="military_document" name="military_document" style="display: none;">
                     <span>Выберите файл</span>
                 </label>
                 <span class="file-name" id="fileName" style="color:#7f69bd;font-size:13px;">Файл не выбран</span>
@@ -268,8 +268,8 @@
 <!-- Модальное окно для третьего шага -->
 <div id="step3Modal" class="modal">
     <div class="navigation-container">
-        <button class="link-button" onclick="goBackToStep1()" data-translate="back-link-text">&lt;&lt;назад</button>
-        <button class="link-button" onclick="goForwardToStep3()" data-translate="forward-link-text">вперёд&gt;&gt;</button>
+        <button class="link-button" onclick="goBack()" data-translate="back-link-text">&lt;&lt;назад</button>
+        <button class="link-button" onclick="goForward()" data-translate="forward-link-text">вперёд&gt;&gt;</button>
     </div>
     
     <div class="modal-header">
@@ -392,8 +392,8 @@
 <!-- Модальное окно для четвёртого шага -->
 <div id="step4Modal" class="modal">
     <div class="navigation-container">
-        <button class="link-button" onclick="goBackToStep3()" data-translate="back-link-text">&lt;&lt;назад</button>
-        <button class="link-button" onclick="goForwardToStep5()" data-translate="forward-link-text">вперёд&gt;&gt;</button>
+        <button class="link-button" onclick="goBack()" data-translate="back-link-text">&lt;&lt;назад</button>
+        <button class="link-button" onclick="goForward()" data-translate="forward-link-text">вперёд&gt;&gt;</button>
     </div>
     
     <div class="modal-header">
@@ -501,7 +501,7 @@
 <!-- Модальное окно для пятого шага -->
 <div id="step5Modal" class="modal">
     <div class="navigation-container">
-        <button class="link-button" onclick="goBackToStep3()" data-translate="back-link-text">&lt;&lt;назад</button>
+        <button class="link-button" onclick="goBack()" data-translate="back-link-text">&lt;&lt;назад</button>
      <!--  <button class="link-button" onclick="goForwardToStep4()" data-translate="forward-link-text">вперёд&gt;&gt;</button>--> 
     </div>
     
@@ -614,13 +614,11 @@
 </div>
 
         <script src="/static/COR_ID_Js/JsPdf.js"></script>  
-        <script src="/static/COR_ID_Js/JsPdf_Custom_Fonts.js"></script>
         <script src="/static/COR_ID_Js/translation.js"></script>  
         <script src="/static/COR_ID_Js/general_fun.js"></script> 
         <script src="/static/COR_ID_Js/doctor_registration.js"></script> 
 
     <script>
-       
   
     </script>
 </body>
