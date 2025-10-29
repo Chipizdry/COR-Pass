@@ -455,13 +455,13 @@
         <h1>Регистрация</h1>
     </div>    
         <div class="form-group">
-            <label for="diplomaFile" style="color:#7f69bd;font-size:13px;">Копия диплома</label>
+            <label for="diploma_file" style="color:#7f69bd;font-size:13px;">Диплом</label>
             <div class="file-upload-container">
                 <label class="file-upload-button">
-                    <input type="file" id="diplomaFile" name="diplomaFile" style="display: none;">
+                    <input type="file" id="diploma_file" name="diploma_file" style="display: none;">
                     <span>Выберите файл</span>
                 </label>
-                <span class="file-name" id="fileName" style="color:#7f69bd;font-size:13px;">Файл не выбран</span>
+                <span class="file-name" id="diplomaFileName" style="color:#7f69bd;font-size:13px;">Файл не выбран</span>
             </div>
         </div>
 
@@ -619,7 +619,128 @@
         <script src="/static/COR_ID_Js/doctor_registration.js"></script> 
 
     <script>
-  
+  document.addEventListener('DOMContentLoaded', () => {
+    const steps = [
+        document.getElementById('step1Modal'),
+        document.getElementById('step2Modal'),
+        document.getElementById('step3Modal'),
+        document.getElementById('step4Modal'),
+        document.getElementById('step5Modal')
+    ];
+
+
+    const fileInput = document.getElementById('fileInput');
+    const previewImage = document.getElementById('previewImage');
+    const placeholder = document.getElementById('placeholder');
+    
+    const militaryInput = document.getElementById('military_document');
+    const fileNameSpan = document.getElementById('fileName');
+
+    const diplomaInput = document.getElementById('diploma_file');
+    const diplomaFileName = document.getElementById('diplomaFileName');
+ 
+    const certificateInput = document.getElementById('certificateFile');
+    const certificateFileName = document.getElementById('certificateFileName');
+
+
+    let currentStep = 0;
+
+    autoFillStep1Fields();
+
+
+        fileInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            previewImage.src = e.target.result;
+            previewImage.style.display = 'block';
+            placeholder.style.display = 'none';  // прячем плейсхолдер
+            initImageDragAndZoom(previewImage);  // навешиваем drag & zoom
+        };
+        reader.readAsDataURL(file);
+    });
+
+
+
+    // Обработчик для военно-учётного документа (шаг 2)
+        militaryInput.addEventListener('change', () => {
+        if (militaryInput.files.length > 0) {
+            fileNameSpan.textContent = militaryInput.files[0].name;
+        } else {
+            fileNameSpan.textContent = 'Файл не выбран';
+        }
+    });
+
+
+
+        diplomaInput.addEventListener('change', () => {
+        if (diplomaInput.files.length > 0) {
+            diplomaFileName.textContent = diplomaInput.files[0].name;
+        } else {
+            diplomaFileName.textContent = 'Файл не выбран';
+        }
+    });
+
+
+
+        certificateInput.addEventListener('change', function () {
+        if (certificateInput.files.length > 0) {
+            certificateFileName.textContent = certificateInput.files[0].name;
+        } else {
+            certificateFileName.textContent = 'Файл не выбран';
+        }
+    });
+
+
+    // Функция отображения нужного шага
+    function showStep(stepIndex) {
+        steps.forEach((step, i) => {
+            step.style.display = (i === stepIndex) ? 'block' : 'none';
+        });
+
+        updateProgressBar(stepIndex);
+    }
+
+    // Обновление прогресс-бара
+    function updateProgressBar(stepIndex) {
+        const progressBars = document.querySelectorAll('.progress-bar');
+        progressBars.forEach(bar => {
+            const stepsElements = bar.querySelectorAll('.progress-step');
+            stepsElements.forEach((el, i) => {
+                if (i <= stepIndex) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+        });
+    }
+
+    // Переход вперёд
+    window.goForward = function() {
+        if (currentStep < steps.length - 1) {
+            currentStep++;
+            showStep(currentStep);
+        }
+    };
+
+    // Переход назад
+    window.goBack = function() {
+        if (currentStep > 0) {
+            currentStep--;
+            showStep(currentStep);
+        } else {
+            if (checkToken()) {          
+            window.location.href = '/static/Medical.html';
+        } 
+        }
+    };
+
+    // Показать первый шаг при загрузке
+    showStep(currentStep);
+});
     </script>
 </body>
 </html>
