@@ -60,5 +60,16 @@
     }
 
 
+// Валидация email
+function isValidEmail(email) {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+}
 
-    
+// Валидация телефона
+function isValidPhone(phone) {
+  const re = /^[+]?\d{6,13}$/;
+  return re.test(phone);
+}
+
+

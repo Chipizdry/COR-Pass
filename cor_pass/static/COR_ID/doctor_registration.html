@@ -629,6 +629,15 @@
     ];
 
 
+        const stepsConfig = {
+        1: { fields: ['lastName', 'firstName', 'workEmail', 'Phone_number'], files: ['profilePhoto'] },
+        2: { fields: ['Passport_serial_number', 'Tax_Number', 'Address'], files: ['passportFile'] },
+        3: { fields: ['Medical_certificate_number', 'Medical_institution'], files: ['medical_certificate_file'] },
+        4: { fields: ['Degree', 'Specialization'], files: ['degree_document'] },
+        5: { fields: ['Agreement_signed'], files: [] } // checkbox согласия
+    };
+    
+
     const fileInput = document.getElementById('fileInput');
     const previewImage = document.getElementById('previewImage');
     const placeholder = document.getElementById('placeholder');
@@ -694,6 +703,110 @@
     });
 
 
+
+
+    
+    // Валидация конкретного шага
+    function validateStep(stepNumber) {
+  let ok = true;
+
+  // Сбрасываем подсветку полей
+  document.querySelectorAll(`#step${stepNumber}Modal input`).forEach(el => {
+    el.style.borderColor = "";
+  });
+
+  switch (stepNumber) {
+    case 1: {
+      const requiredIds = ["lastName", "firstName", "workEmail", "Phone_number"];
+      requiredIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el || !el.value.trim()) {
+          ok = false;
+          el.style.borderColor = "red";
+        }
+      });
+
+      // Проверка email
+      const email = document.getElementById("workEmail").value.trim();
+      const emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/i;
+      if (!emailPattern.test(email)) {
+        ok = false;
+        document.getElementById("workEmail").style.borderColor = "red";
+      }
+
+      // Проверка телефона (должен содержать хотя бы 8 цифр)
+      const phone = document.getElementById("Phone_number").value.trim();
+      const digits = phone.replace(/\D/g, "");
+      if (digits.length < 8) {
+        ok = false;
+        document.getElementById("Phone_number").style.borderColor = "red";
+      }
+      break;
+    }
+
+    case 2: {
+      const requiredIds = ["Passport_serial_number", "Tax_Number"];
+      requiredIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el || !el.value.trim()) {
+          ok = false;
+          el.style.borderColor = "red";
+        }
+      });
+      break;
+    }
+
+    case 3: {
+      const requiredIds = ["medical_license_number", "medical_certificate_number"];
+      requiredIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.value.trim()) {
+          ok = false;
+          el.style.borderColor = "red";
+        }
+      });
+      break;
+    }
+
+    case 4: {
+      const requiredIds = ["clinicName", "clinicAddress", "clinicPosition"];
+      requiredIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.value.trim()) {
+          ok = false;
+          el.style.borderColor = "red";
+        }
+      });
+      break;
+    }
+
+    case 5: {
+      const requiredIds = ["password", "confirmPassword"];
+      requiredIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el || !el.value.trim()) {
+          ok = false;
+          el.style.borderColor = "red";
+        }
+      });
+
+      // Совпадение паролей
+      const pass = document.getElementById("password").value;
+      const confirm = document.getElementById("confirmPassword").value;
+      if (pass !== confirm) {
+        ok = false;
+        document.getElementById("confirmPassword").style.borderColor = "red";
+        alert("Пароли не совпадают!");
+      }
+      break;
+    }
+  }
+
+  return ok;
+}
+
+
+
     // Функция отображения нужного шага
     function showStep(stepIndex) {
         steps.forEach((step, i) => {
@@ -720,7 +833,11 @@
 
     // Переход вперёд
     window.goForward = function() {
-        if (currentStep < steps.length - 1) {
+        if (!validateStep(currentStep+1)) { 
+        alert(`Пожалуйста, заполните все обязательные поля на шаге ${currentStep+1}`);
+        return; // не переходим
+    }
+        if (currentStep < steps.length - 1) {    
             currentStep++;
             showStep(currentStep);
         }
