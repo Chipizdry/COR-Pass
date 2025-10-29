@@ -808,19 +808,6 @@
 
 
 
-function validateAllSteps() {
-  for (let i = 1; i <= 5; i++) {
-    if (!validateStep(i)) {
-      alert(`Исправьте ошибки на шаге ${i}`);
-      showModal(i);
-      return false;
-    }
-  }
-  return true;
-}
-
-
-
     // Функция отображения нужного шага
     function showStep(stepIndex) {
         steps.forEach((step, i) => {
