@@ -13,36 +13,56 @@ from cor_pass.schemas import (
 from cor_pass.repository import cassette as cassette_service
 from typing import List, Optional
 
-from cor_pass.services.access import doctor_access
+from cor_pass.services.access import doctor_access, lab_assistant_or_doctor_access
 
 router = APIRouter(prefix="/cassettes", tags=["Cassette"])
 
 
 @router.post(
     "/create",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     response_model=List[CassetteModelScheema],
 )
 async def create_cassette_for_sample(
     body: CassetteCreate,
     printing: bool = False,
+    request: Request = None,
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Создаем заданное количество кассет для конкретного семпла
+    Создаем заданное количество кассет для конкретного семпла и опционально печатаем их
     """
-    return await cassette_service.create_cassette(
+    created_cassettes = await cassette_service.create_cassette(
         db=db,
         sample_id=body.sample_id,
         num_cassettes=body.num_cassettes,
         printing=printing,
     )
+    
+    # Если нужна печать, печатаем каждую созданную кассету
+    if printing and created_cassettes:
+        logger.info(f"Начинаем печать {len(created_cassettes)} кассет")
+        for cassette in created_cassettes:
+            try:
+                cassette_id = cassette['id'] if isinstance(cassette, dict) else cassette.id
+                print_data = CassettePrinting(cassete_id=cassette_id, printing=True)
+                print_result = await cassette_service.print_cassette_data(
+                    data=print_data, db=db, request=request
+                )
+                if print_result and print_result.get("success"):
+                    logger.debug(f"Кассета {cassette_id} успешно отправлена на печать")
+                else:
+                    logger.warning(f"Не удалось распечатать кассету {cassette_id}: {print_result}")
+            except Exception as e:
+                logger.error(f"Ошибка при печати кассеты {cassette.get('id', 'unknown')}: {e}")
+    
+    return created_cassettes
 
 
 @router.get(
     "/{cassette_id}",
     response_model=CassetteModelScheema,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def read_cassette(cassette_id: str, db: AsyncSession = Depends(get_db)):
     """
@@ -57,7 +77,7 @@ async def read_cassette(cassette_id: str, db: AsyncSession = Depends(get_db)):
 @router.patch(
     "/{cassette_id}",
     response_model=CassetteModelScheema,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def update_cassette_comment(
     cassette_id: str,
@@ -76,7 +96,7 @@ async def update_cassette_comment(
 @router.delete(
     "/delete",
     response_model=DeleteCassetteResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     status_code=status.HTTP_200_OK,
 )
 async def delete_cassettes(
@@ -97,7 +117,7 @@ async def delete_cassettes(
 @router.patch(
     "/{cassette_id}/printed",
     response_model=Optional[CassetteModelScheema],
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def change_glass_printing_status(
     data: CassettePrinting, request: Request, db: AsyncSession = Depends(get_db)

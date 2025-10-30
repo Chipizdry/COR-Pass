@@ -57,6 +57,11 @@ class Settings(BaseSettings):
     scan_interval_seconds: int = 60
     base_path: str = "BASE_PATH"
     smb_enabled: bool = False
+    
+    # SIBIONICS CGM Integration
+    SIBIONICS_API_URL: str = "https://cgm-ce-uat.sisensing.com"
+    SIBIONICS_APP_KEY: str = "SIBIONICS_APP_KEY"
+    SIBIONICS_SECRET: str = "SIBIONICS_SECRET"
 
     class Config:
 

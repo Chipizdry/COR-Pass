@@ -12,7 +12,7 @@ from cor_pass.schemas import (
 )
 from cor_pass.repository import sample as sample_service
 
-from cor_pass.services.access import doctor_access
+from cor_pass.services.access import doctor_access, lab_assistant_or_doctor_access
 
 router = APIRouter(prefix="/samples", tags=["Samples"])
 
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/samples", tags=["Samples"])
 @router.post(
     "/create",
     response_model=CreateSampleWithDetails,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     status_code=status.HTTP_201_CREATED,
 )
 async def create_sample_for_case(
@@ -33,7 +33,7 @@ async def create_sample_for_case(
 
 
 @router.get(
-    "/{sample_id}", response_model=Sample, dependencies=[Depends(doctor_access)]
+    "/{sample_id}", response_model=Sample, dependencies=[Depends(lab_assistant_or_doctor_access)]
 )
 async def read_sample(sample_id: str, db: AsyncSession = Depends(get_db)):
     """Получаем данные о семпле"""
@@ -46,7 +46,7 @@ async def read_sample(sample_id: str, db: AsyncSession = Depends(get_db)):
 @router.put(
     "/archive/{sample_id}",
     response_model=Sample,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def archive(
     sample_id: str,
@@ -70,7 +70,7 @@ async def archive(
 @router.put(
     "/macrodescription/{sample_id}",
     response_model=Sample,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def update_sample_macrodescription(
     sample_id: str,
@@ -94,7 +94,7 @@ async def update_sample_macrodescription(
 @router.delete(
     "/delete",
     response_model=DeleteSampleResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     status_code=status.HTTP_200_OK,
 )
 async def delete_samples(
@@ -110,7 +110,7 @@ async def delete_samples(
 @router.patch(
     "/{sample_id}/print_glasses",
     response_model=Sample,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def print_all_sample_glasses(
     sample_id: str,
@@ -136,7 +136,7 @@ async def print_all_sample_glasses(
 @router.patch(
     "/{sample_id}/print_cassettes",
     response_model=Sample,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def print_all_sample_cassettes(
     sample_id: str,

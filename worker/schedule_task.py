@@ -319,13 +319,13 @@ async def send_vebus_soc_command(modbus_client: AsyncModbusTcpClient, battery_le
         await modbus_client.write_register(
             address=2901,  # адрес регистра VE.Bus SoC
             value=scaled_value,
-            slave =INVERTER_ID
+            slave=INVERTER_ID
         )
-        logger.debug(f"✅ VE.Bus SoC: {scaled_value} A (регистр 2901 = {scaled_value})")
+        logger.debug(f"✅ VE.Bus SoC: {battery_level_percent}% → регистр 2901 = {scaled_value}")
         return {"status": "ok"}
     except Exception as e:
         logger.error(
-            f" Unhandled error during periodic data collection: {e}",
+            f"Ошибка при отправке VE.Bus SoC команды: {e}",
             exc_info=True,
         )
         raise
@@ -346,11 +346,11 @@ async def send_dvcc_max_charge_current_command(modbus_client: AsyncModbusTcpClie
             register_value = value
         await modbus_client.write_register(address=2705, value=register_value, slave=slave)
 
-        logger.debug(f"✅ Установлен DVCC max charge current: {value} A (регистр 2705 = {register_value})")
+        logger.debug(f"✅ DVCC max charge current: {value}A → регистр 2705 = {register_value}")
         return {"status": "ok", "value": value}
     except Exception as e:
         logger.error(
-            f" Unhandled error during periodic data collection: {e}",
+            f"Ошибка при отправке DVCC команды: {e}",
             exc_info=True,
         )
         raise

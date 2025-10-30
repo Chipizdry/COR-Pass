@@ -181,7 +181,7 @@ async def get_patient_by_corid(db: AsyncSession, cor_id: str):
 async def _create_patient_internal(
     db: AsyncSession,
     patient_data: NewPatientRegistration,
-    doctor: Doctor,
+    doctor: Optional[Doctor] = None,
     user_id: Optional[str] = None,
     patient_cor_id_value: Optional[str] = None,
     send_email: bool = False,
@@ -189,6 +189,7 @@ async def _create_patient_internal(
 ) -> PatientCreationResponse:
     """
     Внутренняя вспомогательная функция для создания пациента.
+    doctor: Объект врача (опциональный) - если указан, создается связь врач-пациент в DoctorPatientStatus.
     user_id: ID пользователя, если пациент привязывается к существующему пользователю.
     patient_cor_id_value: Значение patient_cor_id, если оно определено заранее (например, от user.cor_id).
     send_email: Флаг для отправки email, если был создан новый пользователь.
@@ -242,12 +243,14 @@ async def _create_patient_internal(
     db.add(new_patient)
     await db.flush()
 
-    doctor_patient_status = DoctorPatientStatus(
-        patient_id=new_patient.id,
-        doctor_id=doctor.id,
-        status=PatientStatus.registered,
-    )
-    db.add(doctor_patient_status)
+    # Создаем связь врач-пациент только если передан врач
+    if doctor:
+        doctor_patient_status = DoctorPatientStatus(
+            patient_id=new_patient.id,
+            doctor_id=doctor.id,
+            status=PatientStatus.registered,
+        )
+        db.add(doctor_patient_status)
 
     clinic_patient_status = db_PatientClinicStatus(
         patient_id=new_patient.id,
@@ -270,12 +273,13 @@ async def _create_patient_internal(
 async def create_patient_linked_to_user(
     db: AsyncSession,
     patient_data: ExistingPatientRegistration,
-    doctor: Doctor,
+    doctor: Optional[Doctor],
     user_cor_id: str,
 ) -> PatientCreationResponse:
     """
     Создает пациента, связанного с существующим пользователем по его COR ID.
     Если пользователь не найден или уже имеет пациента, выбрасывается HTTPException.
+    Параметр doctor опциональный - если указан, создается связь врач-пациент.
     """
     existing_user = await repository_person.get_user_by_corid(user_cor_id, db)
     if not existing_user:
@@ -314,12 +318,15 @@ async def create_patient_linked_to_user(
     )
     db.add(new_patient)
     await db.flush()
-    doctor_patient_status = DoctorPatientStatus(
-        patient_id=new_patient.id,
-        doctor_id=doctor.id,
-        status=PatientStatus.registered,
-    )
-    db.add(doctor_patient_status)
+    
+    # Создаем связь врач-пациент только если передан врач
+    if doctor:
+        doctor_patient_status = DoctorPatientStatus(
+            patient_id=new_patient.id,
+            doctor_id=doctor.id,
+            status=PatientStatus.registered,
+        )
+        db.add(doctor_patient_status)
 
     clinic_patient_status = db_PatientClinicStatus(
         patient_id=new_patient.id,
@@ -333,11 +340,12 @@ async def create_patient_linked_to_user(
 
 
 async def create_patient_and_user_by_email(
-    db: AsyncSession, patient_data: NewPatientRegistration, doctor: Doctor
+    db: AsyncSession, patient_data: NewPatientRegistration, doctor: Optional[Doctor] = None
 ) -> PatientCreationResponse:
     """
     Создает нового пользователя и связанного с ним пациента.
     Если пользователь с таким email уже существует, выбрасывается HTTPException.
+    Параметр doctor опциональный - если указан, создается связь врач-пациент.
     """
     existing_user_by_email = await repository_person.get_user_by_email(
         patient_data.email, db
@@ -379,11 +387,12 @@ async def create_patient_and_user_by_email(
 
 
 async def create_standalone_patient(
-    db: AsyncSession, patient_data: NewPatientRegistration, doctor: Doctor
+    db: AsyncSession, patient_data: NewPatientRegistration, doctor: Optional[Doctor] = None
 ) -> PatientCreationResponse:
     """
     Создает пациента без привязки к существующему или новому пользователю.
     Patient_cor_id будет сгенерирован автоматически.
+    Параметр doctor опциональный - если указан, создается связь врач-пациент.
     """
     return await _create_patient_internal(
         db=db,

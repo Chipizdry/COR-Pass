@@ -17,6 +17,7 @@ class UserAccess:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden operation"
             )
+        return user
 
 
 class AdminAccess:
@@ -28,6 +29,7 @@ class AdminAccess:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden operation"
             )
+        return user
 
 
 class LawyerAccess:
@@ -56,6 +58,7 @@ class LawyerAccess:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Недостаточно прав для выполнения этой операции.",
             )
+        return user
 
 
 class DoctorAccess:
@@ -130,6 +133,7 @@ class EnergyManagerAccess:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Недостаточно прав для выполнения этой операции.",
             )
+        return user
 
 user_access = UserAccess([User.is_active])
 admin_access = AdminAccess([User.email])

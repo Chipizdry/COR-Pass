@@ -28,21 +28,11 @@ document.addEventListener("DOMContentLoaded", (event) => {
         return mimeToExt[mime] || "";
     }
 
-    const initUploadArea = () => {
-        uploadArea.innerHTML = (
-            `<div class="upload-box" id="uploadBox" tabindex="0">
-                <div class="upload-icon">
-                    <svg viewBox="0 0 24 24"><path d="M12 4v10M7 9l5-5 5 5"/><rect x="4" y="18" width="16" height="2" rx="1"/></svg>
-                </div>
-                <span>Перетягніть сюди свої файли<br><b>або скануйте</b></span>
-                <small class="note">до 5 файлів</small>
-                <input type="file" id="fileInput" multiple accept="image/*,.pdf" hidden>
-            </div>`
-        )
-    }
     const closeModal  = () => {
         uploadedFiles = []
         currentReferralId = null
+
+        uploadArea.innerHTML = ""
         document.querySelector('#caseDirection').classList.remove('open')
     }
     const sendFileRequest = async (file) => {
@@ -68,6 +58,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
                 required: true,
                 elementType: "select",
                 placeholder: "Оберіть вид",
+                defaultValue: "Патогістологія",
                 selectData: [
                     {
                         id: "Патогістологія",
@@ -188,27 +179,27 @@ document.addEventListener("DOMContentLoaded", (event) => {
             const formDataField = formData[data.field]
 
             if(data.elementType === "select"){
-                const selectData = data.selectData.reduce((selectDataString, data) => {
+                const selectData = data.selectData.reduce((selectDataString, selectData) => {
                     return selectDataString + (
-                        `<li data-v="${data.id}" class="${data.id === formDataField ? "selected" : ""}">
-                            ${data.label}
+                        `<li data-v="${selectData.id}" class="${[formDataField, data.defaultValue].includes(selectData.id) ? "selected" : ""}">
+                            ${selectData.label}
                         </li>`
                     )
                 }, '');
-                const defaultDataLabel = !formDataField ? "" : data.selectData.find(data => data.id === formDataField)?.label
+                const defaultDataLabel = !formDataField ? (data.defaultValue || "") : data.selectData.find(data => data.id === formDataField)?.label
 
                 formNODE.innerHTML += `
                 <div class="directorModalFormGroup ${data.required ? "required" : ""}">
                     <label htmlFor="${data.field}">${data.label} ${data.required ? '<span class="req">*</span>' : ''}</label>
                     <div class="directorModalFormGroup-select">
                         <div class="directorModalFormGroup-input input-box">
-                            <span class="label" style="color: ${ formDataField ? "#23155b" : "#a9a4c6"}">${defaultDataLabel || data.placeholder}</span>
+                            <span class="label" style="color: ${ (formDataField || data.defaultValue) ? "#23155b" : "#a9a4c6"}">${defaultDataLabel || data.placeholder}</span>
                         </div>
                         <ul class="directorModalFormGroup-list">
                             <li class="disabled">${data.placeholder}</li>
                             ${selectData}
                         </ul>
-                        <input type="hidden" id="${data.field}" value="${formDataField || ""}" name="${data.field}" ${data.required ? "required" : ""}>
+                        <input type="hidden" id="${data.field}" value="${formDataField  || data.defaultValue || ""}" name="${data.field}" ${data.required ? "required" : ""}>
                     </div>
                 </div>
                 `
@@ -270,41 +261,33 @@ document.addEventListener("DOMContentLoaded", (event) => {
             });
         });
     }
-    const showFiles = files => {
+    const showFiles = async files => {
         if(!files.length) {
             return;
         }
 
         const cutTo5Files = [...files].slice(0,5);
-        uploadArea.innerHTML = ""
 
-        if(uploadBox.parentElement) {
-            uploadBox.remove()
-        }
+        for (let i = 0; i < cutTo5Files.length; i++){
+            await new Promise((resolve) => {
+                const file = cutTo5Files[i];
+                const fileViewerWrapperNODE = document.createElement('div');
+                fileViewerWrapperNODE.className='thumb';
 
-        cutTo5Files.forEach((file)=>{
-            const fileViewerWrapperNODE = document.createElement('div');
-            fileViewerWrapperNODE.className='thumb';
+                const isPDF = file?.content_type?.includes('pdf') || file?.type?.includes('pdf');
+                const imgNODE = document.createElement('img');
 
-            if(cutTo5Files.length === 1){
-                fileViewerWrapperNODE.classList.add('full')
-            }
-
-
-            const isPDF = file?.content_type?.includes('pdf') || file?.type?.includes('pdf');
-            const imgNODE = document.createElement('img');
-
-            if(file.file_url){
-                fetch(`${API_BASE_URL}/api${file.file_url}`, {
-                    method: "GET",
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                    },
-                })
-                    .then(response => response.blob())
-                    .then(blob => {
-                        if(isPDF){
-                            fileViewerWrapperNODE.innerHTML += `
+                if(file.file_url){
+                    fetch(`${API_BASE_URL}/api${file.file_url}`, {
+                        method: "GET",
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                        },
+                    })
+                        .then(response => response.blob())
+                        .then(blob => {
+                            if(isPDF){
+                                fileViewerWrapperNODE.innerHTML += `
                             <div style="background: white; height: 100%; width: 100%">
                                 <embed
                                     src="${URL.createObjectURL(blob)}#toolbar=0"
@@ -313,20 +296,23 @@ document.addEventListener("DOMContentLoaded", (event) => {
                                 ></embed>
                             </div>
                             `
-                            uploadArea.appendChild(fileViewerWrapperNODE);
-                            return;
-                        }
+                                uploadArea.prepend(fileViewerWrapperNODE);
+                                resolve(true)
+                                return;
+                            }
 
-                        imgNODE.src = URL.createObjectURL(blob);
-                        imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
-                        fileViewerWrapperNODE.appendChild(imgNODE);
-                        uploadArea.appendChild(fileViewerWrapperNODE);
-                    })
-                return;
-            }
+                            imgNODE.src = URL.createObjectURL(blob);
+                            imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
+                            fileViewerWrapperNODE.appendChild(imgNODE);
+                            uploadArea.prepend(fileViewerWrapperNODE);
 
-            if(isPDF){
-                fileViewerWrapperNODE.innerHTML += `
+                            resolve(true)
+                        })
+                    return;
+                }
+
+                if(isPDF){
+                    fileViewerWrapperNODE.innerHTML += `
                             <div style="background: white; height: 100%; width: 100%">
                                 <embed
                                     src="${URL.createObjectURL(file)}#toolbar=0"
@@ -335,16 +321,20 @@ document.addEventListener("DOMContentLoaded", (event) => {
                                 ></embed>
                             </div>
                             `
-                uploadArea.appendChild(fileViewerWrapperNODE);
-                return;
-            }
+                    uploadArea.prepend(fileViewerWrapperNODE);
+                    resolve(true)
+                    return;
+                }
 
 
-            imgNODE.src=URL.createObjectURL(file);
-            imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
-            fileViewerWrapperNODE.appendChild(imgNODE);
-            uploadArea.appendChild(fileViewerWrapperNODE);
-        });
+                console.log('HERE')
+                imgNODE.src=URL.createObjectURL(file);
+                imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
+                fileViewerWrapperNODE.appendChild(imgNODE);
+                uploadArea.prepend(fileViewerWrapperNODE);
+                resolve(true)
+            })
+        }
     }
     const submitCaseDirection = (e) => {
         document.querySelector('#caseDirectionSubmit')?.addEventListener('click', (e) => {
@@ -352,6 +342,11 @@ document.addEventListener("DOMContentLoaded", (event) => {
             let ok= true;
 
             document.querySelectorAll('.directorModalFormGroup.required').forEach( box =>{
+
+                const formNODE = document.querySelector('#directionForm');
+                const formData = Object.fromEntries(new FormData(formNODE).entries());
+
+                console.log(formData, "formData")
                 if(!box.querySelector('input').value){
                     box.querySelector('.input-box').classList.add('error');
                     ok = false;
@@ -416,8 +411,6 @@ document.addEventListener("DOMContentLoaded", (event) => {
             })
                 .then(res => res.blob())
                 .then((blob) => {
-                    uploadArea.innerHTML = ""
-
                     const imgNODE = document.createElement('img');
 
                     const fileViewerWrapperNODE = document.createElement('div');
@@ -427,17 +420,15 @@ document.addEventListener("DOMContentLoaded", (event) => {
                     imgNODE.src = URL.createObjectURL(blob);
                     imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
                     fileViewerWrapperNODE.appendChild(imgNODE);
-                    uploadArea.appendChild(fileViewerWrapperNODE);
+                    uploadArea.prepend(fileViewerWrapperNODE);
 
 
-                    console.log(blob, "blob")
-                    console.log(blob.type, "blob")
                     const file = new File([blob], `scan-${new Date().getTime()}.${getExtensionFromBlob(blob)}`, {
                         type: blob.type || "application/octet-stream",
                         lastModified: Date.now(),
                     });
 
-                    uploadedFiles = [...uploadedFiles, file]
+                    uploadedFiles = [file, ...uploadedFiles]
                 })
         })
     }
@@ -460,12 +451,12 @@ document.addEventListener("DOMContentLoaded", (event) => {
         uploadBox?.addEventListener('drop', e => {
             e.preventDefault();
             uploadBox.classList.remove('hover');
-            showFiles(e.dataTransfer.files)
             uploadedFiles = [...uploadedFiles, ...e.dataTransfer.files]
+            showFiles(e.dataTransfer.files)
         });
         fileInput?.addEventListener('change',e => {
+            uploadedFiles = [ ...uploadedFiles, ...e.target.files ]
             showFiles(e.target.files)
-            uploadedFiles = [...uploadedFiles, ...e.target.files]
         });
     }
     const openDirectionModal = () => {
@@ -473,7 +464,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
             uploadedFiles = []
             currentReferralId = null
             document.querySelector('#caseDirection').classList.add('open')
-            fetch(`${API_BASE_URL}/api/cases/referrals/${cases[lastActiveCaseIndex].id}`, {
+            fetch(`${API_BASE_URL}/api/cases/referrals/${cases[lastActiveCaseIndex]?.id}`, {
                 method: "GET",
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -488,6 +479,8 @@ document.addEventListener("DOMContentLoaded", (event) => {
                     return res.json()
                 })
                 .then(refferalData => {
+                    uploadArea.innerHTML = ""
+
                     currentReferralId = refferalData.id
                     drawForm( refferalData )
                     selectPicker();

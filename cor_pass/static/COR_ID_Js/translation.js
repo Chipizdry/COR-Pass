@@ -1,6 +1,4 @@
-
-
-function setLanguage(language) {
+/* function setLanguage(language) {
     const elements = document.querySelectorAll("[data-translate]");
     elements.forEach(element => {
         const key = element.getAttribute("data-translate");
@@ -37,9 +35,6 @@ function setLanguage(language) {
     localStorage.setItem('selectedLanguage', language);
 }
 
-
-
-
 function switchLanguage(language) {
     setLanguage(language);
 }
@@ -52,10 +47,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         userLang.startsWith('uk') ? 'uk' :'ru';
     setLanguage(defaultLang);
 });
+*/
 
-
-
-
+/* Словник має йти перед функціями, які його використовують */
 const translations = {
     ru: {
         title: "Авторизация",
@@ -84,7 +78,6 @@ const translations = {
         "confirm-button": "Подтвердить",
         "send-again-countdown": "Отправить ещё через {countdown}с",
         "send-code-email": "Отправить код на имейл",
-        "error-message": "Произошла ошибка при отправке кода подтверждения на почту.",
         "back-link-text": "<<<назад<<<",
         "password-placeholder": "Введите пароль",
         "confirm-password-placeholder": "Подтвердите пароль",
@@ -122,7 +115,7 @@ const translations = {
         "glass": "Стекла",
         "conclusion": "Заключение",
         "exploration": "Исследования",
-        "currentCases": "Текущее кейсы",
+        "currentCases": "Текущие кейсы",
         "sign": "Подписать",
         "signature": "Подпись",
         "printReport": "Печать исследования",
@@ -176,7 +169,12 @@ const translations = {
         "icdCode": "Код ICD",
         "updateReport": "Обновить репорт",
         "conclusionUpdated": "Заключение успешно обновлено",
-        "noReferrals": "У вас нет ни одного направления"
+        "noReferrals": "У вас нет ни одного направления",
+        "searchPlaceholder": "Поиск",
+        "saveButton": "Сохранить",
+        "microdesSuccess": "Микроописание успешно обновлено",
+        "microdesDenial": "Чтобы записать микроописание, вы должны быть владельцем кейса.",
+        "upload": "Загрузить"
     },
     en: {
         title: "Authorization",
@@ -205,7 +203,6 @@ const translations = {
         "confirm-button": "Confirm",
         "send-again-countdown": "Send again in {countdown}s",
         "send-code-email": "Send code to email",
-        "error-message": "An error occurred while sending the verification code to your email.",
         "back-link-text": "<<<back<<<",
         "password-placeholder": "Enter password",
         "confirm-password-placeholder": "Confirm password",
@@ -282,8 +279,8 @@ const translations = {
         "painting": "Staining Methods:",
         "macrodescription": "Macrodescription: ",
         "microdescription": "Microdescription: ",
-        "macrodes_short": "Макроопис: ",
-        "microdes_short": "Мікроопис: ",
+        "macrodes_short": "Macrodescription: ",
+        "microdes_short": "Microdescription: ",
         "immunohistochemicalProfile": "Immunohistochemical Profile: ",
         "molecularGeneticProfile": "Molecular-genetic profile: ",
         "pathomorphologicalDiagnosis": "Pathohistological Diagnosis: ",
@@ -297,7 +294,12 @@ const translations = {
         "icdCode": "Code ICD",
         "updateReport": "Update Report",
         "conclusionUpdated": "Conclusion successfully updated",
-        "noReferrals": "You have no referrals"
+        "noReferrals": "You have no referrals",
+        "searchPlaceholder": "Search",
+        "saveButton": "Save",
+        "microdesSuccess": "Microdescription successfully updated",
+        "microdesDenial": "To save a microdescription, you must be the case owner.",
+        "upload": "Upload"
     },
     zh: {
         title: "授权",
@@ -326,7 +328,6 @@ const translations = {
         "confirm-button": "确认",
         "send-again-countdown": "{countdown}秒后再发送",
         "send-code-email": "发送验证码到邮箱",
-        "error-message": "发送验证码到您的邮箱时出错。",
         "back-link-text": "<<<返回<<<",
         "password-placeholder": "输入密码",
         "confirm-password-placeholder": "确认密码",
@@ -418,7 +419,12 @@ const translations = {
         "icdCode": "ICD 编码",
         "updateReport": "更新报告",
         "conclusionUpdated": "结论已成功更新",
-        "noReferrals": "您没有任何转诊单"
+        "noReferrals": "您没有任何转诊单",
+        "searchPlaceholder": "搜索",
+        "saveButton": "保存",
+        "microdesSuccess": "微描述已成功更新",
+        "microdesDenial": "要保存微描述，您必须是案例所有者。",
+        "upload": "上传"
     },
     uk: {
         title: "Авторизація",
@@ -447,7 +453,6 @@ const translations = {
         "confirm-button": "Підтвердити",
         "send-again-countdown": "Надіслати знову через {countdown}с",
         "send-code-email": "Надіслати код на електронну пошту",
-        "error-message": "Сталася помилка під час відправлення коду підтвердження на електронну пошту.",
         "back-link-text": "<<<назад<<<",
         "password-placeholder": "Введіть пароль",
         "confirm-password-placeholder": "Підтвердіть пароль",
@@ -457,7 +462,7 @@ const translations = {
         'loginSuccess': 'Вхід виконано успішно!',
         'password-changed': 'Пароль змінено!',
         'login-error': 'Помилка входу.',
-        'recovery-button': 'Восстановить доступ',
+        'recovery-button': 'Відновити доступ',
         "recovery-modal-title": "Відновлення доступу",
         "recovery-modal-select-method": "Виберіть спосіб відновлення:",
         "recovery-modal-super-password-btn": "Ввести супер-пароль",
@@ -467,7 +472,7 @@ const translations = {
         "recovery-modal-recovery-file-label": "Файл відновлення:",
         "recovery-modal-send-btn": "Надіслати",
         "recovery-modal-choose-file": "Оберіть файл",
-        "recovery-modal-no-file": "Файл не вибран",
+        "recovery-modal-no-file": "Файл не вибрано",
         "no-account-text": "Немає акаунта?",
         "password_placeholder": "Пароль",
         "gender-label": "Стать:",
@@ -485,7 +490,7 @@ const translations = {
         "conclusion": "Заключення",
         "exploration": "Дослідження",
         "currentCases": "Поточні кейси",
-        "sign": "Підисати",
+        "sign": "Підписати",
         "signature": "Підпис",
         "printReport": "Друкувати дослідження",
         "createDoctorSign": "Створити підпис",
@@ -525,7 +530,7 @@ const translations = {
         "microdescription": "Мікроскопічний опис: ",
         "macrodes_short": "Макроопис: ",
         "microdes_short": "Мікроопис: ",
-        "immunohistochemicalProfile": "Имуногістохімічний профіль: ",
+        "immunohistochemicalProfile": "Імуногістохімічний профіль: ",
         "molecularGeneticProfile": "Молекулярно-генетичний профіль: ",
         "pathomorphologicalDiagnosis": "Патогістологічний висновок: ",
         "comment": "Коментар: ",
@@ -538,6 +543,131 @@ const translations = {
         "icdCode": "Код ICD",
         "updateReport": "Оновити репорт",
         "conclusionUpdated": "Заключення успішно оновлено",
-        "noReferrals": "У вас немає жодного направлення"
+        "noReferrals": "У вас немає жодного направлення",
+        "searchPlaceholder": "Пошук",
+        "saveButton": "Зберегти",
+        "microdesSuccess": "Мікроопис успішно оновлений",
+        "microdesDenial": "Для того, щоб записати мікроопис, Ви повинні бути власником кейсу.",
+        "upload": "Завантажити"
     },
 }
+
+
+ function getSavedLang() {
+   const saved = localStorage.getItem('selectedLanguage');
+   if (saved && translations?.[saved]) return saved;
+
+   const userLang = String(navigator.language || navigator.userLanguage || 'ru').toLowerCase();
+
+  // базовий код до дефісу
+  const base = userLang.split('-')[0];
+
+let picked =
+    base.startsWith('uk') ? 'uk' :
+    base.startsWith('en') ? 'en' :
+    base.startsWith('zh') ? 'zh' :
+    base.startsWith('ru') ? 'ru' : 'ru';
+
+    return picked;
+}
+
+function setSavedLang(lang) {
+   localStorage.setItem('selectedLanguage', lang);
+}
+
+// переклад одного вузла івсіх його нащадків з data-translate
+function translateNodeDeep(node, language) {
+  if (!(node instanceof HTMLElement)) return;
+  const dict = translations?.[language];
+  if (!dict) return;
+
+  const list = node.matches?.('[data-translate]')
+    ? [node, ...node.querySelectorAll('[data-translate]')]
+    : node.querySelectorAll?.('[data-translate]');
+
+  list?.forEach((el) => {
+    const key = el.getAttribute('data-translate');
+    const t = dict[key];
+    if (!t) return;
+
+    const tag = el.tagName;
+    const type = (el.getAttribute('type') || '').toLowerCase();
+
+    if (tag === 'INPUT' || tag === 'TEXTAREA') {
+      if (type === 'text' || type === 'password' || type === 'email' || type === '') {
+        el.placeholder = t;
+      } else if (type === 'button' || type === 'submit') {
+        el.value = t;
+      } else {
+        el.placeholder = t; //на випадок кастомних типі
+      }
+    } else if (tag === 'SELECT') {
+      const ph = el.querySelector('option[disabled][selected]');
+      if (ph) ph.textContent = t;
+    } else if (tag === 'OPTION') {
+      el.textContent = t;
+    } else {
+      el.textContent = t;
+    }
+  });
+}
+
+// глобальний переклад ст
+function setLanguage(language) {
+  if (!translations?.[language]) return;
+  document.querySelectorAll('[data-translate]').forEach((el) => translateNodeDeep(el, language));
+  setSavedLang(language);
+}
+
+// якщо все зламається
+if (!window.setLanguage) {
+  window.setLanguage = function(){};
+}
+
+// публічні API
+function switchLanguage(language) { setLanguage(language); }
+function applySavedLanguage() { setLanguage(getSavedLang()); }
+
+// автопереклад динамічно доданих ел
+let __langObserverStarted = false;
+function startTranslationObserver() {
+  if (__langObserverStarted) return;
+  __langObserverStarted = true;
+
+  const observer = new MutationObserver((mutations) => {
+    const lang = getSavedLang();
+    mutations.forEach((m) => m.addedNodes.forEach((node) => translateNodeDeep(node, lang)));
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// безпечна ініціалізація при пізньому підключеннні
+(function safeLateInit() {
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      applySavedLanguage();
+      startTranslationObserver();
+    } finally {
+      document.documentElement.classList.remove('i18n-loading');
+    }
+  });
+})();
+
+// працюватиме завжди
+try {
+  applySavedLanguage();
+  window.__i18nReady = true;
+  document.dispatchEvent(new Event('i18n:ready'));
+} catch (e) {
+  console.error('i18n failed:', e);
+  window.__i18nReady = false;
+}
+
+// експорт в глобальний скоуп
+window.getSavedLang = getSavedLang;
+window.setSavedLang = setSavedLang;
+window.setLanguage = setLanguage;
+window.switchLanguage = switchLanguage;
+window.applySavedLanguage = applySavedLanguage;
+window.startTranslationObserver = startTranslationObserver;

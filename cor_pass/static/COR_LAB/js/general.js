@@ -185,14 +185,12 @@ const getItemCountByAllKeys = (entity, keys = []) => {
     }, {});
 }
 
-
 const showTextareaButton = (textareaId) => {
     const textareaNODE = document.querySelector(`#${textareaId}`);
     textareaNODE?.addEventListener('focus', () => {
         textareaNODE.nextElementSibling.classList.add('open');
     })
 }
-
 
 const getAge = (birthDate) => {
     const today = new Date();
@@ -212,7 +210,31 @@ const getAge = (birthDate) => {
     return age;
 }
 
-
 const isCaseIsClosed = (grossingStatus) => {
     return ["IN_SIGNING_STATUS", "COMPLETED"].includes(grossingStatus)
 }
+
+const searchHeader = () => {
+    document.querySelector('.search-container input').addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            const value = event.target.value.trim();
+
+            fetch(`${API_BASE_URL}/api/doctor/search?query=${value}`, {
+                method: "GET",
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                },
+            })
+                .then(response => response.json())
+                .then(response => {
+                    const currentCase = response.data.all_cases.find(({case_code}) => value.toLowerCase() === case_code.toLowerCase())
+                    console.log(currentCase, "currentCase")
+                    window.location.href = `/static/COR_LAB/lab.html?userCorId=${currentCase.patient_id}&caseCode=${currentCase.case_code}`
+                })
+        }
+    });
+
+}
+
+searchHeader()

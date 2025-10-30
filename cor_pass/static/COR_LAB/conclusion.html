@@ -5,9 +5,40 @@
     <title>Title</title>
     <link rel="stylesheet" href="./css/reset.css">
     <link rel="stylesheet" href="./css/general.css">
+    <link rel="stylesheet" href="./css/header.css">
+
+    <!-- приховуємо сторінку, щоб переклалось без FOUC -->
+    <style>
+        html.i18n-loading body {
+            visibility: hidden;
+        }
+    </style>
+
+    <script>
+        document.documentElement.classList.add('i18n-loading');
+    </script>
+
+    <!-- Захист від зависання і пустої сторінки! -->
+    <script>
+        function removeI18nMask() {
+              document.documentElement.classList.remove('i18n-loading');
+        }
+            // Якщо translation.js викликає applySavedLanguage() — знімай після неї
+        document.addEventListener('i18n:ready', removeI18nMask);
+            // fallback: знімаємо при повному завантаженні сторінки
+        window.addEventListener('load', removeI18nMask, { once: true });
+            // запасний таймер, якщо переклад завис
+        setTimeout(removeI18nMask, 2500);
+    </script>
+    <!-- підключаємо переклад та видаляємо зайвий клас -->
+    <script src="../COR_ID_Js/translation.js"></script>
+
+    <noscript>
+        <style>html.i18n-loading body { visibility: visible !important; }</style>
+    </noscript>
+
     <link rel="stylesheet" href="./css/infoPlate.css">
     <link rel="stylesheet" href="./css/comments.css">
-    <link rel="stylesheet" href="./css/header.css">
     <link rel="stylesheet" href="./css/glass.css">
     <link rel="stylesheet" href="./css/conclusion.css">
     <link rel="stylesheet" href="./css/doctorSign.css">
@@ -27,7 +58,7 @@
                 </a>
             </div>
             <div class="search-container">
-                <input type="text" placeholder="Search">
+                <input type="text" placeholder="Search" data-translate="searchPlaceholder">
                 <svg class="search-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <path fill-rule="evenodd" clip-rule="evenodd" d="M11.2 5.60001C8.10722 5.60001 5.60001 8.10722 5.60001 11.2C5.60001 14.2928 8.10722 16.8001 11.2 16.8001C12.7087 16.8001 14.0781 16.2035 15.085 15.2333C15.1061 15.2058 15.1292 15.1794 15.1544 15.1543C15.1795 15.1291 15.2059 15.106 15.2334 15.0849C16.2035 14.078 16.8 12.7087 16.8 11.2C16.8 8.10722 14.2928 5.60001 11.2 5.60001ZM16.8256 15.6942C17.8109 14.4624 18.4001 12.9 18.4001 11.2C18.4001 7.22357 15.1765 4 11.2 4C7.22356 4 4 7.22357 4 11.2C4 15.1765 7.22356 18.4001 11.2 18.4001C12.9001 18.4001 14.4625 17.8109 15.6942 16.8255L18.6344 19.7657C18.9468 20.0781 19.4533 20.0781 19.7658 19.7657C20.0782 19.4533 20.0782 18.9467 19.7658 18.6343L16.8256 15.6942Z" fill="#B1A1DA"/>
                 </svg>
@@ -101,12 +132,6 @@
     </div>
 </div>
 
-<script src="../COR_ID_Js/translation.js"></script>
-<script>
-    // "хелпер" для перекладу
-    const applySavedLanguage = () =>
-        setLanguage(localStorage.getItem('selectedLanguage') || 'uk');
-</script>
 <script src="../COR_ID_Js/general_fun.js"></script>
 <script src="./js/general.js"></script>
 <script src="./js/alert.js"></script>
@@ -119,6 +144,7 @@
     let currentCaseOwner = null;
     let currentCase = null;
     let currentReport = null;
+    let currentGlasses = null;
     let currentAllGlasses = null;
     let activeGlasses = []
 
@@ -143,7 +169,6 @@
         reportOwnerInfoNODE.innerHTML = ""
 
         if (hasOwner) {
-            console.log('11111')
             if (!caseOwner?.is_case_owner || caseIsClosed) {
                 const div = document.createElement('div')
                 div.innerHTML = `<span data-translate="owner">Власник: </span>${getShortName(caseOwner.last_name, caseOwner.first_name, caseOwner.middle_name)}`;
@@ -155,8 +180,6 @@
             }
 
             if (caseOwner?.is_case_owner && !caseIsClosed) {
-                console.log('333333')
-
                 const div = document.createElement('div')
                 div.innerHTML = `<span data-translate="ownCase">Власний кейс</span>`;
                 div.classList = "caseBtnOwner my";
@@ -291,7 +314,7 @@
             <div class="conclusionFormGroupLabel" data-translate="macrodes_short">
                 Макроопис
             </div>
-            <input type="text" class="conclusionFormGroupInput" name="report_macrodescription" value="${caseOwnerReport?.report_macrodescription || currentReport.concatenated_macro_description || ""}">
+            <textarea class="conclusionFormGroupInput" name="report_macrodescription" style="height: 150px;resize: none">${caseOwnerReport?.report_macrodescription || currentReport.concatenated_macro_description || ""}</textarea>
         </div>
         <div class="conclusionFormGroup"  style="${!isMyCase ? disabledStyle : ""}">
             <div class="conclusionFormGroupLabel" data-translate="microdes_short">
@@ -452,7 +475,7 @@
                     .then(caseData => {
                         const {report_details, all_glasses_for_last_case, case_owner, last_case_for_report} = caseData;
 
-                        document.querySelector('.caseItem.active').classList.remove('active')
+                        document.querySelector('.caseItem.active')?.classList.remove('active')
                         caseNewNODE.classList.add('active')
 
                         reportGlassWrapperNODE.innerHTML = ""
@@ -463,7 +486,7 @@
                         currentUserCorId = last_case_for_report.patient_id
 
                         setReport(report_details, last_case_for_report, case_owner);
-                        setReportGlasses(all_glasses_for_last_case, report_details.attached_glasses)
+                        setReportGlasses(all_glasses_for_last_case, report_details.attached_glasses, case_owner)
                         changeUrlParams()
 
                         caseLabelNode.innerHTML = last_case_for_report.case_code

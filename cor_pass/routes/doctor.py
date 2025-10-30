@@ -56,9 +56,15 @@ from cor_pass.repository.patient import (
 )
 from cor_pass.schemas import (
     ActionRequest,
+    AddDoctorCertificateRequest,
+    AddDoctorClinicAffiliationRequest,
+    AddDoctorDiplomaRequest,
     CaseCloseResponse,
     CaseFinalReportPageResponse,
     CaseIDReportPageResponse,
+    CertificateResponse,
+    ClinicAffiliationResponse,
+    DiplomaResponse,
     ExistingPatientRegistration,
     GetAllPatientsResponce,
     InitiateSignatureResponse,
@@ -85,6 +91,8 @@ from cor_pass.schemas import (
     SearchResultPatientOverview,
     SessionLoginStatus,
     SignReportRequest,
+    SimpleDoctorCreate,
+    SimpleDoctorResponse,
     SingleCaseExcisionPageResponse,
     SingleCaseGlassPageResponse,
     StatusResponse,
@@ -109,6 +117,36 @@ from cor_pass.services.search_token_generator import generate_ngrams
 from cor_pass.services.websocket import DEEP_LINK_SCHEME, SESSION_TTL_MINUTES, _broadcast_status, _is_expired, _load_session
 
 router = APIRouter(prefix="/doctor", tags=["Doctor"])
+
+
+async def get_current_medical_staff(db: AsyncSession, user: User):
+    """
+    Возвращает объект Doctor или LabAssistant для текущего пользователя.
+    Используется в роутах с lab_assistant_or_doctor_access.
+    Возвращает кортеж: (staff_object, staff_cor_id)
+    """
+    # Сначала проверяем, врач ли это
+    doctor = await get_doctor(db=db, doctor_id=user.cor_id)
+    if doctor:
+        return doctor, doctor.doctor_id
+    
+    # Если не врач, проверяем лаборанта
+    from sqlalchemy import select
+    from cor_pass.database.models import LabAssistant
+    
+    lab_assistant_query = select(LabAssistant).where(
+        LabAssistant.lab_assistant_cor_id == user.cor_id
+    )
+    lab_assistant = await db.scalar(lab_assistant_query)
+    
+    if lab_assistant:
+        return lab_assistant, lab_assistant.lab_assistant_cor_id
+    
+    # Если ни врач, ни лаборант - ошибка
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="User is neither doctor nor lab assistant"
+    )
 
 
 @router.post(
@@ -184,6 +222,319 @@ async def signup_doctor(
     return doctor_response
 
 
+@router.post(
+    "/v1/signup-doctor-basic",
+    response_model=SimpleDoctorResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(user_access)],
+)
+async def create_doctor_basic(
+    doctor_data: SimpleDoctorCreate = Body(...),
+    current_user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    **Создание врача без дополнительных документов**\n
+    
+    Уровень доступа:
+    - Текущий авторизованный пользователь
+    
+    :param doctor_data: Основные данные врача
+    :param db: Сессия базы данных
+    :return: Созданный врач
+    :rtype: SimpleDoctorResponse
+    """
+    exist_doctor = await get_doctor(db=db, doctor_id=current_user.cor_id)
+    if exist_doctor:
+        logger.debug(f"{current_user.cor_id} doctor already exist")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, 
+            detail="Doctor account already exists"
+        )
+
+    try:
+        from cor_pass.database.models import Doctor, Doctor_Status
+        from datetime import timedelta
+        
+        doctor = Doctor(
+            doctor_id=current_user.cor_id,
+            work_email=doctor_data.work_email,
+            phone_number=doctor_data.phone_number,
+            first_name=doctor_data.first_name,
+            middle_name=doctor_data.middle_name,
+            last_name=doctor_data.last_name,
+            scientific_degree=doctor_data.scientific_degree,
+            date_of_last_attestation=doctor_data.date_of_last_attestation,
+            passport_code=doctor_data.passport_code,
+            taxpayer_identification_number=doctor_data.taxpayer_identification_number,
+            place_of_registration=doctor_data.place_of_registration,
+            date_of_next_review=datetime.now() + timedelta(days=180),
+            status=Doctor_Status.pending,
+        )
+
+        db.add(doctor)
+        await db.commit()
+        await db.refresh(doctor)
+
+        doctor_response = SimpleDoctorResponse(
+            id=doctor.id,
+            doctor_cor_id=doctor.doctor_id,
+            work_email=doctor.work_email,
+            phone_number=doctor.phone_number,
+            first_name=doctor.first_name,
+            middle_name=doctor.middle_name,
+            last_name=doctor.last_name,
+            scientific_degree=doctor.scientific_degree,
+            date_of_last_attestation=doctor.date_of_last_attestation,
+            status=doctor.status,
+            place_of_registration=doctor.place_of_registration,
+            passport_code=doctor.passport_code,
+            taxpayer_identification_number=doctor.taxpayer_identification_number,
+        )
+
+        return doctor_response
+
+    except IntegrityError as e:
+        logger.error(f"Database integrity error: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database error. Email may already be in use."
+        )
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred during doctor creation.",
+        )
+
+
+@router.post(
+    "/v1/add-diploma",
+    response_model=DiplomaResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(user_access)],
+)
+async def add_doctor_diploma(
+    request_data: AddDoctorDiplomaRequest = Body(...),
+    current_user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    **Добавление диплома к существующему врачу**\n
+    
+    Уровень доступа:
+    - Текущий авторизованный пользователь
+    
+    :param request_data: COR-ID врача и данные диплома
+    :param db: Сессия базы данных
+    :return: Созданный диплом
+    :rtype: DiplomaResponse
+    """
+    doctor = await get_doctor(db=db, doctor_id=request_data.doctor_cor_id)
+    if not doctor:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Doctor not found"
+        )
+    
+    if doctor.doctor_id != current_user.cor_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only add diplomas to your own doctor account"
+        )
+
+    try:
+        from cor_pass.database.models import Diploma
+        
+        diploma = Diploma(
+            doctor_id=doctor.doctor_id,
+            date=request_data.diploma.date,
+            series=request_data.diploma.series,
+            number=request_data.diploma.number,
+            university=request_data.diploma.university,
+        )
+        
+        db.add(diploma)
+        await db.commit()
+        await db.refresh(diploma)
+
+        return DiplomaResponse(
+            id=diploma.id,
+            date=diploma.date,
+            series=diploma.series,
+            number=diploma.number,
+            university=diploma.university,
+            file_data=None,
+        )
+
+    except IntegrityError as e:
+        logger.error(f"Database integrity error: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database error. Diploma may already exist."
+        )
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred while adding diploma.",
+        )
+
+
+@router.post(
+    "/v1/add-certificate",
+    response_model=CertificateResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(user_access)],
+)
+async def add_doctor_certificate(
+    request_data: AddDoctorCertificateRequest = Body(...),
+    current_user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    **Добавление сертификата к существующему врачу**\n
+    
+    Уровень доступа:
+    - Текущий авторизованный пользователь
+    
+    :param request_data: COR-ID врача и данные сертификата
+    :param db: Сессия базы данных
+    :return: Созданный сертификат
+    :rtype: CertificateResponse
+    """
+    doctor = await get_doctor(db=db, doctor_id=request_data.doctor_cor_id)
+    if not doctor:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Doctor not found"
+        )
+    
+    if doctor.doctor_id != current_user.cor_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only add certificates to your own doctor account"
+        )
+
+    try:
+        from cor_pass.database.models import Certificate
+        
+        certificate = Certificate(
+            doctor_id=doctor.doctor_id,
+            date=request_data.certificate.date,
+            series=request_data.certificate.series,
+            number=request_data.certificate.number,
+            university=request_data.certificate.university,
+        )
+        
+        db.add(certificate)
+        await db.commit()
+        await db.refresh(certificate)
+
+        return CertificateResponse(
+            id=certificate.id,
+            date=certificate.date,
+            series=certificate.series,
+            number=certificate.number,
+            university=certificate.university,
+            file_data=None,
+        )
+
+    except IntegrityError as e:
+        logger.error(f"Database integrity error: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database error. Certificate may already exist."
+        )
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred while adding certificate.",
+        )
+
+
+@router.post(
+    "/v1/add-clinic-affiliation",
+    response_model=ClinicAffiliationResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(user_access)],
+)
+async def add_doctor_clinic_affiliation(
+    request_data: AddDoctorClinicAffiliationRequest = Body(...),
+    current_user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    **Добавление привязки к клинике для существующего врача**\n
+    
+    Уровень доступа:
+    - Текущий авторизованный пользователь
+    
+    :param request_data: COR-ID врача и данные о клинике
+    :param db: Сессия базы данных
+    :return: Созданная запись о привязке к клинике
+    :rtype: ClinicAffiliationResponse
+    """
+
+    doctor = await get_doctor(db=db, doctor_id=request_data.doctor_cor_id)
+    if not doctor:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Doctor not found"
+        )
+    
+    if doctor.doctor_id != current_user.cor_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only add clinic affiliations to your own doctor account"
+        )
+
+    try:
+        from cor_pass.database.models import ClinicAffiliation
+        
+        clinic_affiliation = ClinicAffiliation(
+            doctor_id=doctor.doctor_id,
+            clinic_name=request_data.clinic_affiliation.clinic_name,
+            department=request_data.clinic_affiliation.department,
+            position=request_data.clinic_affiliation.position,
+            specialty=request_data.clinic_affiliation.specialty,
+        )
+        
+        db.add(clinic_affiliation)
+        await db.commit()
+        await db.refresh(clinic_affiliation)
+
+        return ClinicAffiliationResponse(
+            id=clinic_affiliation.id,
+            clinic_name=clinic_affiliation.clinic_name,
+            department=clinic_affiliation.department,
+            position=clinic_affiliation.position,
+            specialty=clinic_affiliation.specialty,
+        )
+
+    except IntegrityError as e:
+        logger.error(f"Database integrity error: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Database error. Clinic affiliation may already exist."
+        )
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred while adding clinic affiliation.",
+        )
+
+
 @router.post("/doctors/{doctor_cor_id}/photo", dependencies=[Depends(user_access)])
 async def upload_doctor_photo(
     doctor_cor_id: str,
@@ -222,7 +573,7 @@ async def upload_certificate(
 
 @router.get(
     "/patients",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     response_model=GetAllPatientsResponce,
 )
 async def get_doctor_patients(
@@ -242,19 +593,23 @@ async def get_doctor_patients(
     sex: Optional[str] = Query(None, description="Фильтр по полу (варианты:'M','F')"),
     sort_by: Optional[str] = Query(
         "change_date",
-        description="Сортировка по полю (варианты: change_date, birth_date)",
+        description="Сортировка по полю (варианты: change_date, birth_date) ",
     ),
     sort_order: Optional[str] = Query("desc", description="Сортировка (asc или desc)"),
     skip: int = Query(1, ge=1, description="Страницы (1-based index)"),
-    limit: int = Query(10, ge=1, le=100, description="К-ство на страницу"),
+    limit: int = Query(50, ge=1, le=100, description="К-ство на страницу"),
 ):
-    doctor = None
+    # Получаем объект медперсонала (врач или лаборант)
+    staff_object = None
     if current_doctor:
+        # Проверяем, что это именно врач (у лаборанта нет смысла в current_doctor фильтре)
         doctor = await get_doctor(db=db, doctor_id=current_user.cor_id)
         if not doctor:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Doctor not found"
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="Lab assistants cannot filter by current_doctor. Only doctors can use this filter."
             )
+        staff_object = doctor
 
     doctor_status_filters = None
     if doctor_patient_status:
@@ -278,7 +633,7 @@ async def get_doctor_patients(
 
     response = await get_patients_with_optional_status(
         db=db,
-        doctor=doctor,
+        doctor=staff_object,
         doctor_status_filters=doctor_status_filters,
         clinic_status_filters=clinic_status_filters,
         sex_filters=sex,
@@ -292,7 +647,7 @@ async def get_doctor_patients(
 
 @router.get(
     "/patients/{patient_cor_id}",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     response_model=PatientDecryptedResponce,
 )
 async def get_single_patient(
@@ -300,11 +655,9 @@ async def get_single_patient(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(auth_service.get_current_user),
 ):
+    # Для этого роута doctor не используется в repository, поэтому можно передать None
     doctor = await get_doctor(db=db, doctor_id=current_user.cor_id)
-    if not doctor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Doctor not found"
-        )
+    # Если doctor=None (лаборант), функция все равно сработает
 
     patient = await get_doctor_single_patient_without_doctor_status(
         db=db, patient_cor_id=patient_cor_id, doctor=doctor
@@ -317,7 +670,7 @@ async def get_single_patient(
     "/patients/register-new",
     response_model=PatientCreationResponse,
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def add_new_patient_to_doctor(
     body: NewPatientRegistration,
@@ -325,18 +678,16 @@ async def add_new_patient_to_doctor(
     current_user: User = Depends(auth_service.get_current_user),
 ):
     """
-    Добавить нового пациента к врачу.
+    Добавить нового пациента.
+    Доступно врачам и лаборантам.
+    Если создает врач - будет создана связь врач-пациент в DoctorPatientStatus.
     """
+    # Проверяем, кто создает пациента - врач или лаборант
     doctor = await get_doctor(current_user.cor_id, db)
-    if not doctor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Doctor not found"
-        )
-    if current_user.cor_id != doctor.doctor_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to add patients to this doctor",
-        )
+    
+    # Если это не врач, проверяем лаборанта (уже проверено через dependency)
+    # doctor будет None для лаборанта
+    
     new_patient_info = body
     if new_patient_info.email:
         exist_user = await repository_person.get_user_by_email(
@@ -378,7 +729,7 @@ async def add_new_patient_to_doctor(
 @router.post(
     "/patients/add-existing",
     response_model=PatientCreationResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def add_existing_patient_to_doctor(
     patient_data: ExistingPatientAdd,
@@ -386,13 +737,14 @@ async def add_existing_patient_to_doctor(
     current_user: User = Depends(auth_service.get_current_user),
 ):
     """
-    Добавить существующего пациента к врачу.
+    Добавить существующего пользователя как пациента.
+    Доступно врачам и лаборантам.
+    Если создает врач - будет создана связь врач-пациент в DoctorPatientStatus.
     """
+    # Проверяем, кто создает пациента - врач или лаборант
     doctor = await get_doctor(doctor_id=current_user.cor_id, db=db)
-    if not doctor:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Doctor not found"
-        )
+    # doctor будет None для лаборанта
+    
     user = await repository_person.get_user_by_corid(cor_id=patient_data.cor_id, db=db)
     if not user:
         raise HTTPException(
@@ -420,7 +772,7 @@ async def add_existing_patient_to_doctor(
 @router.get(
     "/patients/{patient_id}/glass-details",
     response_model=PatientGlassPageResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     status_code=status.HTTP_200_OK,
     summary="Получение кейсов и стёкол для страницы 'Стёкла'",
     tags=["DoctorPage"],
@@ -435,10 +787,12 @@ async def get_patient_glass_page_data(
     Возвращает список всех кейсов пациента и все стёкла первого кейса
     """
     doctor = await get_doctor(doctor_id=user.cor_id, db=db)
+    doctor_id = doctor.doctor_id if doctor else None
+    
     glass_page_data = await case_service.get_patient_case_details_for_glass_page(
         db=db,
         patient_id=patient_id,
-        current_doctor_id=doctor.doctor_id,
+        current_doctor_id=doctor_id,
         router=router,
         case_id=case_id,
     )
@@ -449,7 +803,7 @@ async def get_patient_glass_page_data(
 @router.get(
     "/cases/{case_id}/glass-details",
     response_model=SingleCaseGlassPageResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     status_code=status.HTTP_200_OK,
     summary="Cтёкла конкретного кейса для страницы 'Стёкла'",
     tags=["DoctorPage"],
@@ -462,9 +816,10 @@ async def get_single_case_details_for_glass_page(
     """
     Возвращает стёкла конкретного кейса
     """
-    doctor = await get_doctor(doctor_id=user.cor_id, db=db)
+    staff_object, staff_cor_id = await get_current_medical_staff(db=db, user=user)
+    
     glass_page_data = await case_service.get_single_case_details_for_glass_page(
-        db=db, case_id=case_id, current_doctor_id=doctor.doctor_id, router=router
+        db=db, case_id=case_id, current_doctor_id=staff_cor_id, router=router
     )
 
     return glass_page_data
@@ -473,7 +828,7 @@ async def get_single_case_details_for_glass_page(
 @router.get(
     "/patients/{patient_cor_id}/referral_page",
     response_model=PatientCasesWithReferralsResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     status_code=status.HTTP_200_OK,
     summary="Получение кейсов и вывод файлов направления по первому кейсу",
     tags=["DoctorPage"],
@@ -487,11 +842,12 @@ async def get_patient_cases_for_doctor(
     """
     Возвращает список всех кейсов конкретного пациента, а также детали первого кейса, включая ссылку на файлы его направлений
     """
-    doctor = await get_doctor(doctor_id=user.cor_id, db=db)
+    staff_object, staff_cor_id = await get_current_medical_staff(db=db, user=user)
+    
     patient_cases_data = await case_service.get_patient_cases_with_directions(
         db=db,
         patient_id=patient_cor_id,
-        current_doctor_id=doctor.doctor_id,
+        current_doctor_id=staff_cor_id,
         case_id=case_id,
     )
     if not patient_cases_data:
@@ -606,7 +962,7 @@ async def update_microdescription(
 @router.get(
     "/patients/{patient_id}/excision-details",
     response_model=PatientExcisionPageResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     status_code=status.HTTP_200_OK,
     summary="Получение кейсов и нужных данных для страницы 'Вырезка'",
     tags=["DoctorPage"],
@@ -620,11 +976,12 @@ async def get_patient_excision_page_data(
     """
     Возвращает все кейсы и данные вырезки по последнему кейсу
     """
-    doctor = await get_doctor(doctor_id=user.cor_id, db=db)
+    staff_object, staff_cor_id = await get_current_medical_staff(db=db, user=user)
+    
     excision_page_data = await case_service.get_patient_case_details_for_excision_page(
         db=db,
         patient_id=patient_id,
-        current_doctor_id=doctor.doctor_id,
+        current_doctor_id=staff_cor_id,
         case_id=case_id,
     )
 
@@ -634,7 +991,7 @@ async def get_patient_excision_page_data(
 @router.get(
     "/cases/{case_id}/excision-details",
     response_model=SingleCaseExcisionPageResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     status_code=status.HTTP_200_OK,
     summary="Данные вырезки конкретного кейса для страницы 'Вырезка'",
     tags=["DoctorPage"],
@@ -647,9 +1004,10 @@ async def get_single_case_details_for_excision_page(
     """
     Возвращает данные вырезки конкретного кейса
     """
-    doctor = await get_doctor(doctor_id=user.cor_id, db=db)
+    staff_object, staff_cor_id = await get_current_medical_staff(db=db, user=user)
+    
     excision_page_data = await case_service.get_single_case_details_for_excision_page(
-        db=db, case_id=case_id, current_doctor_id=doctor.doctor_id
+        db=db, case_id=case_id, current_doctor_id=staff_cor_id
     )
 
     return excision_page_data
@@ -987,7 +1345,7 @@ async def get_current_cases_report_full_page_data_route(
 @router.get(
     "/current_cases/referral_page",
     response_model=PatientCasesWithReferralsResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     status_code=status.HTTP_200_OK,
     summary="Получение кейсов и вывод файлов направления по первому кейсу",
     tags=["Current Cases"],
@@ -1002,12 +1360,13 @@ async def get_current_cases_with_directions_for_doctor(
     """
     Возвращает список всех кейсов конкретного пациента, а также детали первого кейса, включая ссылку на файлы его направлений
     """
-    doctor = await get_doctor(doctor_id=user.cor_id, db=db)
+    staff_object, staff_cor_id = await get_current_medical_staff(db=db, user=user)
+    
     patient_cases_data = await case_service.get_current_cases_with_directions(
         db=db,
         skip=skip,
         limit=limit,
-        current_doctor_id=doctor.doctor_id,
+        current_doctor_id=staff_cor_id,
         case_id=case_id,
     )
     if not patient_cases_data:
@@ -1022,7 +1381,7 @@ async def get_current_cases_with_directions_for_doctor(
 @router.get(
     "/current_cases/excision-details",
     response_model=PatientExcisionPageResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     status_code=status.HTTP_200_OK,
     summary="Получение кейсов и нужных данных для страницы 'Вырезка'",
     tags=["Current Cases"],
@@ -1037,12 +1396,13 @@ async def get_patient_excision_page_data(
     """
     Возвращает все кейсы и данные вырезки по последнему кейсу
     """
-    doctor = await get_doctor(doctor_id=user.cor_id, db=db)
+    staff_object, staff_cor_id = await get_current_medical_staff(db=db, user=user)
+    
     excision_page_data = await case_service.get_current_case_details_for_excision_page(
         db=db,
         skip=skip,
         limit=limit,
-        current_doctor_id=doctor.doctor_id,
+        current_doctor_id=staff_cor_id,
         case_id=case_id,
     )
 
@@ -1052,7 +1412,7 @@ async def get_patient_excision_page_data(
 @router.get(
     "/current_cases/glass-details",
     response_model=PatientGlassPageResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     status_code=status.HTTP_200_OK,
     summary="Получение кейсов и стёкол для страницы 'Текущие кейсы' (вкладка Стёкла)",
     tags=["Current Cases"],
@@ -1067,12 +1427,13 @@ async def get_current_cases_glass_page_data(
     """
     Возвращает список всех текущих кейсов и все стёкла первого кейса
     """
-    doctor = await get_doctor(doctor_id=user.cor_id, db=db)
+    staff_object, staff_cor_id = await get_current_medical_staff(db=db, user=user)
+    
     glass_page_data = await case_service.get_current_cases_glass_details(
         db=db,
         skip=skip,
         limit=limit,
-        current_doctor_id=doctor.doctor_id,
+        current_doctor_id=staff_cor_id,
         router=router,
         case_id=case_id,
     )
@@ -1169,17 +1530,15 @@ async def unified_search(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(auth_service.get_current_user),
 ):
-    doctor = await get_doctor(doctor_id=current_user.cor_id, db=db)
-    if not doctor:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Doctor not found")
+    staff_object, staff_cor_id = await get_current_medical_staff(db=db, user=current_user)
 
     case_db = await case_service.get_single_case(db=db, case_id=query)
     if case_db:
-        return await _get_and_return_case_details(db, str(case_db.patient_id), str(case_db.id), doctor.doctor_id, router)
+        return await _get_and_return_case_details(db, str(case_db.patient_id), str(case_db.id), staff_cor_id, router)
     
     case_db_by_code = await case_service.get_single_case_by_case_code(db=db, case_code=query)
     if case_db_by_code:
-        return await _get_and_return_case_details(db, str(case_db_by_code.patient_id), str(case_db_by_code.id), doctor.doctor_id, router)
+        return await _get_and_return_case_details(db, str(case_db_by_code.patient_id), str(case_db_by_code.id), staff_cor_id, router)
 
 
     search_ngrams = generate_ngrams(query, n=2)

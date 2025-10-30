@@ -278,6 +278,16 @@ class User(Base):
     medicine_intakes = relationship(
         "MedicineIntake", back_populates="user", cascade="all, delete-orphan"
     )
+    
+    # Медицинская карта 
+    medical_card = relationship(
+        "MedicalCard", back_populates="owner", foreign_keys="[MedicalCard.owner_cor_id]", 
+        uselist=False, cascade="all, delete-orphan"
+    )
+    accessible_medical_cards = relationship(
+        "MedicalCardAccess", back_populates="user", foreign_keys="[MedicalCardAccess.user_cor_id]", 
+        cascade="all, delete-orphan"
+    )
 
     # Индексы
     __table_args__ = (
@@ -1238,6 +1248,11 @@ class MedicineIntake(Base):
         """Единица измерения дозировки"""
         return self.schedule.medicine.unit if self.schedule and self.schedule.medicine else None
 
+    @property
+    def medicine_intake_method(self) -> Optional[str]:
+        """Способ приёма лекарства"""
+        return self.schedule.medicine.intake_method if self.schedule and self.schedule.medicine else None
+
     created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
 
@@ -1415,6 +1430,175 @@ class MedicalLaboratory(Base):
     uploaded_at = Column(DateTime(timezone=True), nullable=True, default=func.now())
     lab_logo_data = Column(LargeBinary, nullable=True)
 
+
+# ============================================================================
+# SIBIONICS CGM Integration Models
+# ============================================================================
+
+class SibionicsAuth(Base):
+    """Хранение токенов доступа SIBIONICS для пользователей"""
+    __tablename__ = "sibionics_auth"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    biz_id = Column(String(255), nullable=False, unique=True)  # SIBIONICS Authorization resource ID
+    access_token = Column(String(500), nullable=True)
+    expires_in = Column(DateTime(timezone=True), nullable=True)  # Token expiration time
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+    is_active = Column(Boolean, default=True)  # Статус авторизации
+
+    # Связи
+    user = relationship("User", backref="sibionics_auth")
+    devices = relationship("SibionicsDevice", back_populates="auth", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("idx_sibionics_auth_user_id", "user_id"),
+        Index("idx_sibionics_auth_biz_id", "biz_id"),
+    )
+
+
+class SibionicsDevice(Base):
+    """Информация об устройствах CGM SIBIONICS"""
+    __tablename__ = "sibionics_devices"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    auth_id = Column(String(36), ForeignKey("sibionics_auth.id", ondelete="CASCADE"), nullable=False)
+    device_id = Column(String(255), nullable=False)  # SIBIONICS Device ID
+    device_name = Column(String(255), nullable=True)
+    bluetooth_num = Column(String(255), nullable=True)
+    serial_no = Column(String(255), nullable=True)
+    status = Column(Integer, nullable=True)  # 0: Not started; 1: Monitoring; 2: Expired; 3: Init; 4: Abnormal
+    current_index = Column(Integer, nullable=True)  # Current data index
+    max_index = Column(Integer, nullable=True)
+    min_index = Column(Integer, nullable=True)
+    data_gap = Column(Integer, nullable=True)  # Glucose index interval (minutes)
+    enable_time = Column(DateTime(timezone=True), nullable=True)  # Device wearing start time
+    last_time = Column(DateTime(timezone=True), nullable=True)  # Device wearing deadline
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+
+    # Связи
+    auth = relationship("SibionicsAuth", back_populates="devices")
+    glucose_data = relationship("SibionicsGlucose", back_populates="device", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("idx_sibionics_device_auth_id", "auth_id"),
+        Index("idx_sibionics_device_device_id", "device_id"),
+        UniqueConstraint("auth_id", "device_id", name="uq_auth_device"),
+    )
+
+
+class SibionicsGlucose(Base):
+    """Данные глюкозы с устройств SIBIONICS CGM"""
+    __tablename__ = "sibionics_glucose"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    device_id = Column(String(36), ForeignKey("sibionics_devices.id", ondelete="CASCADE"), nullable=False)
+    index = Column(Integer, nullable=False)  # Glucose data index
+    glucose_value = Column(Float, nullable=False)  # Glucose value in mmol/L
+    trend = Column(Integer, nullable=True)  # 0: stable; ±1: slow; ±2: fast
+    alarm_status = Column(Integer, nullable=True)  # 1: normal; 2-6: various alarms
+    timestamp = Column(DateTime(timezone=True), nullable=False)  # Measurement timestamp
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
+
+    # Связи
+    device = relationship("SibionicsDevice", back_populates="glucose_data")
+
+    __table_args__ = (
+        Index("idx_sibionics_glucose_device_id", "device_id"),
+        Index("idx_sibionics_glucose_timestamp", "timestamp"),
+        UniqueConstraint("device_id", "index", name="uq_device_index"),
+    )
+
+
+class MedicalCardAccessLevel(enum.Enum):
+    """Уровни доступа к медкарте"""
+    VIEW = "view"              # Может смотреть
+    EDIT = "edit"              # Может редактировать (и смотреть)
+    SHARE = "share"            # Может распространять (редактировать, смотреть и делиться с другими)
+
+
+class MedicalCardPurpose(enum.Enum):
+    """Цель предоставления доступа к медкарте"""
+    RELATIVE = "relative"      # Для родственника
+    DOCTOR = "doctor"          # Для врача
+    OTHER = "other"            # Другое
+
+
+class MedicalCard(Base):
+    """
+    Медицинская карта пользователя.
+    Создается автоматически при регистрации пользователя.
+    Используется для шеринга медицинских данных (давление, глюкоза, лекарства) с другими пользователями.
+    """
+    __tablename__ = "medical_cards"
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    owner_cor_id = Column(String(36), ForeignKey("users.cor_id", ondelete="CASCADE"), nullable=False, unique=True)
+    
+    # Настройки отображения для мобильного приложения
+    card_color = Column(String(20), nullable=True, default="#4169E1")  # Цвет карты в интерфейсе
+    display_name = Column(String(100), nullable=True)  # Кастомное имя карты 
+    
+    is_active = Column(Boolean, default=True)
+    
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+    
+    # Связи
+    owner = relationship("User", back_populates="medical_card", foreign_keys=[owner_cor_id])
+    access_grants = relationship("MedicalCardAccess", back_populates="medical_card", cascade="all, delete-orphan")
+    
+    __table_args__ = (
+        Index("idx_medical_card_owner", "owner_cor_id"),
+    )
+
+
+class MedicalCardAccess(Base):
+    """Права доступа к медицинским картам"""
+    __tablename__ = "medical_card_access"
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    medical_card_id = Column(String(36), ForeignKey("medical_cards.id", ondelete="CASCADE"), nullable=False)
+    user_cor_id = Column(String(36), ForeignKey("users.cor_id", ondelete="CASCADE"), nullable=False)
+    
+    # Уровень доступа
+    access_level = Column(
+        Enum(MedicalCardAccessLevel, name="medicalcardaccesslevel", values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=MedicalCardAccessLevel.VIEW
+    )
+    
+    # Цель предоставления доступа (для кого)
+    purpose = Column(
+        Enum(MedicalCardPurpose, name="medicalcardpurpose", values_callable=lambda x: [e.value for e in x]),
+        nullable=True
+    )  # Для кого: родственник, врач, другое
+    purpose_note = Column(String(255), nullable=True)  # Дополнительное пояснение (например, если "другое")
+    
+    # Метаданные о предоставлении доступа
+    granted_by_cor_id = Column(String(36), ForeignKey("users.cor_id"), nullable=True)  # Кто предоставил доступ
+    granted_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=True)  # Дата истечения доступа 
+    
+    # Флаги
+    is_accepted = Column(Boolean, default=False)  # Принял ли пользователь приглашение
+    is_active = Column(Boolean, default=True)
+    
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+    
+    # Связи
+    medical_card = relationship("MedicalCard", back_populates="access_grants")
+    user = relationship("User", foreign_keys=[user_cor_id], back_populates="accessible_medical_cards")
+    granted_by = relationship("User", foreign_keys=[granted_by_cor_id])
+    
+    __table_args__ = (
+        Index("idx_medical_card_access_user", "user_cor_id"),
+        Index("idx_medical_card_access_card", "medical_card_id"),
+        UniqueConstraint("medical_card_id", "user_cor_id", name="uq_card_user_access"),
+    )
 
 
 # Base.metadata.create_all(bind=engine)

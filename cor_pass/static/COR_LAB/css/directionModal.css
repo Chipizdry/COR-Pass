@@ -11,7 +11,7 @@
 }
 
 .modal {
-    overflow: hidden;               
+    overflow: hidden;
 }
 
 .modalContent {
@@ -24,7 +24,7 @@
 
 .modalContent > .df.gap4 {
   flex: 1 1 auto;
-  min-height: 0; 
+  min-height: 0;
   display: flex;
 }
 
@@ -50,7 +50,7 @@
     margin-bottom: 20px;
     text-align: center;
     display: flex;
-    column-gap: 28px;                 
+    column-gap: 28px;
 }
 
 .directorModalTop b {
@@ -72,7 +72,7 @@
     font-size: 14px;
   color: #5B4296;
   white-space: nowrap;
-  justify-content: flex-end;  
+  justify-content: flex-end;
 }
 
 
@@ -110,7 +110,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    overflow: hidden;
+    overflow: auto;
     padding-left: 12px;
     min-height: 0;
     height: auto;
@@ -118,10 +118,15 @@
 
 .directorModalRight .upload-box {
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: 200px;
   height: 100%;
 }
 
+#uploadArea{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
 
 
 .directorModalFormGroup {
@@ -168,7 +173,7 @@
 }
 
 .directorModalFormGroup .directorDateInput::-webkit-calendar-picker-indicator {
-    margin-left: 6px; 
+    margin-left: 6px;
 }
 
 .directorModalFormGroup-select {
@@ -279,7 +284,7 @@
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: #fff; 
+    background: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -341,9 +346,9 @@
 }
 
 .directorModalFooter {
-  position: static;          
-  background: transparent;  
-  padding: 28px 0 30px;     
+  position: static;
+  background: transparent;
+  padding: 28px 0 30px;
   display: flex;
   align-items: center;
 }
@@ -376,7 +381,7 @@
     background: #fff;
     color: #7527B2;
     border-color: #7527B2;
-    border-width: 1px;    
+    border-width: 1px;
 }
 
 .btn-outline:hover {

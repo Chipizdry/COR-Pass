@@ -307,22 +307,64 @@
     const setAllAttachment = (currentCase) => {
         showFiles(currentCase?.attachments)
     }
-    const showFiles = files => {
+    const showFiles = async files => {
         if(!files?.length) {
             directionAttachmentNODE.innerHTML = '<span data-translate="noReferrals">У вас немає жодного направлення</span>';
             applySavedLanguage();
             return;
         }
 
-        files.forEach((file)=>{
-            const fileViewerWrapperNODE = document.createElement('div');
-            fileViewerWrapperNODE.className = 'thumb';
-            fileViewerWrapperNODE.style.width = '100%';
-            fileViewerWrapperNODE.style.maxWidth = '550px';
+        for (let i = 0; i < files.length; i++){
+            await new Promise(async (resolve) => {
+                const file = files[i];
 
-            if(file.file_type?.includes('pdf') || file.content_type?.includes('pdf')){
+                const fileViewerWrapperNODE = document.createElement('div');
+                fileViewerWrapperNODE.className = 'thumb';
+                fileViewerWrapperNODE.style.width = '80%';
+                fileViewerWrapperNODE.style.margin = 'auto';
+
+                if(file.file_type?.includes('pdf') || file.content_type?.includes('pdf')){
+                    if(file.file_url){
+                        if(await checkToken()){
+                            fetch(`${API_BASE_URL}/api${file.file_url}`, {
+                                method: "GET",
+                                headers: {
+                                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                                },
+                            })
+                                .then(response => response.blob())
+                                .then(blob => {
+                                    fileViewerWrapperNODE.innerHTML += `
+                                    <div style="background: white; width: 100%; height: 400px;">
+                                        <embed
+                                            src="${URL.createObjectURL(blob)}#toolbar=0"
+                                            type="application/pdf"
+                                            style="border: none; background: white; margin: 0 auto; display: block; height: 100%; width: 100%;"
+                                        ></embed>
+                                    </div>
+                                    `
+                                    directionAttachmentNODE.prepend(fileViewerWrapperNODE);
+
+                                    resolve(true)
+                                })
+
+                            return;
+                        }
+
+
+                        resolve(true)
+                        return;
+                    }
+
+                    resolve(true)
+                    return;
+                }
+
+                const imgNODE = document.createElement('img');
+                imgNODE.classList = "directionImg"
+
                 if(file.file_url){
-                    if(checkToken()){
+                    if(await checkToken()){
                         fetch(`${API_BASE_URL}/api${file.file_url}`, {
                             method: "GET",
                             headers: {
@@ -331,44 +373,21 @@
                         })
                             .then(response => response.blob())
                             .then(blob => {
-                                fileViewerWrapperNODE.innerHTML += `
-                            <div style="background: white; width: 100%; height: 400px;">
-                                <embed
-                                    src="${URL.createObjectURL(blob)}#toolbar=0"
-                                    type="application/pdf"
-                                    style="border: none; background: white; margin: 0 auto; display: block; height: 100%; width: 100%;"
-                                ></embed>
-                            </div>
-                            `
-                                directionAttachmentNODE.appendChild(fileViewerWrapperNODE);
+                                imgNODE.src = URL.createObjectURL(blob);
+                                imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
+                                fileViewerWrapperNODE.appendChild(imgNODE);
+                                directionAttachmentNODE.prepend(fileViewerWrapperNODE);
+                                resolve(true)
                             })
+
+                        return;
                     }
+
+
+                    resolve(true)
                 }
-
-                return;
-            }
-
-            const imgNODE = document.createElement('img');
-            imgNODE.classList = "directionImg"
-
-            if(file.file_url){
-                if(checkToken()){
-                    fetch(`${API_BASE_URL}/api${file.file_url}`, {
-                        method: "GET",
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                        },
-                    })
-                        .then(response => response.blob())
-                        .then(blob => {
-                            imgNODE.src = URL.createObjectURL(blob);
-                            imgNODE.onload=()=> URL.revokeObjectURL(imgNODE.src);
-                            fileViewerWrapperNODE.appendChild(imgNODE);
-                            directionAttachmentNODE.appendChild(fileViewerWrapperNODE);
-                        })
-                }
-            }
-        });
+            })
+        }
     }
 
     const switchRole = () => {

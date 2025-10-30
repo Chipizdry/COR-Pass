@@ -60,7 +60,10 @@ from cor_pass.routes import (
     ophthalmological_prescriptions,
     prescriptions,
     laboratories,
-    medicine_intakes
+    medicine_intakes,
+    sibionics_routes,
+    medical_cards,
+    medical_card_data,
 )
 from cor_pass.config.config import settings
 from cor_pass.services.ip2_location import initialize_ip2location
@@ -318,8 +321,11 @@ app.include_router(first_aid_kits.router, prefix="/api")
 app.include_router(support.router, prefix="/api")
 app.include_router(ophthalmological_prescriptions.router, prefix="/api")
 app.include_router(prescriptions.router, prefix="/api")
+app.include_router(sibionics_routes.router, prefix="/api")
 app.include_router(laboratories.router, prefix="/api")
 app.include_router(medicine_intakes.router, prefix="/api")
+app.include_router(medical_cards.router, prefix="/api")
+app.include_router(medical_card_data.router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run(

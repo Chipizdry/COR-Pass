@@ -8,7 +8,10 @@ COPY worker /app/worker
 
 
 COPY cor_pass /app/cor_pass
+COPY en-basic /app/en-basic
 
 ENV PYTHONPATH=/app
 
-CMD ["python", "worker/main.py"]
+EXPOSE 8003
+
+CMD ["python", "worker/main_with_websocket.py"]

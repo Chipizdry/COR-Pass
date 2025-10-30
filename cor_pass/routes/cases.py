@@ -32,7 +32,7 @@ from cor_pass.repository import case as case_service
 
 from starlette.datastructures import Headers
 
-from cor_pass.services.access import doctor_access
+from cor_pass.services.access import doctor_access, lab_assistant_or_doctor_access
 from cor_pass.services.auth import auth_service
 from cor_pass.services.document_validation import validate_document_file
 from loguru import logger
@@ -43,7 +43,7 @@ router = APIRouter(prefix="/cases", tags=["Cases"])
 
 @router.post(
     "/create",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     response_model=PatientFirstCaseDetailsResponse,
 )
 async def create_case(
@@ -64,7 +64,7 @@ async def create_case(
 
 @router.get(
     "/{case_id}",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     response_model=CaseDetailsResponse,
 )
 async def read_case(case_id: str, db: AsyncSession = Depends(get_db)):
@@ -79,7 +79,7 @@ async def read_case(case_id: str, db: AsyncSession = Depends(get_db)):
 
 @router.get(
     "/{case_id}/case_parameters",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     response_model=CaseParametersScheema,
 )
 async def read_case_parameters(case_id: str, db: AsyncSession = Depends(get_db)):
@@ -94,7 +94,7 @@ async def read_case_parameters(case_id: str, db: AsyncSession = Depends(get_db))
 
 @router.patch(
     "/case_parameters",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     response_model=CaseParametersScheema,
 )
 async def update_case_parameters(
@@ -124,7 +124,7 @@ async def update_case_parameters(
 @router.delete(
     "/delete",
     response_model=DeleteCasesResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     status_code=status.HTTP_200_OK,
 )
 async def delete_cases(
@@ -139,7 +139,7 @@ async def delete_cases(
 
 @router.get(
     "/patients/{patient_cor_id}/overview",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     response_model=PatientFirstCaseDetailsResponse,
 )
 async def read_patient_overview_details(
@@ -159,7 +159,7 @@ async def read_patient_overview_details(
 
 @router.patch(
     "/case_code",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     response_model=UpdateCaseCodeResponce,
 )
 async def update_case_code(
@@ -186,7 +186,7 @@ async def update_case_code(
     "/referrals/upsert",
     response_model=ReferralResponse,
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def upsert_referral_endpoint(
     referral_data: ReferralCreate, db: AsyncSession = Depends(get_db)
@@ -229,7 +229,7 @@ async def upsert_referral_endpoint(
 @router.get(
     "/referrals/{case_id}",
     response_model=ReferralResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def get_single_referral(case_id: str, db: AsyncSession = Depends(get_db)):
     """
@@ -265,7 +265,7 @@ async def get_single_referral(case_id: str, db: AsyncSession = Depends(get_db)):
 @router.post(
     "/{referral_id}/attachments",
     response_model=ReferralAttachmentResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def upload_referral_attachment(
     referral_id: str,
@@ -308,7 +308,7 @@ async def get_client():
 @router.post(
     "/{referral_id}/scan-and-attach",
     response_model=ReferralAttachmentResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def scan_and_attach_referral(
     referral_id: str,
@@ -394,7 +394,7 @@ async def scan_and_attach_referral(
 
 @router.post(
     "/scan-referral",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def scan_and_attach_referral(
     db: AsyncSession = Depends(get_db)
@@ -467,7 +467,7 @@ async def scan_and_attach_referral(
                 detail="Ошибка сканирования",
             )
 
-@router.get("/attachments/{attachment_id}", dependencies=[Depends(doctor_access)])
+@router.get("/attachments/{attachment_id}", dependencies=[Depends(lab_assistant_or_doctor_access)])
 async def get_referral_attachment(
     attachment_id: str, db: AsyncSession = Depends(get_db)
 ):
@@ -534,7 +534,7 @@ async def release_case(
 
 @router.patch(
     "/{case_id}/print_glasses",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     response_model=CaseDetailsResponse,
 )
 async def print_all_case_glasses(
@@ -554,7 +554,7 @@ async def print_all_case_glasses(
 
 @router.patch(
     "/{case_id}/print_cassettes",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     response_model=Optional[CaseDetailsResponse],
 )
 async def print_all_case_cassettes(
@@ -574,7 +574,7 @@ async def print_all_case_cassettes(
 
 @router.patch(
     "/{case_id}/print_qr",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     response_model=Optional[CaseDetailsResponse],
 )
 async def print_case_qr(

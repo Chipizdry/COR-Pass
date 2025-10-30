@@ -44,10 +44,12 @@ async def set_inverter_parameters(
         return
 
     if settings.app_env == "development":
-     #   await send_grid_feed_w_command(modbus_client=modbus_client_instance, grid_feed_w=grid_feed_w)
-      #  await send_vebus_soc_command(modbus_client=modbus_client_instance, battery_level_percent=battery_level_percent)
-      #  await send_dvcc_max_charge_current_command(modbus_client=modbus_client_instance, charge_battery_value=charge_battery_value)
-        pass
+        logger.info(f"[{object_id}] (DEV) Установка параметров инвертора: grid_feed_w={grid_feed_w}, battery_level_percent={battery_level_percent}, charge_battery_value={charge_battery_value}")
+        
+        await send_grid_feed_w_command(modbus_client=modbus_client_instance, grid_feed_w=grid_feed_w)
+        await send_vebus_soc_command(modbus_client=modbus_client_instance, battery_level_percent=battery_level_percent)
+        await send_dvcc_max_charge_current_command(modbus_client=modbus_client_instance, charge_battery_value=charge_battery_value)
+
 
 async def cerbo_collection_task_worker(object_id: str, object_name: str):
     while True:
@@ -111,6 +113,8 @@ async def cerbo_collection_task_worker(object_id: str, object_name: str):
 
 async def energetic_schedule_task_worker(object_id: str):
     current_active_schedule_id: str | None = None
+    logger.debug(f"[{object_id}] Starting energetic schedule task worker.")
+    logger.debug(f"current_active_schedule_id initialized to: {current_active_schedule_id}")
 
     while True:
         try:
@@ -121,6 +125,8 @@ async def energetic_schedule_task_worker(object_id: str):
 
                 operational_schedules = [s for s in object_schedules if not s.is_manual_mode]
                 now_time = datetime.now().time()
+                
+                logger.debug(f"[{object_id}] 🔍 Проверка расписаний: найдено {len(object_schedules)} расписаний для объекта, {len(operational_schedules)} операционных, текущее время {now_time}, активное расписание ID: {current_active_schedule_id}")
 
                 active_schedule = None
                 for schedule in operational_schedules:
@@ -134,7 +140,10 @@ async def energetic_schedule_task_worker(object_id: str):
                             break
 
                 if active_schedule:
+                    logger.debug(f"[{object_id}] ✅ Найдено активное расписание ID={active_schedule.id}, период {active_schedule.start_time}-{active_schedule.end_time}")
+                    
                     if active_schedule.id != current_active_schedule_id:
+                        logger.info(f"[{object_id}] 🔄 Переключение расписания: {current_active_schedule_id} → {active_schedule.id}")
                         # деактивация предыдущей
                         if current_active_schedule_id:
                             await update_schedule_is_active_status(db, current_active_schedule_id, False)
@@ -147,12 +156,17 @@ async def energetic_schedule_task_worker(object_id: str):
                             active_schedule.charge_battery_value,
                         )
                         await update_schedule_is_active_status(db, active_schedule.id, True)
+                    else:
+                        logger.debug(f"[{object_id}] ⏸️ Расписание ID={active_schedule.id} уже активно, параметры не меняем")
                 else:
+                    logger.debug(f"[{object_id}] ⚠️ Активное расписание не найдено, сбрасываем на дефолт")
                     # сброс к дефолтным параметрам
                     if current_active_schedule_id:
+                        logger.info(f"[{object_id}] 🔄 Сброс расписания {current_active_schedule_id} на дефолтные параметры")
                         await update_schedule_is_active_status(db, current_active_schedule_id, False)
                         current_active_schedule_id = None
-                    await set_inverter_parameters(object_id, DEFAULT_grid_feed_kw, DEFAULT_battery_level_percent, DEFAULT_charge_battery_value)
+                        await set_inverter_parameters(object_id, DEFAULT_grid_feed_kw, DEFAULT_battery_level_percent, DEFAULT_charge_battery_value)
+                    # Если current_active_schedule_id уже None, не вызываем set_inverter_parameters повторно
 
         except Exception as e:
             logger.error(f"[{object_id}] Error in schedule task: {e}", exc_info=True)

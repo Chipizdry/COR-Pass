@@ -125,25 +125,48 @@ async def get_paginated_user_intakes(
     user_cor_id: str,
     page: int = 1,
     page_size: int = 20,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
 ) -> dict:
     """
     Получает список всех приемов пользователя с пагинацией.
     Сортировка по planned_datetime в обратном порядке.
+    
+    Args:
+        db: AsyncSession - сессия базы данных
+        user_cor_id: str - идентификатор пользователя
+        page: int - номер страницы (начиная с 1)
+        page_size: int - количество записей на странице
+        start_date: Optional[date] - начальная дата фильтрации (включительно)
+        end_date: Optional[date] - конечная дата фильтрации (включительно)
+    
+    Returns:
+        dict - словарь с items, total, page, page_size, total_pages
     """
+    # Базовое условие фильтрации
+    filters = [MedicineIntake.user_cor_id == user_cor_id]
+    
+    # Добавляем фильтры по датам, если они указаны
+    if start_date:
+        filters.append(func.date(MedicineIntake.planned_datetime) >= start_date)
+    if end_date:
+        filters.append(func.date(MedicineIntake.planned_datetime) <= end_date)
+    
+    # Запрос для подсчета общего количества
     count_query = (
         select(func.count())
         .select_from(MedicineIntake)
-        .where(MedicineIntake.user_cor_id == user_cor_id)
+        .where(*filters)
     )
     total = await db.scalar(count_query)
 
-
+    # Запрос для получения данных с пагинацией
     query = (
         select(MedicineIntake)
         .options(
             joinedload(MedicineIntake.schedule).joinedload(MedicineSchedule.medicine)
         )
-        .where(MedicineIntake.user_cor_id == user_cor_id)
+        .where(*filters)
         .order_by(MedicineIntake.planned_datetime.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
@@ -237,6 +260,15 @@ async def generate_schedule_intakes(
             if schedule.intake_times:
                 # Если указаны конкретные времена приема
                 for intake_time in schedule.intake_times:
+                    # Преобразуем в time объект, если это строка
+                    if isinstance(intake_time, str):
+                        # Парсим строку формата "HH:MM" или "HH:MM:SS"
+                        time_parts = intake_time.split(":")
+                        if len(time_parts) == 2:
+                            intake_time = time(int(time_parts[0]), int(time_parts[1]))
+                        elif len(time_parts) == 3:
+                            intake_time = time(int(time_parts[0]), int(time_parts[1]), int(time_parts[2]))
+                    
                     planned_datetime = datetime.combine(current_date, intake_time)
                     intake = MedicineIntake(
                         schedule_id=schedule.id,
@@ -266,3 +298,165 @@ async def generate_schedule_intakes(
     await db.commit()
     
     return intakes
+
+
+async def get_dates_with_intakes_in_range(
+    db: AsyncSession,
+    user_cor_id: str,
+    start_date: date,
+    end_date: date
+) -> List[date]:
+    """
+    Получить список уникальных дат в указанном диапазоне, когда есть запланированные приемы.
+    
+    Args:
+        db: Сессия базы данных
+        user_cor_id: COR ID пользователя
+        start_date: Начальная дата диапазона (включительно)
+        end_date: Конечная дата диапазона (включительно)
+        
+    Returns:
+        Список уникальных дат (date), отсортированных по возрастанию
+    """
+    # Преобразуем даты в datetime для сравнения
+    start_datetime = datetime.combine(start_date, time.min)
+    end_datetime = datetime.combine(end_date, time.max)
+    
+    # Запрос на получение уникальных дат
+    query = (
+        select(func.date(MedicineIntake.planned_datetime).label('intake_date'))
+        .where(
+            and_(
+                MedicineIntake.user_cor_id == user_cor_id,
+                MedicineIntake.planned_datetime >= start_datetime,
+                MedicineIntake.planned_datetime <= end_datetime
+            )
+        )
+        .distinct()
+        .order_by('intake_date')
+    )
+    
+    result = await db.execute(query)
+    dates = [row[0] for row in result.all()]
+    
+    return dates
+
+
+async def get_grouped_intakes_by_date_range(
+    db: AsyncSession,
+    user_cor_id: str,
+    start_date: date,
+    end_date: date
+):
+    """
+    Получить приемы лекарств, сгруппированные по дням и времени.
+    
+    Args:
+        db: Сессия базы данных
+        user_cor_id: COR ID пользователя
+        start_date: Начальная дата диапазона
+        end_date: Конечная дата диапазона
+        
+    Returns:
+        Словарь с группированными приемами по дням и времени
+    """
+    from collections import defaultdict
+    from cor_pass.schemas import GroupedMedicineIntake, DailyMedicineIntakes, GroupedMedicineIntakesResponse
+    
+    # Преобразуем даты в datetime
+    start_datetime = datetime.combine(start_date, time.min)
+    end_datetime = datetime.combine(end_date, time.max)
+    
+    # Получаем все приемы в диапазоне с связанными данными
+    query = (
+        select(MedicineIntake)
+        .options(
+            joinedload(MedicineIntake.schedule).joinedload(MedicineSchedule.medicine)
+        )
+        .where(
+            and_(
+                MedicineIntake.user_cor_id == user_cor_id,
+                MedicineIntake.planned_datetime >= start_datetime,
+                MedicineIntake.planned_datetime <= end_datetime
+            )
+        )
+        .order_by(MedicineIntake.planned_datetime)
+    )
+    
+    result = await db.execute(query)
+    intakes = result.scalars().unique().all()
+    
+    # Группируем по дате, затем по времени
+    days_dict = defaultdict(lambda: defaultdict(list))
+    
+    for intake in intakes:
+        intake_date = intake.planned_datetime.date()
+        intake_time = intake.planned_datetime.strftime("%H:%M")
+        days_dict[intake_date][intake_time].append(intake)
+    
+    # Формируем ответ
+    days = []
+    
+    # Названия дней недели на русском
+    day_names = {
+        0: "Понедельник",
+        1: "Вторник",
+        2: "Среда",
+        3: "Четверг",
+        4: "Пятница",
+        5: "Суббота",
+        6: "Воскресенье"
+    }
+    
+    for intake_date in sorted(days_dict.keys(), reverse=True):
+        time_groups = []
+        total_intakes = 0
+        
+        # Сортируем по времени (внутри дня от позднего к раннему)
+        for intake_time in sorted(days_dict[intake_date].keys(), reverse=True):
+            medicines_at_time = days_dict[intake_date][intake_time]
+            total_intakes += len(medicines_at_time)
+            
+            # Создаем список MedicineIntakeResponse для каждого лекарства
+            medicine_responses = []
+            for intake in medicines_at_time:
+                medicine_responses.append({
+                    'id': intake.id,
+                    'schedule_id': intake.schedule_id,
+                    'user_cor_id': intake.user_cor_id,
+                    'planned_datetime': intake.planned_datetime,
+                    'actual_datetime': intake.actual_datetime,
+                    'status': intake.status,
+                    'notes': intake.notes,
+                    'created_at': intake.created_at,
+                    'updated_at': intake.updated_at,
+                    'medicine_name': intake.medicine_name,
+                    'medicine_dosage': intake.medicine_dosage,
+                    'medicine_unit': intake.medicine_unit,
+                    'medicine_intake_method': intake.schedule.medicine.intake_method if intake.schedule and intake.schedule.medicine else None,
+                })
+            
+            time_groups.append(GroupedMedicineIntake(
+                time=intake_time,
+                planned_datetime=medicines_at_time[0].planned_datetime,
+                medicines=medicine_responses,
+                total_count=len(medicines_at_time)
+            ))
+        
+        day_name = day_names[intake_date.weekday()]
+        
+        days.append(DailyMedicineIntakes(
+            intake_date=intake_date,
+            day_name=day_name,
+            time_groups=time_groups,
+            total_intakes=total_intakes
+        ))
+    
+    return GroupedMedicineIntakesResponse(
+        days=days,
+        total_days=len(days),
+        date_range={
+            "start": start_date.isoformat(),
+            "end": end_date.isoformat()
+        }
+    )

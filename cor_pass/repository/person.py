@@ -80,6 +80,7 @@ async def create_user(body: UserModel, db: AsyncSession) -> User:
     Асинхронно создает нового юзера в базе данных.
 
     """
+    from cor_pass.database.models import MedicalCard
 
     new_user = User(**body.model_dump())
     new_user.id = str(uuid.uuid4())
@@ -106,6 +107,12 @@ async def create_user(body: UserModel, db: AsyncSession) -> User:
         await db.commit()
         await db.refresh(new_user)
         await db.refresh(user_settings)
+        
+        # Создание медицинской карты для нового пользователя
+        medical_card = MedicalCard(owner_cor_id=new_user.cor_id)
+        db.add(medical_card)
+        await db.commit()
+        
         return new_user
     except Exception as e:
         await db.rollback()

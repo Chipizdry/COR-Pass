@@ -21,7 +21,7 @@ from cor_pass.schemas import (
 from cor_pass.repository import glass as glass_service
 from typing import List, Optional
 
-from cor_pass.services.access import doctor_access
+from cor_pass.services.access import doctor_access, lab_assistant_or_doctor_access
 from loguru import logger
 from cor_pass.config.config import settings
 from scan_worker.smbprotocol_worker import save_file_to_smb, save_file_to_smb_manual
@@ -31,28 +31,48 @@ router = APIRouter(prefix="/glasses", tags=["Glass"])
 
 @router.post(
     "/create",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     response_model=List[GlassModelScheema],
 )
 async def create_glass_for_cassette(
     body: GlassCreate,
     printing: bool = False,
+    request: Request = None,
     db: AsyncSession = Depends(get_db),
 ):
-    """Создаем указанное количество стёкол"""
-    return await glass_service.create_glass(
+    """Создаем указанное количество стёкол и опционально печатаем их"""
+    created_glasses = await glass_service.create_glass(
         db=db,
         cassette_id=body.cassette_id,
         num_glasses=body.num_glasses,
         staining_type=body.staining_type,
         printing=printing,
     )
+    
+    # Если нужна печать, печатаем каждое созданное стекло
+    if printing and created_glasses:
+        logger.info(f"Начинаем печать {len(created_glasses)} стёкол")
+        for glass in created_glasses:
+            try:
+                glass_id = glass['id'] if isinstance(glass, dict) else glass.id
+                print_data = GlassPrinting(glass_id=glass_id, printing=True)
+                print_result = await glass_service.print_glass_data(
+                    data=print_data, db=db, request=request
+                )
+                if print_result and print_result.get("success"):
+                    logger.debug(f"Стекло {glass_id} успешно отправлено на печать")
+                else:
+                    logger.warning(f"Не удалось распечатать стекло {glass_id}: {print_result}")
+            except Exception as e:
+                logger.error(f"Ошибка при печати стекла {glass.get('id', 'unknown')}: {e}")
+    
+    return created_glasses
 
 
 @router.get(
     "/{glass_id}",
     response_model=GlassModelScheema,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def read_glass_info(glass_id: str, db: AsyncSession = Depends(get_db)):
     """Получаем информацию о стекле по его ID."""
@@ -65,7 +85,7 @@ async def read_glass_info(glass_id: str, db: AsyncSession = Depends(get_db)):
 @router.delete(
     "/delete",
     response_model=DeleteGlassesResponse,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     status_code=status.HTTP_200_OK,
 )
 async def delete_glasses_endpoint(
@@ -79,7 +99,7 @@ async def delete_glasses_endpoint(
 @router.patch(
     "/{glass_id}/staining",
     response_model=GlassModelScheema,
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def change_glass_staining(
     glass_id: str, body: ChangeGlassStaining, db: AsyncSession = Depends(get_db)
@@ -94,7 +114,7 @@ async def change_glass_staining(
 @router.patch(
     "/{glass_id}/printed",
     response_model=Optional[GlassModelScheema],
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def change_glass_printing_status(
     data: GlassPrinting, request: Request, db: AsyncSession = Depends(get_db)
@@ -118,7 +138,7 @@ PLACEHOLDER_PATH = "cor_pass/static/assets/dummy_glass.png"
 
 @router.get(
     "/{glass_id}/preview",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
 )
 async def get_glass_preview(glass_id: str, db: AsyncSession = Depends(get_db)):
     """
@@ -161,7 +181,7 @@ async def get_glass_preview(glass_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/upload-glass/{glass_id}",
-    dependencies=[Depends(doctor_access)],
+    dependencies=[Depends(lab_assistant_or_doctor_access)],
     response_model=Optional[UploadGlassSVSResponse])
 async def upload_glass_file(
     glass_id: str,

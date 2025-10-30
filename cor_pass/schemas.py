@@ -11,7 +11,7 @@ from pydantic import (
     model_validator,
 )
 from typing import Any, Dict, Generic, List, Literal, Optional, TypeVar, Union
-from datetime import datetime, time, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone, date
 
 from cor_pass.database.models import (
     AccessLevel,
@@ -35,12 +35,26 @@ from datetime import date
 # AUTH MODELS
 
 
+
 class UserModel(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=32)
-    birth: Optional[int] = Field(None, ge=1945, le=2100)
+    birth: Optional[int] = Field(None, ge=1900)
     user_sex: Optional[str] = Field(None, max_length=1)
     cor_id: Optional[str] = Field(None, max_length=15)
+
+    @field_validator("birth")
+    @classmethod
+    def validate_birth_year(cls, v: Optional[int]) -> Optional[int]:
+        """Валидация года рождения - не может быть в будущем"""
+        if v is None:
+            return v
+        
+        current_year = datetime.now().year
+        if v > current_year:
+            raise ValueError(f"Год рождения не может быть больше текущего года ({current_year})")
+        
+        return v
 
     @field_validator("user_sex")
     def user_sex_must_be_m_or_f(cls, v):
@@ -57,7 +71,7 @@ class UserDb(BaseModel):
     is_active: bool
     last_password_change: datetime
     user_sex: Optional[str] = Field(None, max_length=1)
-    birth: Optional[int] = Field(None, ge=1945, le=2100)
+    birth: Optional[int] = Field(None, ge=1900)
     user_index: int
     created_at: datetime
     last_active: Optional[datetime] = None
@@ -329,11 +343,38 @@ class UpdateOTPRecordModel(BaseModel):
 class DiplomaCreate(BaseModel):
     scan: Optional[bytes] = Field(None, description="Скан диплома")
     date: Optional[datetime] = Field(..., description="Дата выдачи диплома")
-    series: str = Field(..., max_length=50, description="Серия диплома")
-    number: str = Field(..., max_length=50, description="Номер диплома")
-    university: str = Field(..., max_length=250, description="Название ВУЗа")
+    series: str = Field(..., min_length=1, max_length=50, description="Серия диплома")
+    number: str = Field(..., min_length=1, max_length=50, description="Номер диплома")
+    university: str = Field(..., min_length=2, max_length=250, description="Название ВУЗа")
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    @field_validator('date')
+    @classmethod
+    def validate_diploma_date(cls, v: Optional[datetime]) -> Optional[datetime]:
+        if v is None:
+            return v
+        # Диплом не может быть выдан в будущем
+        if v > datetime.now(timezone.utc):
+            raise ValueError("Дата выдачи диплома не может быть в будущем")
+        # Диплом не может быть старше 1900 года
+        if v.year < 1900:
+            raise ValueError("Дата выдачи диплома не может быть раньше 1900 года")
+        return v
+
+    @field_validator('series', 'number')
+    @classmethod
+    def validate_not_empty(cls, v: str, info: ValidationInfo) -> str:
+        if not v or not v.strip():
+            raise ValueError(f"{info.field_name} не может быть пустым")
+        return v.strip()
+
+    @field_validator('university')
+    @classmethod
+    def validate_university(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Название ВУЗа не может быть пустым")
+        return v.strip()
 
 
 class DiplomaResponse(BaseModel):
@@ -355,13 +396,40 @@ class DiplomaResponse(BaseModel):
 class CertificateCreate(BaseModel):
     scan: Optional[bytes] = Field(None, description="Скан сертификата")
     date: Optional[datetime] = Field(..., description="Дата выдачи сертификата")
-    series: str = Field(..., max_length=50, description="Серия сертификата")
-    number: str = Field(..., max_length=50, description="Номер сертификата")
-    university: str = Field(..., max_length=250, description="Название ВУЗа")
+    series: str = Field(..., min_length=1, max_length=50, description="Серия сертификата")
+    number: str = Field(..., min_length=1, max_length=50, description="Номер сертификата")
+    university: str = Field(..., min_length=2, max_length=250, description="Название ВУЗа")
 
     class Config:
         from_attributes = True
         arbitrary_types_allowed = True
+
+    @field_validator('date')
+    @classmethod
+    def validate_certificate_date(cls, v: Optional[datetime]) -> Optional[datetime]:
+        if v is None:
+            return v
+        # Сертификат не может быть выдан в будущем
+        if v > datetime.now(timezone.utc):
+            raise ValueError("Дата выдачи сертификата не может быть в будущем")
+        # Сертификат не может быть старше 1900 года
+        if v.year < 1900:
+            raise ValueError("Дата выдачи сертификата не может быть раньше 1900 года")
+        return v
+
+    @field_validator('series', 'number')
+    @classmethod
+    def validate_not_empty(cls, v: str, info: ValidationInfo) -> str:
+        if not v or not v.strip():
+            raise ValueError(f"{info.field_name} не может быть пустым")
+        return v.strip()
+
+    @field_validator('university')
+    @classmethod
+    def validate_university(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Название ВУЗа не может быть пустым")
+        return v.strip()
 
 
 class CertificateResponse(BaseModel):
@@ -381,7 +449,7 @@ class CertificateResponse(BaseModel):
 
 
 class ClinicAffiliationCreate(BaseModel):
-    clinic_name: str = Field(..., max_length=250, description="Название клиники")
+    clinic_name: str = Field(..., min_length=2, max_length=250, description="Название клиники")
     department: Optional[str] = Field(None, max_length=250, description="Отделение")
     position: Optional[str] = Field(None, max_length=250, description="Должность")
     specialty: Optional[str] = Field(None, max_length=250, description="Специальность")
@@ -389,6 +457,20 @@ class ClinicAffiliationCreate(BaseModel):
     class Config:
         from_attributes = True
         arbitrary_types_allowed = True
+
+    @field_validator('clinic_name')
+    @classmethod
+    def validate_clinic_name(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Название клиники не может быть пустым")
+        return v.strip()
+
+    @field_validator('department', 'position', 'specialty')
+    @classmethod
+    def validate_optional_fields(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v.strip() == "":
+            return None
+        return v.strip() if v else None
 
 
 class ClinicAffiliationResponse(BaseModel):
@@ -431,14 +513,14 @@ class DoctorCreate(BaseModel):
     work_email: EmailStr = Field(
         ..., description="Рабочий имейл, должен быть уникальным"
     )
-    phone_number: Optional[str] = Field(None, description="Номер телефона")
-    first_name: str = Field(..., description="Имя врача")
-    middle_name: str = Field(..., description="Отчество врача")
-    last_name: str = Field(..., description="Фамилия врача")
-    passport_code: str = Field(..., description="Номер паспорта")
-    taxpayer_identification_number: str = Field(..., description="ИНН")
-    place_of_registration: str = Field(..., description="Место прописки")
-    scientific_degree: Optional[str] = Field(None, description="Научная степень")
+    phone_number: Optional[str] = Field(None, min_length=7, max_length=20, description="Номер телефона")
+    first_name: str = Field(..., min_length=1, max_length=100, description="Имя врача")
+    middle_name: str = Field(..., min_length=1, max_length=100, description="Отчество врача")
+    last_name: str = Field(..., min_length=1, max_length=100, description="Фамилия врача")
+    passport_code: str = Field(..., min_length=4, max_length=50, description="Номер паспорта")
+    taxpayer_identification_number: str = Field(..., min_length=8, max_length=20, description="ИНН")
+    place_of_registration: str = Field(..., min_length=5, max_length=500, description="Место прописки")
+    scientific_degree: Optional[str] = Field(None, max_length=200, description="Научная степень")
     date_of_last_attestation: Optional[date] = Field(
         None, description="Дата последней атестации"
     )
@@ -446,17 +528,109 @@ class DoctorCreate(BaseModel):
     certificates: List[CertificateCreate] = []
     clinic_affiliations: List[ClinicAffiliationCreate] = []
 
+    @field_validator('phone_number')
+    @classmethod
+    def validate_phone_number(cls, v: Optional[str]) -> Optional[str]:
+        """
+        Валидация номера телефона:
+        - Разрешены цифры, пробелы, дефисы, скобки и знак +
+        - Длина от 7 до 20 символов
+        - Должен содержать хотя бы 7 цифр
+        """
+        if v is None:
+            return v
+        
+        # Убираем пробелы для проверки
+        cleaned = v.strip()
+        if not cleaned:
+            return None
+        
+        # Проверяем допустимые символы
+        import re
+        if not re.match(r'^[\d\s\-\(\)\+]+$', cleaned):
+            raise ValueError(
+                "Номер телефона может содержать только цифры, пробелы, дефисы, скобки и знак +"
+            )
+        
+        # Проверяем количество цифр
+        digits_only = re.sub(r'\D', '', cleaned)
+        if len(digits_only) < 7:
+            raise ValueError("Номер телефона должен содержать минимум 7 цифр")
+        if len(digits_only) > 15:
+            raise ValueError("Номер телефона не может содержать более 15 цифр")
+        
+        return cleaned
+
+    @field_validator('first_name', 'middle_name', 'last_name')
+    @classmethod
+    def validate_names(cls, v: str, info: ValidationInfo) -> str:
+        """Валидация имени, отчества, фамилии"""
+        if not v or not v.strip():
+            raise ValueError(f"{info.field_name} не может быть пустым")
+        
+        # Проверяем, что имя содержит только буквы, дефисы и апострофы
+        import re
+        if not re.match(r"^[A-Za-zА-Яа-яЁёІіЇїЄєҐґ'\-\s]+$", v.strip()):
+            raise ValueError(
+                f"{info.field_name} может содержать только буквы, дефисы и апострофы"
+            )
+        
+        return v.strip()
+
+    @field_validator('passport_code', 'taxpayer_identification_number')
+    @classmethod
+    def validate_document_numbers(cls, v: str, info: ValidationInfo) -> str:
+        """Валидация документов"""
+        if not v or not v.strip():
+            raise ValueError(f"{info.field_name} не может быть пустым")
+        return v.strip()
+
+    @field_validator('place_of_registration')
+    @classmethod
+    def validate_address(cls, v: str) -> str:
+        """Валидация адреса"""
+        if not v or not v.strip():
+            raise ValueError("Место прописки не может быть пустым")
+        if len(v.strip()) < 5:
+            raise ValueError("Место прописки должно содержать минимум 5 символов")
+        return v.strip()
+
+    @field_validator('date_of_last_attestation')
+    @classmethod
+    def validate_attestation_date(cls, v: Optional[date]) -> Optional[date]:
+        """Валидация даты аттестации"""
+        if v is None:
+            return v
+        
+        # Дата аттестации не может быть в будущем
+        if v > date.today():
+            raise ValueError("Дата аттестации не может быть в будущем")
+        
+        # Дата аттестации не может быть старше 100 лет
+        if v.year < (date.today().year - 100):
+            raise ValueError("Дата аттестации слишком старая")
+        
+        return v
+
+    @field_validator('scientific_degree')
+    @classmethod
+    def validate_scientific_degree(cls, v: Optional[str]) -> Optional[str]:
+        """Валидация научной степени"""
+        if v is not None and v.strip() == "":
+            return None
+        return v.strip() if v else None
+
     class Config:
         json_schema_extra = {
             "example": {
                 "work_email": "doctor@example.com",
-                "phone_number": "+3806666666",
+                "phone_number": "+380666666666",
                 "first_name": "John",
                 "middle_name": "Doe",
                 "last_name": "Smith",
                 "passport_code": "CN123456",
                 "taxpayer_identification_number": "1234567890",
-                "place_of_registration": "Kyiv, Antona Tsedica 12",
+                "place_of_registration": "Kyiv, Antona Tsedika 12",
                 "scientific_degree": "PhD",
                 "date_of_last_attestation": "2022-12-31",
                 "diplomas": [
@@ -518,15 +692,6 @@ class DoctorResponseForSignature(BaseModel):
     first_name: Optional[str] = Field(None, description="Имя врача")
     middle_name: Optional[str] = Field(None, description="Отчество врача")
     last_name: Optional[str] = Field(None, description="Фамилия врача")
-    # doctors_photo: Optional[str] = Field(None, description="Ссылка на фото врача")
-    # scientific_degree: Optional[str] = Field(None, description="Научная степень")
-    # date_of_last_attestation: Optional[date] = Field(
-    #     None, description="Дата последней атестации"
-    # )
-    # status: Doctor_Status
-    # place_of_registration: Optional[str] = Field(None, description="Место прописки")
-    # passport_code: Optional[str] = Field(None, description="Номер паспорта")
-    # taxpayer_identification_number: Optional[str] = Field(None, description="ИНН")
 
     class Config:
         from_attributes = True
@@ -556,6 +721,121 @@ class DoctorCreateResponse(BaseModel):
     class Config:
         from_attributes = True
         arbitrary_types_allowed = True
+
+
+class SimpleDoctorCreate(BaseModel):
+    """Упрощенная схема для создания врача без дополнительных документов"""
+    work_email: EmailStr = Field(
+        ..., description="Рабочий имейл, должен быть уникальным"
+    )
+    phone_number: Optional[str] = Field(None, min_length=7, max_length=20, description="Номер телефона")
+    first_name: str = Field(..., min_length=1, max_length=100, description="Имя врача")
+    middle_name: str = Field(..., min_length=1, max_length=100, description="Отчество врача")
+    last_name: str = Field(..., min_length=1, max_length=100, description="Фамилия врача")
+    passport_code: str = Field(..., min_length=4, max_length=50, description="Номер паспорта")
+    taxpayer_identification_number: str = Field(..., min_length=8, max_length=20, description="ИНН")
+    place_of_registration: str = Field(..., min_length=5, max_length=500, description="Место прописки")
+    scientific_degree: Optional[str] = Field(None, max_length=200, description="Научная степень")
+    date_of_last_attestation: Optional[date] = Field(
+        None, description="Дата последней атестации"
+    )
+
+    @field_validator('phone_number')
+    @classmethod
+    def validate_phone_number(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        cleaned = v.strip()
+        if not cleaned:
+            return None
+        if not re.match(r'^[\d\s\-\(\)\+]+$', cleaned):
+            raise ValueError(
+                "Номер телефона может содержать только цифры, пробелы, дефисы, скобки и знак +"
+            )
+        digits_only = re.sub(r'\D', '', cleaned)
+        if len(digits_only) < 7:
+            raise ValueError("Номер телефона должен содержать минимум 7 цифр")
+        if len(digits_only) > 15:
+            raise ValueError("Номер телефона не может содержать более 15 цифр")
+        return cleaned
+
+    @field_validator('first_name', 'middle_name', 'last_name')
+    @classmethod
+    def validate_names(cls, v: str, info: ValidationInfo) -> str:
+        if not v or not v.strip():
+            raise ValueError(f"{info.field_name} не может быть пустым")
+        if not re.match(r"^[A-Za-zА-Яа-яЁёІіЇїЄєҐґ'\-\s]+$", v.strip()):
+            raise ValueError(
+                f"{info.field_name} может содержать только буквы, дефисы и апострофы"
+            )
+        return v.strip()
+
+    @field_validator('passport_code', 'taxpayer_identification_number')
+    @classmethod
+    def validate_document_numbers(cls, v: str, info: ValidationInfo) -> str:
+        if not v or not v.strip():
+            raise ValueError(f"{info.field_name} не может быть пустым")
+        return v.strip()
+
+    @field_validator('place_of_registration')
+    @classmethod
+    def validate_address(cls, v: str) -> str:
+        if not v or not v.strip():
+            raise ValueError("Место прописки не может быть пустым")
+        if len(v.strip()) < 5:
+            raise ValueError("Место прописки должно содержать минимум 5 символов")
+        return v.strip()
+
+    @field_validator('date_of_last_attestation')
+    @classmethod
+    def validate_attestation_date(cls, v: Optional[date]) -> Optional[date]:
+        if v is None:
+            return v
+        if v > date.today():
+            raise ValueError("Дата аттестации не может быть в будущем")
+        if v.year < (date.today().year - 100):
+            raise ValueError("Дата аттестации слишком старая")
+        return v
+
+
+class SimpleDoctorResponse(BaseModel):
+    """Упрощенный ответ при создании врача"""
+    id: str = Field(..., description="ID врача")
+    doctor_cor_id: str = Field(..., description="COR-ID врача")
+    work_email: EmailStr = Field(..., description="Рабочий имейл")
+    phone_number: Optional[str] = Field(None, description="Номер телефона")
+    first_name: str = Field(..., description="Имя врача")
+    middle_name: str = Field(..., description="Отчество врача")
+    last_name: str = Field(..., description="Фамилия врача")
+    scientific_degree: Optional[str] = Field(None, description="Научная степень")
+    date_of_last_attestation: Optional[date] = Field(
+        None, description="Дата последней атестации"
+    )
+    status: Doctor_Status
+    place_of_registration: Optional[str] = Field(None, description="Место прописки")
+    passport_code: Optional[str] = Field(None, description="Номер паспорта")
+    taxpayer_identification_number: Optional[str] = Field(None, description="ИНН")
+
+    class Config:
+        from_attributes = True
+
+
+class AddDoctorDiplomaRequest(BaseModel):
+    """Схема для добавления диплома к существующему врачу"""
+    doctor_cor_id: str = Field(..., description="COR-ID врача")
+    diploma: DiplomaCreate = Field(..., description="Данные диплома")
+
+
+class AddDoctorCertificateRequest(BaseModel):
+    """Схема для добавления сертификата к существующему врачу"""
+    doctor_cor_id: str = Field(..., description="COR-ID врача")
+    certificate: CertificateCreate = Field(..., description="Данные сертификата")
+
+
+class AddDoctorClinicAffiliationRequest(BaseModel):
+    """Схема для добавления привязки к клинике для существующего врача"""
+    doctor_cor_id: str = Field(..., description="COR-ID врача")
+    clinic_affiliation: ClinicAffiliationCreate = Field(..., description="Данные о клинике")
 
 
 # CorIdAuthSession MODELS
@@ -1888,49 +2168,6 @@ class CaseOwnershipResponse(BaseModel):
     case_owner: Optional[CaseOwnerResponse]
 
 
-# class BloodPressureMeasurementCreate(BaseModel):
-#     systolic_pressure: Optional[int] = Field(None, gt=0, description="Систолическое (верхнее) давление")
-#     diastolic_pressure: Optional[int] = Field(None, gt=0, description="Диастолическое (нижнее) давление")
-#     pulse: Optional[int] = Field(None, gt=0, description="Пульс")
-#     measured_at: datetime = Field(..., description="Дата и время измерения (с устройства)")
-
-#     @field_validator('systolic_pressure')
-#     @classmethod
-#     def validate_systolic_range(cls, v):
-#         if not (50 <= v <= 250):
-#             raise ValueError("Систолическое давление должно быть в диапазоне от 50 до 250.")
-#         return v
-
-#     @field_validator('diastolic_pressure')
-#     @classmethod
-#     def validate_diastolic_range(cls, v):
-#         if not (30 <= v <= 150):
-#             raise ValueError("Диастолическое давление должно быть в диапазоне от 30 до 150.")
-#         return v
-
-
-#     @model_validator(mode='after')
-#     def check_diastolic_less_than_systolic(self):
-#         if self.diastolic_pressure >= self.systolic_pressure:
-#             raise ValueError("Диастолическое давление не может быть выше или равно систолическому.")
-#         return self
-
-# class BloodPressureMeasures(BaseModel):
-#     sistolic: Optional[int] = Field(None, alias="sistolic")
-#     diastolic: Optional[int] = Field(None, alias="diastolic")
-
-
-# class IndividualResult(BaseModel):
-#     measures: str | BloodPressureMeasures
-#     member: List[str]
-
-
-# class TonometrIncomingData(BaseModel):
-#     created_at: datetime
-#     member: List[str]
-#     result: List[IndividualResult]
-
-
 class NewBloodPressureMeasurementResponse(BaseModel):
     id: str
     systolic_pressure: Optional[int]
@@ -2456,23 +2693,65 @@ class MedicineScheduleBase(BaseModel):
     notes: Optional[str] = Field(None, description="Заметка")
 
 
-    @field_validator("intake_times")
+    @field_validator("intake_times", mode="before")
     @classmethod
-    def validate_intake_times(cls, v: Optional[List[time]], info: ValidationInfo):
+    def validate_intake_times(cls, v: Optional[List], info: ValidationInfo):
+        if v is None:
+            return v
+        
+        # Преобразуем строки в time объекты
+        result = []
+        for item in v:
+            if isinstance(item, str):
+                # Парсим строку формата "HH:MM", "HH:MM:SS" или "HH:MM:SS.microseconds[Z]"
+                try:
+                    # Убираем timezone marker (Z) если есть
+                    time_str = item.rstrip('Z')
+                    
+                    # Разделяем по двоеточию
+                    time_parts = time_str.split(":")
+                    
+                    if len(time_parts) == 2:
+                        # Формат HH:MM
+                        result.append(time(int(time_parts[0]), int(time_parts[1])))
+                    elif len(time_parts) == 3:
+                        # Формат HH:MM:SS или HH:MM:SS.microseconds
+                        seconds_part = time_parts[2]
+                        
+                        # Проверяем, есть ли миллисекунды/микросекунды
+                        if '.' in seconds_part:
+                            seconds_str, microseconds_str = seconds_part.split('.')
+                            seconds = int(seconds_str)
+                            # Преобразуем миллисекунды в микросекунды (datetime.time принимает микросекунды)
+                            # Если пришло "39.554", то это 554 миллисекунды = 554000 микросекунд
+                            microseconds = int(microseconds_str.ljust(6, '0')[:6])
+                            result.append(time(int(time_parts[0]), int(time_parts[1]), seconds, microseconds))
+                        else:
+                            # Простой формат HH:MM:SS
+                            result.append(time(int(time_parts[0]), int(time_parts[1]), int(seconds_part)))
+                    else:
+                        raise ValueError(f"Неверный формат времени: {item}. Ожидается HH:MM, HH:MM:SS или HH:MM:SS.microseconds")
+                except (ValueError, IndexError) as e:
+                    raise ValueError(f"Не удалось распарсить время '{item}': {e}")
+            elif isinstance(item, time):
+                result.append(item)
+            else:
+                raise ValueError(f"Неверный тип времени: {type(item)}. Ожидается строка или time объект")
+        
         data = info.data or {}  
         times_per_day = data.get("times_per_day")
 
-        if times_per_day is not None and v is not None:
-            if len(v) != times_per_day:
+        if times_per_day is not None and result is not None:
+            if len(result) != times_per_day:
                 raise ValueError(
-                    f"Количество вхождений часов приема ({len(v)}) должно соответствовать количеству приёмов в день({times_per_day})"
+                    f"Количество вхождений часов приема ({len(result)}) должно соответствовать количеству приёмов в день({times_per_day})"
                 )
 
         # Если times_per_day не указано, но intake_times есть — выставляем автоматически
-        if v is not None and times_per_day is None:
-            data["times_per_day"] = len(v)
+        if result is not None and times_per_day is None:
+            data["times_per_day"] = len(result)
 
-        return v
+        return result
 
 
     @field_validator("times_per_day")
@@ -2551,6 +2830,7 @@ class MedicineIntakeResponse(BaseModel):
     name: str = Field(alias='medicine_name', description="Название лекарства")
     dosage: Optional[float] = Field(alias='medicine_dosage', description="Дозировка лекарства")
     unit: Optional[str] = Field(alias='medicine_unit', description="Единица измерения дозировки")
+    intake_method: Optional[str] = Field(alias='medicine_intake_method', description="Способ приёма лекарства")
     # name: str
     # medicine_dosage: Optional[float] = None
     # medicine_unit: Optional[str] = None
@@ -2567,6 +2847,132 @@ class PaginatedMedicineIntakeResponse(BaseModel):
     total_pages: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class GroupedMedicineIntake(BaseModel):
+    """Группа приемов лекарств на одно время"""
+    time: str = Field(..., description="Время приема (HH:MM)")
+    planned_datetime: datetime = Field(..., description="Полная дата и время планового приема")
+    medicines: List[MedicineIntakeResponse] = Field(default_factory=list, description="Список лекарств на это время")
+    total_count: int = Field(..., description="Количество лекарств в группе")
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DailyMedicineIntakes(BaseModel):
+    """Приемы лекарств на конкретную дату, сгруппированные по времени"""
+    intake_date: date = Field(..., description="Дата")
+    day_name: str = Field(..., description="Название дня недели")
+    time_groups: List[GroupedMedicineIntake] = Field(default_factory=list, description="Группы приемов по времени")
+    total_intakes: int = Field(..., description="Общее количество приемов за день")
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GroupedMedicineIntakesResponse(BaseModel):
+    """Список приемов лекарств, сгруппированных по дням и времени"""
+    days: List[DailyMedicineIntakes] = Field(default_factory=list, description="Приемы по дням")
+    total_days: int = Field(..., description="Количество дней")
+    date_range: dict = Field(..., description="Диапазон дат (start, end)")
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MedicineScheduleWithIntakes(MedicineScheduleResponse):
+    intakes: List[MedicineIntakeResponse] = []
+
+    class Config:
+        from_attributes = True
+
+
+# ===================================
+# Схемы для медицинских карт
+# ===================================
+
+class MedicalCardUpdate(BaseModel):
+    """Схема для обновления медицинской карты"""
+    display_name: Optional[str] = Field(None, max_length=100, description="Кастомное имя карты")
+    card_color: Optional[str] = Field(None, max_length=20, description="Цвет карты в интерфейсе")
+    is_active: Optional[bool] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MedicalCardResponse(BaseModel):
+    """Схема для ответа с информацией о медицинской карте"""
+    id: str
+    owner_cor_id: str
+    display_name: Optional[str] = None
+    card_color: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+    
+    # Дополнительная информация о владельце
+    gender: Optional[str] = Field(None, description="Пол владельца (из User.user_sex)")
+    birth_date: Optional[date] = Field(None, description="Полная дата рождения (из Profile.birth_date)")
+    birth_year: Optional[int] = Field(None, description="Год рождения (из User.birth), если полной даты нет")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MedicalCardAccessCreate(BaseModel):
+    """Схема для предоставления доступа к медицинской карте"""
+    user_cor_id: str = Field(..., description="COR ID пользователя, которому предоставляется доступ")
+    access_level: str = Field("view", pattern="^(view|edit|share)$", description="Уровень доступа: view (смотреть), edit (редактировать), share (распространять)")
+    purpose: Optional[str] = Field(None, pattern="^(relative|doctor|other)$", description="Для кого: relative (родственник), doctor (врач), other (другое)")
+    purpose_note: Optional[str] = Field(None, max_length=255, description="Дополнительное пояснение (если выбрано 'other')")
+    expires_at: Optional[datetime] = Field(None, description="Дата истечения доступа")
+
+    @field_validator('expires_at')
+    @classmethod
+    def validate_expires_at(cls, v: Optional[datetime]) -> Optional[datetime]:
+        if v and v <= datetime.now(v.tzinfo or timezone.utc):
+            raise ValueError("Дата истечения должна быть в будущем")
+        return v
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MedicalCardAccessResponse(BaseModel):
+    """Схема для ответа с информацией о доступе к медицинской карте"""
+    id: str
+    medical_card_id: str
+    user_cor_id: str
+    access_level: str
+    purpose: Optional[str] = None
+    purpose_note: Optional[str] = None
+    granted_by_cor_id: Optional[str] = None
+    granted_at: datetime
+    expires_at: Optional[datetime] = None
+    is_accepted: bool
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MedicalCardWithAccessInfo(MedicalCardResponse):
+    """Схема медицинской карты с информацией о доступе"""
+    my_access_level: Optional[str] = Field(None, description="Уровень доступа текущего пользователя")
+    is_owner: bool = Field(..., description="Является ли текущий пользователь владельцем")
+    
+    # Информация о владельце (из User/Profile)
+    owner_name: Optional[str] = Field(None, description="ФИО владельца карты")
+    owner_birth_year: Optional[int] = Field(None, description="Год рождения владельца")
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MedicalCardListResponse(BaseModel):
+    """Схема для списка медицинских карт"""
+    my_card: Optional[MedicalCardResponse] = Field(None, description="Моя медицинская карта")
+    accessible_cards: List[MedicalCardWithAccessInfo] = Field(default_factory=list, description="Доступные карты других пользователей")
+    total_accessible: int = Field(0, description="Количество доступных карт")
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class MedicineScheduleWithIntakes(MedicineScheduleResponse):
     intakes: List[MedicineIntakeResponse] = []
@@ -2797,3 +3203,123 @@ class LaboratoryRead(LaboratoryBase):
 
     class Config:
         orm_mode = True
+
+
+# ============================================================================
+# SIBIONICS CGM Integration Schemas
+# ============================================================================
+
+# Request/Response schemas for SIBIONICS API
+
+class SibionicsAuthRequest(BaseModel):
+    """Запрос на авторизацию в SIBIONICS (внутреннее использование)"""
+    app_key: str = Field(..., description="App Key from SIBIONICS")
+    secret: str = Field(..., description="Secret Key from SIBIONICS")
+
+
+class SibionicsTokenResponse(BaseModel):
+    """Ответ с токеном от SIBIONICS API"""
+    access_token: str = Field(..., description="Access token")
+    expires_in: int = Field(..., description="Token expiration timestamp (milliseconds)")
+
+
+class SibionicsUserAuthCreate(BaseModel):
+    """Создание связи пользователя с SIBIONICS аккаунтом"""
+    biz_id: str = Field(..., description="SIBIONICS Authorization resource ID")
+
+
+class SibionicsUserAuthResponse(BaseModel):
+    """Информация об авторизации пользователя в SIBIONICS"""
+    id: str
+    user_id: str
+    biz_id: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SibionicsDeviceData(BaseModel):
+    """Данные устройства CGM от SIBIONICS API"""
+    device_id: str = Field(..., alias="deviceId")
+    device_name: str = Field(..., alias="deviceName")
+    index: int = Field(..., description="Current data index")
+    status: int = Field(..., description="0: Not started; 1: Monitoring; 2: Expired; 3: Init; 4: Abnormal")
+    enable_time: int = Field(..., alias="enableTime", description="Device wearing start time (timestamp)")
+    last_time: int = Field(..., alias="lastTime", description="Device wearing deadline (timestamp)")
+    bluetooth_num: str = Field(..., alias="blueToothNum")
+    serial_no: Optional[str] = Field(None, alias="serialNo")
+    max_index: int = Field(..., alias="maxIndex")
+    min_index: int = Field(..., alias="minIndex")
+    data_gap: int = Field(..., alias="dataGap", description="Glucose index interval")
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class SibionicsDeviceResponse(BaseModel):
+    """Ответ с информацией об устройстве из БД"""
+    id: str
+    device_id: str
+    device_name: Optional[str]
+    bluetooth_num: Optional[str]
+    serial_no: Optional[str]
+    status: Optional[int]
+    current_index: Optional[int]
+    max_index: Optional[int]
+    min_index: Optional[int]
+    data_gap: Optional[int]
+    enable_time: Optional[datetime]
+    last_time: Optional[datetime]
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SibionicsGlucoseData(BaseModel):
+    """Данные глюкозы от SIBIONICS API"""
+    i: int = Field(..., description="Index")
+    v: float = Field(..., description="Glucose value in mmol/L")
+    s: int = Field(..., description="Trend: 0=stable, ±1=slow, ±2=fast")
+    ast: int = Field(..., description="Alarm status: 1=normal, 2-6=various alarms")
+    t: int = Field(..., description="Timestamp (milliseconds)")
+
+
+class SibionicsGlucoseResponse(BaseModel):
+    """Ответ с данными глюкозы из БД"""
+    id: str
+    device_id: str
+    index: int
+    glucose_value: float
+    trend: Optional[int]
+    alarm_status: Optional[int]
+    timestamp: datetime
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SibionicsGlucoseListResponse(BaseModel):
+    """Список данных глюкозы с пагинацией"""
+    records: List[SibionicsGlucoseResponse]
+    current_page: int
+    page_size: int
+    total_page: int
+    total: int
+
+
+class SibionicsSyncRequest(BaseModel):
+    """Запрос на синхронизацию данных с SIBIONICS"""
+    device_id: Optional[str] = Field(None, description="Specific device ID (optional)")
+    start_index: Optional[int] = Field(60, ge=60, le=20160, description="Starting index for data sync")
+    page_size: int = Field(1000, ge=1, le=1000, description="Number of records per request")
+
+
+class SibionicsSyncResponse(BaseModel):
+    """Результат синхронизации данных"""
+    devices_synced: int
+    total_records_added: int
+    total_records_updated: int
+    sync_timestamp: datetime
+    details: List[Dict[str, Any]] = Field(default_factory=list)

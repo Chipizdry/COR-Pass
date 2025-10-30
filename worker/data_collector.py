@@ -296,11 +296,11 @@ async def send_grid_feed_w_command(modbus_client: AsyncModbusTcpClient, grid_fee
             value=register_value,
             slave=slave
         )
-        logger.debug(f"✅ grid_feed_w: {register_value} W (регистр 2703 = {register_value})")
+        logger.debug(f"✅ grid_feed_w: {grid_feed_w} W → регистр 2703 = {register_value}")
         return {"status": "ok", "value": grid_feed_w}
     except Exception as e:
         logger.error(
-            f" Unhandled error during periodic data collection: {e}",
+            f"Ошибка при отправке grid_feed_w команды: {e}",
             exc_info=True,
         )
         raise
