@@ -120,10 +120,97 @@ async function sendDoctorBasic() {
   }
 }
 
+// Валидация конкретного шага
+window.validateStep = function(stepNumber) {
+  let ok = true;
 
+  // Сбрасываем подсветку полей
+  document.querySelectorAll(`#step${stepNumber}Modal input`).forEach(el => {
+    el.style.borderColor = "";
+  });
 
+  switch (stepNumber) {
+    case 1: {
+      const requiredIds = ["lastName", "firstName", "workEmail", "Phone_number"];
+      requiredIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el || !el.value.trim()) {
+          ok = false;
+          el.style.borderColor = "red";
+        }
+      });
 
-function validateAllSteps() {
+      // Проверка email
+      const email = document.getElementById("workEmail").value.trim();
+      const emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/i;
+      if (!emailPattern.test(email)) {
+        ok = false;
+        document.getElementById("workEmail").style.borderColor = "red";
+      }
+
+      // Проверка телефона (должен содержать хотя бы 8 цифр)
+      const phone = document.getElementById("Phone_number").value.trim();
+      const digits = phone.replace(/\D/g, "");
+      if (digits.length < 8) {
+        ok = false;
+        document.getElementById("Phone_number").style.borderColor = "red";
+      }
+      break;
+    }
+
+    case 2: {
+      const requiredIds = ["Passport_serial_number", "Tax_Number", "Addres"];
+      requiredIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el || !el.value.trim()) {
+          ok = false;
+          el.style.borderColor = "red";
+        }
+      });
+      break;
+    }
+
+    case 3: {
+      const requiredIds = ["Clinick_Name", "Department", "Job_title", "specialization", "degree"];
+      requiredIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.value.trim()) {
+          ok = false;
+          el.style.borderColor = "red";
+        }
+      });
+      break;
+    }
+
+    case 4: {
+      const requiredIds = ["date_id", "Serial_number", "Number", "University"];
+      requiredIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.value.trim()) {
+          ok = false;
+          el.style.borderColor = "red";
+        }
+      });
+      break;
+    }
+
+    case 5: {
+      const requiredIds = ["date_id", "Serial_number", "Number", "University"];
+      requiredIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.value.trim()) {
+          ok = false;
+          el.style.borderColor = "red";
+        }
+      });
+      break;
+    }
+  }
+
+  return ok;
+}
+
+window.validateAllSteps = function() {
   for (let i = 1; i <= 5; i++) {
     if (!validateStep(i)) {
       alert(`Исправьте ошибки на шаге ${i}`);
