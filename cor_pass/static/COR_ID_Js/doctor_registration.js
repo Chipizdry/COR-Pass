@@ -3,6 +3,7 @@
 
   /* ========== Автозаполнение данных (localStorage) ========== */
   function autoFillStep1Fields() {
+    if (checkToken()) {
     console.log("Автозаполнение полей шага 1...");
     const gender = localStorage.getItem('userGender');
     const birthYear = localStorage.getItem('userBirthYear');
@@ -14,7 +15,7 @@
   
     const birthYearInput = document.getElementById('birthYear');
     if (birthYearInput && birthYear) birthYearInput.value = birthYear;
-  }
+  }}
 
 
 
@@ -76,7 +77,7 @@ function isValidPhone(phone) {
 
 // Отправка базовых данных врача
 async function sendDoctorBasic() {
-  const token = localStorage.getItem('accessToken'); // если используется авторизация
+  if (checkToken()) {
   const url = '/api/doctor/v1/signup-doctor-basic';
 
   const doctorData = {
@@ -96,9 +97,9 @@ async function sendDoctorBasic() {
       const response = await fetch(url, {
           method: 'POST',
           headers: {
-              'Content-Type': 'application/json',
-              ...(token && { 'Authorization': `Bearer ${token}` })
-          },
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + getToken()
+        },
           body: JSON.stringify(doctorData)
       });
 
@@ -118,7 +119,7 @@ async function sendDoctorBasic() {
       console.error('Ошибка сети или сервера:', err);
       alert('Не удалось отправить данные. Проверьте подключение к сети.');
   }
-}
+}}
 
 // Валидация конкретного шага
 window.validateStep = function(stepNumber) {

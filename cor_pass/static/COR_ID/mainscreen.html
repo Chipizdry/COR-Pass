@@ -759,6 +759,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     doctorButton.classList.remove('hidden');
                     break;
 
+                case 'lab_assistant':
+                    doctorButton.classList.remove('hidden');
+                    break;
+
                 default:
                     console.log(`Неизвестная роль: ${role}. Применяется дефолт — только медицина.`);
                     doctorButton.classList.remove('hidden');

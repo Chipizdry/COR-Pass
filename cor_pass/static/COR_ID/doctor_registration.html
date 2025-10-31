@@ -735,6 +735,7 @@
 
     // Переход вперёд
     window.goForward = function() {
+        if (checkToken()) {
         if (!validateStep(currentStep+1)) { 
         alert(`Пожалуйста, заполните все обязательные поля на шаге ${currentStep+1}`);
         return; // не переходим
@@ -743,10 +744,11 @@
             currentStep++;
             showStep(currentStep);
         }
-    };
+    }};
 
     // Переход назад
     window.goBack = function() {
+        if (checkToken()) {
         if (currentStep > 0) {
             currentStep--;
             showStep(currentStep);
@@ -755,7 +757,7 @@
             window.location.href = '/static/medical.html';
         } 
         }
-    };
+    }};
 
     // Показать первый шаг при загрузке
     showStep(currentStep);

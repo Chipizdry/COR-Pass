@@ -1,55 +1,6 @@
-/* function setLanguage(language) {
-    const elements = document.querySelectorAll("[data-translate]");
-    elements.forEach(element => {
-        const key = element.getAttribute("data-translate");
 
-        // Проверяем, есть ли перевод для данного языка и ключа
-        if (translations[language] && translations[language][key]) {
-            const translation = translations[language][key];
 
-            // Обработка разных типов элементов
-            if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-                // Для input и textarea обрабатываем placeholder и value
-                if (element.type === 'text' || element.type === 'password' || element.type === 'email') {
-                    element.placeholder = translation;
-                } else if (element.type === 'button' || element.type === 'submit') {
-                    element.value = translation;
-                }
-            } else if (element.tagName === 'SELECT') {
-                // Для select переводим placeholder (disabled option)
-                const placeholderOption = element.querySelector("option[disabled][selected]");
-                if (placeholderOption) {
-                    placeholderOption.textContent = translation;
-                }
-            } else if (element.tagName === 'OPTION') {
-                // Для option заменяем текст
-                element.textContent = translation;
-            } else {
-                // Для остальных элементов заменяем текстовое содержимое
-                element.textContent = translation;
-            }
-        }
-    });
-
-    // Сохраняем выбранный язык в localStorage
-    localStorage.setItem('selectedLanguage', language);
-}
-
-function switchLanguage(language) {
-    setLanguage(language);
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    const userLang = localStorage.getItem('selectedLanguage') || navigator.language || navigator.userLanguage;
-    const defaultLang = userLang.startsWith('ru') ? 'ru' : 
-                        userLang.startsWith('en') ? 'en' : 
-                        userLang.startsWith('zh') ? 'zh' :
-                        userLang.startsWith('uk') ? 'uk' :'ru';
-    setLanguage(defaultLang);
-});
-*/
-
-/* Словник має йти перед функціями, які його використовують */
+/* Словарь должен быть объявлен до функций, которые его используют */
 const translations = {
     ru: {
         title: "Авторизация",
@@ -174,7 +125,40 @@ const translations = {
         "saveButton": "Сохранить",
         "microdesSuccess": "Микроописание успешно обновлено",
         "microdesDenial": "Чтобы записать микроописание, вы должны быть владельцем кейса.",
-        "upload": "Загрузить"
+        "upload": "Загрузить",
+        "excisionCommonParams": "Общие параметры вырезки",
+        "sampleType": "Тип образцов",
+        "macrodes": "Макроописание",
+        "sample": "Образец",
+        "withArchive": "с архивом",
+        "withoutArchive": "без архива",
+        "caseSettings": "Параметры кейса",
+        "docPhotoScan": "Фото/скан документа",
+        "scan": "Сканировать",
+        "colorChangeSuccess": "Окраска стекла успешно изменена",
+        "cassettesCreated": "Кассеты успешно созданы",
+        "cassetteCreated": "Кассета успешно создана",
+        "glassesCreated": "Стёкла успешно созданы",
+        "glassCreated": "Стекло успешно создано",
+        "expQRprinted": "QR исследования распечатан",
+        "expCassettesPrinted": "Кассеты исследования распечатаны",
+        "expGlassesPrinted": "Стёкла исследования распечатаны",
+        "glassesPrinted": "Стёкла образца распечатаны",
+        "cassettesScaned": "Кассета отсканирована",
+        "glassPrinted": "Стекло распечатано",
+        "casesDeleted": "Кейсы успешно удалены",
+        "caseDeleted": "Кейс успешно удалён",
+        "casesCreated": "Кейсы успешно созданы",
+        "caseCreated": "Кейс успешно создан",
+        "specimensDeleted": "Образцы успешно удалены",
+        "specimenDeleted": "Образец успешно удалён",
+        "specimensCreated": "Образцы успешно созданы",
+        "specimenCreated": "Образец успешно создан",
+        "cassettesDeleted": "Кассеты успешно удалены",
+        "cassetteDeleted": "Кассета успешно удалена",
+        "glassesDeleted": "Стёкла успешно удалены",
+        "glassDeleted": "Стекло успешно удалено",
+        "macrodesSuccess": "Макроописание успешно обновлено"
     },
     en: {
         title: "Authorization",
@@ -299,7 +283,40 @@ const translations = {
         "saveButton": "Save",
         "microdesSuccess": "Microdescription successfully updated",
         "microdesDenial": "To save a microdescription, you must be the case owner.",
-        "upload": "Upload"
+        "upload": "Upload",
+        "excisionCommonParams": "Section parameters",
+        "sampleType": "Sample type",
+        "macrodes": "Macroscopic description",
+        "sample": "Sample",
+        "withArchive": "with archive",
+        "withoutArchive": "without archive",
+        "caseSettings": "Case settings",
+        "docPhotoScan": "Document photo/scan",
+        "scan": "Scan",
+        "colorChangeSuccess": "Slide color successfully changed",
+        "cassettesCreated": "Cassettes successfully created",
+        "cassetteCreated": "Cassette successfully created",
+        "glassesCreated": "Slides successfully created",
+        "glassCreated": "Slide successfully created",
+        "expQRprinted": "Research QR printed",
+        "expCassettesPrinted": "Research cassettes printed",
+        "expGlassesPrinted": "Research slides printed",
+        "glassesPrinted": "Sample slides printed",
+        "cassettesScaned": "Cassette scanned",
+        "glassPrinted": "Slide printed",
+        "casesDeleted": "Cases successfully deleted",
+        "caseDeleted": "Case successfully deleted",
+        "casesCreated": "Cases successfully created",
+        "caseCreated": "Case successfully created",
+        "specimensDeleted": "Specimens successfully deleted",
+        "specimenDeleted": "Specimen successfully deleted",
+        "specimensCreated": "Specimens successfully created",
+        "specimenCreated": "Specimen successfully created",
+        "cassettesDeleted": "Cassettes successfully deleted",
+        "cassetteDeleted": "Cassette successfully deleted",
+        "glassesDeleted": "Slides successfully deleted",
+        "glassDeleted": "Slide successfully deleted",
+        "macrodesSuccess": "Macrodescription successfully updated"
     },
     zh: {
         title: "授权",
@@ -424,7 +441,40 @@ const translations = {
         "saveButton": "保存",
         "microdesSuccess": "微描述已成功更新",
         "microdesDenial": "要保存微描述，您必须是案例所有者。",
-        "upload": "上传"
+        "upload": "上传",
+        "excisionCommonParams": "切取参数",
+        "sampleType": "样本类型",
+        "macrodes": "宏观描述",
+        "sample": "样本",
+        "withArchive": "带存档",
+        "withoutArchive": "无存档",
+        "caseSettings": "病例参数",
+        "docPhotoScan": "文件照片/扫描",
+        "scan": "扫描",
+        "colorChangeSuccess": "载玻片颜色已成功更改",
+        "cassettesCreated": "盒已成功创建",
+        "cassetteCreated": "盒已成功创建",
+        "glassesCreated": "载玻片已成功创建",
+        "glassCreated": "载玻片已成功创建",
+        "expQRprinted": "研究 QR 已打印",
+        "expCassettesPrinted": "研究盒已打印",
+        "expGlassesPrinted": "研究载玻片已打印",
+        "glassesPrinted": "样本载玻片已打印",
+        "cassettesScaned": "盒已扫描",
+        "glassPrinted": "载玻片已打印",
+        "casesDeleted": "病例已成功删除",
+        "caseDeleted": "病例已成功删除",
+        "casesCreated": "病例已成功创建",
+        "caseCreated": "病例已成功创建",
+        "specimensDeleted": "样本已成功删除",
+        "specimenDeleted": "样本已成功删除",
+        "specimensCreated": "样本已成功创建",
+        "specimenCreated": "样本已成功创建",
+        "cassettesDeleted": "盒已成功删除",
+        "cassetteDeleted": "盒已成功删除",
+        "glassesDeleted": "载玻片已成功删除",
+        "glassDeleted": "载玻片已成功删除",
+        "macrodesSuccess": "宏观描述已成功更新"
     },
     uk: {
         title: "Авторизація",
@@ -548,10 +598,48 @@ const translations = {
         "saveButton": "Зберегти",
         "microdesSuccess": "Мікроопис успішно оновлений",
         "microdesDenial": "Для того, щоб записати мікроопис, Ви повинні бути власником кейсу.",
-        "upload": "Завантажити"
-    },
+        "upload": "Завантажити",
+        "excisionCommonParams": "Загальні параметри вирізки",
+        "sampleType": "Тип зразків",
+        "macrodes": "Макроопис",
+        "sample": "Зразок",
+        "withArchive": "з архівом",
+        "withoutArchive": "без архіву",
+        "caseSettings": "Параметри кейсу",
+        "docPhotoScan": "Фото/скан документу",
+        "scan": "Сканувати",
+        "colorChangeSuccess": "Забарвлення скельця успішно зміненно",
+        "cassettesCreated": "Касети успішно створені",
+        "cassetteCreated": "Касета успішно створена",
+        "glassesCreated": "Скельця успішно створені",
+        "glassCreated": "Скельце успішно створено",
+        "expQRprinted": "QR дослідження роздруковано",
+        "expCassettesPrinted": "Касети дослідження роздруковані",
+        "expGlassesPrinted": "Скельця дослідження роздруковані",
+        "glassesPrinted": "Скельця зразка роздруковані",
+        "cassettesScaned": "Касета відсканована",
+        "glassPrinted": "Скельце роздруковано",
+        "casesDeleted": "Кейси успішно видалені",
+        "caseDeleted": "Кейс успішно видалено",
+        "casesCreated": "Кейси успішно створені",
+        "caseCreated": "Кейс успішно створено",
+        "specimensDeleted": "Зразки успішно видалені",
+        "specimenDeleted": "Зразок успішно видалено",
+        "specimensCreated": "Зразки успішно створені",
+        "specimenCreated": "Зразок успішно створено",
+        "cassettesDeleted": "Касети успішно видалені",
+        "cassetteDeleted": "Касета успішно видалена",
+        "glassesDeleted": "Скельця успішно видалені",
+        "glassDeleted": "Скельце успішно видалено",
+        "macrodesSuccess": "Макроопис успішно оновлений"
+    }
 }
 
+
+/**
+ * Получает сохранённый язык из localStorage
+ * или выбирает язык по настройкам браузера.
+ */
 
  function getSavedLang() {
    const saved = localStorage.getItem('selectedLanguage');
@@ -559,8 +647,9 @@ const translations = {
 
    const userLang = String(navigator.language || navigator.userLanguage || 'ru').toLowerCase();
 
-  // базовий код до дефісу
+  // Базовый код языка до дефиса (например, 'en-US' → 'en')
   const base = userLang.split('-')[0];
+  // Определяем язык на основе кода
 
 let picked =
     base.startsWith('uk') ? 'uk' :
@@ -570,12 +659,26 @@ let picked =
 
     return picked;
 }
-
+/**
+ * Сохраняет выбранный язык в localStorage
+ */
 function setSavedLang(lang) {
    localStorage.setItem('selectedLanguage', lang);
 }
 
-// переклад одного вузла івсіх його нащадків з data-translate
+// ----------------------------------------
+// Перевод узла и всех его дочерних элементов
+// ----------------------------------------
+
+/**
+ * Переводит указанный элемент (и его потомков),
+ * у которых есть атрибут data-translate.
+ *
+ * @param {HTMLElement} node - элемент, в котором выполняется перевод
+ * @param {string} language - выбранный язык
+ */
+
+
 function translateNodeDeep(node, language) {
   if (!(node instanceof HTMLElement)) return;
   const dict = translations?.[language];
@@ -599,7 +702,7 @@ function translateNodeDeep(node, language) {
       } else if (type === 'button' || type === 'submit') {
         el.value = t;
       } else {
-        el.placeholder = t; //на випадок кастомних типі
+        el.placeholder = t;  // на случай нестандартных input-типов
       }
     } else if (tag === 'SELECT') {
       const ph = el.querySelector('option[disabled][selected]');
@@ -612,23 +715,53 @@ function translateNodeDeep(node, language) {
   });
 }
 
-// глобальний переклад ст
+
+// ------------------------------
+// Установка языка для всей страницы
+// ------------------------------
+
+/**
+ * Устанавливает язык интерфейса и переводит все элементы.
+ */
+
+
 function setLanguage(language) {
   if (!translations?.[language]) return;
   document.querySelectorAll('[data-translate]').forEach((el) => translateNodeDeep(el, language));
   setSavedLang(language);
 }
 
-// якщо все зламається
+// ------------------------------
+// Защита от ошибок (fallback)
+// ------------------------------
+
+/**
+ * Если функция не определена, создаём пустую,
+ * чтобы не вызвать ошибку при поздней инициализации.
+ */
+
+
 if (!window.setLanguage) {
   window.setLanguage = function(){};
 }
 
-// публічні API
+// ------------------------------
+// Публичные API-функции
+// ------------------------------
+
+
 function switchLanguage(language) { setLanguage(language); }
 function applySavedLanguage() { setLanguage(getSavedLang()); }
 
-// автопереклад динамічно доданих ел
+// ------------------------------
+// Автоматический перевод при изменениях DOM
+// ------------------------------
+
+/**
+ * Следит за добавлением новых элементов в DOM и автоматически переводит их.
+ */
+
+
 let __langObserverStarted = false;
 function startTranslationObserver() {
   if (__langObserverStarted) return;
@@ -642,7 +775,15 @@ function startTranslationObserver() {
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
-// безпечна ініціалізація при пізньому підключеннні
+// ------------------------------
+// Безопасная инициализация при загрузке
+// ------------------------------
+
+/**
+ * Выполняет инициализацию перевода после полной загрузки DOM.
+ * Также убирает CSS-класс i18n-loading, если он использовался для скрытия контента.
+ */
+
 (function safeLateInit() {
   document.addEventListener('DOMContentLoaded', () => {
     try {
@@ -654,7 +795,11 @@ function startTranslationObserver() {
   });
 })();
 
-// працюватиме завжди
+// ------------------------------
+// Автоматическая инициализация при старте
+// ------------------------------
+
+
 try {
   applySavedLanguage();
   window.__i18nReady = true;
@@ -664,7 +809,12 @@ try {
   window.__i18nReady = false;
 }
 
-// експорт в глобальний скоуп
+
+// ------------------------------
+// Экспорт функций в глобальную область
+// ------------------------------
+
+
 window.getSavedLang = getSavedLang;
 window.setSavedLang = setSavedLang;
 window.setLanguage = setLanguage;
