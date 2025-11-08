@@ -90,6 +90,11 @@
           <button onclick="applyManualWindow()">Apply</button>
         </div>
       </div>
+
+      <button id="open-upload-modal-btn" class="upload-modal-btn" style="margin-bottom: 15px;">
+        📁 Загрузить DICOM файлы
+      </button>
+
   </div>
 </div>
 
@@ -220,19 +225,32 @@
     Как только файлы будут загружены, они автоматически будут отображены.
   </p>
   <div class="dicom-upload-container">
-    <input type="file" id="dicom-upload" multiple>
-    <button onclick="handleUpload()">Upload DICOM files</button>
-    <div class="dicom-progress-container">
-        <div class="dicom-progress-bar" id="progress-bar">0%</div>
-    </div>
-    <div class="file-info" id="file-info"></div>
-    <div id="upload-status"></div>
+      <div class="form-group">
+      <input type="file" id="dicom-upload" multiple>
+      <button onclick="handleUpload()">Upload DICOM files</button>
+      <div class="dicom-progress-container">
+          <div class="dicom-progress-bar" id="progress-bar">0%</div>
+      </div>
+      <div class="file-info" id="file-info"></div>
+    </div> 
+      <div id="upload-status"></div>
 
-    <div class="svs-preview-container" id="svs-preview-container" style="display: none;">
-      <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">SVS Preview</h3>
-      <img id="svs-thumbnail" src="" alt="SVS Thumbnail" style="max-width: 512px; border: 1px solid #ccc; cursor: pointer;" onclick="openFullscreenSVS()" />
+      <div class="svs-preview-container" id="svs-preview-container" style="display: none;">
+        <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">SVS Preview</h3>
+        <img id="svs-thumbnail" src="" alt="SVS Thumbnail" style="max-width: 512px; border: 1px solid #ccc; cursor: pointer;" onclick="openFullscreenSVS()" />
+      </div>
+  </div> 
+  
+  <div class="form-group">
+    <label for="diploma_file" style="color:#7f69bd;font-size:13px;">Диплом</label>
+    <div class="file-upload-container">
+        <label class="file-upload-button">
+            <input type="file" id="diploma_file" name="diploma_file" style="display: none;">
+            <span>Выберите файл</span>
+        </label>
+        <span class="file-name" id="diplomaFileName" style="color:#7f69bd;font-size:13px;">Файл не выбран</span>
     </div>
-  </div>  
+  </div>
 </div>
 
   <script src="/static/dicom/dicom_viewer.js"></script>  
@@ -317,6 +335,16 @@ function formatFileSize(bytes) {
   const metadataPanel = document.querySelector('.svs-metadata-panel');
   const collapseBtn = document.getElementById('collapse-panel-btn');
   const expandBtn = document.getElementById('expand-panel-btn');
+
+
+
+  // Обработчик для кнопки открытия модального окна
+document.getElementById('open-upload-modal-btn').addEventListener('click', function() {
+  const modal = document.getElementById('Dicom_upload_modal');
+  if (modal) {
+    modal.style.display = 'block';
+  }
+});
 
 
   checkToken();
