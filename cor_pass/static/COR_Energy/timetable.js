@@ -13,7 +13,7 @@ function getShiftedTime(h, m, shiftHours) {
 }
 
 function formatIsoTimeWithShift(h, m) {
-    const shifted = getShiftedTime(h, m, -3);
+    const shifted = getShiftedTime(h, m, -2);
     return `${String(shifted.hours).padStart(2, '0')}:${String(shifted.minutes).padStart(2, '0')}:00.000Z`;
 }
 

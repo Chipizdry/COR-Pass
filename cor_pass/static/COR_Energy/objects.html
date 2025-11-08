@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -13,11 +10,12 @@
     <link rel="alternate icon" href="/static/favicon.png" type="image/png">
       
       <!-- Для Safari -->
-    <link rel="mask-icon" href="/static/favicon.svg" color="#291161">
-    <link rel="stylesheet" href="/static/COR_ID_css/styles.css">
-    <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/modal.css">
+    <link rel="mask-icon"  href="/static/favicon.svg" color="#291161"> 
     <link rel="stylesheet" href="/static/COR_Energy/energy.css">
+    <link rel="stylesheet" href="/static/COR_ID_css/styles.css">
+    <link rel="stylesheet" href="/static/COR_ID_css/modal.css">
 
+    
     <title>COR-Energy</title>
     <script src="/static/COR_Energy/scripts.js"></script>
     <script src="/static/COR_Energy/power-settings.js"></script>
@@ -35,11 +33,16 @@
         <h1>Energetic Object</h1>
         <div id="loading" class="loading">Загрузка данных...</div>
         <div id="error" class="error" style="display: none;"></div>
+
+        <div class="schedule-controls">
+           
+            <button onclick="addObject()" class="btn">+ Добавить объект</button>
+        </div>
         <div id="table-container" style="display: none;" class="schedule-table-container">
             <table id="objects-table" class="schedule-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <!-- Убрана колонка ID -->
                         <th>Название</th>
                         <th>Описание</th>
                         <th>Протокол</th>
@@ -50,6 +53,47 @@
                     <!-- Данные будут загружены через JavaScript -->
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления объекта -->
+    <div id="addObjectModal" class="modal" style="display: none;">
+        <div class="modal-header">
+            <div class="modal-buttons">
+                <button class="modal-button close" data-action="close" id="closeAddObject">✖</button>
+            </div>
+            <h3 style="margin-top:30; color:#291161;font-size: 17px;">Добавить объект</h3>
+        </div>
+        <div class="modal-content">
+            <div class="form">
+                <label for="objectId">ID:</label>
+                <input type="text" id="objectId" name="objectId" required>
+            </div>
+
+            <div class="form">
+                <label for="objectName">Название:</label>
+                <input type="text" id="objectName" name="objectName" required>
+            </div>
+
+            <div class="form">
+                <label for="objectDescription">Описание:</label>
+                <textarea id="objectDescription" name="objectDescription" required></textarea>
+            </div>
+
+            <div class="form">
+                <label for="objectProtocol">Протокол:</label>
+                <input type="text" id="objectProtocol" name="objectProtocol" required>
+            </div>
+
+            <div class="form">
+                <label for="objectStatus">Статус:</label>
+                <select id="objectStatus" name="objectStatus" required>
+                    <option value="active">Активный</option>
+                    <option value="inactive">Неактивный</option>
+                </select>
+            </div>
+
+            <button onclick="submitAddObjectForm()">Добавить</button>
         </div>
     </div>
 
@@ -106,18 +150,18 @@
         // Функция для отрисовки таблицы
         function renderTable(objects) {
             const tableBody = document.getElementById('table-body');
-            
+
             // Очищаем существующие данные
             tableBody.innerHTML = '';
-            
+
             // Создаем строки для каждого объекта
             objects.forEach(obj => {
                 const row = document.createElement('tr');
-                
+
                 // Определяем статус активности
                 let statusClass = 'status-unknown';
                 let statusText = 'Неизвестно';
-                
+
                 if (obj.is_active === true) {
                     statusClass = 'status-active';
                     statusText = 'Активен';
@@ -125,21 +169,20 @@
                     statusClass = 'status-inactive';
                     statusText = 'Неактивен';
                 }
-                
+
                 // Форматируем Modbus регистры
                 const modbusRegisters = obj.modbus_registers 
                     ? JSON.stringify(obj.modbus_registers)
                     : 'Нет данных';
-                
+
                 // Создаем ячейки таблицы
                 row.innerHTML = `
-                    <td>${obj.id}</td>
                     <td>${obj.name || 'Не указано'}</td>
                     <td>${obj.description || 'Не указано'}</td>
                     <td title="${modbusRegisters}">${modbusRegisters.length > 50 ? modbusRegisters.substring(0, 50) + '...' : modbusRegisters}</td>
                     <td class="${statusClass}">${statusText}</td>
                 `;
-                
+
                 tableBody.appendChild(row);
             });
         }
@@ -150,7 +193,49 @@
             // Здесь можно реализовать переход на страницу редактирования
         }
         
-    
+        function addObject() {
+            const modal = document.getElementById('addObjectModal');
+            modal.style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'none';
+        }
+
+        async function submitAddObjectForm() {
+            const form = document.getElementById('addObjectForm');
+            const formData = new FormData(form);
+
+            const objectData = {
+                id: formData.get('objectId'),
+                name: formData.get('objectName'),
+                description: formData.get('objectDescription'),
+                protocol: formData.get('objectProtocol'),
+                status: formData.get('objectStatus')
+            };
+
+            try {
+                const response = await fetch('/api/modbus/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(objectData)
+                });
+
+                if (response.ok) {
+                    alert('Объект успешно добавлен!');
+                    closeModal('addObjectModal');
+                    loadObjects(); // Обновляем таблицу объектов
+                } else {
+                    alert('Ошибка при добавлении объекта.');
+                }
+            } catch (error) {
+                console.error('Ошибка при добавлении объекта:', error);
+                alert('Произошла ошибка при добавлении объекта.');
+            }
+        }
         
         // Функция для обновления данных (можно вызвать из консоли или по кнопке)
         function refreshData() {
@@ -160,7 +245,9 @@
         // Загружаем данные при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
             loadObjects();
-           
+            // Инициализация модального окна для добавления объекта
+            initModalControls('addObjectModal');
+            makeModalDraggable('addObjectModal');
         });
         
         // Обработка ошибок загрузки страницы

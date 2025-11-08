@@ -1,6 +1,4 @@
-
-
-
+// Установлен русский язык как предпочтительный для ответов.
 const modalConfigs = {
     columnSelectModal: { width: '250px', height:  'auto', top: '300px', left: '200px' },
     corIdModal: { width: '300px', height:  'auto', top: '300px', left: '250px' },
@@ -29,6 +27,7 @@ const modalConfigs = {
     RegistersModal: { width: '350px', height: 'auto', top: '50px', left: 'auto' },
     inverterModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
     ExcelModal: { width: '350px', height: '550px', top: 'auto', left: 'auto' },
+    addObjectModal:{ width: '250px', height: 'auto', top: 'auto', left: 'auto' },
 };
 
 //Функция получения токена

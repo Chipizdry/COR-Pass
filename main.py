@@ -203,6 +203,8 @@ def read_root(request: Request):
         return FileResponse("cor_pass/static/COR_ID/login.html")
 
 
+
+
 @app.get("/version")
 async def get_version():
     return {"version": __version__}

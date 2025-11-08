@@ -116,6 +116,41 @@
         </button>
 
 
+
+
+
+        <button class="custom-button"id="COR-Finance">
+            <!-- Первая SVG-иконка -->       
+            
+            <svg width="24" height="24" viewBox="0 0 50 51" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="50" height="50" rx="25" fill="#7B43F2"/>
+                <path d="M17.4737 29.6316L14 33.0358V23.2632H17.4737M23.2632 27.5011L21.4453 25.9495L19.7895 
+                27.4779V18.6316H23.2632M29.0526 25.5789L25.5789 29.0526V14H29.0526M32.3063 25.3589L30.2105 
+                23.2632H36V29.0526L33.9274 26.98L25.5789 35.2589L21.5611 31.7621L17.1842 36H14L21.4916 
+                28.6589L25.5789 32.1095" fill="white"/>
+            </svg>
+                
+                
+                
+            <!-- Текст кнопки -->
+            <span class="button-text">Финансы</span> 
+            <!-- Вторая SVG-иконка -->
+            <svg class="icon-right" width="24" height="24" viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1.125" y="0.625" width="28.75" height="28.75" rx="14.375" stroke="#7527B2" stroke-width="1.25"/>
+                <path d="M20.1161 14.3274L20.1132 14.3248L14.1478 8.73647L14.1432 8.73226L14.1418 8.7311C13.7749 8.40419 
+                13.2289 8.43324 12.8907 8.76051L12.8866 8.76302L12.8857 8.76387L12.8823 8.76723L12.883 8.76796C12.5174 
+                9.10176 12.5154 9.67494 12.8829 10.0382L12.885 10.0403L12.8862 10.0415L12.8884 10.0435L18.1453 
+                14.996L12.8804 19.956L12.8817 19.9574C12.7001 20.1105 12.6074 20.3496 12.6074 20.5897C12.6074 21.0796 
+                13.0121 21.4995 13.5307 21.4995C13.7755 21.4995 13.9909 21.4093 14.1458 21.2575L14.1494 21.254L20.1144 
+                15.637L20.1176 15.634L20.1415 15.6107L20.151 15.6008L20.1535 15.5982C20.4888 15.233 20.4849 14.6591 
+                20.1161 14.3274Z" fill="#7527B2"/>
+            </svg>
+        </button>
+
+
+
+
+
         <button class="custom-button"id="COR-ERP">
             <!-- Первая SVG-иконка -->       
             <svg width="24" height="24" viewBox="0 0 51 50" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -443,8 +478,9 @@
                 35.1945C33.7103 34.6788 34 33.9793 34 33.25V31.875C34 30.4163 
                 33.4205 29.0174 32.3891 27.9859C31.3576 26.9545 29.9587 
                 26.375 28.5 26.375H23Z" fill="white"/>
-            </svg>
+            </svg> 
                 
+
                                 
             <!-- Текст кнопки -->
             <span class="button-text">Мой кабинет</span> 
@@ -555,6 +591,16 @@
     document.getElementById('COR-MED').addEventListener('click', function() {
         if (checkToken()) {          
             window.location.href = '/static/medical.html';
+        } 
+    });
+
+
+
+
+       // Обработчик для кнопки "Финансы"
+       document.getElementById('COR-Finance').addEventListener('click', function() {
+        if (checkToken()) {          
+            window.location.href = 'https://frontend.dev.cor-finance.cor-medical.ua' + '?access_token=' + accessToken;
         } 
     });
 
@@ -711,11 +757,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const corErpButton = document.getElementById('COR-ERP');
     const energyManagerButton = document.getElementById('EnergyManagerButton');
     const doctorButton = document.getElementById('Doctor');
+    const financierButton = document.getElementById('COR-Finance');
 
     // Сначала скрываем все кнопки по умолчанию
     corErpButton.classList.add('hidden');
     energyManagerButton.classList.add('hidden');
     doctorButton.classList.add('hidden');
+    financierButton.classList.add('hidden');
     adminButtonContainer.innerHTML = '';
 
     if (!accessToken) {
@@ -762,6 +810,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 case 'lab_assistant':
                     doctorButton.classList.remove('hidden');
                     break;
+
+                case 'financier':
+                    financierButton.classList.remove('hidden');
+                    break;   
+
 
                 default:
                     console.log(`Неизвестная роль: ${role}. Применяется дефолт — только медицина.`);
