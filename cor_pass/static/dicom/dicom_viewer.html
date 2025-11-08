@@ -91,9 +91,7 @@
         </div>
       </div>
 
-      <button id="open-upload-modal-btn" class="upload-modal-btn" style="margin-bottom: 15px;">
-        📁 Загрузить DICOM файлы
-      </button>
+      <button id="open-upload-modal-btn" class="button-style-1" style="margin-bottom: 15px;">Загрузить DICOM файлы</button>
 
   </div>
 </div>
@@ -212,7 +210,9 @@
 <button id="expand-panel-btn" class="tool-btn"><</button>
 <button id="collapse-panel-btn">></button>
 </div>
-   <!--Модальное окно загрузки SVS Dicom-->
+
+
+ <!--Модальное окно загрузки SVS Dicom-->
 <div id="Dicom_upload_modal" class="modal" style="display: block;">
   <div class="modal-header">     
     <div class="modal-buttons">
@@ -224,33 +224,42 @@
     С помощью кнопки «Выберите файлы», прикрепите их. После чего, запустите загрузку файлов, нажав на кнопку «Загрузить Dicom файлы». 
     Как только файлы будут загружены, они автоматически будут отображены.
   </p>
-  <div class="dicom-upload-container">
+<!--  <div class="dicom-upload-container"> -->
       <div class="form-group">
-      <input type="file" id="dicom-upload" multiple>
-      <button onclick="handleUpload()">Upload DICOM files</button>
+      
+          <div class="file-upload-container">
+              <label class="file-upload-button">
+                  <input type="file" id="dicom-upload" name="dicom_files" multiple style="display: none;">
+                  <span>Выберите файлы</span>
+              </label>
+              <span class="file-name" id="dicomFileName" style="color:#7f69bd;font-size:13px;">Файлы не выбраны</span>
+          </div>
+      </div>
+      
+      <button class="button-style-1" onclick="handleUpload()" style="height: 40px;display: flex;
+      align-items: center;justify-content: center;white-space: nowrap;margin: 30px 30px 20px 30px;"
+      >Загрузить DICOM файлы</button>
+      
       <div class="dicom-progress-container">
           <div class="dicom-progress-bar" id="progress-bar">0%</div>
       </div>
-      <div class="file-info" id="file-info"></div>
-    </div> 
-      <div id="upload-status"></div>
 
+       <!-- Контейнер для информации о файле и статуса загрузки -->
+       <div class="upload-info-container" style="display: flex;
+       justify-content: space-between;
+       align-items: center;
+       margin-bottom: 8px;
+       margin-left: 30px;
+       margin-right: 35px;
+       max-width: 400px;">
+        <div class="file-info" id="file-info" style="flex: 1; text-align: left; "></div> 
+        <div id="upload-status" style="flex: 1; text-align: right; "></div>
+    </div>
       <div class="svs-preview-container" id="svs-preview-container" style="display: none;">
         <h3 style="margin-top:5px;margin-bottom:5px;  color: #7527B2; font-size: 15px;">SVS Preview</h3>
         <img id="svs-thumbnail" src="" alt="SVS Thumbnail" style="max-width: 512px; border: 1px solid #ccc; cursor: pointer;" onclick="openFullscreenSVS()" />
       </div>
-  </div> 
-  
-  <div class="form-group">
-    <label for="diploma_file" style="color:#7f69bd;font-size:13px;">Диплом</label>
-    <div class="file-upload-container">
-        <label class="file-upload-button">
-            <input type="file" id="diploma_file" name="diploma_file" style="display: none;">
-            <span>Выберите файл</span>
-        </label>
-        <span class="file-name" id="diplomaFileName" style="color:#7f69bd;font-size:13px;">Файл не выбран</span>
-    </div>
-  </div>
+
 </div>
 
   <script src="/static/dicom/dicom_viewer.js"></script>  
@@ -346,6 +355,21 @@ document.getElementById('open-upload-modal-btn').addEventListener('click', funct
   }
 });
 
+
+
+// Обработчик для отображения выбранных файлов
+document.getElementById('dicom-upload').addEventListener('change', function(e) {
+    const fileNameElement = document.getElementById('dicomFileName');
+    const files = e.target.files;
+    
+    if (files.length === 0) {
+        fileNameElement.textContent = 'Файлы не выбраны';
+    } else if (files.length === 1) {
+        fileNameElement.textContent = files[0].name;
+    } else {
+        fileNameElement.textContent = `Выбрано файлов: ${files.length}`;
+    }
+});
 
   checkToken();
   makeModalDraggable('Dicom_upload_modal');

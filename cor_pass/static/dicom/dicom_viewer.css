@@ -91,13 +91,15 @@ input[type="range"] {
   padding: 0 30px;
 }
 
-    .dicom-progress-container {
-        margin-top: 10px;
-        width: 100%;
-        background: #e0e0e0;
-        border-radius: 5px;
-        overflow: hidden;
-    }
+.dicom-progress-container {
+  margin: 10px 30px;
+  width: 400px;
+  background: #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+
     .dicom-progress-bar {
         height: 20px;
         background: #7B43F2;
