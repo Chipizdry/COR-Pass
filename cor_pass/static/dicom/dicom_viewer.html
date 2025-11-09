@@ -225,17 +225,40 @@
     Как только файлы будут загружены, они автоматически будут отображены.
   </p>
 
-      <div class="form-group">
-      
-          <div class="file-upload-container">
-              <label class="file-upload-button">
-              <input type="file" id="dicom-upload" name="dicom_files" multiple style="display: none;">
-                
-                  <span>Выберите файлы</span>
-              </label>
-              <span class="file-name" id="dicomFileName" style="color:#7f69bd;font-size:13px;">Файлы не выбраны</span>
-          </div>
+  <div class="form-group">
+    <div class="file-upload-container">
+  
+      <!-- Кнопка как в первом стиле -->
+      <label class="file-upload-button" id="btn-select-main">
+        <span>Выберите файлы</span>
+      </label>
+  
+      <!-- Раскрывающийся блок выбора -->
+      <div id="select-options" class="select-options hidden">
+  
+          <label class="file-btn">
+            <input type="file" id="dicom-upload" accept=".dcm,.dicom,.svs,.*" multiple hidden>
+            📄 Файлы
+          </label>
+  
+          <label class="file-btn">
+              <input type="file" id="upload-folder" webkitdirectory directory hidden>
+              📁 Папка
+          </label>
+  
+          <label class="file-btn">
+              <input type="file" id="upload-zip" accept=".zip,.7z,.rar" hidden>
+              🗃 Архив
+          </label>
+  
+          <div class="file-btn back" id="btn-back">↩ Назад</div>
       </div>
+  
+      <!-- Вывод выбранных файлов -->
+      <span class="file-name" id="dicomFileName" style="color:#7f69bd;font-size:13px;">Файлы не выбраны</span>
+  
+    </div>
+  </div>
       
       <button class="button-style-1" onclick="handleUpload()" style="height: 40px;display: flex;
       align-items: center;justify-content: center;white-space: nowrap;margin: 30px 30px 20px 30px;"
@@ -293,6 +316,65 @@
     const CIRCLE_CENTER_X = 109;    // Исходная позиция центра круга
 
     let isZoomSliderDragging = false;
+/////////////////////////////////////////////////
+
+
+
+const mainBtn = document.getElementById('btn-select-main');
+const options = document.getElementById('select-options');
+const backBtn = document.getElementById('btn-back');
+const info = document.getElementById('dicomFileName');
+
+// Показать варианты
+mainBtn.addEventListener('click', () => {
+  mainBtn.style.display = 'none';
+  options.classList.remove('hidden');
+  setTimeout(() => options.classList.add('show'), 10);
+});
+
+// Назад
+backBtn.addEventListener('click', () => {
+  options.classList.remove('show');
+  setTimeout(() => {
+    options.classList.add('hidden');
+    mainBtn.style.display = 'inline-block';
+  }, 250);
+});
+
+// Обработчик выбора файлов
+function onSelect(input) {
+  if (!input.files.length) {
+    info.textContent = "Ничего не выбрано";
+    return;
+  }
+
+  let text = "";
+  if (input.files.length === 1) {
+    text = "📎 " + input.files[0].name;
+  } else {
+    text = `📎 Выбрано: ${input.files.length} файлов/элементов`;
+  }
+
+  info.textContent = text;
+
+  // Подсвечиваем активную кнопку
+  document.querySelectorAll('.file-btn').forEach(btn => btn.classList.remove('active'));
+  input.parentElement.classList.add('active');
+}
+
+// Слушаем 3 input'a
+document.getElementById('dicom-upload').addEventListener('change', e => onSelect(e.target));
+document.getElementById('upload-folder').addEventListener('change', e => onSelect(e.target));
+document.getElementById('upload-zip').addEventListener('change', e => onSelect(e.target));
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////
 
     function updateViewMode() {
   currentMode = document.getElementById('view-mode').value;
