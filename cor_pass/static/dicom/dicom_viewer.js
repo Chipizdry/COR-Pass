@@ -43,6 +43,7 @@ function prepareUIBeforeUpload() {
   document.getElementById('svs-preview-container').style.display = 'none';
 }
 
+/*
   function collectFiles(fileInput) {
     const formData = new FormData();
     let totalSize = 0;
@@ -51,7 +52,8 @@ function prepareUIBeforeUpload() {
     for (const file of fileInput.files) {
       const fileParts = file.name.split('.');
       const fileExt = fileParts.length > 1 ? fileParts.pop().toLowerCase() : '';
-      if (['', 'dcm', 'zip', 'svs'].includes(fileExt)) {
+    if (['', 'dcm', 'zip', 'svs'].includes(fileExt)) {
+      
         formData.append('files', file);
         totalSize += file.size;
         fileCount++;
@@ -59,6 +61,31 @@ function prepareUIBeforeUpload() {
     }
     return { formData, totalSize, fileCount };
   }
+*/
+
+
+function collectFiles(fileInput) {
+  const formData = new FormData();
+  let totalSize = 0;
+  let fileCount = 0;
+
+  for (const file of fileInput.files) {
+    const fileParts = file.name.split('.');
+    const fileExt = fileParts.length > 1 ? fileParts.pop().toLowerCase() : '';
+
+    if (['', 'dcm', 'zip', 'rar', '7z', 'tar', 'gz', 'svs'].includes(fileExt)) {
+      // Передаем файл + путь внутри папки, если он есть
+      const path = file.webkitRelativePath || file.name;
+      formData.append('files', file, path);
+
+      totalSize += file.size;
+      fileCount++;
+    }
+  }
+  return { formData, totalSize, fileCount };
+}
+
+
 
   
   async function uploadFiles(formData, token) {
