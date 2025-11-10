@@ -93,6 +93,7 @@ hr {
   display: flex;
   font-size: 10px;
   color: #7B7B80;
+  margin-bottom: -4px;
 }
 
 .report-dates>div {
@@ -133,9 +134,10 @@ hr {
   position: relative;
   padding: 0 12px;
   white-space: nowrap;
+  margin-bottom: -4px;
 }
 
-.patient-details span:not(:first-child)::before {
+.patient-details span:not(:first-child, .no-span)::before {
   content: "";
   position: absolute;
   left: 0; top: 0; bottom: 0;
@@ -144,11 +146,8 @@ hr {
 }
 
 .patient-details .no-span {
-  content: "";
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 0;
-  background: #fff;
+  padding: 0 4px;
+  margin: 0;
 }
 
 .case-info {
@@ -211,6 +210,7 @@ hr {
   left: 0; top: 0; bottom: 0;
   width: 1px;
   background: #7B7B80;
+  margin-bottom: -2px;
 }
 
 .stats-line {
@@ -289,6 +289,10 @@ hr {
   padding: 8px 24px;
 }
 
+.doc-subtitle span, .doc-footer span {
+  margin: 0 4px;
+}
+
 .footer-left {
   text-align: left;
 }
@@ -314,6 +318,7 @@ hr {
 .stats-section {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
+  padding-bottom: 2px;
 }
 
 .report-dates > div:not(:first-child),

@@ -116,8 +116,8 @@
         </div>
         <div class="middle df fdc">
             <div class="top df aic jcsb">
-                <div data-translate="glass">
-                    Скельця
+                <div data-translate="exploration">
+                    Дослідження
                 </div>
                 <div class="topActions df aic">
                     <div class="topActionsItem" id="doctorSignModalBtn" data-translate="sign">
@@ -442,13 +442,13 @@
 
                     <section class="patient-section">
                         <div class="patient-name">
-                            <strong data-translate="patient">Пацієнт:</strong> ${`${currentReport.patient_surname} ${currentReport.patient_first_name} ${currentReport.patient_middle_name}`}
+                            <strong data-translate="patient">Пацієнт:</strong> ${`${currentReport.patient_surname || ""} ${currentReport.patient_first_name || ""} ${currentReport.patient_middle_name || ""}`}
                         </div>
                         <hr>
                         <div class="patient-details">
                             <span><strong data-translate="gender-label">Стать:</strong> ${currentReport.patient_sex === "F"? '<span class="no-span" data-translate="f">Жін</span>' : '<span class="no-span" data-translate="m">Чол</span>' }</span>
-                            <span><strong data-translate="patientBirthDate">Д/н:</strong> ${new Date(currentReport.patient_birth_date).toLocaleDateString()}</span>
-                            <span><strong data-translate="age">Вік:</strong> ${getAge(currentReport.patient_birth_date)}<span class="no-span" data-translate="yearsSuffix">р.</span></span>
+                            <span><strong data-translate="patientBirthDate">Д/н:</strong> ${new Date(currentReport.patient_birth_date).toLocaleDateString() || ""}</span>
+                            <span><strong data-translate="age">Вік:</strong> ${getAge(currentReport.patient_birth_date) || ""}<span class="no-span" data-translate="yearsSuffix">р.</span></span>
                             <span><strong data-translate="contact">Контакти:</strong> ${currentReport.patient_phone_number || ""}, ${currentReport.patient_email || ""}</span>
                         </div>
                     </section>

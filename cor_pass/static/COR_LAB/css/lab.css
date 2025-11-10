@@ -10,6 +10,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    padding-bottom: 58px;
 }
 .specimenPlaceholder{
     padding: 16px 12px;
@@ -22,7 +23,7 @@
     min-height: 159px;
     padding: 12px 10px;
     width: 112px;
-    border: 2px solid #EFECF8;
+    border: 1px solid #EFECF8;
     border-bottom:1px solid #eeecf8;
 }
 .specimenItem.active{
@@ -35,13 +36,12 @@
 .specimenItems{
     overflow: hidden;
     flex: 1;
-    padding-bottom: 58px;
 }
 
 
 
 .glassMark{
-    margin-top: 4px;
+    margin-bottom: 8px;
     position: relative;
 }
 .glassPlaceholder{
@@ -51,10 +51,48 @@
     border-bottom: 1px solid #eeecf8;
 }
 .glassItem{
-    border: 1px solid #FFFFFF;
-    border-radius: 4px;
+    width: 86px;
+    min-width: 86px;
+    height: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+.glassItemContent{
+    flex: 0 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 0 8px;
+    background: #FFFFFF;
+    border: 2px solid #88C6FF;
+    border-bottom: 0;
+    border-radius: 6px 6px 0 0;
+    margin-bottom: -2px;
+}
+.glassItemFooter{
+    flex: 0 0 18px;
     background: #88C6FF;
-    padding: 4px;
+    border: 2px solid #88C6FF;
+    border-top: 0;
+    border-radius: 0 0 6px 6px;
+}
+.glassItemPicker{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.glassItemPaint{
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.glassItemPaint img{
+    width: 20px;
+    height: 20px;
 }
 .glassItems{
     padding: 12px 6px;
@@ -74,7 +112,7 @@
 .cassetteItem{
     padding: 12px 6px;
     height: 159px;
-    font-weight: 400;
+    font-weight: 700;
     border-bottom: 1px solid #eeecf8;
 }
 .cassetteColumn{
@@ -96,6 +134,7 @@
     position: relative;
     overflow: hidden;
     padding-right: 58px;
+    padding-bottom: 58px;
 }
 #cassetteItems{
     overflow: hidden;
@@ -103,11 +142,17 @@
 
 
 .casePlate{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-weight: 800;
     color: #5B4296;
-    padding: 6px 4px 4px;
+    padding: 6px 10.5px 4px;
+    min-height: 32px;
+    border-radius: 6px;
     text-align: center;
     cursor: pointer;
+    line-height: 1;
     border: 1px solid #ffffff;
 }
 .casePlate.active{
@@ -116,7 +161,7 @@
     border-radius: 6px;
 }
 #parentMark .casePlate{
-    width: 42.5px;
+    min-width: 42.5px;
 }
 #parentMark{
     margin-bottom: 10px;
@@ -129,20 +174,24 @@
     margin-top: 10px;
 }
 #childMark .casePlate{
-    width: 31px;
+    min-width: auto;
+    padding: 6px 10.5px 4px;
 }
 .caseItem{
     cursor: pointer;
-    padding: 12px 6px;
+    padding: 12px;
     height: 159px;
     min-height: 159px;
     width: 159px;
-    border: 2px solid #EFECF8;
-    border-bottom:1px solid #eeecf8;
+    box-sizing: border-box;
+    border: 1px solid #EFECF8;
+    border-left: none;
+    background: #FFF;
 }
 
 .caseItem.active{
     border: 2px solid #7527B2;
+    border-left: 2px solid #7527B2;
 }
 .caseItemTop{
     margin-bottom: 10px;
@@ -158,11 +207,17 @@
 }
 .caseItemImgCount{
     position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 17px;
+    top: 33px;
+    left: 25px;
+    transform: translate(-50%, -50%);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-weight: 800;
     color: white;
+    pointer-events: none;
 }
 .caseItemMark{
     margin-top: 8px;
@@ -182,20 +237,35 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    padding-bottom: 58px;
+    background: #FFF;
+    border-radius: 20px;
 }
 
 .casePlaceholder{
     padding: 16px 12px;
     background: #FFF;
     height: 190px;
-    border-right:1px solid #eeecf8;
+    border: 1px solid #eeecf8;
     border-top-left-radius: 20px;
+    border-bottom: 1px solid #eeecf8;
+}
+.cassettePlaceholder .counter{
+    margin-bottom: 8px;
+    justify-content: space-between;
+    width: 100%;
+}
+.glassPlaceholder .counter{
+    justify-content: space-between;
+    width: 100%;
 }
 .caseItems{
     flex: 1;
     overflow: hidden;
     border-right:1px solid #eeecf8;
-    padding-bottom: 58px;
+    background: #FFF;
+    padding: 0 0 12px;
+    align-items: stretch;
 }
 .cassetteCommentsArea{
     padding: 16px;

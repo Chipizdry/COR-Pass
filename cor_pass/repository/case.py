@@ -569,12 +569,18 @@ async def delete_cases(db: AsyncSession, case_ids: List[str]) -> Dict[str, Any]:
 
 
 async def get_patient_first_case_details(
-    db: AsyncSession, patient_id: str
+    db: AsyncSession, patient_id: str, case_id: Optional[str] = None
 ) -> Optional[Dict[str, Any]]:
     """
     Асинхронно получает список всех кейсов пациента и детализацию первого из них:
     все семплы первого кейса, но кассеты и стекла загружаются только для первого семпла.
     Использует model_validate и model_dump для работы с Pydantic моделями.
+    
+    Args:
+        db: Сессия базы данных
+        patient_id: COR ID пациента
+        case_id: Опциональный ID конкретного кейса для детализации.
+                 Если не указан, берется первый кейс по дате создания.
     """
     cases_result = await db.execute(
         select(db_models.Case)
@@ -588,7 +594,16 @@ async def get_patient_first_case_details(
 
     first_case_details = None
     if all_cases_db:
-        first_case_db = all_cases_db[0]
+        # Определяем какой кейс детализировать
+        if case_id:
+            # Ищем кейс с указанным ID
+            first_case_db = next((case for case in all_cases_db if case.id == case_id), None)
+            if not first_case_db:
+                # Если кейс не найден, берем первый по умолчанию
+                first_case_db = all_cases_db[0]
+        else:
+            # Берем первый кейс по дате
+            first_case_db = all_cases_db[0]
 
         samples_result = await db.execute(
             select(db_models.Sample)

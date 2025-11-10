@@ -126,11 +126,10 @@ img{
     left: 0;
     right: 0;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    height: 58px;
-    justify-content: space-around;
-    gap: 5px;
+    justify-content: center;
+    gap: 4px;
     padding: 3px;
     border: 1px solid #eeecf8;
 }
@@ -138,8 +137,9 @@ img{
     left: initial;
     top: 0;
     height: auto;
-    width: 58px;
-    flex-direction: row;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
 }
 .arrows.right div{
     transform: rotate(-90deg);
@@ -147,13 +147,24 @@ img{
 .arrows.right .prev{
     transform: rotate(90deg);
 }
+.arrows.right .prev{
+    order: 1;
+}
+.arrows.right .next{
+    order: 2;
+}
 .arrows div{
-    width: 100%;
+    width: auto;
     cursor: pointer;
     display: flex;
     justify-content: center;
+    align-items: center;
+}
+.arrows .next{
+    order: 1;
 }
 .arrows .prev{
+    order: 2;
     transform: rotate(180deg);
 }
 .arrows .disable{

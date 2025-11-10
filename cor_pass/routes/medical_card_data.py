@@ -14,9 +14,11 @@ from cor_pass.database.models import (
 from cor_pass.repository.blood_pressure import get_measurements_paginated
 from cor_pass.repository.medicine import get_user_medicines_with_schedules
 from cor_pass.repository import sibionics_repository
+from cor_pass.repository.blood_pressure import create_measurement
 from cor_pass.schemas import (
     PaginatedBloodPressureResponse,
     BloodPressureMeasurementResponse,
+    BloodPressureMeasurementCreate,
     MedicineRead,
     OralMedicine,
     OintmentMedicine,
@@ -266,6 +268,75 @@ async def get_latest_blood_pressure_by_card(
     )
     
     return measurements[0]
+
+
+@router.post(
+    "/{card_id}/blood-pressure",
+    response_model=BloodPressureMeasurementResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(user_access)],
+    summary="Добавить измерение давления в медицинскую карту",
+    description="""
+    Добавляет новое измерение артериального давления и пульса в медицинскую карту.
+    
+    **Требования:**
+    - Пользователь должен иметь уровень доступа EDIT или SHARE к медкарте
+    - Доступ не должен быть истекшим
+    - Медкарта должна быть активна
+    
+    **Применение:**
+    - Врач добавляет измерения для пациента
+    - Родственник добавляет данные за пожилого человека
+    - Медсестра вносит данные с медицинского оборудования
+    """
+)
+async def create_blood_pressure_for_card(
+    card_id: str,
+    body: BloodPressureMeasurementCreate,
+    current_user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Добавляет новое измерение давления в медицинскую карту.
+    
+    Требуется уровень доступа EDIT или SHARE.
+    """
+
+    card = await verify_medical_card_access(
+        card_id=card_id,
+        current_user=current_user,
+        db=db,
+        required_level=MedicalCardAccessLevel.EDIT  
+    )
+    
+
+    owner_query = select(User).where(User.cor_id == card.owner_cor_id)
+    result = await db.execute(owner_query)
+    owner = result.scalar_one_or_none()
+    
+    if not owner:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Владелец медицинской карты не найден"
+        )
+    
+    new_measurement = await create_measurement(db=db, body=body, user=owner)
+    
+    logger.info(
+        f"User {current_user.cor_id} created blood pressure measurement for card {card_id} "
+        f"(owner: {card.owner_cor_id}): {body.systolic_pressure}/{body.diastolic_pressure}, "
+        f"pulse: {body.pulse}"
+    )
+    
+    return BloodPressureMeasurementResponse(
+        systolic_pressure=new_measurement.systolic_pressure,
+        diastolic_pressure=new_measurement.diastolic_pressure,
+        pulse=new_measurement.pulse,
+        measured_at=new_measurement.measured_at,
+        id=new_measurement.id,
+        user_id=new_measurement.user_id,
+        created_at=new_measurement.created_at,
+    )
 
 
 @router.get(

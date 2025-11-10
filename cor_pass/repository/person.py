@@ -109,9 +109,11 @@ async def create_user(body: UserModel, db: AsyncSession) -> User:
         await db.refresh(user_settings)
         
         # Создание медицинской карты для нового пользователя
-        medical_card = MedicalCard(owner_cor_id=new_user.cor_id)
-        db.add(medical_card)
-        await db.commit()
+        # Только если cor_id уже установлен (не пустой и не None)
+        if new_user.cor_id and new_user.cor_id.strip():
+            medical_card = MedicalCard(owner_cor_id=new_user.cor_id)
+            db.add(medical_card)
+            await db.commit()
         
         return new_user
     except Exception as e:
@@ -476,6 +478,11 @@ async def get_user_roles(email: str, db: AsyncSession) -> List[str]:
     )
     if energy_manager:
         roles.append("energy_manager")
+    financier = await role_check.financier_role_checker.is_financier(
+        user=user, db=db
+    )
+    if financier:
+        roles.append("financier")
     if user.is_active:
         roles.append("active_user")
     return roles

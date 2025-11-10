@@ -26,7 +26,7 @@ async def run_websocket_server():
     config = uvicorn.Config(
         app=app,
         host="0.0.0.0",
-        port=8003,  # Отдельный порт для WebSocket сервера
+        port=45762,  # Отдельный порт для WebSocket сервера
         log_level="info",
         loop="asyncio"
     )
@@ -37,6 +37,25 @@ async def run_websocket_server():
 async def main():
     """Запускает оба сервиса параллельно"""
     logger.info("Starting modbus_worker with WebSocket support...")
+    
+    # Инициализируем Telegram бот для мониторинга батарей (только для development)
+    if settings.app_env == "development":
+        try:
+            from worker.telegram_bot import init_telegram_monitor, start_commands_handler_task
+            logger.info("🤖 Initializing Telegram battery monitor (development mode)...")
+            telegram_initialized = await init_telegram_monitor()
+            if telegram_initialized:
+                logger.info("✅ Telegram battery monitor initialized successfully")
+                # Запускаем обработчик команд
+                logger.info("🤖 Starting Telegram commands handler...")
+                commands_task = start_commands_handler_task()
+                logger.info("✅ Telegram commands handler started")
+            else:
+                logger.warning("⚠️ Telegram battery monitor not configured or initialization failed")
+        except Exception as e:
+            logger.error(f"Failed to initialize Telegram monitor: {e}", exc_info=True)
+    else:
+        logger.info("ℹ️ Telegram battery monitor disabled (production mode)")
     
     # Создаем задачи для обоих сервисов
     worker_task = asyncio.create_task(run_worker())

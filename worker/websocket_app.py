@@ -6,6 +6,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import Dict
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from loguru import logger
@@ -67,6 +68,15 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Добавляем CORS middleware для поддержки WebSocket соединений из браузера
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # Инициализация контекста для проверки паролей
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -91,10 +101,19 @@ async def get_user_by_email(email: str, db: AsyncSession):
 
 async def send_modbus_command_to_all_devices():
     """
-    Фоновая задача для периодической отправки Modbus-команды всем подключенным энергетическим устройствам.
-    Команда: 09 03 00 00 00 0a c4 85 (hex)
+    Фоновая задача для периодической отправки Modbus-команд всем подключенным энергетическим устройствам.
+    Отправляет команды поочередно:
+    1. 09 03 00 00 00 10 45 4E
+    2. 09 03 00 00 00 0A C4 85
     """
     logger.info("🔄 Starting background task: send_modbus_command_to_all_devices")
+    
+    # Список команд для поочередной отправки
+    commands = [
+        "09 03 00 00 00 10 45 4E",
+        "09 03 00 00 00 0A C4 85"
+    ]
+    command_index = 0
     
     while True:
         try:
@@ -107,8 +126,8 @@ async def send_modbus_command_to_all_devices():
                 logger.debug("No active energetic devices connected")
                 continue
             
-            # Формируем hex-команду
-            hex_command = "09 03 00 00 00 0a c4 85"
+            # Выбираем команду из списка по очереди
+            hex_command = commands[command_index]
             command_data = {
                 "command_type": "modbus_read",
                 "hex_data": hex_command
@@ -125,11 +144,14 @@ async def send_modbus_command_to_all_devices():
                         session_id=session_id,
                         event_data=command_data
                     )
-                    logger.debug(f"📤 Sent Modbus command to device with session_id: {session_id}")
+                    logger.debug(f"📤 Sent Modbus command [{hex_command}] to device with session_id: {session_id}")
                 except Exception as e:
                     logger.warning(f"Failed to send command to session {session_id}: {e}")
             
-            logger.info(f"✅ Modbus command broadcast complete. Sent to {len(connections)} devices")
+            logger.info(f"✅ Modbus command [{hex_command}] broadcast complete. Sent to {len(connections)} devices")
+            
+            # Переключаемся на следующую команду
+            command_index = (command_index + 1) % len(commands)
             
         except asyncio.CancelledError:
             logger.info("Background task send_modbus_command_to_all_devices cancelled")
@@ -137,7 +159,7 @@ async def send_modbus_command_to_all_devices():
         except Exception as e:
             logger.error(f"Error in send_modbus_command_to_all_devices: {e}", exc_info=True)
             # Продолжаем работу даже при ошибке
-            await asyncio.sleep(5)
+            await asyncio.sleep(3)
 
 
 @app.get("/health")
@@ -199,7 +221,7 @@ async def get_energetic_device_status(session_id: str):
     return connection_info
 
 
-@app.websocket("/ws/devices")
+@app.websocket("/wssdevices")
 async def websocket_energetic_device_endpoint(
     websocket: WebSocket, 
     session_id: str, 
@@ -210,8 +232,12 @@ async def websocket_energetic_device_endpoint(
     Аутентификация по email/password через первое сообщение.
     Использует websocket_events_manager для broadcast событий.
     """
-    connection_id = await websocket_events_manager.connect(websocket, session_id=session_id)
-    logger.info(f"Energetic device connection attempt, session_id: {session_id}")
+    # Сначала принимаем WebSocket соединение
+    await websocket.accept()
+    logger.info(f"Energetic device WebSocket accepted, session_id: {session_id}")
+    
+    connection_id = await websocket_events_manager.connect(websocket, session_id=session_id, accept_connection=False)
+    logger.info(f"Energetic device connection registered, session_id: {session_id}")
     
     try:
         # Первое сообщение с credentials
@@ -306,10 +332,10 @@ async def send_message_to_energetic_device(message: WSMessageBase, db: AsyncSess
     status_code=status.HTTP_200_OK,
     summary="Вручную отправить Modbus-команду всем устройствам"
 )
-async def broadcast_modbus_command_manual(hex_data: str = "09 03 00 00 00 0a c4 85"):
+async def broadcast_modbus_command_manual(hex_data: str = "09 03 00 00 00 08 05 48"):
     """
     Вручную отправляет Modbus-команду (hex) всем подключенным энергетическим устройствам.
-    По умолчанию отправляет: 09 03 00 00 00 0a c4 85
+    По умолчанию отправляет: 09 03 00 00 00 08 05 48
     """
     connections = websocket_events_manager.active_connections
     

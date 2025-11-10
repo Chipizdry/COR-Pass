@@ -1,3 +1,8 @@
+"""
+SMB Worker для автоматического сканирования и связывания файлов сканов стекол
+
+"""
+
 import asyncio
 import enum
 import socket
@@ -65,8 +70,25 @@ class StainingType(enum.Enum):
         return abbr[:3]
 STAINING_ABBREVIATIONS = [st.abbr() for st in StainingType]
 
+# Новый паттерн с разделителями _
+# Сканер убирает |, остаются только _
+# Формат: {case_code}_{cassette}_{hospital}_{sample}_L{glass_number}_{staining}_{cor_id}_{timestamp}.svs
+# Пример: S25R00026_A16_FF_A_L0_VK_2244J230X-1994M_2025-11-07_20_00_27.svs
+new_filename_pattern = re.compile(
+    r"^(?P<case_code>S\d{2}[RBECXSAY]\d{5})"
+    r"_(?P<cassette>[A-Z0-9]+)"
+    r"_(?P<hospital>[A-Z]{2})"
+    r"_(?P<sample>[A-Z])"
+    r"_L(?P<glass_number>\d+)"
+    r"_(?P<staining>[A-Z0-9&]+)"
+    r"_(?P<cor_id>[A-Z0-9]+(?:-[A-Z0-9]+)?)"
+    r"_\d{4}-\d{2}-\d{2}_\d{2}_\d{2}_\d{2}"
+    r"\.svs$",
+    re.IGNORECASE
+)
 
-filename_pattern = re.compile(
+# Старый паттерн без разделителей (для обратной совместимости)
+old_filename_pattern = re.compile(
     r"^(?P<case_code>S\d{2}[RBECXSAY]\d{5})"
     r"(?P<cassette>[A-Z]\d)"
     r"(?P<hospital>[A-Z]{2})"
@@ -85,20 +107,38 @@ def parse_filename(filename):
     if not base.lower().endswith(".svs"):
         return None
 
-    m = filename_pattern.match(base)
-    if not m:
-        # logger.debug(f"Файл {base} не соответствует регулярному выражению: {filename_pattern.pattern}")
-        return None
-
-    return {
-        "case_code": m.group("case_code"),
-        "cassette": m.group("cassette"),
-        "hospital": m.group("hospital"),
-        "sample": m.group("sample"),
-        "glass_number": int(m.group("glass_number")),
-        "staining": m.group("staining"),
-        "cor_id": m.group("cor_id")
-    }
+    # Сначала пробуем новый формат с двойными разделителями
+    m = new_filename_pattern.match(base)
+    if m:
+        parsed_data = {
+            "case_code": m.group("case_code"),
+            "cassette": m.group("cassette"),
+            "hospital": m.group("hospital"),
+            "sample": m.group("sample"),
+            "glass_number": int(m.group("glass_number")),
+            "staining": m.group("staining"),
+            "cor_id": m.group("cor_id")
+        }
+        logger.debug(f"Успешно распарсен файл (новый формат) {base}: {parsed_data}")
+        return parsed_data
+    
+    # Если не подошел новый формат, пробуем старый
+    m = old_filename_pattern.match(base)
+    if m:
+        parsed_data = {
+            "case_code": m.group("case_code"),
+            "cassette": m.group("cassette"),
+            "hospital": m.group("hospital"),
+            "sample": m.group("sample"),
+            "glass_number": int(m.group("glass_number")),
+            "staining": m.group("staining"),
+            "cor_id": m.group("cor_id")
+        }
+        logger.debug(f"Успешно распарсен файл (старый формат) {base}: {parsed_data}")
+        return parsed_data
+    
+    # logger.debug(f"Файл {base} не соответствует ни одному формату")
+    return None
 
 async def fetch_file_from_smb(path: str) -> str:
     loop = asyncio.get_running_loop()
@@ -360,15 +400,12 @@ async def update_scan_urls():
                 if not info:
                     continue
 
-                # Учитываем, что cassette_number в базе данных может быть длиннее, но нам нужна только последняя буква + цифра
-                cassette_last = cassette_number[-2:] if cassette_number and len(cassette_number) >= 2 else None
-
                 # logger.debug(f"Сравниваем с файлом {file}: {info}")
 
                 if (
                     info["case_code"] == case_code and
                     info["sample"] == sample_number and
-                    info["cassette"] == cassette_last and
+                    info["cassette"] == cassette_number and
                     info["glass_number"] == glass_number and
                     info["staining"] == staining and
                     info["cor_id"] == cor_id

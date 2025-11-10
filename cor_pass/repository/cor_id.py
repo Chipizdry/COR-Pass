@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 import datetime
 from datetime import datetime
-from cor_pass.database.models import User
+from cor_pass.database.models import User, MedicalCard
 from loguru import logger
 from cor_pass.database.redis_db import redis_client
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -109,6 +109,12 @@ async def create_new_corid(user: User, db: AsyncSession):
     logger.debug(f"For {user.email} created {user.cor_id}")
     try:
         await db.commit()
+        # Создаём медицинскую карту после того как cor_id был присвоен
+        medical_card = MedicalCard(owner_cor_id=user.cor_id)
+        db.add(medical_card)
+        await db.commit()
+        await db.refresh(medical_card)
+        logger.debug(f"Medical card created for {user.email} with cor_id {user.cor_id}")
     except Exception as e:
         await db.rollback()
         raise e

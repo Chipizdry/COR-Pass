@@ -20,6 +20,7 @@ from sqlalchemy import (
     Boolean,
     LargeBinary,
     DateTime,
+    text,
 )
 
 from sqlalchemy.orm import declarative_base, relationship, Mapped
@@ -193,7 +194,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    cor_id = Column(String(250), unique=True, nullable=True)
+    cor_id = Column(String(250), nullable=True, index=True)  # Unique constraint реализован через partial index в миграции
     email = Column(String(250), unique=True, nullable=False)
     backup_email = Column(String(250), unique=True, nullable=True)
     password = Column(String(250), nullable=False)
@@ -259,6 +260,9 @@ class User(Base):
     user_lawyers = relationship(
         "Lawyer", back_populates="user", cascade="all, delete-orphan"
     )
+    user_financiers = relationship(
+        "Financier", back_populates="user", cascade="all, delete-orphan"
+    )
     blood_pressure_measurements = relationship(
         "BloodPressureMeasurement", back_populates="user", cascade="all, delete-orphan"
     )
@@ -293,6 +297,8 @@ class User(Base):
     __table_args__ = (
         Index("idx_users_email", "email"),
         Index("idx_users_cor_id", "cor_id"),
+        # Unique index для cor_id (в PostgreSQL unique index позволяет несколько NULL значений)
+        Index("users_cor_id_key", "cor_id", unique=True),
     )
 
 
@@ -379,6 +385,17 @@ class Lawyer(Base):
 
     user = relationship("User", back_populates="user_lawyers")
 
+class Financier(Base):
+    __tablename__ = "financiers"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    financier_cor_id = Column(
+        String(36), ForeignKey("users.cor_id"), unique=True, nullable=False
+    )
+    first_name = Column(String(100), nullable=True)
+    surname = Column(String(100), nullable=True)
+    middle_name = Column(String(100), nullable=True)
+
+    user = relationship("User", back_populates="user_financiers")
 
 class Diploma(Base):
     __tablename__ = "diplomas"
@@ -1040,6 +1057,17 @@ class EnergeticObject(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String, nullable=False, unique=True, comment="Имя/название объекта")
     description = Column(String, nullable=True, comment="Описание объекта")
+    ip_address = Column(String, nullable=True, comment="IP-адрес объекта")
+    port = Column(Integer, nullable=True, comment="Порт объекта")
+    inverter_login = Column(String, nullable=True, comment="Логин для доступа к инвертору")
+    inverter_password = Column(String, nullable=True, comment="Пароль для доступа к инвертору")
+    timezone = Column(
+        String, 
+        nullable=False, 
+        default='Europe/Kiev',
+        server_default='Europe/Kiev',
+        comment="Часовой пояс объекта (например: Europe/Kiev)"
+    )
 
     modbus_registers = Column(
         JSONB,
@@ -1052,8 +1080,6 @@ class EnergeticObject(Base):
     measurements = relationship("CerboMeasurement", back_populates="energetic_object", cascade="all, delete-orphan")
     schedules = relationship("EnergeticSchedule", back_populates="energetic_object", cascade="all, delete-orphan")
 
-    # def __repr__(self):
-    #     return f"<EnergeticObject(id={self.id}, name='{self.name}')>"
 
 
 class CerboMeasurement(Base):
@@ -1598,6 +1624,72 @@ class MedicalCardAccess(Base):
         Index("idx_medical_card_access_user", "user_cor_id"),
         Index("idx_medical_card_access_card", "medical_card_id"),
         UniqueConstraint("medical_card_id", "user_cor_id", name="uq_card_user_access"),
+    )
+
+
+# ============================================================================
+# Fuel Station System Models (Система заправок)
+# ============================================================================
+
+class FuelStationQRSession(Base):
+    """
+    Сессия QR кода для заправки.
+    Создаётся при генерации QR кода сотрудником.
+    Используется для одноразовой верификации на заправке.
+    """
+    __tablename__ = "fuel_station_qr_sessions"
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_cor_id = Column(String(36), ForeignKey("users.cor_id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # QR код данные
+    session_token = Column(String(255), unique=True, nullable=False, index=True, comment="Уникальный токен сессии")
+    totp_code = Column(String(10), nullable=False, comment="TOTP код на момент генерации")
+    timestamp_token = Column(String(255), nullable=False, comment="Timestamp токен для защиты от replay атак")
+    
+    # Метаданные
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), comment="Время создания QR кода")
+    expires_at = Column(DateTime(timezone=True), nullable=False, comment="Время истечения QR кода")
+    
+    # Статус использования (для предотвращения повторного использования)
+    is_used = Column(Boolean, default=False, comment="Был ли использован QR код")
+    used_at = Column(DateTime(timezone=True), nullable=True, comment="Время использования")
+    
+    __table_args__ = (
+        Index("idx_fuel_qr_user", "user_cor_id"),
+        Index("idx_fuel_qr_token", "session_token"),
+        Index("idx_fuel_qr_created", "created_at"),
+    )
+
+
+class FinanceBackendAuth(Base):
+    """
+    Хранение TOTP секретов для авторизации с бэкендом финансов.
+    Используется для server-to-server аутентификации.
+    """
+    __tablename__ = "finance_backend_auth"
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    
+    # Идентификация
+    service_name = Column(String(100), unique=True, nullable=False, comment="Название сервиса (finance_backend)")
+    api_endpoint = Column(String(500), nullable=False, comment="URL бэкенда финансов")
+    
+    # TOTP для авторизации
+    totp_secret = Column(LargeBinary, nullable=False, comment="Зашифрованный TOTP секрет")
+    totp_interval = Column(Integer, default=30, comment="Интервал TOTP в секундах")
+    
+    # Метаданные
+    is_active = Column(Boolean, default=True, comment="Активна ли интеграция")
+    last_successful_auth = Column(DateTime(timezone=True), nullable=True, comment="Последняя успешная авторизация")
+    last_failed_auth = Column(DateTime(timezone=True), nullable=True, comment="Последняя неудачная авторизация")
+    failed_attempts = Column(Integer, default=0, comment="Количество неудачных попыток подряд")
+    
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+    
+    __table_args__ = (
+        Index("idx_finance_auth_service", "service_name"),
     )
 
 

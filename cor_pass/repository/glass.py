@@ -446,7 +446,9 @@ async def print_glass_data(
     hooper=data.hooper if data.hooper else "?"
     patient_cor_id=db_glass.patient_cor_id
         
-    content = f"{clinic_name}|{case_code}|{sample_number}|{cassette_number}|L{glass_number}|{staining}|{hooper}|{patient_cor_id}"
+    # Старый формат с добавлением разделителей _ для парсинга
+    # Сканер игнорирует |, поэтому остаются только _
+    content = f"{case_code}|_{cassette_number}|_{clinic_name}|_{sample_number}|_L{glass_number}|_{staining}|_{patient_cor_id}"
 
     label_to_print = PrintLabel(
         model_id=model_id, 

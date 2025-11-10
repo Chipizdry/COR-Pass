@@ -1,21 +1,52 @@
 <!doctype html>
-<html lang="en">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Lab Page</title>
     <link rel="stylesheet" href="./css/reset.css">
-    <link rel="stylesheet" href="./css/infoPlate.css">
     <link rel="stylesheet" href="./css/general.css">
+    <link rel="stylesheet" href="./css/header.css">
+
+<!-- приховуємо сторінку, щоб переклалось без FOUC -->
+    <style>
+        html.i18n-loading body {
+            visibility: hidden;
+        }
+    </style>
+
+    <script>
+        document.documentElement.classList.add('i18n-loading');
+    </script>
+
+    <!-- Захист від зависання і пустої сторінки! -->
+    <script>
+        function removeI18nMask() {
+              document.documentElement.classList.remove('i18n-loading');
+        }
+            // Якщо translation.js викликає applySavedLanguage() — знімай після неї
+        document.addEventListener('i18n:ready', removeI18nMask);
+            // fallback: знімаємо при повному завантаженні сторінки
+        window.addEventListener('load', removeI18nMask, { once: true });
+            // запасний таймер, якщо переклад завис
+        setTimeout(removeI18nMask, 2500);
+    </script>
+    <!-- підключаємо переклад та видаляємо зайвий клас -->
+    <script src="../COR_ID_Js/translation.js"></script>
+
+    <noscript>
+        <style>html.i18n-loading body { visibility: visible !important; }</style>
+    </noscript>
+
+    <link rel="stylesheet" href="./css/infoPlate.css">
     <link rel="stylesheet" href="./css/comments.css">
     <link rel="stylesheet" href="./css/lab.css">
     <link rel="stylesheet" href="./css/modal.css">
     <link rel="stylesheet" href="./css/caseSettings.css">
-    <link rel="stylesheet" href="./css/header.css">
     <link rel="stylesheet" href="./css/directionModal.css">
-    <link rel="stylesheet" href=".v/COR_ID_css/modal.css">
-    <title>Document</title>
+    <link rel="stylesheet" href="../COR_ID_css/modal.css">
 </head>
 <body>
 
@@ -132,7 +163,7 @@
                             </a>
                         </div>
                         <div class="search-container">
-                            <input type="text" placeholder="Search">
+                            <input type="text" placeholder="Search" data-translate="searchPlaceholder">
                             <svg class="search-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
                                 <path fill-rule="evenodd" clip-rule="evenodd" d="M11.2 5.60001C8.10722 5.60001 5.60001 8.10722 5.60001 11.2C5.60001 14.2928 8.10722 16.8001 11.2 16.8001C12.7087 16.8001 14.0781 16.2035 15.085 15.2333C15.1061 15.2058 15.1292 15.1794 15.1544 15.1543C15.1795 15.1291 15.2059 15.106 15.2334 15.0849C16.2035 14.078 16.8 12.7087 16.8 11.2C16.8 8.10722 14.2928 5.60001 11.2 5.60001ZM16.8256 15.6942C17.8109 14.4624 18.4001 12.9 18.4001 11.2C18.4001 7.22357 15.1765 4 11.2 4C7.22356 4 4 7.22357 4 11.2C4 15.1765 7.22356 18.4001 11.2 18.4001C12.9001 18.4001 14.4625 17.8109 15.6942 16.8255L18.6344 19.7657C18.9468 20.0781 19.4533 20.0781 19.7658 19.7657C20.0782 19.4533 20.0782 18.9467 19.7658 18.6343L16.8256 15.6942Z" fill="#B1A1DA"/>
                             </svg>
@@ -151,10 +182,9 @@
                                 <div class="df aic">
                                     <span id="searchCaseId"></span>
                                     <button class="edit-btn" aria-label="Edit case">
-                                        <svg class="icon-edit" viewBox="0 0 24 24">
-                                            <path d="M4 20h16"/>
-                                            <path d="M14.7 5.3l4 4L9 19.3l-4-4L14.7 5.3z"/>
-                                        </svg>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M14.2234 6.01548L17.2843 9.07641M12.1828 20.2998H20.3453M4.02031 16.2186L3 20.2998L7.08124 19.2795L18.9025 7.4582C19.2851 7.07552 19.5 6.55658 19.5 6.01548C19.5 5.47438 19.2851 4.95544 18.9025 4.57276L18.727 4.39727C18.3444 4.01471 17.8254 3.7998 17.2843 3.7998C16.7432 3.7998 16.2243 4.01471 15.8416 4.39727L4.02031 16.2186Z" stroke="#7527B2" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
                                     </button>
                                 </div>
                                 <div id="userName" style="white-space: nowrap"></div>
@@ -162,8 +192,8 @@
                                 <div id="userAge"></div>
                             </div>
                             <div class="tabs">
-                                <button class="tab" id="directionModalBtn">Направлення</button>
-                                <button class="tab" id="caseSettingsModalBtn">Параметри кейсу</button>
+                                <button class="tab" id="directionModalBtn"  data-translate="direction">Направлення</button>
+                                <button class="tab" id="caseSettingsModalBtn" data-translate="caseSettings">Параметри кейсу</button>
                             </div>
                         </div>
                         <div class="infoHeader">
@@ -229,11 +259,25 @@
                     </div>
                 </div>
                 <div class="commentsWrapper df fdc">
-                    <div class="commentsWrapperTop">
+                    <div class="commentsWrapperTop" data-translate="macrodes_short">
                         Макроопис
                     </div>
                     <textarea id="sampleMacroDescription"></textarea>
-                    <button class="commentsWrapperButton">Зберегти</button>
+                    <button class="commentsWrapperButton" type="button">
+                        <span class="commentsWrapperButtonIcon">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <g clip-path="url(#clip0_7279_16748)">
+                            <path d="M13.75 16.5V12.2644C13.7498 12.0787 13.7132 11.8948 13.6424 11.7233C13.5715 11.5518 13.4678 11.3961 13.3372 11.265C13.2066 11.1339 13.0516 11.03 12.8811 10.9593C12.7106 10.8886 12.5279 10.8524 12.3435 10.8529H7.65647C7.47209 10.8524 7.28942 10.8886 7.11891 10.9593C6.94841 11.03 6.79341 11.1339 6.66278 11.265C6.53216 11.3961 6.42846 11.5518 6.35764 11.7233C6.28681 11.8948 6.25023 12.0787 6.25 12.2644V16.5M13.75 0.753342V2.8529C13.7498 3.03865 13.7132 3.22253 13.6424 3.39403C13.5715 3.56553 13.4678 3.72128 13.3372 3.85238C13.2066 3.98348 13.0516 4.08735 12.8811 4.15806C12.7106 4.22876 12.5279 4.26492 12.3435 4.26445H7.65647C7.47209 4.26492 7.28942 4.22876 7.11891 4.15806C6.94841 4.08735 6.79341 3.98348 6.66278 3.85238C6.53216 3.72128 6.42846 3.56553 6.35764 3.39403C6.28681 3.22253 6.25023 3.03865 6.25 2.8529V0.500009M13.75 0.753342C13.3841 0.586394 12.987 0.500027 12.5853 0.500009H6.25M13.75 0.753342C14.0535 0.892009 14.3332 1.08579 14.5741 1.32667L16.6759 3.43778C16.9369 3.6994 17.144 4.01035 17.2854 4.35279C17.4268 4.69524 17.4998 5.06244 17.5 5.43334V13.6751C17.4998 14.0467 17.4268 14.4146 17.2853 14.7577C17.1438 15.1009 16.9366 15.4125 16.6754 15.6749C16.4142 15.9373 16.1042 16.1452 15.7632 16.2868C15.4222 16.4284 15.0568 16.5008 14.6879 16.5H5.31294C4.9441 16.5009 4.57869 16.4286 4.23762 16.2871C3.89655 16.1457 3.58652 15.9378 3.32525 15.6755C3.06399 15.4133 2.85662 15.1016 2.71502 14.7585C2.57341 14.4154 2.50035 14.0476 2.5 13.676V3.32312C2.50046 2.95161 2.57361 2.58385 2.71527 2.24085C2.85693 1.89785 3.06431 1.58634 3.32557 1.32415C3.58682 1.06195 3.89681 0.854205 4.23782 0.712792C4.57883 0.57138 4.94417 0.499074 5.31294 0.500009H6.25" stroke="#7B43F2" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                            </g>
+                            <defs>
+                            <clipPath id="clip0_7279_16748">
+                            <rect width="20" height="20" fill="white"/>
+                            </clipPath>
+                            </defs>
+                            </svg>
+                        </span>
+                        <span class="commentsWrapperButtonLabel" data-translate="saveButton">Зберегти</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -241,20 +285,20 @@
     <div id="caseSettingsModal" class="modalCustom">
         <div class="modalWrapper">
             <div class="modalContent">
-                <div class="modalTitle">Параметри кейсу</div>
+                <div class="modalTitle" data-translate="caseSettings">Параметри кейсу</div>
                 <div class="caseSettings">
                     <div class="df">
                         <div class="caseSettingsContent df">
 
                         </div>
                         <div class="commentsWrapper df fdc">
-                            <div class="commentsWrapperTop">
+                            <div class="commentsWrapperTop" data-translate="macrodes_short">
                                 Макроопис
                             </div>
                             <textarea id="caseSettingsComments"></textarea>
                         </div>
                     </div>
-                    <button class="modalButton">
+                    <button class="modalButton" data-translate="saveButton">
                         Зберегти
                     </button>
                 </div>
@@ -264,34 +308,34 @@
     <div id="cassetteComments" class="modalCustom">
         <div class="modalWrapper">
             <div class="modalContent">
-                <div class="modalTitle">Комментарий</div>
+                <div class="modalTitle" data-translate="comment">Коментар</div>
                 <div>
                     <textarea class="cassetteCommentsArea" placeholder="Текст комментария..."></textarea>
-                    <div class="modalSubmit">
-                        Сохранить
+                    <div class="modalSubmit" data-translate="saveButton">
+                        Зберегти
                     </div>
                 </div>
             </div>
         </div>
     </div>
     <div id="caseDirection" class="modalCustom">
-    <div class="modalWrapper">
-        <button class="directorClose" data-action="close" aria-label="Close" type="button">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd" clip-rule="evenodd" d="M13.6872 0.312751C14.1042 0.729752 14.1042 1.40584 13.6872 1.82284L1.82284 13.6873C1.40584 14.1042 0.729751 14.1042 0.31275 13.6873C-0.10425 13.2702 -0.10425 12.5942 0.31275 12.1772L12.1772 0.312751C12.5942 -0.104249 13.2702 -0.104249 13.6872 0.312751Z" fill="#B1A1DA"/>
-                <path fill-rule="evenodd" clip-rule="evenodd" d="M13.6873 13.6873C13.2702 14.1042 12.5942 14.1042 12.1772 13.6873L0.312752 1.82284C-0.104248 1.40584 -0.104248 0.729751 0.312752 0.31275C0.729753 -0.10425 1.40584 -0.10425 1.82284 0.31275L13.6873 12.1772C14.1042 12.5942 14.1042 13.2702 13.6873 13.6873Z" fill="#B1A1DA"/>
-            </svg>
-        </button>
-        <div class="modalContent">
-          <div class="modalTitle">Направлення</div>
-          <div class="directorModalTop">
-            <b>S25B01251</b>
+  <div class="modalWrapper">
+    <button class="directorClose" data-action="close" aria-label="Close" type="button">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M13.6872 0.312751C14.1042 0.729752 14.1042 1.40584 13.6872 1.82284L1.82284 13.6873C1.40584 14.1042 0.729751 14.1042 0.31275 13.6873C-0.10425 13.2702 -0.10425 12.5942 0.31275 12.1772L12.1772 0.312751C12.5942 -0.104249 13.2702 -0.104249 13.6872 0.312751Z" fill="#B1A1DA"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M13.6873 13.6873C13.2702 14.1042 12.5942 14.1042 12.1772 13.6873L0.312752 1.82284C-0.104248 1.40584 -0.104248 0.729751 0.312752 0.31275C0.729753 -0.10425 1.40584 -0.10425 1.82284 0.31275L13.6873 12.1772C14.1042 12.5942 14.1042 13.2702 13.6873 13.6873Z" fill="#B1A1DA"/>
+    </svg>
+    </button>
+    <div class="modalContent">
+      <div class="modalTitle" data-translate="direction">Направлення</div>
+      <div class="directorModalTop">
+        <b>S25B01251</b>
             <div class="directorTopCol left">
                 <span id="todayMeta"></span>
             </div>
 
             <div class="directorTopCol right">
-                <span>Фото/скан документу</span>
+                <span data-translate="docPhotoScan">Фото/скан документу</span>
             </div>
           </div>
 
@@ -316,8 +360,8 @@
             </div>
           </div>
           <div class="directorModalFooter">
-            <button class="btn btn-primary" id="caseDirectionSubmit">Зберегти</button>
-            <button class="btn btn-outline" id="caseDirectionScan">Сканувати</button>
+          <button class="btn btn-primary" id="caseDirectionSubmit" data-translate="saveButton">Зберегти</button>
+          <button class="btn btn-outline" id="caseDirectionScan" data-translate="scan">Сканувати</button>
           </div>
         </div>
     </div>
@@ -346,7 +390,7 @@
 </script>
 <script>
     const PATIENT_COR_ID = new URLSearchParams(window.location.search).get('userCorId')
-    const CASE_CODE = new URLSearchParams(window.location.search).get('caseCode')
+    const CASE_ID = new URLSearchParams(window.location.search).get('caseId')
     let cases = []
 
     //Draw HTML Template
@@ -458,7 +502,7 @@
         })
             .then(res => res.json())
             .then(() => {
-                showSuccessAlert(`Окрас скельця успішно зміненно`)
+                showSuccessAlert('<span data-translate="colorChangeSuccess">Забарвлення скельця успішно зміненно</span>')
             })
     }
     const getGlassPaintPicker  = (elementNODE, parentWrapperQUERY, btnWrapperQUERY, callback) => {
@@ -524,48 +568,52 @@
         document.addEventListener('click', closeOutOfPopup)
     }
 
-    const scrollContent = (e, contentNODESelector, arrowsNODESelector, paginationUpDown = true, currentPaginationPage) => {
+    // casePageIndex = scrollContent(e, '#caseItems', "#caseItemsScroll", true, casePageIndex)
+
+    const scrollContent = (e, contentNODESelector, arrowsNODESelector, paginationUpDown = true, currentPaginationPage, elementIndexScroll) => {
         const elem = e?.currentTarget;
         const animationDirection = paginationUpDown ? "top" : "left";
         let newPaginationPage = currentPaginationPage;
 
-        const caseContentNODE = document.querySelectorAll(contentNODESelector);
+        const caseContentNODE = document.querySelector(contentNODESelector);
+        const elementInContainer = document.querySelector(`${contentNODESelector} > div`);
 
+        if(!elementInContainer){
+            return 0;
+        }
 
-        let caseContentHeight = 0;
-        let caseContentScrollHeight = 0;
+        const elementInContainerHeight = elementInContainer[paginationUpDown ? "offsetHeight" : "offsetWidth"];
+        let caseContentHeight =  caseContentNODE[paginationUpDown ? "clientHeight" : "clientWidth"];;
+        let caseContentScrollHeight = caseContentNODE[paginationUpDown ? "scrollHeight" : "scrollWidth"];
+        const scrollPixelSize = Math.floor(caseContentHeight / elementInContainerHeight) * elementInContainerHeight;
+        const scrollabelContentNODE = document.querySelectorAll(contentNODESelector);
 
-        caseContentNODE.forEach(elem => {
-            if (elem.clientHeight > caseContentHeight) {
-                caseContentHeight = elem[paginationUpDown ? "clientHeight" : "clientWidth"];
-            }
-
-            if (elem.scrollHeight > caseContentScrollHeight) {
-                caseContentScrollHeight = elem[paginationUpDown ? "scrollHeight" : "scrollWidth"];
-            }
-        })
+        if(elementIndexScroll){
+            const elementScrollabelPosition = elementInContainerHeight * (elementIndexScroll + 1) + elementInContainerHeight;
+            newPaginationPage = Math.floor(elementScrollabelPosition / caseContentHeight)
+        }
 
         if (!elem) {
-            caseContentNODE.forEach(elem => {
-                elem.scrollTo({[animationDirection]: caseContentHeight * newPaginationPage, behavior: 'smooth'});
+            scrollabelContentNODE.forEach(elem => {
+                elem.scrollTo({[animationDirection]: scrollPixelSize * newPaginationPage, behavior: 'smooth'});
             })
         }
 
         if (elem?.classList.contains('prev')) {
             newPaginationPage -= 1;
-            caseContentNODE.forEach(elem => {
-                elem.scrollTo({[animationDirection]: caseContentHeight * newPaginationPage, behavior: 'smooth'});
+            scrollabelContentNODE.forEach(elem => {
+                elem.scrollTo({[animationDirection]: scrollPixelSize * newPaginationPage, behavior: 'smooth'});
             })
         }
 
         if (elem?.classList.contains('next')) {
             newPaginationPage += 1;
-            caseContentNODE.forEach(elem => {
-                elem.scrollTo({[animationDirection]: caseContentHeight * newPaginationPage, behavior: 'smooth'});
+            scrollabelContentNODE.forEach(elem => {
+                elem.scrollTo({[animationDirection]: scrollPixelSize * newPaginationPage, behavior: 'smooth'});
             })
         }
 
-        if ((caseContentScrollHeight - caseContentHeight * (newPaginationPage + 1)) < 0) {
+        if ((caseContentScrollHeight - caseContentHeight * newPaginationPage) < 0) {
             document.querySelector(`${arrowsNODESelector} .next`).classList.add('disable')
         } else {
             document.querySelector(`${arrowsNODESelector} .next`).classList.remove('disable')
@@ -609,7 +657,7 @@
                 elem.style.display = "none"
             })
             directorModalFooterNODE.style.display = "none";
-            commentsWrapperButtonNODE.style.display = "none";
+                commentsWrapperButtonNODE.style.display = "none";
             return;
         }
 
@@ -627,7 +675,7 @@
             elem.style.display = "block"
         })
         directorModalFooterNODE.style.display = "block";
-        commentsWrapperButtonNODE.style = "";
+            commentsWrapperButtonNODE.style = "";
     }
     const setPathomorphologyTemplate = (activeCaseIndex, activeSpecimenIndex) => {
         if ((activeCaseIndex === lastActiveCaseIndex) && (activeSpecimenIndex === lastActiveSpecimenIndex)) {
@@ -693,10 +741,11 @@
                 .then(res => res.json())
                 .then(userData => {
                     document.querySelector('#userName').innerHTML = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`;
-                    document.querySelector('#userGender').innerHTML = userData.sex === "M" ? "Чол" : "Жін";
-                    document.querySelector('#userAge').innerHTML = `${(userData.age || "")  ? `${userData.age}р` : ''}`;
+                                document.querySelector('#userGender').innerHTML = userData.sex === "F"? '<span data-translate="f">Жін</span>' : '<span data-translate="m">Чол</span>';
+                                document.querySelector('#userAge').innerHTML = `${(userData.age || "")  ? `${userData.age}<span data-translate="yearsSuffix">р.</span>` : ''}`;
 
-                    fetch(`${API_BASE_URL}/api/cases/patients/${PATIENT_COR_ID}/overview`, {
+                    const query = `?${CASE_ID ? `case_id=${CASE_ID}` : ""}`
+                    fetch(`${API_BASE_URL}/api/cases/patients/${PATIENT_COR_ID}/overview${query}`, {
                         method: "GET",
                         headers: {
                             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -704,8 +753,7 @@
                     })
                         .then(res => res.json())
                         .then(casesList => {
-                            console.log(casesList, "casesList")
-                            const activeCaseIndex = casesList.all_cases.findIndex(({case_code}) => case_code === CASE_CODE)
+                            const activeCaseIndex = casesList.all_cases.findIndex(({id}) => id === CASE_ID)
                             const activeCase = activeCaseIndex !== -1 ? activeCaseIndex : 0;
 
                             cases = casesList.all_cases
@@ -713,6 +761,7 @@
                             if(!casesList.first_case_details){
                                 return;
                             }
+
 
                             cases[activeCase].samples = casesList.first_case_details.samples.map(({cassettes, ...sampleData}, index) => {
                                 return {
@@ -730,6 +779,7 @@
                             setPathomorphologyTemplate(activeCase, 0)
                             setCaseEdit()
                             countCaseInputNODE.setAttribute('data-delete-count', cases.length - 1)
+                            casePageIndex = scrollContent(null, '#caseItems', "#caseItemsScroll", true, 0, activeCase)
                         })
                 })
         }
@@ -776,7 +826,12 @@
                 createOrDeleteGlassHandler()
                 changeEntityCountHandler("#cassetteItems .counter input")
                 changeItemCountOnEntity()
-                showSuccessAlert(`Касет${+countOfCassetteInputNODE.value>1 ? "и" : "а"} успішно ствернн${+countOfCassetteInputNODE.value>1 ? "і" : "а"}`)
+                // showSuccessAlert
+                const count = +countOfCassetteInputNODE.value;
+                const lang = getSavedLang();
+                const dict = translations?.[lang] || {};
+                const key  = count > 1 ? 'cassettesCreated' : 'cassetteCreated';
+                showSuccessAlert(dict[key] || 'Done');
 
                 countOfCassetteInputNODE.value = 1;
                 changePrintInModel()
@@ -816,7 +871,12 @@
                     .setAttribute('data-delete-count', cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[cassetteIndex].glasses.length - 1)
                 changeItemCountOnEntity()
                 glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
-                showSuccessAlert(`Скельц${+countOfGlassInput.value > 1 ? "я" : "е"} успішно ствернн${+countOfGlassInput.value>1 ? "і" : "е"}`)
+                // showSuccessAlert
+                const count = +countOfGlassInput.value;
+                const lang = getSavedLang();
+                const dict = translations?.[lang] || {};
+                const key  = count > 1 ? 'glassesCreated' : 'glassCreated';
+                showSuccessAlert(dict[key] || 'Done');
                 countOfGlassInput.value = 1;
                 changePrintInModel()
             })
@@ -885,7 +945,7 @@
             })
                 .then(res => res.json())
                 .then(() => {
-                    showSuccessAlert("QR дослідження раздрукованно")
+                    showSuccessAlert('<span data-translate="expQRprinted">QR дослідження роздруковано</span>')
                     changePrintUI(elem.querySelector('img'), true)
                 })
         })
@@ -916,7 +976,7 @@
                                         }))
                                 )
 
-                                showSuccessAlert("Касети дослідження раздрукованно")
+                                showSuccessAlert('<span data-translate="expCassettesPrinted">Касети дослідження роздруковані</span>')
                                 changePrintInModel();
                                 changePrintUI(elem.querySelector('img'), true)
                             })
@@ -953,7 +1013,7 @@
                                         }))
                                 )
 
-                                showSuccessAlert("Скельця дослідження раздрукованно")
+                                showSuccessAlert('<span data-translate="expGlassesPrinted">Скельця дослідження роздруковані</span>')
                                 changePrintInModel();
                                 changePrintUI(elem.querySelector('img'), true)
                             })
@@ -1044,7 +1104,7 @@
                                 )
 
 
-                                showSuccessAlert("Скельця зразка раздрукованно")
+                                showSuccessAlert('<span data-translate="microdesSuccess">Скельця зразка роздруковані</span>')
                                 changePrintInModel();
                                 changePrintUI(elem.querySelector('img'), true)
                             })
@@ -1075,7 +1135,7 @@
                                         }))
                                 )
 
-                                showSuccessAlert("Касети зразка раздрукованно")
+                                showSuccessAlert('<span data-translate="CassettesPrinted">Касети зразка роздруковані</span>')
                                 changePrintInModel();
                                 changePrintUI(elem.querySelector('img'), true)
                             })
@@ -1218,7 +1278,7 @@
                                     .cassettes[currentCassetteIndex]
                                     .is_printed = true;
 
-                                showSuccessAlert("Касета відсканованна")
+                                showSuccessAlert('<span data-translate="cassettesScaned">Касета відсканована</span>')
                                 changePrintInModel();
                                 changePrintUI(cassetteColumnNODE.querySelector('.cassettePrint img'), true)
                             })
@@ -1241,14 +1301,17 @@
     const glassTemplate = (currentGlass) => {
         const currentPrint = glassPaintList.find((glassPaint) => glassPaint.id === currentGlass.staining)
         const div = document.createElement('div');
-        div.classList = "glassItem df aic jcsb";
+        div.classList = "glassItem";
         div.innerHTML = `
-        <div class="glassItemPicker">
-            ${currentGlass.glass_number} <span class="glassPaintValue">${currentPrint.short}</span>
+        <div class="glassItemContent">
+            <div class="glassItemPicker">
+                ${currentGlass.glass_number} <span class="glassPaintValue">${currentPrint.short}</span>
+            </div>
+            <div class="glassItemPaint" style="cursor: pointer" data-help-text="Роздрукувати скельце">
+                <img src="./assets/${currentGlass.is_printed ? "printActive" : "print"}.svg" alt="print">
+            </div>
         </div>
-        <div class="glassItemPaint" style="cursor: pointer" data-help-text="Роздрукувати скельце">
-            <img src="./assets/${currentGlass.is_printed ? "printActive" : "print"}.svg" alt="print">
-        </div>
+        <div class="glassItemFooter"></div>
         `;
 
         div.querySelector('.glassItemPicker').addEventListener('click', (e) => {
@@ -1295,7 +1358,7 @@
                                     .glasses[currentGlassIndex]
                                     .is_printed = true;
 
-                                showSuccessAlert("Скельце раздрукованно")
+                                showSuccessAlert('<span data-translate="glassPrinted">Скельце роздруковано</span>')
                                 changePrintInModel();
                                 changePrintUI(div.querySelector('.glassItemPaint img'), true)
                             })
@@ -1353,8 +1416,13 @@
                         specimenPageIndex = scrollContent(null, "#specimenItems", "#specimenItemsScroll", true, 0)
                         cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
                         glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
+                        // showSuccessAlert
+                        const count = +countCaseInputNODE.value;
+                        const lang = getSavedLang();
+                        const dict = translations?.[lang] || {};
+                        const key  = count > 1 ? 'casesDeleted' : 'caseDeleted';
+                        showSuccessAlert(dict[key] || 'Done');
 
-                        showSuccessAlert(`Кейс${+countCaseInputNODE.value>1 ? "и" : ""} успішно видаленно`)
 
                         countCaseInputNODE.value = 1;
                         countCaseInputNODE.setAttribute('data-delete-count', cases.length - 1)
@@ -1391,8 +1459,12 @@
                         specimenPageIndex = scrollContent(null, "#specimenItems", "#specimenItemsScroll", true, 0)
                         cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
                         glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
-
-                        showSuccessAlert(`Кейс${+countCaseInputNODE.value>1 ? "и" : ""} успішно створенно`)
+                        // showSuccessAlert
+                        const count = +countCaseInputNODE.value;
+                        const lang = getSavedLang();
+                        const dict = translations?.[lang] || {};
+                        const key  = count > 1 ? 'casesCreated' : 'caseCreated';
+                        showSuccessAlert(dict[key] || 'Done');
 
                         countCaseInputNODE.value = 1;
                         countCaseInputNODE.setAttribute('data-delete-count', cases.length - 1)
@@ -1458,7 +1530,13 @@
                         glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
 
                         changeItemCountOnEntity()
-                        showSuccessAlert(`Зраз${+countOfSpecimenInputNODE.value> 1 ? "ки" : "ок"} успішно видаленно`)
+                        // showSuccessAlert
+                        const count = +countOfSpecimenInputNODE.value;
+                        const lang = getSavedLang();
+                        const dict = translations?.[lang] || {};
+                        const key  = count > 1 ? 'specimensDeleted' : 'specimenDeleted';
+                        showSuccessAlert(dict[key] || 'Done');
+
 
                         countOfSpecimenInputNODE.setAttribute('data-delete-count', cases[lastActiveCaseIndex].samples.length - 1)
                         countOfSpecimenInputNODE.value = 1;
@@ -1502,8 +1580,12 @@
                         specimenPageIndex = scrollContent(null, "#specimenItems", "#specimenItemsScroll", true, 0)
                         cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
                         glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
-
-                        showSuccessAlert(`Зраз${+countOfSpecimenInputNODE.value>1 ? "ки" : "ок"} успішно створенно`)
+                        // showSuccessAlert
+                        const count = +countOfSpecimenInputNODE.value;
+                        const lang = getSavedLang();
+                        const dict = translations?.[lang] || {};
+                        const key  = count > 1 ? 'specimensCreated' : 'specimenCreated';
+                        showSuccessAlert(dict[key] || 'Done');
 
                         countOfSpecimenInputNODE.setAttribute('data-delete-count', cases[lastActiveCaseIndex].samples.length - 1)
                         countOfSpecimenInputNODE.value = 1;
@@ -1564,8 +1646,12 @@
 
                         cassettePageIndex = scrollContent(null, "#cassetteItems", "#cassetteItemsScroll", false, 0)
                         glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
-
-                        showSuccessAlert(`Касет${+countOfCassetteInputNODE.value>1 ? "и" : "а"} успішно видаленн${+countOfCassetteInputNODE.value>1 ? "и" : "а"}`)
+                        // showSuccessAlert
+                        const count = +countOfCassetteInputNODE.value;
+                        const lang = getSavedLang();
+                        const dict = translations?.[lang] || {};
+                        const key  = count > 1 ? 'cassettesDeleted' : 'cassetteDeleted';
+                        showSuccessAlert(dict[key] || 'Done');
 
                         countOfCassetteInputNODE.setAttribute('data-delete-count', cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes.length - 1)
                         countOfCassetteInputNODE.value = 1;
@@ -1644,7 +1730,12 @@
                                 .setAttribute('data-delete-count', cases[lastActiveCaseIndex].samples[lastActiveSpecimenIndex].cassettes[index].glasses.length + 1)
                             changeItemCountOnEntity()
                             glassPageIndex = scrollContent(null, ".glassItems", "#glassItemsScroll", true, 0)
-                            showSuccessAlert(`Скельц${+countOfGlassInput.value>1 ? "я" : "е"} успішно видаленн${+countOfGlassInput.value>1 ? "і" : "е"}`)
+                            // showSuccessAlert
+                            const count = +countOfGlassInput.value;
+                            const lang = getSavedLang();
+                            const dict = translations?.[lang] || {};
+                            const key  = count > 1 ? 'glassesDeleted' : 'glassDeleted';
+                            showSuccessAlert(dict[key] || 'Done');
                             countOfGlassInput.value = 1;
                             changePrintInModel()
                         })
@@ -1862,8 +1953,8 @@
             })
                 .then(res => res.json())
                 .then(() => {
-                    showSuccessAlert('Макро опис успішно оновлений')
-
+                    // showSuccessAlert
+                    showSuccessAlert('<span data-translate="macrodesSuccess">Макроопис успішно оновлений</span>')
                     macroDescriptionTextareaNODE.nextElementSibling.classList.remove('open');
                 })
         })
@@ -1877,8 +1968,8 @@
             toggleDiv.classList.add('role-toggle')
             toggleDiv.innerHTML = `
             <div class="role-toggle">
-                <button class="role-btn doc">Лікар</button>
-                <button class="role-btn lab active">Лаборант</button>
+                <button class="role-btn doc" data-translate="doc">Лікар</button>
+                <button class="role-btn lab active" data-translate="lab">Лаборант</button>
             </div>
             `
             headerNODE.append(toggleDiv)

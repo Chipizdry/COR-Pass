@@ -29,6 +29,20 @@ from scan_worker.smbprotocol_worker import save_file_to_smb, save_file_to_smb_ma
 router = APIRouter(prefix="/glasses", tags=["Glass"])
 
 
+def generate_glass_filename(case_code: str, cassette_number: str, hospital: str, 
+                            sample_number: str, glass_number: int, staining: str, 
+                            cor_id: str, timestamp: str = None) -> str:
+    """
+    Генерирует стандартное имя файла для стекла с разделителями _
+    Формат: {case_code}_{cassette}_{hospital}_{sample}_L{glass_number}_{staining}_{cor_id}_{timestamp}.svs
+    Пример: S25R00026_A16_FF_A_L0_VK_2244J230X-1994M_2025-11-07_20_00_27.svs
+    """
+    if timestamp is None:
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
+    
+    return f"{case_code}_{cassette_number}_{hospital}_{sample_number}_L{glass_number}_{staining}_{cor_id}_{timestamp}.svs"
+
+
 @router.post(
     "/create",
     dependencies=[Depends(lab_assistant_or_doctor_access)],
@@ -198,9 +212,48 @@ async def upload_glass_file(
             detail="You are not connected to NAS / can not save svs scan",
         )
     try:
+        # Получаем информацию о стекле
+        glass = await db.get(Glass, glass_id)
+        if not glass:
+            raise HTTPException(status_code=404, detail="Стекло не найдено")
+        
+        # Загружаем связанные данные
+        from sqlalchemy.orm import selectinload
+        from sqlalchemy import select as sql_select
+        result = await db.execute(
+            sql_select(Glass)
+            .where(Glass.id == glass_id)
+            .options(
+                selectinload(Glass.cassette).selectinload(glass_service.db_models.Cassette.sample)
+                .selectinload(glass_service.db_models.Sample.case)
+            )
+        )
+        glass_full = result.scalar_one()
+        
+        # Генерируем стандартное имя файла
+        case = glass_full.cassette.sample.case
+        sample = glass_full.cassette.sample
+        cassette = glass_full.cassette
+        
+        staining_abbr = glass_full.staining.abbr() if glass_full.staining else "UNK"
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
+        
+        new_filename = generate_glass_filename(
+            case_code=case.case_code,
+            cassette_number=cassette.cassette_number,
+            hospital="FF",  # Можно сделать параметром или брать из настроек
+            sample_number=sample.sample_number,
+            glass_number=glass_full.glass_number,
+            staining=staining_abbr,
+            cor_id=case.patient_id,
+            timestamp=timestamp
+        )
+        
+        logger.info(f"Загрузка файла стекла {glass_id} с именем: {new_filename}")
+        
         data = BytesIO(await file.read())
         today = datetime.now().strftime("%Y-%m-%d")
-        svs_path = f"{settings.base_path}/{today}/{file.filename}"
+        svs_path = f"{settings.base_path}/{today}/{new_filename}"
         smb_full_path = f"\\\\{settings.smb_server_ip}\\{settings.smb_share}\\{svs_path}"
 
         await save_file_to_smb_manual(data, smb_full_path)

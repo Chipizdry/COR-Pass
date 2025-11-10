@@ -4,7 +4,7 @@ import io
 from typing import Optional
 import uuid
 from click import File
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -143,14 +143,20 @@ async def delete_cases(
     response_model=PatientFirstCaseDetailsResponse,
 )
 async def read_patient_overview_details(
-    patient_cor_id: str, db: AsyncSession = Depends(get_db)
+    patient_cor_id: str,
+    db: AsyncSession = Depends(get_db),
+    case_id: Optional[str] = Query(None, description="Опциональный параметр case_id для выбора конкретного кейса")
 ):
     """
     Возвращает список всех кейсов пациента и детализацию первого из них:
     семплы, кассеты первого семпла и стекла этих кассет.
+    
+    Параметры:
+    - patient_cor_id: COR ID пациента
+    - case_id: Опциональный ID кейса для детализации. Если не указан, берется первый кейс по дате создания.
     """
     overview_data = await case_service.get_patient_first_case_details(
-        db=db, patient_id=patient_cor_id
+        db=db, patient_id=patient_cor_id, case_id=case_id
     )
     if overview_data is None:
         raise HTTPException(status_code=404, detail="Patient not found")

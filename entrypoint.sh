@@ -13,10 +13,16 @@ touch $SCAN_DIR/$(date +%Y%m%d%H%M).file
 # upgrade DB
 /usr/local/bin/alembic upgrade head
 
+# Create Prometheus multiprocess directory
+export PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc
+mkdir -p $PROMETHEUS_MULTIPROC_DIR
+rm -rf $PROMETHEUS_MULTIPROC_DIR/*
+
 /usr/local/bin/gunicorn main:app \
     --workers 5 \
     --worker-class uvicorn.workers.UvicornWorker \
     --bind 0.0.0.0:8000 \
+    --config gunicorn_conf.py \
     --log-level info \
     --error-logfile - \
     --access-logfile -

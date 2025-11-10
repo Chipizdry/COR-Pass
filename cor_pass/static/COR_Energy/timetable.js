@@ -13,7 +13,7 @@ function getShiftedTime(h, m, shiftHours) {
 }
 
 function formatIsoTimeWithShift(h, m) {
-    const shifted = getShiftedTime(h, m, -2);
+    const shifted = getShiftedTime(h, m, 0);
     return `${String(shifted.hours).padStart(2, '0')}:${String(shifted.minutes).padStart(2, '0')}:00.000Z`;
 }
 
@@ -272,7 +272,8 @@ function updateSchedulePeriod(id, field, value) {
 }
 
 function formatIsoTime(h, m) {
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00.000Z`;
+    // Время в timezone объекта, без UTC маркера
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
 }
 
 // Сохранение периода (отправка на сервер)
@@ -291,7 +292,8 @@ async function saveSchedulePeriod(buttonElement) {
     const isManualMode = !active; 
 
    
-    const formattedStartTime = formatIsoTimeWithShift(startHour, startMinute); 
+    // Форматируем время без смещения - оно уже в timezone объекта
+    const formattedStartTime = formatIsoTime(startHour, startMinute); 
     const dataToSend = {
         start_time: formattedStartTime,
         duration_hours: durationHour,
@@ -382,8 +384,8 @@ async function toggleSchedule() {
 
     const updatePromises = schedulePeriods.map(async period => {
         const dataToSend = {
-         //   start_time: formatIsoTime(period.startHour, period.startMinute),
-            start_time: formatIsoTimeWithShift(period.startHour, period.startMinute),
+            // Время уже в timezone объекта, без конвертации
+            start_time: formatIsoTime(period.startHour, period.startMinute),
             duration_hours: period.durationHour,
             duration_minutes: period.durationMinute,
             grid_feed_w: period.feedIn,
@@ -572,8 +574,8 @@ async function fetchAllSchedulePeriods() {
             let startHour = startTime.getHours();
             let startMinute = startTime.getMinutes();
 
-            // сдвигаем +3 ЧАСА сразу после получения, локально используем уже сдвинутое
-            ({ hours: startHour, minutes: startMinute } = getShiftedTime(startHour, startMinute, 3));
+            // Время приходит уже в timezone объекта, конвертация не нужна
+            // ({ hours: startHour, minutes: startMinute } = getShiftedTime(startHour, startMinute, 3)); // УБРАНО
 
 
             let durationHour = 0;

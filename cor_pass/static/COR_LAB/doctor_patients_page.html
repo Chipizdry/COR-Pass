@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru" class="layout-page">
+<html lang="uk" class="layout-page">
 <head>
     <link rel="icon" type="image/png" href="./favicon.png">
     <meta charset="UTF-8"/>
-    <title>Кор Lab — Пациенты</title>
+    <title>COR-Lab — Пацієнти</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" type="text/css" href="./css/reset.css">
@@ -12,7 +12,35 @@
     <link rel="stylesheet" type="text/css" href="./css/header.css">
     <link rel="stylesheet" type="text/css" href="../COR_ID_css/modal.css">
 
+    <!-- приховуємо сторінку, щоб переклалось без FOUC -->
+    <style>
+        html.i18n-loading body {
+            visibility: hidden;
+        }
+    </style>
 
+    <script>
+        document.documentElement.classList.add('i18n-loading');
+    </script>
+
+    <!-- Захист від зависання і пустої сторінки! -->
+    <script>
+        function removeI18nMask() {
+              document.documentElement.classList.remove('i18n-loading');
+        }
+            // Якщо translation.js викликає applySavedLanguage() — знімай після неї
+        document.addEventListener('i18n:ready', removeI18nMask);
+            // fallback: знімаємо при повному завантаженні сторінки
+        window.addEventListener('load', removeI18nMask, { once: true });
+            // запасний таймер, якщо переклад завис
+        setTimeout(removeI18nMask, 2500);
+    </script>
+    <!-- підключаємо переклад та видаляємо зайвий клас -->
+    <script src="../COR_ID_Js/translation.js"></script>
+
+    <noscript>
+        <style>html.i18n-loading body { visibility: visible !important; }</style>
+    </noscript>
 </head>
 <body class="layout-page">
 
@@ -29,7 +57,7 @@
                     </a>
                 </div>
                 <div class="search-container">
-                    <input type="text" placeholder="Search" id="searchInput">
+                    <input type="text" placeholder="Search" id="searchInput" data-translate="searchPlaceholder">
                     <svg class="search-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
                         <path fill-rule="evenodd" clip-rule="evenodd"
                               d="M11.2 5.60001C8.10722 5.60001 5.60001 8.10722 5.60001 11.2C5.60001 14.2928 8.10722 16.8001 11.2 16.8001C12.7087 16.8001 14.0781 16.2035 15.085 15.2333C15.1061 15.2058 15.1292 15.1794 15.1544 15.1543C15.1795 15.1291 15.2059 15.106 15.2334 15.0849C16.2035 14.078 16.8 12.7087 16.8 11.2C16.8 8.10722 14.2928 5.60001 11.2 5.60001ZM16.8256 15.6942C17.8109 14.4624 18.4001 12.9 18.4001 11.2C18.4001 7.22357 15.1765 4 11.2 4C7.22356 4 4 7.22357 4 11.2C4 15.1765 7.22356 18.4001 11.2 18.4001C12.9001 18.4001 14.4625 17.8109 15.6942 16.8255L18.6344 19.7657C18.9468 20.0781 19.4533 20.0781 19.7658 19.7657C20.0782 19.4533 20.0782 18.9467 19.7658 18.6343L16.8256 15.6942Z"
@@ -45,7 +73,7 @@
                 </svg>
                 </button>
                     <div class="role-toggle">
-                        <button class="role-btn active aic jcc df" style="min-width: 270px;" id="addPatientBtn">
+                        <button class="role-btn active aic jcc df" style="min-width: 270px;" id="addPatientBtn" data-translate="addPatient">
                             <svg width="24" height="25" viewBox="0 0 24 25" fill="none"
                                  xmlns="http://www.w3.org/2000/svg">
                                 <rect x="0.625" y="1.125" width="22.75" height="22.75" rx="11.375" stroke="white"
@@ -86,9 +114,9 @@
             <div style="position:relative">
                 <div class="sort" id="sortBtn">
                     <img src="./assets/sort.svg" alt="Сортировка" class="icon">
-                    <span>Сортировка:</span>&nbsp;
+                    <span data-translate="sort">Сортування:</span>&nbsp;
                     <span id="sortLabel">
-            <span>Дата зміни: від нових до старих</span>
+            <span data-translate="dateDesc">Дата зміни: від нових до старих</span>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12.7241 16.0865L12.7269 16.0834L18.7453 9.65889L18.7499 9.65396L18.7511 9.65252C19.1032 9.25733 19.0719 8.66929 18.7194 8.30513L18.7167 8.30066L18.7158 8.29968L18.7122 8.29599L18.7114 8.29678C18.3519 7.90305 17.7346 7.90088 17.3434 8.29665L17.3412 8.29895L17.3399 8.30027L17.3377 8.30263L12.0041 13.964L6.66231 8.29402L6.66086 8.2954C6.49594 8.09985 6.23847 8 5.97981 8C5.45224 8 5 8.43581 5 8.99434C5 9.25792 5.09722 9.48996 5.26063 9.65679L5.26438 9.66067L11.3137 16.0847L11.3169 16.0882L11.342 16.1139L11.3527 16.1241L11.3555 16.1268C11.7488 16.488 12.3668 16.4838 12.7241 16.0865Z"
                     fill="#5B4296"/>
@@ -97,18 +125,18 @@
 
                 </div>
                 <div class="dropdown" id="sortDropdown">
-                    <button data-field="date" data-dir="desc">Дата зміни: від нових до старих</button>
-                    <button data-field="date" data-dir="asc">Дата зміни: від старих до нових</button>
-                    <button data-field="name" data-dir="asc">Призвищє: від А до Я</button>
-                    <button data-field="name" data-dir="desc">Призвищє: від Я до А</button>
-                    <button data-field="id" data-dir="asc">COR ID: ↑</button>
-                    <button data-field="id" data-dir="desc">COR ID: ↓</button>
-                    <button data-field="age" data-dir="asc">Вік: ↑</button>
-                    <button data-field="age" data-dir="desc">Вік: ↓</button>
-                    <button data-field="gender" data-dir="asc">Стать: від А до Я</button>
-                    <button data-field="gender" data-dir="desc">Стать: від Я до А</button>
-                    <button data-field="status" data-dir="asc">Статус: від А до Я</button>
-                    <button data-field="status" data-dir="desc">Статус: від Я до А</button>
+                    <button data-field="date" data-dir="desc" data-translate="dateDesc">Дата зміни: від нових до старих</button>
+                    <button data-field="date" data-dir="asc" data-translate="dateAsc">Дата зміни: від старих до нових</button>
+                    <button data-field="name" data-dir="asc" data-translate="nameAsc">Прізвище: від А до Я</button>
+                    <button data-field="name" data-dir="desc" data-translate="nameDesc">Прізвище: від Я до А</button>
+                    <button data-field="id" data-dir="asc" data-translate="idAsc">COR ID: ↑</button>
+                    <button data-field="id" data-dir="desc" data-translate="idDesc">COR ID: ↓</button>
+                    <button data-field="age" data-dir="asc" data-translate="ageAsc">Вік: ↑</button>
+                    <button data-field="age" data-dir="desc" data-translate="ageDesc">Вік: ↓</button>
+                    <button data-field="gender" data-dir="asc" data-translate="genderAsc">Стать: від А до Я</button>
+                    <button data-field="gender" data-dir="desc" data-translate="genderDesc">Стать: від Я до А</button>
+                    <button data-field="status" data-dir="asc" data-translate="statusAsc">Статус: від А до Я</button>
+                    <button data-field="status" data-dir="desc" data-translate="statusDesc">Статус: від Я до А</button>
                 </div>
             </div>
         </div>
@@ -119,13 +147,13 @@
                 <table>
                     <thead>
                     <tr>
-                        <th data-field="name">Фамилия, имя, отчество</th>
-                        <th data-field="id">COR ID</th>
-                        <th data-field="age">Возраст</th>
-                        <th data-field="gender">Пол</th>
-                        <th data-field="date">Дослідження</th>
-                        <th data-field="date">Дата изменения</th>
-                        <th data-field="status">Статус</th>
+                        <th data-field="name" data-translate="fullName">Прізвище, ім'я, по-батькові</th>
+                        <th data-field="id" data-translate="id">COR-ID</th>
+                        <th data-field="age" data-translate="age">Вік</th>
+                        <th data-field="gender" data-translate="gender">Стать</th>
+                        <th data-field="date" data-translate="explorationDate">Дослідження</th>
+                        <th data-field="date" data-translate="changeDate">Дата змін</th>
+                        <th data-field="status" data-translate="status">Статус</th>
                         <th style="width:32px"></th>
                     </tr>
                     </thead>
@@ -145,78 +173,78 @@
         <div class="modal-buttons">
             <button class="modal-button close" data-action="close" id="cancelPatientBtn">✖</button>
         </div>
-        <h1>Новый пациент</h1>
+        <h1 data-translate="newPatient">Новий пацієнт</h1>
     </div>
 
     <div class="tab-buttons">
-        <button class="tab-button active" data-tab="byCorIdTab">Добавить по COR-ID</button>
-        <button class="tab-button" data-tab="registerPatientTab">Регистрация пациента</button>
+        <button class="tab-button active" data-tab="byCorIdTab" data-translate="addPatientByCorId">Додати по COR-ID</button>
+        <button class="tab-button" data-tab="registerPatientTab" data-translate="registerNewPatient">Регістрація пацієнта</button>
     </div>
 
     <div class="tab-content active" id="byCorIdTab">
         <div class="form-group-width">
-            <label for="corIdInput">Введите COR-ID:</label>
+            <label for="corIdInput" data-translate="corIdInput">Введіть COR-ID:</label>
             <input type="text" id="corIdInput" name="corIdInput" required maxlength="15">
         </div>
     </div>
 
     <div class="tab-content" id="registerPatientTab">
         <div class="form-group-width">
-            <label for="surname">Фамилия</label>
+            <label for="surname" data-translate="surname">Прізвище</label>
             <input type="text" id="surname" name="surname" required>
         </div>
 
         <div class="form-group-width">
-            <label for="firstName">Имя</label>
+            <label for="firstName" data-translate="firstName">Ім'я</label>
             <input type="text" id="firstName" name="firstName" required>
         </div>
 
         <div class="form-group-width">
-            <label for="middleName">Отчество</label>
+            <label for="middleName" data-translate="middleName">По-батькові</label>
             <input type="text" id="middleName" name="middleName" required>
         </div>
 
         <div class="form-group-width">
-            <label for="birthDate">Дата рождения</label>
+            <label for="birthDate" data-translate="birthDate">Дата народження</label>
             <input type="date" id="birthDate" name="birthDate" required>
         </div>
 
         <div class="form-group-width">
-            <label>Пол:</label>
+            <label data-translate="gender-label">Стать:</label>
         </div>
         <div class="additional-fields">
             <label class="storage-option">
                 <input type="radio" name="gender" value="M">
                 <span class="custom-radio"></span>
-                <span>Мужской</span>
+                <span data-translate="male-option">Чоловік</span>
             </label>
 
             <label class="storage-option">
                 <input type="radio" name="gender" value="F">
                 <span class="custom-radio"></span>
-                <span>Женский</span>
+                <span data-translate="female-option">Жінка</span>
             </label>
         </div>
 
 
-        <div class="additional-fields">
+        <div class="form-group-width  additional-fields">
             <div class="input-wrapper">
-                <label for="patientEmail">Імейл</label>
+                <label for="patientEmail" data-translate="email">Ел. пошта</label>
                 <input type="text" id="patientEmail" name="patientEmail">
             </div>
             <div class="input-wrapper">
-                <label for="patientPhone">Телефон</label>
+                <label for="patientPhone" data-translate="phone">Телефон</label>
                 <input type="text" id="patientPhone" name="patientPhone" required>
             </div>
         </div>
 
         <div class="form-group-width">
-            <label for="address">Адрес</label>
+            <label for="address" data-translate="address">Адреса</label>
             <input type="text" id="address" name="address" required>
         </div>
     </div>
 
-    <button class="button" id="Add_Patient" data-translate="Add_Patient">Добавить пациента</button>
+    <button class="button" id="Add_Patient" data-translate="addPatient">Додати пацієнта</button>
 </div>
 
 
@@ -227,22 +255,22 @@
             <div class="modal-buttons">
                 <button class="modal-button close" data-action="close" id="closeAddDeviceModal">✖</button>
             </div>
-            <h3 style="margin-top:30; color:#291161;font-size: 17px;">Новое устройство</h3>
+            <h3 style="margin-top:30; color:#291161;font-size: 17px;" data-translate="newDevice">Новий пристрій</h3>
 
         </div>
 
-        <label>Тип устройства:</label>
+        <label data-translate="deviceType">Тип пристрою:</label>
         <select id="deviceType" class="select">
-            <option value="Принтер">Принтер кассет</option>
-            <option value="Сканер">Принтер стёкол</option>
-            <option value="Камера">Сканер</option>
-            <option value="Другое">Другое</option>
+            <option value="Принтер" data-translate="cassettePrinter">Принтер касет</option>
+            <option value="Сканер" data-translate="glassPrinter">Принтер скелець</option>
+            <option value="Камера" data-translate="scanner">Сканер</option>
+            <option value="Другое" data-translate="other">Інше</option>
         </select>
 
-        <label>ID устройства (0–65535):</label>
+        <label data-translate="deviceId">ID пристрою (0–65535):</label>
         <input type="text" class="select" id="deviceId" min="0" max="65535"/>
 
-        <label>IP-адрес:</label>
+        <label data-translate="deviceIp">IP-адреса:</label>
         <input type="text" id="deviceIp" placeholder="000.000.000.000"/>
 
         <!--    <label>Маска подсети:</label>
@@ -251,17 +279,16 @@
             <label>Шлюз:</label>
             <input type="text" id="deviceGateway" placeholder="000.000.000.000" /> -->
 
-        <label>Статус / Локация:</label>
-        <input type="text" id="deviceLocation" maxlength="20" placeholder="Серверная, этаж 2"/>
+        <label data-translate="deviceLocation">Статус / Локація:</label>
+        <input type="text" id="deviceLocation" maxlength="20" placeholder="Серверна, поверх 2"/>
 
-        <button onclick="testDevice()" class="button" id="testDevice">Тест</button>
-        <button onclick="addDevice()" class="button" id="addDevice">Сохранить</button>
+        <button onclick="testDevice()" class="button" id="testDevice" data-translate="testDevice">Тест</button>
+        <button onclick="addDevice()" class="button" id="addDevice" data-translate="saveButton">Зберегти</button>
 
     </div>
 </div>
 
 <!-- ─── ЛОГИКА (сортировка, поиск, обработчики) ─── -->
-<script src="../COR_ID_Js/translation.js"></script>
 <script src="../COR_ID_Js/general_fun.js"></script>
 <script src="./js/general.js"></script>
 <script src="./printers.js"></script>
@@ -295,15 +322,14 @@
         const roles = decodeToken(getToken())?.roles
         tbody.innerHTML = "";
         patientsData.forEach(r => {
-            console.log(r, "r")
             const tr = document.createElement("tr");
             tr.innerHTML = `
             <td style="display:flex;align-items:center;background:var(--clr-surface-alt);">
               ${r.avatar ? `<img class="avatar" src="${r.avatar}" alt="">` : ""}${r.name}
             </td>
             <td>${r.patient_cor_id}</td>
-            <td>${r.age ? `${r.age} лет` : ""}</td>
-            <td>${r.sex === "M" ? "Мужской" : "Женский"}</td>
+            <td>${r.age ? `${r.age}&nbsp;<span data-translate="yearsSuffix">р.</span>` : ""}</td>
+            <td>${r.sex === "F"? '<span data-translate="f">Жін</span>' : '<span data-translate="m">Чол</span>'}</td>
             <td>${r.cases.length > 1 ? `${r.cases[0]} ...` : r.cases.length === 1 ? `${r.cases[0]}` : ""}</td>
             <td>${new Date(r.change_date).toLocaleDateString()}</td>
             <td><span class="status">${r.status ? `<span class="status-dot"></span>${r.status}</span>` : ""}</td>
@@ -314,7 +340,9 @@
             }
             tbody.appendChild(tr);
         });
-        footerInfo.textContent = `Всего: ${patientsData.length} пациентов`;
+        const lang = getSavedLang();
+        const dict = translations?.[lang] || {};
+        footerInfo.textContent = `${dict.totalPatients || 'Всього'}: ${patientsData.length} ${dict.patients || 'пацієнтів'}`;
     }
 
     const sortTableRows = (field, dir) =>{
@@ -370,16 +398,20 @@
 
 
     /* Утилита: превращаем "дд.мм.гггг" в Date */
-    function parseDate(str) {
+/*     function parseDate(str) {
         const [d, m, y] = str.split(".").map(Number);
         return new Date(y, m - 1, d);
-    }
-
+    } */
+    /* change_date зберігається у ISO-форматі (2025-05-09T07:19:51.498743), а parseDate() очікує дд.мм.рррр. Через це сортування по даті працюватиме некоректно. */
     /* Компаратор для сортировки по полю */
     function compare(a, b, field) {
-        if (field === "date") return parseDate(a.change_date) - parseDate(b.change_date);
-        if (field === "age") return a.age - b.age;
-        return a[field].toString().localeCompare(b[field].toString(), "ru", {sensitivity: "base"});
+        if (field === "date") {
+            return new Date(a.change_date) - new Date(b.change_date);
+        }
+        if (field === "age") return (a.age ?? 0) - (b.age ?? 0);
+        const av = a[field] != null ? a[field].toString() : '';
+        const bv = b[field] != null ? b[field].toString() : '';
+        return av.localeCompare(bv, "ru", {sensitivity: "base"});
     }
 
 
@@ -469,7 +501,9 @@
         const token = localStorage.getItem('access_token'); // Предполагаю, что токен лежит в localStorage
 
         if (!corId) {
-            alert('Пожалуйста, введите COR-ID');
+            const lang = getSavedLang();
+            const dict = translations?.[lang] || {};
+            alert(dict.enterCorId || 'Будь ласка, введіть COR-ID');
             return;
         }
 
@@ -480,28 +514,34 @@
                     headers: {
                         'accept': 'application/json',
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                        'Authorization': 'Bearer ' + token
                     },
                     body: JSON.stringify({
                         cor_id: corId,
                         status: 'registered'
                     })
                 });
+                const lang = getSavedLang();
+                const dict = translations?.[lang] || {};
 
                 if (response.ok) {
                     const result = await response.json();
-                    console.log('Пациент успешно добавлен:', result);
-                    alert('Пациент успешно добавлен!');
-                    // Можно тут закрыть модалку и сбросить поле
+                    console.log(dict.patientAddedLog || 'Пацієнта успішно додано:', result);
+                    alert(dict.patientAddedAlert || 'Пацієнта успішно додано!');
+                    // тут можна закрити модалку/очистити поле
                 } else {
-                    const error = await response.json();
-                    console.error('Ошибка при добавлении пациента:', error);
-                    alert('Ошибка: ' + (error.detail || 'Неизвестная ошибка'));
+                    const error = await response.json().catch(() => ({}));
+                    console.error(dict.addPatientErrorLog || 'Помилка при додаванні пацієнта:', error);
+                    const prefix = dict.errorPrefix || 'Помилка';
+                    const unknown = dict.unknownError || 'Невідома помилка';
+                    alert(`${prefix}: ${error?.detail || unknown}`);
                 }
             }
         } catch (error) {
-            console.error('Ошибка сети:', error);
-            alert('Ошибка сети: ' + error.message);
+            const lang = getSavedLang();
+            const dict = translations?.[lang] || {};
+            console.error(dict.networkErrorLog || 'Помилка мережі:', error);
+            alert(`${dict.networkErrorAlert || 'Помилка мережі:'} ${error.message || ''}`);
         }
     }
 
@@ -548,7 +588,9 @@
         }
 
         if (!isValid) {
-            alert('Пожалуйста, заполните все обязательные поля и выберите пол пациента.');
+            const lang = getSavedLang();
+            const dict = translations?.[lang] || {};
+            alert(dict.fillRequiredFields || 'Будь ласка, заповніть усі обов’язкові поля та виберіть стать пацієнта.');
             return;
         }
 
@@ -585,15 +627,18 @@
                     }
                 })
                 .then(data => {
-                    console.log('Пациент успешно добавлен:', data);
-                    alert('Пациент успешно добавлен!');
+                    const lang = getSavedLang();
+                    const dict = translations?.[lang] || {};
+                    console.log(dict.patientAddedLog || 'Пацієнта успішно додано:', data);
+                    alert(dict.patientAddedAlert || 'Пацієнта успішно додано!');
                     document.getElementById('addPatientModal').style.display = 'none';
-
-                    window.location.reload()
+                    window.location.reload();
                 })
                 .catch(error => {
-                    console.error('Ошибка при добавлении пациента:', error);
-                    alert('Ошибка при добавлении пациента. Проверьте введённые данные.');
+                    const lang = getSavedLang();
+                    const dict = translations?.[lang] || {};
+                    console.error(dict.addPatientErrorLog || 'Помилка при додаванні пацієнта:', error);
+                    alert(dict.addPatientErrorAlert || 'Помилка при додаванні пацієнта. Перевірте введені дані.');
                 });
         }
     }
@@ -635,6 +680,7 @@
         const cancelPatientBtn = document.getElementById('cancelPatientBtn');
         const savePatientBtn = document.getElementById('savePatientBtn');
         const tabs = document.querySelectorAll('.tab');
+        /* просто '.tab' немає, може '.tab-button'? */
         const tabContents = document.querySelectorAll('.tab-content');
         const importFileInput = document.getElementById('importFile');
         const importFileName = document.getElementById('importFileName');
@@ -697,12 +743,62 @@
             const isAvailable = await checkPrinterAvailability(ip);
 
             if (!isAvailable) {
-                alert('Принтер недоступен. Проверьте соединение.');
+                const lang = getSavedLang();
+                const dict = translations?.[lang] || {};
+                alert(dict.printerUnavailable || 'Принтер недоступний. Перевірте з’єднання.');
                 return;
             }
 
             await sendPrintRequest(ip);
         });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const getFormattedDateBirth = (dayBirth) => {
+            if(!dayBirth){
+                return null
+            }
+
+            const day = dayBirth.slice(0, 2);
+            const month = dayBirth.slice(2, 4);
+            const year = dayBirth.slice(4, 8);
+
+            return `${year}-${month}-${day}`
+        }
+        document.querySelectorAll('#registerPatientTab input[type="text"]').forEach(elem => {
+            elem.addEventListener('keyup', e => {
+                const value = e.target.value.trim();
+                const lineLength = value.split('|').length - 1;
+
+                if(lineLength === 9){
+                    const [
+                        last_name,
+                        first_name,
+                        birthDate,
+                        sex,
+                        email,
+                        phone,
+                        research_type,
+                        material_type,
+                        container_count,
+                        description
+                    ] = value.split("|")
+                    const newDate = getFormattedDateBirth(birthDate)
+
+                    document.querySelector('#registerPatientTab input[name="surname"]').value = last_name || ""
+                    document.querySelector('#registerPatientTab input[name="firstName"]').value = first_name || ""
+                    document.querySelector('#registerPatientTab input[name="patientEmail"]').value = email || ""
+                    document.querySelector('#registerPatientTab input[name="patientPhone"]').value = phone || ""
+
+                    if(sex){
+                        document.querySelector(`#registerPatientTab input[name="gender"][value="${sex}"]`).checked = true
+                    }
+                    if(newDate){
+                        document.querySelector('#registerPatientTab input[name="birthDate"]').value = newDate
+                    }
+                }
+            })
+        })
     });
 </script>
 </body>

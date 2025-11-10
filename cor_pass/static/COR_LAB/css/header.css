@@ -83,9 +83,16 @@
     display: flex;
     background: rgba(255, 255, 255, 0.30);
     border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.40);
+    width: 271px;
+    padding: 4px;
+    gap: 4px;
 }
 .role-toggle .role-btn {
-    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 0;
     border: none;
     background: none;
     font-size: 16px;
@@ -94,6 +101,7 @@
     transition: background .2s, color .2s;
     height: 64px;
     border-radius: 20px;
+    flex: 1;
 }
 .role-toggle .role-btn svg {
     margin-right: 10px;
@@ -117,7 +125,7 @@
     background: none;
     border: none;
     font-size: 16px;
-    color: #6F66B1;
+    color: #7B43F2;
     padding: 8px 0;
     cursor: pointer;
     position: relative;
@@ -142,17 +150,35 @@
 .meta-info {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 0;
     margin-left: auto;
     color: #291161;
     font-size: 18px;
     font-weight: 800;
 }
+.meta-info > *{
+    position: relative;
+}
+.meta-info > * + *{
+    margin-left: 16px;
+}
+.meta-info > * + *::before{
+    content: "";
+    position: absolute;
+    left: -16px;
+    top: 50%;
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(90deg, transparent 8px, #EFECF8 8px, #EFECF8 9px, transparent 9px);
+    transform: translateY(-50%);
+}
+
 .meta-info .edit-btn {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 4px;
+    padding: 0px;
+    padding-left: 8px;
 }
 .meta-info .icon-edit {
     width: 16px;
@@ -172,6 +198,7 @@
     font-size: 16px;
     font-weight: 400;
     max-width: 400px;
+    min-height: 64px;
     flex: 1;
 }
 #infoText{

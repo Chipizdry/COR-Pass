@@ -292,21 +292,42 @@ async def get_patients_with_optional_status(
     sort_by: Optional[str] = "change_date",
     sort_order: Optional[str] = "desc",
     skip: int = 1,
-    limit: int = 30
+    limit: int = 30,
+    filter_by_doctor: bool = False,  # Новый параметр - фильтровать ли по конкретному врачу
 ) -> Tuple[List, int]:
-    query = (
-        select(DoctorPatientStatus, Patient, PatientClinicStatusModel)
-        .join(Patient, DoctorPatientStatus.patient_id == Patient.id)
-        .join(
-            PatientClinicStatusModel,
-            PatientClinicStatusModel.patient_id == Patient.id,
-            isouter=True,
+    # filter_by_doctor=True означает "показать только пациентов конкретного врача"
+    # filter_by_doctor=False означает "показать всех пациентов" (для лаборанта или врача без фильтра)
+    
+    if filter_by_doctor and doctor:
+        # Запрос для врача с фильтром current_doctor=True - только его пациенты
+        query = (
+            select(DoctorPatientStatus, Patient, PatientClinicStatusModel)
+            .join(Patient, DoctorPatientStatus.patient_id == Patient.id)
+            .join(
+                PatientClinicStatusModel,
+                PatientClinicStatusModel.patient_id == Patient.id,
+                isouter=True,
+            )
+            .where(DoctorPatientStatus.doctor_id == doctor.id)
         )
-    )
+    else:
+        # Запрос для лаборанта или врача без фильтра - все пациенты
+        query = (
+            select(DoctorPatientStatus, Patient, PatientClinicStatusModel)
+            .select_from(Patient)
+            .join(
+                DoctorPatientStatus,
+                DoctorPatientStatus.patient_id == Patient.id,
+                isouter=True,  # LEFT JOIN для отображения всех пациентов
+            )
+            .join(
+                PatientClinicStatusModel,
+                PatientClinicStatusModel.patient_id == Patient.id,
+                isouter=True,
+            )
+        )
 
-    if doctor:
-        query = query.where(DoctorPatientStatus.doctor_id == doctor.id)
-
+    # Фильтры применяем только если они указаны
     if doctor_status_filters:
         query = query.where(
             DoctorPatientStatus.status.in_([s.value for s in doctor_status_filters])
@@ -344,23 +365,37 @@ async def get_patients_with_optional_status(
 
     patients_data = patients_data_result.all()
 
-    count_query = (
-        select(func.count(Patient.id.distinct()))
-        .select_from(Patient)
-        .join(
-            DoctorPatientStatus,
-            DoctorPatientStatus.patient_id == Patient.id,
-            isouter=True,
+    # Count query - аналогично основному запросу
+    if filter_by_doctor and doctor:
+        count_query = (
+            select(func.count(Patient.id.distinct()))
+            .select_from(Patient)
+            .join(
+                DoctorPatientStatus,
+                DoctorPatientStatus.patient_id == Patient.id,
+            )
+            .join(
+                PatientClinicStatusModel,
+                PatientClinicStatusModel.patient_id == Patient.id,
+                isouter=True,
+            )
+            .where(DoctorPatientStatus.doctor_id == doctor.id)
         )
-        .join(
-            PatientClinicStatusModel,
-            PatientClinicStatusModel.patient_id == Patient.id,
-            isouter=True,
+    else:
+        count_query = (
+            select(func.count(Patient.id.distinct()))
+            .select_from(Patient)
+            .join(
+                DoctorPatientStatus,
+                DoctorPatientStatus.patient_id == Patient.id,
+                isouter=True,  # LEFT JOIN для всех пациентов
+            )
+            .join(
+                PatientClinicStatusModel,
+                PatientClinicStatusModel.patient_id == Patient.id,
+                isouter=True,
+            )
         )
-    )
-
-    if doctor:
-        count_query = count_query.where(DoctorPatientStatus.doctor_id == doctor.id)
 
     if doctor_status_filters:
         count_query = count_query.where(

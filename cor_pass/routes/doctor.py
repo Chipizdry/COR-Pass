@@ -601,6 +601,8 @@ async def get_doctor_patients(
 ):
     # Получаем объект медперсонала (врач или лаборант)
     staff_object = None
+    filter_by_current_doctor = False
+    
     if current_doctor:
         # Проверяем, что это именно врач (у лаборанта нет смысла в current_doctor фильтре)
         doctor = await get_doctor(db=db, doctor_id=current_user.cor_id)
@@ -610,6 +612,7 @@ async def get_doctor_patients(
                 detail="Lab assistants cannot filter by current_doctor. Only doctors can use this filter."
             )
         staff_object = doctor
+        filter_by_current_doctor = True  # Активируем фильтрацию по конкретному врачу
 
     doctor_status_filters = None
     if doctor_patient_status:
@@ -640,7 +643,8 @@ async def get_doctor_patients(
         sort_by=sort_by,
         sort_order=sort_order,
         skip=skip,
-        limit=limit
+        limit=limit,
+        filter_by_doctor=filter_by_current_doctor,  # Передаём флаг фильтрации
     )
     return response
  

@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cor_pass.database import db
-from cor_pass.database.models import Doctor, Doctor_Status, EnergyManager, Lawyer, User, LabAssistant
+from cor_pass.database.models import Doctor, Doctor_Status, EnergyManager, Lawyer, Financier, User, LabAssistant
 from cor_pass.services.auth import auth_service
 from cor_pass.config.config import settings
 
@@ -135,9 +135,37 @@ class EnergyManagerAccess:
             )
         return user
 
+
+class FinancierAccess:
+    def __init__(self, email):
+        self.email = email
+
+    async def __call__(
+        self,
+        user: User = Depends(auth_service.get_current_user),
+        db: AsyncSession = Depends(db.get_db),
+    ):
+        has_access = False
+        if user.email in settings.admin_accounts:
+            has_access = True
+
+        query = select(Financier).where(Financier.financier_cor_id == user.cor_id)
+        result = await db.execute(query)
+        financier = result.scalar_one_or_none()
+        if financier:
+            has_access = True
+
+        if not has_access:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Недостаточно прав для выполнения этой операции.",
+            )
+        return user
+
 user_access = UserAccess([User.is_active])
 admin_access = AdminAccess([User.email])
 lawyer_access = LawyerAccess([User.email])
 doctor_access = DoctorAccess([User.email])
 lab_assistant_or_doctor_access = LabAssistantOrDoctorAccess([User.email])
 energy_manager_access = EnergyManagerAccess([User.email])
+financier_access = FinancierAccess([User.email])

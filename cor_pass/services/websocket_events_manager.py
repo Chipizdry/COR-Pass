@@ -163,9 +163,18 @@ class WebSocketEventsManager:
             except Exception as e:
                 logger.error(f"Failed to handle pubsub message: {e}", exc_info=True)
 
-    async def connect(self, websocket: WebSocket, session_id: Optional[str] = None) -> str:
-        """Подключение WebSocket клиента с опциональным session_id."""
-        await websocket.accept()
+    async def connect(self, websocket: WebSocket, session_id: Optional[str] = None, accept_connection: bool = True) -> str:
+        """
+        Подключение WebSocket клиента с опциональным session_id.
+        
+        Args:
+            websocket: WebSocket соединение
+            session_id: Опциональный идентификатор сессии
+            accept_connection: Если True, вызовет websocket.accept(). Если False, предполагается что соединение уже принято.
+        """
+        if accept_connection:
+            await websocket.accept()
+        
         connection_id = str(uuid.uuid4())
         connected_at = datetime.now(timezone.utc).isoformat()
         client_ip = get_websocket_client_ip(websocket)

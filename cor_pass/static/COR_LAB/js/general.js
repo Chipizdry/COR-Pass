@@ -230,7 +230,7 @@ const searchHeader = () => {
                 .then(response => {
                     const currentCase = response.data.all_cases.find(({case_code}) => value.toLowerCase() === case_code.toLowerCase())
                     console.log(currentCase, "currentCase")
-                    window.location.href = `/static/COR_LAB/lab.html?userCorId=${currentCase.patient_id}&caseCode=${currentCase.case_code}`
+                    window.location.href = `/static/COR_LAB/lab.html?userCorId=${currentCase.patient_id}&caseId=${currentCase.id}`
                 })
         }
     });

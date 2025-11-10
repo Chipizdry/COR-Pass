@@ -62,6 +62,13 @@ class Settings(BaseSettings):
     SIBIONICS_API_URL: str = "https://cgm-ce-uat.sisensing.com"
     SIBIONICS_APP_KEY: str = "SIBIONICS_APP_KEY"
     SIBIONICS_SECRET: str = "SIBIONICS_SECRET"
+    
+    # Telegram Bot Configuration
+    telegram_bot_token: str = "TELEGRAM_BOT_TOKEN"
+    telegram_chat_id: str = "TELEGRAM_CHAT_ID"  # Может быть список через запятую: "-123,-456"
+    telegram_battery_alert_threshold: int = 20  # Уровень заряда в % для отправки уведомления
+    telegram_alert_cooldown_minutes: int = 60  # Интервал между повторными уведомлениями
+    telegram_timezone: str = "Europe/Kiev"  # Часовой пояс для отображения времени
 
     class Config:
 

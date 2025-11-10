@@ -2088,6 +2088,33 @@ class LawyerResponse(BaseModel):
         from_attributes = True
 
 
+class FinancierCreate(BaseModel):
+    first_name: str = Field(
+        ..., min_length=1, max_length=20, description="Имя финансиста"
+    )
+    middle_name: str = Field(
+        ..., min_length=1, max_length=20, description="Отчество финансиста"
+    )
+    last_name: str = Field(
+        ..., min_length=1, max_length=20, description="Фамилия финансиста"
+    )
+
+    class Config:
+        from_attributes = True
+
+
+class FinancierResponse(BaseModel):
+
+    id: str
+    financier_cor_id: str
+    first_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class ReportResponseSchema(BaseModel):
     id: str
     case_id: str
@@ -2575,8 +2602,13 @@ class UploadGlassSVSResponse(BaseModel):
 class EnergeticObjectBase(BaseModel):
     name: str
     description: Optional[str] = None
+    ip_address: Optional[str] = Field(None, description="IP-адрес объекта")
+    port: Optional[int] = Field(None, description="Порт объекта")
+    inverter_login: Optional[str] = Field(None, description="Логин для доступа к инвертору")
+    inverter_password: Optional[str] = Field(None, description="Пароль для доступа к инвертору")
     modbus_registers: Optional[dict] = None
     is_active: Optional[bool] = None
+    timezone: str = Field(default="Europe/Kiev", description="Часовой пояс объекта (например: Europe/Kiev, America/New_York)")
 
 class EnergeticObjectCreate(EnergeticObjectBase):
     pass
@@ -2584,8 +2616,13 @@ class EnergeticObjectCreate(EnergeticObjectBase):
 class EnergeticObjectUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    ip_address: Optional[str] = Field(None, description="IP-адрес объекта")
+    port: Optional[int] = Field(None, description="Порт объекта")
+    inverter_login: Optional[str] = Field(None, description="Логин для доступа к инвертору")
+    inverter_password: Optional[str] = Field(None, description="Пароль для доступа к инвертору")
     modbus_registers: Optional[dict] = None
     is_active: Optional[bool] = None
+    timezone: Optional[str] = Field(None, description="Часовой пояс объекта (например: Europe/Kiev, America/New_York)")
 
 class EnergeticObjectResponse(EnergeticObjectBase):
     id: str
@@ -3297,6 +3334,117 @@ class SibionicsGlucoseResponse(BaseModel):
     timestamp: datetime
     created_at: datetime
 
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
+# Fuel Station Schemas (Схемы для системы заправок)
+# ============================================================================
+
+class FuelQRGenerateRequest(BaseModel):
+    """Запрос на генерацию QR кода для заправки"""
+    validity_minutes: Optional[int] = Field(
+        default=5, 
+        ge=1, 
+        le=30, 
+        description="Время действия QR кода в минутах (1-30)"
+    )
+
+
+class FuelQRCodeData(BaseModel):
+    """Данные QR кода для заправки"""
+    cor_id: str = Field(..., description="COR ID сотрудника")
+    totp_code: str = Field(..., description="TOTP код")
+    timestamp_token: str = Field(..., description="Timestamp токен")
+    session_token: str = Field(..., description="Уникальный токен сессии")
+    expires_at: datetime = Field(..., description="Время истечения QR кода")
+
+
+class FuelQRGenerateResponse(BaseModel):
+    """Ответ при генерации QR кода"""
+    qr_data: FuelQRCodeData
+    qr_data_string: str = Field(..., description="Строка для генерации QR кода (JSON)")
+    expires_in_seconds: int = Field(..., description="Через сколько секунд истекает")
+    created_at: datetime
+
+
+class FuelQRVerifyRequest(BaseModel):
+    """Запрос на верификацию QR кода (от заправщика)"""
+    qr_data_string: str = Field(..., description="Отсканированные данные QR кода (JSON)")
+
+
+class FuelUserLimitInfo(BaseModel):
+    """Информация о лимитах пользователя от бэкенда финансов"""
+    cor_id: str
+    employee_name: Optional[str] = Field(None, description="ФИО сотрудника")
+    employee_limit: float = Field(..., description="Лимит сотрудника")
+    organization_id: str = Field(..., description="ID организации")
+    organization_name: str = Field(..., description="Название организации")
+    organization_limit: float = Field(..., description="Лимит организации")
+    is_active: bool = Field(..., description="Активен ли сотрудник")
+
+
+class FuelQRVerifyResponse(BaseModel):
+    """Ответ при верификации QR кода"""
+    is_valid: bool = Field(..., description="Валиден ли QR код")
+    message: str = Field(..., description="Сообщение о результате")
+    
+    # Данные пользователя (если успешно)
+    user_cor_id: Optional[str] = None
+    
+    # Лимиты (если успешно получены от бэкенда финансов)
+    limit_info: Optional[FuelUserLimitInfo] = None
+    
+
+
+# Схемы для интеграции с бэкендом финансов
+
+class FinanceBackendAuthRequest(BaseModel):
+    """Запрос авторизации на бэкенде финансов"""
+    totp_code: str = Field(..., description="TOTP код для авторизации")
+    timestamp: int = Field(..., description="Unix timestamp")
+
+
+class FinanceCheckLimitRequest(BaseModel):
+    """Запрос проверки лимита сотрудника"""
+    cor_id: str = Field(..., description="COR ID сотрудника")
+    auth: FinanceBackendAuthRequest = Field(..., description="Данные авторизации")
+
+
+class FinanceCheckLimitResponse(BaseModel):
+    """Ответ от бэкенда финансов с лимитами"""
+    cor_id: str
+    employee_name: Optional[str] = None
+    employee_limit: float
+    organization_id: str
+    organization_name: str
+    organization_limit: float
+    is_active: bool
+
+
+# Схемы для настройки интеграции (только для админов)
+
+class FinanceBackendAuthConfigCreate(BaseModel):
+    """Создание конфигурации авторизации с бэкендом финансов"""
+    service_name: str = Field(default="finance_backend", description="Название сервиса")
+    api_endpoint: str = Field(..., description="URL бэкенда финансов")
+    totp_secret: str = Field(..., description="TOTP секрет (Base32)")
+    totp_interval: int = Field(default=30, description="Интервал TOTP в секундах")
+
+
+class FinanceBackendAuthConfigResponse(BaseModel):
+    """Ответ с конфигурацией (без секретов)"""
+    id: str
+    service_name: str
+    api_endpoint: str
+    totp_interval: int
+    is_active: bool
+    last_successful_auth: Optional[datetime]
+    last_failed_auth: Optional[datetime]
+    failed_attempts: int
+    created_at: datetime
+    
     model_config = ConfigDict(from_attributes=True)
 
 

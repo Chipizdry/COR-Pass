@@ -16,7 +16,7 @@ class WorkerManager:
 
         # создаём асинхронные задачи
         collection_task = asyncio.create_task(cerbo_collection_task_worker(object_id=object_id, object_name=object_name))
-        schedule_task = asyncio.create_task(energetic_schedule_task_worker(object_id))
+        schedule_task = asyncio.create_task(energetic_schedule_task_worker(object_id=object_id, object_name=object_name))
 
         self.tasks[object_id] = {
             "collection_task": collection_task,

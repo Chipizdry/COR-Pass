@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Research Page</title>
     <link rel="stylesheet" href="../../css/reset.css">
     <link rel="stylesheet" href="../../css/general.css">
     <link rel="stylesheet" href="../../css/infoPlate.css">
@@ -12,6 +12,36 @@
     <link rel="stylesheet" href="../../css/myCard/general.css">
     <link rel="stylesheet" href="../../css/myCard/research.css">
     <link rel="stylesheet" href="../../../COR_ID_css/modal.css">
+
+    <!-- приховуємо сторінку, щоб переклалось без FOUC -->
+    <style>
+        html.i18n-loading body {
+            visibility: hidden;
+        }
+    </style>
+
+    <script>
+        document.documentElement.classList.add('i18n-loading');
+    </script>
+
+    <!-- Захист від зависання і пустої сторінки! -->
+    <script>
+        function removeI18nMask() {
+              document.documentElement.classList.remove('i18n-loading');
+        }
+            // Якщо translation.js викликає applySavedLanguage() — знімай після неї
+        document.addEventListener('i18n:ready', removeI18nMask);
+            // fallback: знімаємо при повному завантаженні сторінки
+        window.addEventListener('load', removeI18nMask, { once: true });
+            // запасний таймер, якщо переклад завис
+        setTimeout(removeI18nMask, 2500);
+    </script>
+    <!-- підключаємо переклад та видаляємо зайвий клас -->
+    <script src="../../../COR_ID_Js/translation.js"></script>
+
+    <noscript>
+        <style>html.i18n-loading body { visibility: visible !important; }</style>
+    </noscript>
 </head>
 <body>
 
@@ -26,7 +56,7 @@
                 </a>
             </div>
             <div class="search-container">
-                <input type="text" placeholder="Search">
+                <input type="text" placeholder="Search" data-translate="searchPlaceholder">
                 <svg class="search-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
                     <path fill-rule="evenodd" clip-rule="evenodd"
                           d="M11.2 5.60001C8.10722 5.60001 5.60001 8.10722 5.60001 11.2C5.60001 14.2928 8.10722 16.8001 11.2 16.8001C12.7087 16.8001 14.0781 16.2035 15.085 15.2333C15.1061 15.2058 15.1292 15.1794 15.1544 15.1543C15.1795 15.1291 15.2059 15.106 15.2334 15.0849C16.2035 14.078 16.8 12.7087 16.8 11.2C16.8 8.10722 14.2928 5.60001 11.2 5.60001ZM16.8256 15.6942C17.8109 14.4624 18.4001 12.9 18.4001 11.2C18.4001 7.22357 15.1765 4 11.2 4C7.22356 4 4 7.22357 4 11.2C4 15.1765 7.22356 18.4001 11.2 18.4001C12.9001 18.4001 14.4625 17.8109 15.6942 16.8255L18.6344 19.7657C18.9468 20.0781 19.4533 20.0781 19.7658 19.7657C20.0782 19.4533 20.0782 18.9467 19.7658 18.6343L16.8256 15.6942Z"
@@ -42,20 +72,20 @@
                     </svg>
                 </button>
                 <div class="role-toggle">
-                    <button class="role-btn doc active">Лікар</button>
-                    <button class="role-btn lab">Лаборант</button>
+                    <button class="role-btn doc active" data-translate="doc">Лікар</button>
+                    <button class="role-btn lab" data-translate="lab">Лаборант</button>
                 </div>
             </div>
         </div>
         <div class="header-row bottom">
             <div>
                 <div class="tabs">
-                    <button class="tab medCardPage active">Вся медкарта</button>
-                    <button class="tab directionPage">Направлення</button>
-                    <button class="tab tenderloinPage">Вирізка</button>
-                    <button class="tab glassPage">Скельця</button>
-                    <button class="tab conclusionPage">Заключення</button>
-                    <button class="tab explorationPage">Дослідження</button>
+                    <button class="tab medCardPage active" data-translate="medCardPage">Вся медкарта</button>
+                    <button class="tab directionPage" data-translate="direction">Направлення</button>
+                    <button class="tab tenderloinPage" data-translate="tenderloin">Вирізка</button>
+                    <button class="tab glassPage" data-translate="glass">Скельця</button>
+                    <button class="tab conclusionPage" data-translate="conclusion">Заключення</button>
+                    <button class="tab explorationPage" data-translate="exploration">Дослідження</button>
                 </div>
             </div>
             <div class="meta-info">
@@ -76,16 +106,16 @@
                 <div class="glassPageRevert" style="display: none">
                     <img src="../../assets/arrow.svg" alt="arrow">
                 </div>
-                <div>
+                <div data-translate="specializations">
                     Спеціальності
                 </div>
             </div>
             <div class="bottom">
                 <div class="specificMed">
-                    <div data-id="pathomorphology" class="specificMedItem active">Патоморфологія</div>
-                    <div data-id="" class="specificMedItem">Ендокринологія</div>
-                    <div data-id="" class="specificMedItem">Кардіологія</div>
-                    <div data-id="ophthalmology" class="specificMedItem">Офтальмологія</div>
+                    <div data-id="pathomorphology" class="specificMedItem active" data-translate="pathomorphology">Патоморфологія</div>
+                    <div data-id="" class="specificMedItem" data-translate="endocrinology">Ендокринологія</div>
+                    <div data-id="" class="specificMedItem" data-translate="cardiology">Кардіологія</div>
+                    <div data-id="ophthalmology" class="specificMedItem" data-translate="ophthalmology">Офтальмологія</div>
                 </div>
             </div>
         </div>
@@ -93,40 +123,40 @@
             <div class="top df aic jcsb">
                 <div class="df" style="flex-wrap: nowrap; overflow: auto; width: 100%">
                     <div class="centralItem">
-                        <p>Останні записи</p>
+                        <p data-translate="latestRecords">Останні записи</p>
                     </div>
                     <div class="centralItem">
-                        <p>Виписки/Заключення</p>
-                    </div>
-                    <div class="centralItem">
-                        <p>Рецепти/Нутріенти</p>
-                    </div>
-                    <div class="centralItem">
-                        <p>Призначення</p>
-                    </div>
-                    <div class="centralItem">
-                        <p>Захворювання</p>
-                    </div>
-                    <div class="centralItem">
-                        <p>Щеплення</p>
+                        <p data-translate="extracts_Conclusions">Виписки/Заключення</p>
                     </div>
                     <div class="centralItem active">
-                        <p>Дослідження</p>
+                        <p data-translate="recipes_Nutrients">Рецепти/Нутріенти</p>
+                    </div>
+                    <div class="centralItem">
+                        <p data-translate="prescription">Призначення</p>
+                    </div>
+                    <div class="centralItem">
+                        <p data-translate="disease">Захворювання</p>
+                    </div>
+                    <div class="centralItem">
+                        <p data-translate="vaccination">Щеплення</p>
+                    </div>
+                    <div class="centralItem">
+                        <p data-translate="exploration">Дослідження</p>
                     </div>
                 </div>
             </div>
             <div class="bottom df ">
                 <div style="width: 100%">
                     <div class="researchTop">
-                        <div class="researchTopItem">Інструментальні</div>
-                        <div class="researchTopItem">Лабораторні</div>
+                        <div class="researchTopItem" data-translate="instrResearch">Інструментальні</div>
+                        <div class="researchTopItem" data-translate="labResearch">Лабораторні</div>
                     </div>
                     <div class="researchContent">
                         <div class="researchContentItem">
                             <div>
                                 <div class="researchButton">
-                                    <div class="researchButtonText">
-                                        Артериальний тиск / пульс
+                                    <div class="researchButtonText" data-translate="bloodPressure_Pulse">
+                                        Артеріальний тиск / пульс
                                     </div>
                                     <svg class="researchButtonSvg" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M12.7241 7.30478L12.7269 7.30793L18.7453 13.7324L18.7499 13.7374L18.7511 13.7388C19.1032 14.134 19.0719 14.722 18.7194 15.0862L18.7167 15.0907L18.7158 15.0917L18.7122 15.0953L18.7114 15.0945C18.3519 15.4883 17.7346 15.4904 17.3434 15.0947L17.3412 15.0924L17.3399 15.0911L17.3377 15.0887L12.0041 9.42728L6.66231 15.0973L6.66086 15.0959C6.49594 15.2915 6.23847 15.3913 5.97981 15.3913C5.45224 15.3913 5 14.9555 5 14.397C5 14.1334 5.09722 13.9014 5.26063 13.7345L5.26438 13.7307L11.3137 7.30662L11.3169 7.30313L11.342 7.27743L11.3527 7.26718L11.3555 7.26448C11.7488 6.90335 12.3668 6.90755 12.7241 7.30478Z" fill="#5B4296"/>
@@ -134,15 +164,15 @@
                                 </div>
                                 <div>
                                     <div class="researchButtonActions">
-                                        <div class="researchButtonAction active" data-from="pulseGraph">Графік</div>
-                                        <div class="researchButtonAction" data-from="pulseList">Список</div>
+                                        <div class="researchButtonAction active" data-from="pulseGraph" data-translate="pulseGraph">Графік</div>
+                                        <div class="researchButtonAction" data-from="pulseList" data-translate="pulseList">Список</div>
                                     </div>
                                     <div class="researchActionsContent">
                                         <div class="researchActionsContentGraph open" data-to="pulseGraph">
                                             <div class="chartInfo aic">
                                                 <div class="chartInfoDate">
                                                 </div>
-                                                <div class="chartInfoDate df aic">
+                                                <div class="chartInfoDate df aic" data-translate="graphView">
                                                     Відображення графіку за:
                                                     <div class="chartInfoPicker">
                                                         <div class="chartInfoPickerButton df aic">
@@ -153,7 +183,7 @@
                                                                 <path d="M9.99995 10.2216L12.2222 12.4438H7.77772L9.99995 10.2216Z" fill="#5B4296"/>
                                                                 <path d="M9.99995 15.7771L7.77772 13.5549H12.2222L9.99995 15.7771Z" fill="#5B4296"/>
                                                             </svg>
-                                                            <div class="chartInfoPickerValue">
+                                                            <div class="chartInfoPickerValue" data-translate="all">
                                                                 Весь час
                                                             </div>
                                                             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -161,10 +191,10 @@
                                                             </svg>
                                                         </div>
                                                         <div class="chartInfoPickerBlock">
-                                                            <div data-value="all" class="chartInfoPickerBlockItem active">Весь час</div>
-                                                            <div data-value="week" class="chartInfoPickerBlockItem">Тиждень</div>
-                                                            <div data-value="month" class="chartInfoPickerBlockItem">Місяць</div>
-                                                            <div data-value="custom" class="chartInfoPickerBlockItem">Період</div>
+                                                            <div data-value="all" class="chartInfoPickerBlockItem active" data-translate="all">Весь час</div>
+                                                            <div data-value="week" class="chartInfoPickerBlockItem" data-translate="week">Тиждень</div>
+                                                            <div data-value="month" class="chartInfoPickerBlockItem" data-translate="month">Місяць</div>
+                                                            <div data-value="custom" class="chartInfoPickerBlockItem" data-translate="custom">Період</div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -356,36 +386,38 @@
             .then(res => res.json())
             .then(userData => {
                 const age = `${(userData.age || "")  ? `${userData.age}р` : ''}`.trim();
-                const gender = userData.sex === "M" ? "Чол" : "Жін";
+                const gender = userData.sex === "F"? '<span data-translate="f">Жін</span>' : '<span data-translate="m">Чол</span>';
                 const fullName = `${userData.surname || ""} ${userData.first_name || ""} ${userData.middle_name || ""}`.trim()
                 const birthDay = `${(userData.birth_date || "")  ? new Date(userData.birth_date).toLocaleDateString() : ''}`.trim()
                 document.querySelector('#userName').innerHTML = fullName;
                 document.querySelector('#userGender').innerHTML = gender;
-                document.querySelector('#userAge').innerHTML = age
+                document.querySelector('#userAge').innerHTML = age;
 
+                const lang = getSavedLang();
+                const dict = translations?.[lang] || {};
 
+                drawGeneralInfoBLock(dict.personalData || "Персональні дані", [
+                    drawItemInfoBLock(dict.id || "COR-ID", PATIENT_COR_ID),
+                    drawItemInfoBLock(dict.fullName_sh || "ПІБ", fullName),
+                    drawItemInfoBLock(dict.birthDate || "Дата народження", `${birthDay} ${age}`),
+                    drawItemInfoBLock(dict.gender || "Стать", gender),
+                ]);
 
-                drawGeneralInfoBLock("Персональні дані", [
-                    drawItemInfoBLock("СOR-ID", PATIENT_COR_ID),
-                    drawItemInfoBLock("ПІБ", fullName),
-                    drawItemInfoBLock("Дата народження", `${birthDay} ${age}`),
-                    drawItemInfoBLock("Стать", gender)
+                drawGeneralInfoBLock(dict.physiologicalParams || "Фізіологічні параметри", [
+                    drawItemInfoBLock(dict.height || "Зріст (см)", ""),
+                    drawItemInfoBLock(dict.weight || "Вага (кг)", ""),
+                    drawItemInfoBLock(dict.pulseParams || "Пульс (уд/хв)", ""),
+                    drawItemInfoBLock(dict.sugar || "Цукор (ммоль/л)", ""),
+                    drawItemInfoBLock(dict.saturation || "Сатурація (%)", ""),
+                ]);
+
+                drawGeneralInfoBLock(dict.contactInfo || "Контактна інформація", [
+                    drawItemInfoBLock(dict.email || "Ел. пошта", ""),
+                    drawItemInfoBLock(dict.phone || "Телефон", ""),
+                    drawItemInfoBLock(dict.bloodPressure || "Тиск (SBP/DBP)", ""), /* переставити у фізіологічні параметри */
+                    drawItemInfoBLock(dict.birthCity || "Місто народження", ""),
+                    drawItemInfoBLock(dict.address || "Адреса проживання", ""),
                 ])
-                drawGeneralInfoBLock("Физиологічні параметри", [
-                    drawItemInfoBLock("Зріст (см)", ""),
-                    drawItemInfoBLock("Вага (кг)", ""),
-                    drawItemInfoBLock("Пульс (уд/хв)", ""),
-                    drawItemInfoBLock("Цукор (ммоль/л)", ""),
-                    drawItemInfoBLock("Сатурація (%)", ""),
-                ])
-                drawGeneralInfoBLock("Контактна інформація", [
-                    drawItemInfoBLock("Email", ""),
-                    drawItemInfoBLock("Телефон", ""),
-                    drawItemInfoBLock("Тиск (SYS/DIA)", ""),
-                    drawItemInfoBLock("Місто народження", ""),
-                    drawItemInfoBLock("Адреса проживання", ""),
-                ])
-
                 getPulseInfo()
             })
     }
@@ -427,7 +459,7 @@
             data: {
                 datasets: [
                     {
-                        label: 'Пульс',
+                        label: translations[getSavedLang()]?.pulse || 'Пульс',
                         data: pulseData,
                         borderColor: "#ED1064",
                         backgroundColor: "white",
@@ -435,7 +467,7 @@
                         pointRadius: 5,
                     },
                     {
-                        label: 'ДАТ',
+                        label: translations[getSavedLang()]?.diastolicPressure || 'ДАТ',
                         data: diastolicPressureData,
                         borderColor: "#25B6FF",
                         backgroundColor: "white",
@@ -443,7 +475,7 @@
                         pointRadius: 5,
                     },
                     {
-                        label: 'САТ',
+                        label: translations[getSavedLang()]?.systolicPressure || 'САТ',
                         data: systolicPressureData,
                         borderColor: "#3927E8",
                         backgroundColor: "white",
@@ -518,7 +550,9 @@
                 </div>
                 <div>
                     <div class="researchListItemTop">
-                        САТ ${item.systolic_pressure} | ДАТ ${item.diastolic_pressure} | Пульс ${item.pulse}
+                        <span data-translate="systolicPressure">САТ</span> ${item.systolic_pressure} |
+                        <span data-translate="diastolicPressure">ДАТ</span> ${item.diastolic_pressure} |
+                        <span data-translate="pulse">Пульс</span> ${item.pulse}
                     </div>
                     <div class="researchListItemBottom">
                         ${new Date(item.measured_at).toLocaleString()}
@@ -543,7 +577,7 @@
 
     const switchRole = () => {
         document.querySelector('.role-toggle .role-btn:not(.active)').addEventListener('click', (e) => {
-            window.location.href = `/static/COR_LAB/lab.html?userCorId=${currentUserCorId}`
+            window.location.href = `/static/COR_LAB/lab.html?userCorId=${PATIENT_COR_ID}`
         })
     }
 
@@ -593,9 +627,16 @@
             })
         })
     }
+
+    const goToCasesHandler = () => {
+        document.querySelector('#goToCases')?.addEventListener('click', () => {
+            window.location.href = `/static/COR_LAB/doctor_patients_page.html`
+        })
+    }
 </script>
 <script>
     document.addEventListener("DOMContentLoaded", (event) => {
+        goToCasesHandler()
         goToTab()
         switchRole()
         switchSpecialist()

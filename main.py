@@ -1,13 +1,14 @@
 import asyncio
 import time
 import uvicorn
+import os
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from fastapi import FastAPI, Request, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Histogram, CollectorRegistry, CONTENT_TYPE_LATEST, generate_latest, multiprocess
 
 from prometheus_fastapi_instrumentator import PrometheusFastApiInstrumentator
 
@@ -34,6 +35,7 @@ from cor_pass.routes import (
     otp_auth,
     admin,
     lawyer,
+    financier,
     doctor,
     websocket,
     device_ws,
@@ -64,6 +66,7 @@ from cor_pass.routes import (
     sibionics_routes,
     medical_cards,
     medical_card_data,
+    fuel_station,
 )
 from cor_pass.config.config import settings
 from cor_pass.services.ip2_location import initialize_ip2location
@@ -76,8 +79,10 @@ from jose import JWTError, jwt
 from cor_pass.services.websocket import check_session_timeouts, cleanup_auth_sessions, register_signature_expirer
 
 from cor_pass.services.logger import setup_logging
+from cor_pass.services.prometheus_multiprocess import setup_prometheus_multiprocess
 
 setup_logging()
+setup_prometheus_multiprocess()
 
 
 all_licenses_info = [
@@ -149,10 +154,77 @@ app.mount("/static", StaticFiles(directory="cor_pass/static"), name="static")
 
 origins = settings.allowed_redirect_urls
 
-PrometheusFastApiInstrumentator().instrument(app).expose(app, "/metrics")
+# === Настройка Prometheus метрик с multiprocess поддержкой ===
 
+# Создаем собственные метрики которые работают в multiprocess mode
+HTTP_REQUESTS_TOTAL = Counter(
+    "http_requests_total",
+    "Total HTTP requests",
+    ["method", "endpoint", "status_code"]
+)
 
-# Пример метрик
+HTTP_REQUEST_DURATION = Histogram(
+    "http_request_duration_seconds",
+    "HTTP request duration in seconds",
+    ["method", "endpoint", "status_code"],
+    buckets=(0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0, float("inf"))
+)
+
+# Кастомный middleware для сбора метрик
+@app.middleware("http")
+async def prometheus_metrics_middleware(request: Request, call_next):
+    # Получаем route для endpoint (не path с параметрами)
+    endpoint = request.url.path
+    for route in app.routes:
+        match = route.matches(request.scope)
+        if match[0] == 2:  # Match.FULL
+            endpoint = route.path
+            break
+    
+    method = request.method
+    
+    # Засекаем время
+    start_time = time.time()
+    
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+    except Exception as e:
+        status_code = 500
+        raise
+    finally:
+        # Записываем метрики
+        duration = time.time() - start_time
+        HTTP_REQUESTS_TOTAL.labels(method=method, endpoint=endpoint, status_code=status_code).inc()
+        HTTP_REQUEST_DURATION.labels(method=method, endpoint=endpoint, status_code=status_code).observe(duration)
+    
+    return response
+
+# Endpoint для метрик с multiprocess поддержкой
+@app.get("/metrics")
+async def metrics():
+    """Prometheus metrics endpoint с поддержкой multiprocess mode"""
+    from prometheus_client import REGISTRY
+    
+    prom_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR")
+    
+    # Если PROMETHEUS_MULTIPROC_DIR установлен - собираем метрики со всех workers
+    if prom_dir:
+        registry = CollectorRegistry()
+        multiprocess.MultiProcessCollector(registry)
+        data = generate_latest(registry)
+    else:
+        # В single-process режиме используем дефолтный registry
+        data = generate_latest(REGISTRY)
+    
+    # Если данных нет - возвращаем хотя бы дефолтный registry (для отладки)
+    if not data or len(data) < 100:
+        logger.warning(f"Metrics data is empty or too small: {len(data) if data else 0} bytes, falling back to REGISTRY")
+        data = generate_latest(REGISTRY)
+    
+    return Response(content=data, media_type=CONTENT_TYPE_LATEST)
+
+# Дополнительные кастомные метрики
 REQUEST_COUNT = Counter("app_requests_total", "Total number of requests")
 REQUEST_LATENCY = Histogram("app_request_latency_seconds", "Request latency")
 
@@ -201,8 +273,6 @@ def read_root(request: Request):
     REQUEST_COUNT.inc()
     with REQUEST_LATENCY.time():
         return FileResponse("cor_pass/static/COR_ID/login.html")
-
-
 
 
 @app.get("/version")
@@ -298,6 +368,7 @@ app.include_router(person.router, prefix="/api")
 app.include_router(cor_id.router, prefix="/api")
 app.include_router(otp_auth.router, prefix="/api")
 app.include_router(lawyer.router, prefix="/api")
+app.include_router(financier.router, prefix="/api")
 app.include_router(doctor.router, prefix="/api")
 app.include_router(cases.router, prefix="/api")
 app.include_router(samples.router, prefix="/api")
@@ -328,6 +399,7 @@ app.include_router(laboratories.router, prefix="/api")
 app.include_router(medicine_intakes.router, prefix="/api")
 app.include_router(medical_cards.router, prefix="/api")
 app.include_router(medical_card_data.router, prefix="/api")
+app.include_router(fuel_station.router, prefix="/api/fuel", tags=["Fuel Station"])
 
 if __name__ == "__main__":
     uvicorn.run(

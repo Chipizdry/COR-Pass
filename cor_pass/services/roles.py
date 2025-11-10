@@ -8,6 +8,7 @@ from cor_pass.database.models import (
     Doctor_Status,
     EnergyManager,
     Lawyer,
+    Financier,
     User,
     LabAssistant,
 )
@@ -92,6 +93,21 @@ class EnergyManagerRoleChecker:
             return energy_manager
 
 
+class FinancierRoleChecker:
+    async def is_financier(
+        self,
+        user: User = Depends(auth_service.get_current_user),
+        db: AsyncSession = Depends(db.get_db),
+    ):
+        financier_query = select(Financier).where(
+            Financier.financier_cor_id == user.cor_id
+        )
+        financier = await db.scalar(financier_query)
+
+        if financier:
+            return financier
+
+
 user_role_checker = UserRoleChecker()
 admin_role_checker = AdminRoleChecker()
 lawyer_role_checker = LawyerRoleChecker()
@@ -99,3 +115,4 @@ doctor_role_checker = DoctorRoleChecker()
 cor_int_role_checker = CorIntRoleChecker()
 lab_assistant_role_checker = LabAssistantRoleChecker()
 energy_manager_role_checker = EnergyManagerRoleChecker()
+financier_role_checker = FinancierRoleChecker()

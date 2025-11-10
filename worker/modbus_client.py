@@ -1,8 +1,11 @@
-from typing import Optional
+from typing import Optional, Dict
 from loguru import logger
 from pymodbus.client import AsyncModbusTcpClient
+from datetime import datetime
 
 error_count = 0
+# для отслеживания ошибок по объектам
+_error_stats: Dict[str, Dict] = {}
 
 _modbus_client_instance: Optional[AsyncModbusTcpClient] = None
 
@@ -112,11 +115,89 @@ async def get_modbus_client_singleton() -> Optional[AsyncModbusTcpClient]:
     return await create_modbus_client_singleton()
 
 
-def register_modbus_error():
-    """Регистрирует ошибку Modbus и инкрементирует счётчик."""
-    global error_count
+def register_modbus_error(object_id: str = None):
+    """
+    Регистрирует ошибку Modbus и инкрементирует счётчик.
+    
+    Args:
+        object_id: ID энергетического объекта (опционально)
+    """
+    global error_count, _error_stats
     error_count += 1
     logger.warning(f"❗ Modbus ошибка #{error_count}")
+    
+    # Если указан object_id, ведем статистику по объекту
+    if object_id:
+        if object_id not in _error_stats:
+            _error_stats[object_id] = {
+                'total_errors': 0,
+                'consecutive_errors': 0,
+                'last_error_time': None,
+                'last_success_time': None,
+            }
+        
+        _error_stats[object_id]['total_errors'] += 1
+        _error_stats[object_id]['consecutive_errors'] += 1
+        _error_stats[object_id]['last_error_time'] = datetime.now()
+
+
+def register_modbus_success(object_id: str = None):
+    """
+    Регистрирует успешную операцию Modbus.
+    
+    Args:
+        object_id: ID энергетического объекта (опционально)
+    """
+    global _error_stats
+    
+    if object_id and object_id in _error_stats:
+        _error_stats[object_id]['consecutive_errors'] = 0
+        _error_stats[object_id]['last_success_time'] = datetime.now()
+
+
+def get_modbus_error_stats(object_id: str) -> Dict:
+    """
+    Получает статистику ошибок для объекта.
+    
+    Args:
+        object_id: ID энергетического объекта
+        
+    Returns:
+        Словарь со статистикой ошибок
+    """
+    global _error_stats
+    
+    if object_id not in _error_stats:
+        return {
+            'total_errors': 0,
+            'consecutive_errors': 0,
+            'last_error_time': None,
+            'last_success_time': None,
+        }
+    
+    return _error_stats[object_id].copy()
+
+
+def reset_modbus_error_stats(object_id: str = None):
+    """
+    Сбрасывает статистику ошибок.
+    
+    Args:
+        object_id: ID объекта для сброса. Если None - сбрасывает все.
+    """
+    global _error_stats, error_count
+    
+    if object_id:
+        if object_id in _error_stats:
+            _error_stats[object_id] = {
+                'total_errors': 0,
+                'consecutive_errors': 0,
+                'last_error_time': None,
+                'last_success_time': None,
+            }
+    else:
+        _error_stats.clear()
+        error_count = 0
 
 
 def decode_signed_16(value: int) -> int:

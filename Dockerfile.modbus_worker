@@ -12,6 +12,6 @@ COPY en-basic /app/en-basic
 
 ENV PYTHONPATH=/app
 
-EXPOSE 8003
+EXPOSE 45762
 
 CMD ["python", "worker/main_with_websocket.py"]
