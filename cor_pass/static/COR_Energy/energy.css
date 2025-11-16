@@ -884,3 +884,49 @@ footer {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+
+
+.btn-icon {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 6px;
+    transition: 0.2s;
+    max-width: 20px;
+}
+
+.btn-icon:hover {
+    transform: scale(1.2);
+    opacity: 0.8;
+    background: none;
+}
+
+.btn-icon:active {
+    transform: scale(0.95);
+    background: none;
+}
+
+
+.btn-icon:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    background: none;
+}
+
+.btn-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: #333;
+}
+.btn-icon:hover svg {
+    fill: #2ccb32;
+}
+.btn-icon:disabled svg {
+    fill: #aaa;
+}
+
+
+
+

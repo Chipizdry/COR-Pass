@@ -58,6 +58,49 @@ def check_dicom_support():
         handler = pydicom.uid.UID(uid).is_supported
         logger.debug(f"{name} ({uid}): {'✓' if handler else '✗'}")
 
+"""
+def load_all_series(user_cor_id: str):
+    user_dicom_dir = os.path.join(DICOM_ROOT_DIR, user_cor_id)
+
+    dicom_files = [
+        os.path.join(user_dicom_dir, f)
+        for f in os.listdir(user_dicom_dir)
+        if os.path.isfile(os.path.join(user_dicom_dir, f))
+           and not f.startswith(".")
+    ]
+
+    """
+def load_all_series(user_cor_id: str):
+    user_dicom_dir = os.path.join(DICOM_ROOT_DIR, user_cor_id)
+
+    dicom_files = [
+        os.path.join(root, f)
+        for root, dirs, files in os.walk(user_dicom_dir)
+        for f in files
+        if not f.startswith(".")
+    ]
+
+    series_map = {}  # {SeriesInstanceUID: [datasets]}
+
+    for path in dicom_files:
+        try:
+            ds = pydicom.dcmread(path, force=True, stop_before_pixels=False)
+            series_uid = getattr(ds, "SeriesInstanceUID", None)
+            if not series_uid:
+                continue
+
+            if series_uid not in series_map:
+                series_map[series_uid] = []
+
+            series_map[series_uid].append(ds)
+
+        except Exception as e:
+            logger.warning(f"Bad DICOM {path}: {e}")
+            continue
+
+    return series_map
+
+
 
 @lru_cache(maxsize=16)
 def load_volume(user_cor_id: str):
@@ -71,11 +114,13 @@ def load_volume(user_cor_id: str):
             detail="DICOM данные для этого пользователя не найдены.",
         )
 
-    dicom_paths = [
-        os.path.join(user_dicom_dir, f)
-        for f in os.listdir(user_dicom_dir)
-        if not f.startswith(".") and os.path.isfile(os.path.join(user_dicom_dir, f))
-    ]
+
+    dicom_paths = []
+    for root, dirs, files in os.walk(user_dicom_dir):
+        for f in files:
+            if f.startswith("."):
+                continue
+            dicom_paths.append(os.path.join(root, f))
 
     datasets = []
     for path in dicom_paths:
@@ -354,6 +399,7 @@ async def upload_dicom_files(
             file_ext = os.path.splitext(file.filename)[1].lower()
 
             temp_path = os.path.join(user_dicom_dir, file.filename)
+            os.makedirs(os.path.dirname(temp_path), exist_ok=True)
             with open(temp_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
@@ -379,14 +425,17 @@ async def upload_dicom_files(
         if not os.path.exists(user_dicom_dir):
             raise HTTPException(status_code=404, detail="User DICOM directory not found")
 
-        dicom_paths = [
-            os.path.join(user_dicom_dir, f)
-            for f in os.listdir(user_dicom_dir)
-            if not f.startswith(".")
-            and os.path.isfile(os.path.join(user_dicom_dir, f))
-            and f.lower().endswith((".dcm", ""))
-            and not f.lower().endswith(".svs")
-        ]
+        dicom_paths = []
+
+        for root, dirs, files in os.walk(user_dicom_dir):
+            for f in files:
+                if f.startswith("."):
+                    continue
+                if f.lower().endswith(".svs"):
+                    continue
+                # поддерживаем файлы без расширений и DICOM-файлы
+                if f.lower().endswith(".dcm") or "." not in f:
+                    dicom_paths.append(os.path.join(root, f))
 
         for file_path in dicom_paths:
             try:

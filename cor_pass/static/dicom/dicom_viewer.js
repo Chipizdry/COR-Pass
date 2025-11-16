@@ -43,26 +43,6 @@ function prepareUIBeforeUpload() {
   document.getElementById('svs-preview-container').style.display = 'none';
 }
 
-/*
-  function collectFiles(fileInput) {
-    const formData = new FormData();
-    let totalSize = 0;
-    let fileCount = 0;
-  
-    for (const file of fileInput.files) {
-      const fileParts = file.name.split('.');
-      const fileExt = fileParts.length > 1 ? fileParts.pop().toLowerCase() : '';
-    if (['', 'dcm', 'zip', 'svs'].includes(fileExt)) {
-      
-        formData.append('files', file);
-        totalSize += file.size;
-        fileCount++;
-      }
-    }
-    return { formData, totalSize, fileCount };
-  }
-*/
-
 
 function collectFiles(fileInput) {
   const formData = new FormData();
@@ -136,89 +116,7 @@ function collectFiles(fileInput) {
     ['axial', 'sagittal', 'coronal'].forEach(update);
   }
 
-  /*
-  async function handleUpload() {
-  //  const fileInput = document.getElementById('dicom-upload');
-    const statusText = document.getElementById('upload-status');
-    const progressBar = document.getElementById('progress-bar');
-
-      // Собираем все input'ы
-      const inputs = [
-        document.getElementById('dicom-upload'),  // файлы DICOM
-        document.getElementById('upload-folder'), // папка
-        document.getElementById('upload-zip')     // архивы
-    ];
-
-    // Собираем все выбранные файлы
-    let files = [];
-    inputs.forEach(input => {
-        if (input.files.length) {
-            files.push(...input.files);
-        }
-    });
-  
-    if (files.length === 0) {
-      statusText.textContent = 'Please select files';
-      return;
-  }
-/*
-    if (!fileInput.files.length) {
-      statusText.textContent = 'Please select files';
-      return;
-    }
-  */
- /*
-    prepareUIBeforeUpload();
-    const token = getToken();
-    const { formData, totalSize, fileCount } = collectFiles(fileInput);
-  
-    if (fileCount === 0) {
-      statusText.textContent = 'No valid files selected';
-      return;
-    }
-  
-    document.getElementById('file-info').textContent =
-      `Selected ${fileCount} files (${formatFileSize(totalSize)})`;
-  
-    statusText.textContent = 'Uploading...';
-    progressBar.style.width = '0%';
-    progressBar.textContent = '0%';
-    document.getElementById('loading-spinner')?.style?.setProperty("display", "block");
-  
-    try {
-      checkToken();
-      const result = await uploadFilesWithProgress(formData, token);
-  
-      progressBar.style.width = '100%';
-      progressBar.textContent = '100%';
-  
-      if (result.steps) {
-        statusText.innerHTML =
-          result.steps.map(step => `<div>${step}</div>`).join('') +
-          `<div style="margin-top: 8px;"><strong>${result.message}</strong></div>`;
-      } else {
-        statusText.textContent = result.message;
-      }
-  
-      if (result.message.includes('SVS')) {
-        await handleSVS(token);
-      } else {
-        await handleDICOM(token);
-      }
-    } catch (err) {
-      console.error('Upload failed:', err);
-      statusText.textContent = `Error: ${err.message}`;
-      progressBar.style.background = '#f44336';
-      if (err.message.includes('401')) {
-        showTokenExpiredModal();
-      }
-    } finally {
-      document.getElementById('loading-spinner')?.style?.setProperty("display", "none");
-    }
-  }
-
-*/
-
+ 
 async function handleUpload() {
   const statusText = document.getElementById('upload-status');
   const progressBar = document.getElementById('progress-bar');

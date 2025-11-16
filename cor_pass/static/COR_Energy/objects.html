@@ -18,11 +18,6 @@
     
     <title>COR-Energy</title>
     <script src="/static/COR_Energy/scripts.js"></script>
-    <script src="/static/COR_Energy/power-settings.js"></script>
-    <script src="/static/COR_Energy/chart.js"></script>
-    <script src="/static/COR_Energy/line_chart.js"></script>
-    <script src="/static/COR_Energy/chart_settings.js"></script>
-    <script src="/static/COR_Energy/timetable.js"></script>
     <script src="/static/COR_ID_Js/general_fun.js"></script>
     <script src="/static/COR_Energy/xlsx.full.min.js"></script>
     <script src="/static/COR_Energy/chart.min.js"></script>
@@ -47,6 +42,7 @@
                         <th>Описание</th>
                         <th>Протокол</th>
                         <th>Статус</th>
+                        <th>Действия</th>
                     </tr>
                 </thead>
                 <tbody id="table-body">
@@ -93,25 +89,30 @@
                 </select>
             </div>
 
+            <div class="form">
+                <label for="objectStatus">Действия:</label>
+                
+            </div>
+
+
             <button onclick="submitAddObjectForm()">Добавить</button>
         </div>
     </div>
 
     <script>
-        // Основная функция для загрузки и отображения данных
+       // Основная функция для загрузки и отображения данных
         async function loadObjects() {
             const loadingElement = document.getElementById('loading');
             const errorElement = document.getElementById('error');
             const tableContainer = document.getElementById('table-container');
             const tableBody = document.getElementById('table-body');
-            
+
             try {
-                // Показываем индикатор загрузки
+                // UI — начало загрузки
                 loadingElement.style.display = 'block';
                 errorElement.style.display = 'none';
                 tableContainer.style.display = 'none';
-                
-                // Выполняем запрос к API
+
                 const response = await fetch('/api/modbus/', {
                     method: 'GET',
                     headers: {
@@ -119,27 +120,37 @@
                         'Content-Type': 'application/json'
                     }
                 });
-                
+
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                
-                const objects = await response.json();
-                
-                // Скрываем индикатор загрузки
-                loadingElement.style.display = 'none';
-                
-                // Если данные получены, создаем таблицу
-                if (objects && objects.length > 0) {
-                    renderTable(objects);
-                    tableContainer.style.display = 'block';
-                } else {
-                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Нет данных для отображения</td></tr>';
-                    tableContainer.style.display = 'block';
+
+                let objects = await response.json();
+
+                // ✔ защита от случаев, если бек вернёт { data: [...] }
+                if (!Array.isArray(objects)) {
+                    if (Array.isArray(objects?.data)) {
+                        objects = objects.data;
+                    } else {
+                        throw new Error("Неверный формат ответа от сервера");
+                    }
                 }
-                
+
+                // UI — конец загрузки
+                loadingElement.style.display = 'none';
+
+                if (objects.length > 0) {
+                    renderTable(objects);
+                } else {
+                    tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align:center">Нет данных для отображения</td>
+                    </tr>`;
+                }
+
+                tableContainer.style.display = 'block';
+
             } catch (error) {
-                // Обработка ошибок
                 loadingElement.style.display = 'none';
                 errorElement.style.display = 'block';
                 errorElement.textContent = `Ошибка при загрузке данных: ${error.message}`;
@@ -148,44 +159,65 @@
         }
         
         // Функция для отрисовки таблицы
-        function renderTable(objects) {
-            const tableBody = document.getElementById('table-body');
+function renderTable(objects) {
+    const tableBody = document.getElementById('table-body');
+    tableBody.innerHTML = '';
 
-            // Очищаем существующие данные
-            tableBody.innerHTML = '';
+    objects.forEach(obj => {
+        const row = document.createElement('tr');
+        row.dataset.id = obj.id; // сохраняем ID объекта в строку
 
-            // Создаем строки для каждого объекта
-            objects.forEach(obj => {
-                const row = document.createElement('tr');
+        // Определяем статус активности
+        let statusClass = 'status-unknown';
+        let statusText = 'Неизвестно';
 
-                // Определяем статус активности
-                let statusClass = 'status-unknown';
-                let statusText = 'Неизвестно';
-
-                if (obj.is_active === true) {
-                    statusClass = 'status-active';
-                    statusText = 'Активен';
-                } else if (obj.is_active === false) {
-                    statusClass = 'status-inactive';
-                    statusText = 'Неактивен';
-                }
-
-                // Форматируем Modbus регистры
-                const modbusRegisters = obj.modbus_registers 
-                    ? JSON.stringify(obj.modbus_registers)
-                    : 'Нет данных';
-
-                // Создаем ячейки таблицы
-                row.innerHTML = `
-                    <td>${obj.name || 'Не указано'}</td>
-                    <td>${obj.description || 'Не указано'}</td>
-                    <td title="${modbusRegisters}">${modbusRegisters.length > 50 ? modbusRegisters.substring(0, 50) + '...' : modbusRegisters}</td>
-                    <td class="${statusClass}">${statusText}</td>
-                `;
-
-                tableBody.appendChild(row);
-            });
+        if (obj.is_active === true) {
+            statusClass = 'status-active';
+            statusText = 'Активен';
+        } else if (obj.is_active === false) {
+            statusClass = 'status-inactive';
+            statusText = 'Неактивен';
         }
+
+        // Формат Modbus регистров
+        const modbusRegisters = obj.modbus_registers 
+            ? JSON.stringify(obj.modbus_registers)
+            : 'Нет данных';
+
+            row.innerHTML = `
+            <td>${obj.name || 'Не указано'}</td>
+            <td>${obj.description || 'Не указано'}</td>
+            <td title="${modbusRegisters}">
+                ${modbusRegisters.length > 50 ? modbusRegisters.substring(0, 50) + '...' : modbusRegisters}
+            </td>
+            <td class="${statusClass}">${statusText}</td>
+
+            <!-- ✅ кнопки только эмодзи -->
+            <td class="actions">
+                <button class="btn-icon btn-edit"   title="Редактировать">✏️</button>
+                <button class="btn-icon btn-delete" title="Удалить">🗑️</button>
+                <button class="btn-icon btn-stop"   title="Остановить">⏹️</button>
+            </td>
+        `;
+
+        // Навешиваем обработчики на кнопки
+        row.querySelector('.btn-edit').addEventListener('click', () => handleEdit(obj));
+        row.querySelector('.btn-delete').addEventListener('click', () => handleDelete(obj));
+        row.querySelector('.btn-stop').addEventListener('click', () => handleStop(obj));
+
+
+        // ✅ Переход при клике на строку (кроме кнопок)
+            row.addEventListener('click', (e) => {
+            if (e.target.closest('button')) return; // не реагировать на кнопки
+            const userCorId = localStorage.getItem('COR-ID');  
+            const objectId = obj.id;
+            window.location.href = `/static/COR_Energy/object.html?userCorId=${userCorId}&object_Id=${objectId}`;
+        });
+
+
+        tableBody.appendChild(row);
+    });
+}
         
         
         function editObject(id) {
@@ -197,6 +229,23 @@
             const modal = document.getElementById('addObjectModal');
             modal.style.display = 'block';
         }
+
+
+        function handleEdit(obj) {
+            console.log("Редактировать:", obj.id, obj);
+            // TODO открыть модалку редактирования
+        }
+
+        function handleDelete(obj) {
+            console.log("Удалить:", obj.id);
+            // TODO запрос DELETE на сервер + обновление таблицы
+        }
+
+        function handleStop(obj) {
+            console.log("Остановить:", obj.id);
+            // TODO запрос остановки объекта
+        }
+
 
         function closeModal(modalId) {
             const modal = document.getElementById(modalId);
