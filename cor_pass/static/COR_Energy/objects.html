@@ -3,9 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <!-- Favicon SVG (основной) -->
-    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-    
       <!-- Fallback для старых браузеров -->
     <link rel="alternate icon" href="/static/favicon.png" type="image/png">
       
@@ -25,16 +22,21 @@
 </head>
 <body>
     <div class="energy-container">
-        <h1>Energetic Object</h1>
+        <div class="navigation-container">
+            <button class="link-button" onclick="goBack('/static/COR_ID/mainscreen.html')" data-translate="back-link-text">&lt;&lt;&lt;назад&lt;&lt;&lt;</button>         
+        </div>
         <div id="loading" class="loading">Загрузка данных...</div>
         <div id="error" class="error" style="display: none;"></div>
 
-        <div class="schedule-controls">
-           
-            <button onclick="addObject()" class="btn">+ Добавить объект</button>
+        <div class="header-row">
+            <h1>Объекты</h1>
+
+            <div class="button-controls">
+                <button onclick="addObject()" class="btn">+ Добавить объект</button>
+            </div>
         </div>
-        <div id="table-container" style="display: none;" class="schedule-table-container">
-            <table id="objects-table" class="schedule-table">
+        <div id="table-container" style="display: none;" class="objects-table-container">
+            <table id="objects-table" class="objects-table">
                 <thead>
                     <tr>
                         <!-- Убрана колонка ID -->
@@ -42,7 +44,7 @@
                         <th>Описание</th>
                         <th>Протокол</th>
                         <th>Статус</th>
-                        <th>Действия</th>
+                        <th>   </th>
                     </tr>
                 </thead>
                 <tbody id="table-body">
@@ -100,6 +102,8 @@
     </div>
 
     <script>
+
+     
        // Основная функция для загрузки и отображения данных
         async function loadObjects() {
             const loadingElement = document.getElementById('loading');
@@ -165,9 +169,8 @@ function renderTable(objects) {
 
     objects.forEach(obj => {
         const row = document.createElement('tr');
-        row.dataset.id = obj.id; // сохраняем ID объекта в строку
+        row.dataset.id = obj.id;
 
-        // Определяем статус активности
         let statusClass = 'status-unknown';
         let statusText = 'Неизвестно';
 
@@ -179,12 +182,11 @@ function renderTable(objects) {
             statusText = 'Неактивен';
         }
 
-        // Формат Modbus регистров
         const modbusRegisters = obj.modbus_registers 
             ? JSON.stringify(obj.modbus_registers)
             : 'Нет данных';
 
-            row.innerHTML = `
+        row.innerHTML = `
             <td>${obj.name || 'Не указано'}</td>
             <td>${obj.description || 'Не указано'}</td>
             <td title="${modbusRegisters}">
@@ -192,28 +194,69 @@ function renderTable(objects) {
             </td>
             <td class="${statusClass}">${statusText}</td>
 
-            <!-- ✅ кнопки только эмодзи -->
             <td class="actions">
-                <button class="btn-icon btn-edit"   title="Редактировать">✏️</button>
-                <button class="btn-icon btn-delete" title="Удалить">🗑️</button>
-                <button class="btn-icon btn-stop"   title="Остановить">⏹️</button>
+                <button class="more-btn">⋮</button>
+
+                <div class="actions-menu">
+                    <button class="action-edit">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M15.7474 11.9794V15.5793C15.7472 16.0886 15.5447 16.577 15.1846 16.9372C14.8244 
+                            17.2974 14.336 17.4998 13.8266 17.5H4.42077C4.16761 17.4999 3.91696 17.4498 3.68323 
+                            17.3525C3.4495 17.2552 3.2373 17.1127 3.05882 16.9332C2.88033 16.7537 2.73908 16.5406 
+                            2.64319 16.3063C2.5473 16.072 2.49865 15.8211 2.50003 15.5679V6.1726C2.49853 5.91984 
+                            2.5472 5.66929 2.64323 5.43548C2.73927 5.20166 2.88075 4.98923 3.05948 4.8105C3.23822 
+                            4.63177 3.45065 4.49028 3.68446 4.39425C3.91827 4.29822 4.16882 4.24954 4.42158 
+                            4.25105H8.02064M15.7473 7.56389L12.4353 4.25104M5.81121 13.0837V11.3283C5.81284 
+                            11.0389 5.92797 10.7608 6.13147 10.5557L13.8598 2.82731C13.9624 2.72362 14.0845 
+                            2.6413 14.2191 2.58511C14.3536 2.52893 14.498 2.5 14.6439 2.5C14.7897 2.5 14.9341 
+                            2.52893 15.0687 2.58511C15.2032 2.6413 15.3253 2.72362 15.4279 2.82731L17.1719 
+                            4.5713C17.2756 4.67385 17.3579 4.79594 17.4141 4.93052C17.4702 5.0651 17.4992 
+                            5.20949 17.4992 5.35532C17.4992 5.50116 17.4702 5.64555 17.4141 5.78013C17.3579 
+                            5.91471 17.2756 6.0368 17.1719 6.13935L9.44351 13.8677C9.23801 14.0718 8.96046 
+                            14.1868 8.67084 14.188H6.9155C6.77042 14.1882 6.62673 14.1598 6.49265 14.1043C6.35858 
+                            14.0489 6.23676 13.9676 6.13418 13.865C6.03159 13.7624 5.95026 13.6406 5.89484 
+                            13.5065C5.83942 13.3724 5.811 13.2288 5.81121 13.0837Z" stroke="#5B4296" 
+                            stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg> 
+                         Редактировать</button>
+                    <button class="action-pause">⏸ Приостановить</button>
+                    <button class="action-delete">🗑 Удалить</button>
+                </div>
             </td>
         `;
 
-        // Навешиваем обработчики на кнопки
-        row.querySelector('.btn-edit').addEventListener('click', () => handleEdit(obj));
-        row.querySelector('.btn-delete').addEventListener('click', () => handleDelete(obj));
-        row.querySelector('.btn-stop').addEventListener('click', () => handleStop(obj));
+    
+        const btn = row.querySelector('.more-btn');
+        const menu = row.querySelector('.actions-menu');
 
-
-        // ✅ Переход при клике на строку (кроме кнопок)
-            row.addEventListener('click', (e) => {
-            if (e.target.closest('button')) return; // не реагировать на кнопки
-            const userCorId = localStorage.getItem('COR-ID');  
-            const objectId = obj.id;
-            window.location.href = `/static/COR_Energy/object.html?userCorId=${userCorId}&object_Id=${objectId}`;
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeAllMenus();
+            menu.classList.toggle('visible');
         });
 
+        menu.querySelector('.action-edit').onclick = (e) => {
+            e.stopPropagation();
+            handleEdit(obj);
+        };
+
+        menu.querySelector('.action-pause').onclick = (e) => {
+            e.stopPropagation();
+            handleStop(obj);
+        };
+
+        menu.querySelector('.action-delete').onclick = (e) => {
+            e.stopPropagation();
+            handleDelete(obj);
+        };
+
+        // Переход при клике на строку
+        row.addEventListener('click', (e) => {
+            if (e.target.closest('button')) return;
+
+            const userCorId = localStorage.getItem('COR-ID');  
+            window.location.href = `/static/COR_Energy/object.html?userCorId=${userCorId}&object_Id=${obj.id}`;
+        });
 
         tableBody.appendChild(row);
     });
@@ -252,6 +295,13 @@ function renderTable(objects) {
             modal.style.display = 'none';
         }
 
+
+        function closeAllMenus() {
+        document.querySelectorAll('.actions-menu.visible')
+            .forEach(menu => menu.classList.remove('visible'));
+        }
+
+        document.addEventListener('click', () => closeAllMenus());
         async function submitAddObjectForm() {
             const form = document.getElementById('addObjectForm');
             const formData = new FormData(form);
@@ -303,6 +353,8 @@ function renderTable(objects) {
         window.addEventListener('error', function(e) {
             console.error('Page error:', e.error);
         });
+
+  
     </script>
 </body>
 </html>

@@ -166,11 +166,10 @@
 }
 /* Стили для контейнера навигации */
 .navigation-container {
-    display: flex
-;
+    display: flex;
     justify-content: space-between;
     width: 100%;
-    padding: 0 20px;
+    padding: 0 10px;
     box-sizing: border-box;
     margin-top: 20px;
     margin-bottom: 10px;

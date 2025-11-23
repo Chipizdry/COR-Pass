@@ -1,7 +1,7 @@
 
 
 .energy-container {
-    background-color: white;
+    background-color:rgba(255, 255, 255, 0.6);
     padding: 19px;
     border-radius: 30px;
     max-width: 900px;
@@ -9,6 +9,13 @@
     text-align: center;
     height: 800px;
     flex-shrink: 0;
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between; /* заголовок слева, кнопка справа */
+    align-items: center; /* выравнивание по вертикали */
+    margin-bottom: 20px;
 }
 
 body {
@@ -367,6 +374,11 @@ footer {
     gap: 10px;
 }
 
+.button-controls {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: flex-end; 
+}
 .schedule-table-container {
     overflow-x: auto;
 }
@@ -890,11 +902,11 @@ footer {
 .btn-icon {
     background: none;
     border: none;
-    font-size: 18px;
+    font-size: 12px;
     cursor: pointer;
     padding: 4px 6px;
     transition: 0.2s;
-    max-width: 20px;
+    max-width: 10px;
 }
 
 .btn-icon:hover {
@@ -916,8 +928,8 @@ footer {
 }
 
 .btn-icon svg {
-    width: 20px;
-    height: 20px;
+    width: 10px;
+    height: 10px;
     fill: #333;
 }
 .btn-icon:hover svg {
@@ -928,5 +940,118 @@ footer {
 }
 
 
+.objects-table-container {
+    height: 630px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+/* Чтобы заголовок был закреплён */
+.objects-table thead tr {
+    position: sticky;
+    top: 0;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 5;
+}
+
+/* Таблица должна растягиваться */
+.objects-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.objects-table th{
+    height: 40px !important;
+    line-height: 40px !important;
+    padding: 0 10px !important;  
+    color: #5B4296;
+    border-bottom: 1px solid #5B4296;
+}
 
 
+.objects-table td {
+    height: 40px !important;
+    line-height: 40px !important;
+    padding: 0 10px !important;
+    color: #5B4296;
+    border-bottom: 1px solid #5B4296;
+}
+
+
+.objects-table tr {
+    height: 40px !important;
+    line-height: 40px !important;
+    padding: 0 10px !important;
+    color: #5B4296;
+    border-bottom: 1px solid #5B4296;
+}
+
+
+/* Столбец с действиями */
+.objects-table td.actions {
+    position: relative;
+    width: 40px;
+    text-align: center;
+}
+
+/* Кнопка три точки */
+.more-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 22px;
+    margin: 0px;
+    border-radius: 6px;
+    transition: 0.2s;
+    height: 35px;
+    padding: 2px;
+    color: #7527B2;
+}
+
+.more-btn:hover {
+    background: rgba(0,0,0,0.05);
+    border-radius: 6px;
+    margin: 0px;
+    transition: 0.2s;
+    height: 35px;
+    padding: 2px;
+}
+
+/* Выпадающее меню */
+.actions-menu {
+    position: absolute;
+    right: 0;
+    top: 45px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    padding: 10px 0;
+    width: 150px;
+    display: none;
+    z-index: 999;
+}
+
+.actions-menu.visible {
+    display: block;
+}
+
+.actions-menu button {
+    width: 100%;
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 10px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    color: #291161;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.actions-menu button:hover {
+    background: rgba(41,17,97,0.06);
+}
