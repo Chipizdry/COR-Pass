@@ -943,9 +943,9 @@ footer {
 .objects-table-container {
     height: 630px;
     overflow-y: auto;
-    border: 1px solid #ddd;
+    /* border: 1px solid #ddd; */
     border-radius: 20px;
-    padding: 10px;
+    padding: 0 10px 10px 10px;
     background: rgba(255, 255, 255, 0.6);
 }
 
@@ -957,18 +957,55 @@ footer {
     z-index: 5;
 }
 
+.objects-table thead th:first-child {
+    border-top-left-radius: 20px;
+}
+
+.objects-table thead th:last-child {
+    border-top-right-radius: 20px;
+}
+
 /* Таблица должна растягиваться */
 .objects-table {
     width: 100%;
     border-collapse: collapse;
+    border-spacing: 0;
 }
 
+/*
 .objects-table th{
     height: 40px !important;
     line-height: 40px !important;
     padding: 0 10px !important;  
     color: #5B4296;
-    border-bottom: 1px solid #5B4296;
+   border-bottom: 1px solid rgba(91, 66, 150, 0.25);/* Граница под заголовком */
+/* } */
+
+.objects-table th {
+    height: 40px !important;
+    line-height: 40px !important;
+    padding: 0 10px !important;
+    color: #5B4296;
+    position: relative;
+    border-bottom: none !important;
+}
+
+.objects-table th::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+
+    width: 100%;
+    height: 1px;
+
+    background: linear-gradient(
+        to right,
+        rgba(91, 66, 150, 0) 0%,         /* край — растворение */
+        rgba(91, 66, 150, 0.25) 30%,      /* как border */
+        rgba(91, 66, 150, 0.25) 70%,      
+        rgba(91, 66, 150, 0) 100%        /* край — растворение */
+    );
 }
 
 
@@ -977,8 +1014,12 @@ footer {
     line-height: 40px !important;
     padding: 0 10px !important;
     color: #5B4296;
-    border-bottom: 1px solid #5B4296;
+    border-bottom: 1px solid rgba(91, 66, 150, 0.1);/* Граница под ячейками */
+   
 }
+
+
+
 
 
 .objects-table tr {

@@ -185,6 +185,8 @@
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
+    transition: border-color .2s, color .2s;
+    gap: 12px;
 }
 
 .directorModalFormGroup-input .label {
@@ -193,16 +195,22 @@
     line-height: 56px;
 }
 
-.directorModalFormGroup-input::after {
-    content: '';
-    border: 6px solid transparent;
-    border-top-color: #6f66b1;
-    transition: .2s;
+.directorModalFormGroup-input .selectArrow {
+    flex-shrink: 0;
+    transition: transform .2s;
 }
 
-.directorModalFormGroup-select.open .directorModalFormGroup-input::after {
+.directorModalFormGroup-select.open .directorModalFormGroup-input .selectArrow {
     transform: rotate(180deg);
-    margin-top: 6px;
+}
+
+.directorModalFormGroup-select.open .directorModalFormGroup-input {
+    border-color: #7527B2;
+    color: #5B4296;
+}
+
+.directorModalFormGroup-select.open .directorModalFormGroup-input .label {
+    color: #5B4296;
 }
 
 .directorModalFormGroup-list {
@@ -220,7 +228,7 @@
     pointer-events: none;
     transform: translateY(-12px);
     transition: .2s;
-    padding: 10px 0;
+    padding: 8px 16px;
     z-index: 2;
 }
 
@@ -231,19 +239,40 @@
 }
 
 .directorModalFormGroup-list li {
-    padding: 16px 22px;
+    position: relative;
+    padding: 16px;
     font-size: 16px;
     color: #23155b;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 12px;
+    outline: none;
+    transition: background-color .2s;
 }
 
 .directorModalFormGroup-list li:hover {
-    background: #f2eeff;
+    background: #EFECF8;
+}
+
+.directorModalFormGroup-list li::after {
+    content: '';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    width: 6px;
+    height: 12px;
+    border: solid #5B4296;
+    border-width: 0 2px 2px 0;
+    transform: translateY(-60%) rotate(45deg);
+    opacity: 0;
+    transition: opacity .2s;
 }
 
 .directorModalFormGroup-list li.selected {
-    background: rgba(176, 56, 255, .14);
+    background: transparent;
+}
+
+.directorModalFormGroup-list li.selected::after {
+    opacity: 1;
 }
 
 .directorModalFormGroup-list li.disabled {
@@ -351,9 +380,11 @@
   padding: 28px 0 30px;
   display: flex;
   align-items: center;
+  width: 100%;
+  gap: 16px;
 }
 
-.directorModalFooter .btn:last-child {
+#caseDirectionScan {
   margin-left: auto;
 }
 

@@ -39,9 +39,15 @@ from datetime import date
 class UserModel(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=32)
-    birth: Optional[int] = Field(None, ge=1900)
-    user_sex: Optional[str] = Field(None, max_length=1)
-    cor_id: Optional[str] = Field(None, max_length=15)
+    birth: Optional[int] = Field(
+        None, 
+        ge=1900, 
+        description="Год рождения (например: 1990). Должен быть не раньше 1900 и не позже текущего года"
+    )
+    user_sex: Optional[Literal["M", "F", "*"]] = Field(
+        None, 
+        description="Пол пользователя: 'M' (мужской), 'F' (женский), '*' (другое/не указано)"
+    )
 
     @field_validator("birth")
     @classmethod
@@ -57,9 +63,10 @@ class UserModel(BaseModel):
         return v
 
     @field_validator("user_sex")
+    @classmethod
     def user_sex_must_be_m_or_f(cls, v):
-        if v not in ["M", "F", "*"]:
-            raise ValueError('user_sex must be "M" or "F" or "*" (other)')
+        if v is not None and v not in ["M", "F", "*"]:
+            raise ValueError('user_sex должен быть "M" (мужской), "F" (женский) или "*" (другое)')
         return v
 
 
@@ -208,6 +215,14 @@ class UserSessionDBModel(BaseModel):
     updated_at: datetime
 
 
+class UserMeResponse(BaseModel):
+    corid: str | None
+    roles: list[str]
+    first_name: Optional[str] = None
+    surname: Optional[str] = None
+    middle_name: Optional[str] = None
+
+
 # PASS-MANAGER MODELS
 
 
@@ -354,6 +369,9 @@ class DiplomaCreate(BaseModel):
     def validate_diploma_date(cls, v: Optional[datetime]) -> Optional[datetime]:
         if v is None:
             return v
+        # Если дата naive (без timezone), делаем её UTC
+        if v.tzinfo is None:
+            v = v.replace(tzinfo=timezone.utc)
         # Диплом не может быть выдан в будущем
         if v > datetime.now(timezone.utc):
             raise ValueError("Дата выдачи диплома не может быть в будущем")
@@ -409,6 +427,9 @@ class CertificateCreate(BaseModel):
     def validate_certificate_date(cls, v: Optional[datetime]) -> Optional[datetime]:
         if v is None:
             return v
+        # Если дата naive (без timezone), делаем её UTC
+        if v.tzinfo is None:
+            v = v.replace(tzinfo=timezone.utc)
         # Сертификат не может быть выдан в будущем
         if v > datetime.now(timezone.utc):
             raise ValueError("Дата выдачи сертификата не может быть в будущем")
@@ -499,6 +520,8 @@ class DoctorWithRelationsResponse(BaseModel):
     passport_code: Optional[str] = Field(None, description="Номер паспорта")
     taxpayer_identification_number: Optional[str] = Field(None, description="ИНН")
     place_of_registration: Optional[str] = Field(None, description="Место прописки")
+    reserv_scan: Optional[str] = Field(None, description="Ссылка на скан резерва")
+    date_of_next_review: Optional[date] = Field(None, description="Дата следующей проверки")
     status: str
     diplomas: List[DiplomaResponse] = []
     certificates: List[CertificateResponse] = []
@@ -670,6 +693,7 @@ class DoctorResponse(BaseModel):
     middle_name: Optional[str] = Field(None, description="Отчество врача")
     last_name: Optional[str] = Field(None, description="Фамилия врача")
     doctors_photo: Optional[str] = Field(None, description="Ссылка на фото врача")
+    age: Optional[int] = Field(None, description="Возраст врача")
     scientific_degree: Optional[str] = Field(None, description="Научная степень")
     date_of_last_attestation: Optional[date] = Field(
         None, description="Дата последней атестации"
@@ -903,6 +927,24 @@ class ConfirmCheckSessionResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     device_id: Optional[str] = None
+
+
+class WebInitiateLoginRequest(BaseModel):
+    """Запрос для инициации входа с веб-фронтенда через COR-ID приложение"""
+    email: EmailStr
+
+
+class WebInitiateLoginResponse(BaseModel):
+    """Ответ с данными для авторизации через COR-ID приложение"""
+    session_token: str
+    deep_link: str
+    qr_code: str  # Base64 encoded PNG QR code (data:image/png;base64,...)
+    expires_at: datetime
+
+
+class QrScannedRequest(BaseModel):
+    """Уведомление о сканировании QR-кода"""
+    session_token: str
 
 
 # PATIENTS MODELS
@@ -2602,6 +2644,7 @@ class UploadGlassSVSResponse(BaseModel):
 class EnergeticObjectBase(BaseModel):
     name: str
     description: Optional[str] = None
+    protocol: Optional[str] = Field(None, description="Протокол связи")
     ip_address: Optional[str] = Field(None, description="IP-адрес объекта")
     port: Optional[int] = Field(None, description="Порт объекта")
     inverter_login: Optional[str] = Field(None, description="Логин для доступа к инвертору")
@@ -2616,6 +2659,7 @@ class EnergeticObjectCreate(EnergeticObjectBase):
 class EnergeticObjectUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    protocol: Optional[str] = Field(None, description="Протокол связи")
     ip_address: Optional[str] = Field(None, description="IP-адрес объекта")
     port: Optional[int] = Field(None, description="Порт объекта")
     inverter_login: Optional[str] = Field(None, description="Логин для доступа к инвертору")
@@ -3262,14 +3306,18 @@ class SibionicsTokenResponse(BaseModel):
 
 class SibionicsUserAuthCreate(BaseModel):
     """Создание связи пользователя с SIBIONICS аккаунтом"""
-    biz_id: str = Field(..., description="SIBIONICS Authorization resource ID")
+    biz_id: Optional[str] = Field(None, description="SIBIONICS Authorization resource ID (если есть)")
+    access_token: Optional[str] = Field(None, description="Access token от Sibionics H5 авторизации")
+    expires_in: Optional[int] = Field(None, description="Время жизни токена в секундах")
+    refresh_token: Optional[str] = Field(None, description="Refresh token (если предоставлен)")
 
 
 class SibionicsUserAuthResponse(BaseModel):
     """Информация об авторизации пользователя в SIBIONICS"""
     id: str
     user_id: str
-    biz_id: str
+    biz_id: Optional[str] = None
+    access_token: Optional[str] = None
     is_active: bool
     created_at: datetime
     updated_at: datetime
@@ -3395,8 +3443,54 @@ class FuelQRVerifyResponse(BaseModel):
     
     # Лимиты (если успешно получены от бэкенда финансов)
     limit_info: Optional[FuelUserLimitInfo] = None
-    
 
+
+# ============================================================================
+# Offline QR Code Schemas (Офлайн QR коды)
+# ============================================================================
+
+class FuelOfflineQRData(BaseModel):
+    """Данные офлайн QR кода для заправки (работает без интернета)"""
+    cor_id: str = Field(..., description="COR ID сотрудника")
+    totp_code: str = Field(..., description="TOTP код (6 цифр)")
+    timestamp: int = Field(..., description="Unix timestamp генерации QR")
+    company_id: Optional[str] = Field(None, description="ID компании (опционально)")
+
+
+class FuelOfflineQRGenerateResponse(BaseModel):
+    """Ответ при генерации офлайн QR кода"""
+    qr_data: FuelOfflineQRData
+    qr_data_string: str = Field(..., description="JSON строка для QR кода")
+    expires_in_seconds: int = Field(..., description="Через сколько секунд истекает TOTP код")
+    totp_interval: int = Field(default=30, description="Интервал TOTP в секундах")
+
+
+class FuelOfflineQRVerifyRequest(BaseModel):
+    """Запрос на офлайн верификацию QR кода"""
+    qr_data_string: str = Field(..., description="Отсканированные данные QR кода (JSON)")
+
+
+class FuelOfflineQRVerifyResponse(BaseModel):
+    """Ответ при офлайн верификации QR кода"""
+    is_valid: bool = Field(..., description="Валиден ли QR код")
+    message: str = Field(..., description="Сообщение о результате")
+    user_cor_id: Optional[str] = Field(None, description="COR ID пользователя")
+    company_id: Optional[str] = Field(None, description="ID компании")
+    verified_at: Optional[datetime] = Field(None, description="Время верификации")
+
+
+class FuelOfflineTOTPSecretResponse(BaseModel):
+    """Ответ с TOTP секретом для настройки офлайн режима
+    
+    Workflow для мобильных разработчиков:
+    1. При первом логине проверить наличие сохранённого TOTP секрета
+    2. Если секрета нет - сделать GET /api/fuel-station/offline/totp-secret
+    3. Сохранить totp_secret локально (SharedPreferences/Keychain)
+    4. Использовать сохранённый секрет для генерации TOTP кодов офлайн
+    """
+    totp_secret: str = Field(..., description="Base32 TOTP секрет для сохранения в приложении")
+    totp_interval: int = Field(default=30, description="Интервал TOTP в секундах")
+    
 
 # Схемы для интеграции с бэкендом финансов
 
@@ -3448,6 +3542,124 @@ class FinanceBackendAuthConfigResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# ============================================================================
+# Corporate Client Schemas (Корпоративные клиенты)
+# ============================================================================
+
+class CorporateClientCreate(BaseModel):
+    """Создание заявки на регистрацию корпоративного клиента"""
+    company_format: str = Field(..., min_length=1, max_length=50, description="Форма підприємства: ТОВ, ФОП, ПП")
+    company_name: str = Field(..., min_length=1, max_length=255, description="Полное название компании")
+    address: str = Field(..., min_length=1, max_length=500, description="Юридический адрес")
+    phone_number: str = Field(..., min_length=10, max_length=20, description="Контактный телефон")
+    email: EmailStr = Field(..., description="Email компании")
+    tax_id: str = Field(..., min_length=1, max_length=50, description="ЄДРПОУ/ИНН")
+
+
+class CorporateClientResponse(BaseModel):
+    """Ответ с данными корпоративного клиента"""
+    id: str
+    owner_cor_id: str
+    company_format: str
+    company_name: str
+    address: str
+    phone_number: str
+    email: str
+    tax_id: str
+    status: str  # pending, active, blocked, rejected, limit_exceeded
+    fuel_limit: float  # Лимит компании на топливо
+    finance_company_id: Optional[int]
+    reviewed_by: Optional[str]
+    reviewed_at: Optional[datetime]
+    rejection_reason: Optional[str]
+    created_at: datetime
+    updated_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CorporateClientWithOwner(CorporateClientResponse):
+    """Корпоративный клиент с информацией о владельце (для админа)"""
+    owner_first_name: Optional[str] = None
+    owner_last_name: Optional[str] = None
+    owner_email: Optional[str] = None
+
+
+class CorporateClientApprove(BaseModel):
+    """Подтверждение заявки (перевод в статус active)"""
+    pass  # Пустое тело
+
+
+class CorporateClientReject(BaseModel):
+    """Отклонение заявки (перевод в статус rejected)"""
+    rejection_reason: str = Field(..., min_length=1, max_length=1000, description="Причина отклонения")
+
+
+class CorporateClientBlock(BaseModel):
+    """Блокировка компании (перевод в статус blocked)"""
+    reason: Optional[str] = Field(None, max_length=1000, description="Причина блокировки")
+
+
+class CorporateClientUpdate(BaseModel):
+    """Обновление данных корпоративного клиента (админ)"""
+    company_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    address: Optional[str] = Field(None, min_length=1, max_length=500)
+    phone_number: Optional[str] = Field(None, min_length=10, max_length=20)
+    email: Optional[EmailStr] = None
+    fuel_limit: Optional[float] = Field(None, ge=0, description="Лимит компании на топливо")
+
+
+class FinancePartnerLoginResponse(BaseModel):
+    """Ответ от финансового бэкенда при логине партнёра"""
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+
+
+class CreateAccountMemberRequest(BaseModel):
+    """Запрос на добавление пользователя в компанию"""
+    cor_id: str = Field(..., description="COR-ID пользователя")
+    first_name: str = Field(..., description="Имя пользователя")
+    last_name: str = Field(..., description="Фамилия пользователя")
+    account_id: int = Field(..., description="ID аккаунта в finance backend?")
+    company_id: int = Field(..., description="ID компании в finance backend")
+    limit_amount: float = Field(..., ge=0, description="Лимит пользователя")
+    limit_period: Literal["day", "week", "month"] = Field(..., description="Период лимита")
+
+
+class AccountMemberResponse(BaseModel):
+    """Ответ от финансового бэкенда при создании участника компании"""
+    id: int
+    first_name: str
+    last_name: str
+    cor_id: str
+    account_id: int
+    limit_amount: str
+    limit_period: str
+    disabled_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: Optional[datetime] = None
+
+
+class FinanceCreateCompanyRequest(BaseModel):
+    """Запрос на создание компании в финансовом бэкенде"""
+    company_format: str
+    name: str
+    tax_id: str
+    address: str
+    phone_number: str
+    email: str
+    owner_id: int  # user_id владельца в finance backend
+
+
+class FinanceCreateCompanyResponse(BaseModel):
+    """Ответ от финансового бэкенда при создании компании"""
+    id: int  # company_id в finance backend
+    name: str
+    owner_id: int
+
+
 class SibionicsGlucoseListResponse(BaseModel):
     """Список данных глюкозы с пагинацией"""
     records: List[SibionicsGlucoseResponse]
@@ -3471,3 +3683,152 @@ class SibionicsSyncResponse(BaseModel):
     total_records_updated: int
     sync_timestamp: datetime
     details: List[Dict[str, Any]] = Field(default_factory=list)
+
+
+class SibionicsH5AuthUrlRequest(BaseModel):
+    """Запрос на получение H5 Authorization URL"""
+    redirect_url: Optional[str] = Field(
+        None,
+        description="URL для редиректа после авторизации (опционально)"
+    )
+
+
+class SibionicsH5AuthUrlResponse(BaseModel):
+    """H5 Authorization URL для авторизации пользователя в Sibionics"""
+    auth_url: str = Field(
+        ...,
+        description="URL для авторизации пользователя в Sibionics",
+        examples=["https://open-auth-uat.sisensing.com/?appKey=xxx&thirdBizId=123"]
+    )
+    third_biz_id: str = Field(
+        ...,
+        description="Уникальный ID пользователя в вашей системе (user.id)"
+    )
+    expires_in: int = Field(
+        300,
+        description="Время жизни URL в секундах (5 минут)"
+    )
+
+
+class SibionicsAuthCallbackContent(BaseModel):
+    """Содержимое webhook type 201 - Authorization Success"""
+    bizIds: List[str] = Field(
+        ...,
+        description="Массив SIBIONICS Authorization resource IDs",
+        examples=[["1423159073910992896", "1423159073910992899"]]
+    )
+    thirdBizId: str = Field(
+        ...,
+        description="Ваш user_id, который был передан в H5 URL",
+        examples=["18000000000"]
+    )
+    isAuthorized: bool = Field(
+        ...,
+        description="Статус авторизации"
+    )
+    grantTime: int = Field(
+        ...,
+        description="Timestamp авторизации (milliseconds)",
+        examples=[1709705256289]
+    )
+
+
+class SibionicsCallbackRequest(BaseModel):
+    """Webhook от Sibionics type 201 - Authorization Success Notification"""
+    type: int = Field(
+        ...,
+        description="Тип события (201 = Authorization Success)",
+        examples=[201]
+    )
+    content: SibionicsAuthCallbackContent = Field(
+        ...,
+        description="Содержимое события"
+    )
+
+
+class SibionicsCallbackResponse(BaseModel):
+    """Ответ на callback от Sibionics"""
+    success: bool
+    message: str
+    user_id: Optional[str] = None  # UUID string
+    biz_ids: Optional[List[str]] = None
+    primary_biz_id: Optional[str] = None
+
+
+class SibionicsWebhookDeviceData(BaseModel):
+    """Данные устройства в webhook от Sibionics"""
+    device_id: str = Field(..., description="Device ID")
+    device_name: Optional[str] = Field(None, description="Device name")
+    device_type: Optional[str] = Field(None, description="Device type")
+    last_sync_time: Optional[int] = Field(None, description="Last sync timestamp (milliseconds)")
+    battery_level: Optional[int] = Field(None, description="Battery level (0-100)")
+
+
+class SibionicsWebhookGlucoseRecord(BaseModel):
+    """Запись глюкозы в webhook"""
+    i: int = Field(..., description="Index", alias="i")
+    v: float = Field(..., description="Glucose value (mg/dL)", alias="v")
+    t: int = Field(..., description="Timestamp (milliseconds)", alias="t")
+    trend: Optional[int] = Field(None, description="Trend arrow (0-8)")
+
+
+class SibionicsWebhookRequest(BaseModel):
+    """Webhook от Sibionics с данными устройства (шаг 6 на схеме)"""
+    biz_id: str = Field(
+        ...,
+        description="SIBIONICS Authorization resource ID"
+    )
+    device_id: str = Field(
+        ...,
+        description="Device ID"
+    )
+    event_type: str = Field(
+        ...,
+        description="Тип события: new_data, device_online, device_offline, etc."
+    )
+    timestamp: int = Field(
+        ...,
+        description="Timestamp события (milliseconds)"
+    )
+    device_data: Optional[SibionicsWebhookDeviceData] = Field(
+        None,
+        description="Информация об устройстве"
+    )
+    glucose_records: Optional[List[SibionicsWebhookGlucoseRecord]] = Field(
+        None,
+        description="Новые записи глюкозы"
+    )
+    sign: Optional[str] = Field(
+        None,
+        description="Подпись для верификации webhook"
+    )
+
+
+class SibionicsWebhookResponse(BaseModel):
+    """Ответ на webhook от Sibionics"""
+    success: bool
+    message: str
+    records_processed: int = 0
+
+
+# === User Actions Schemas (API 105) ===
+
+class SibionicsActionData(BaseModel):
+    """Данные действия пользователя (зависят от типа)"""
+    actionImgs: Optional[List[str]] = Field(default_factory=list, description="Изображения действия")
+    eventType: Optional[str] = Field(None, description="Тип события (напр. Lunch, Dinner для еды)")
+    eventDetail: Optional[str] = Field(None, description="Детали события (напр. название еды, значение finger blood)")
+    eventConsume: Optional[float] = Field(None, description="Потребление (калории для спорта, доза для лекарств/инсулина)")
+    unit: Optional[str] = Field(None, description="Единица измерения (для лекарств)")
+
+
+class SibionicsActionResponse(BaseModel):
+    """Действие пользователя из Sibionics"""
+    actionTime: str = Field(..., description="Время начала действия (ISO 8601 или timestamp)")
+    actionEndTime: Optional[str] = Field(None, description="Время окончания действия (для сна)")
+    createTime: str = Field(..., description="Время создания записи")
+    type: int = Field(..., description="Тип: 1=еда, 2=спорт, 3=лекарства, 4=инсулин, 5=сон, 6=fingerBlood, 7=самочувствие")
+    actionData: SibionicsActionData = Field(..., description="Данные действия")
+    
+    class Config:
+        from_attributes = True

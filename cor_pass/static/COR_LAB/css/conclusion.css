@@ -3,6 +3,7 @@
   width: 50%;
   padding: 12px;
   overflow: auto;
+  border-right: 1px solid #EFECF8;
 }
 .conclusionFormGroup{
   margin-bottom: 16px;
@@ -10,31 +11,35 @@
 .conclusionFormGroupLabel{
   color:  #B1A1DA;
   font-weight: 400;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 .conclusionFormGroupInput{
-  background: white;
-  border: none;
-  padding: 16px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.60);
-  width: 100%;
+    border: 1px solid #fff;
+    padding: 16px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.60);
+    width: 100%;
 }
 .conclusionBottom{
   color: #7B43F2;
   font-weight: 400;
 }
 .conclusionActionBottom{
-  padding: 12px 24px;
-  border: none;
-  font-size: 16px;
-  background: #6C00FF;
-  color: #FFFFFF;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background .2s, color .2s;
-  text-align: center;
-  margin-top: 20px;
+width: 205px;
+height: 64px;
+padding: 20px 26px;
+border: none;
+font-size: 18px;
+line-height: 24px;
+font-weight: 800;
+background: #7527B2;
+color: #FFFFFF;
+border-radius: 20px;
+cursor: pointer;
+transition: background .2s, color .2s;
+text-align: center;
+align-content: center;
+margin: 20px 0;
 }
 .conclusionTop{
   margin-bottom: 18px;
@@ -53,4 +58,19 @@
   font-size: 12px;
   margin-left: 10px;
   margin-bottom: 5px;
+}
+
+.glassWrapperLabel {
+  font-size: 16px;
+  line-height: 20px;
+  color: #B1A1DA;
+  margin-bottom: 16px;
+}
+
+.conclusionFormGroupInput.custom-scroll::-webkit-scrollbar-track {
+    margin: 20px;
+}
+
+.glassContent.df.custom-scroll::-webkit-scrollbar-track {
+    margin-bottom: 20px;
 }

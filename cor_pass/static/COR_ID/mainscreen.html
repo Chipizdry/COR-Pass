@@ -715,7 +715,7 @@
         function extractAndSaveGenderAndBirthYear(corId) {
     try {
         console.log("Обрабатываем COR-ID:", corId);
-        localStorage.setItem('COR-ID', corId);
+        
         const match = corId.match(/^(.{9})-(\d{4})([MF])$/);
         
         if (match) {

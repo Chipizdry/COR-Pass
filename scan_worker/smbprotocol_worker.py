@@ -74,6 +74,8 @@ STAINING_ABBREVIATIONS = [st.abbr() for st in StainingType]
 # Сканер убирает |, остаются только _
 # Формат: {case_code}_{cassette}_{hospital}_{sample}_L{glass_number}_{staining}_{cor_id}_{timestamp}.svs
 # Пример: S25R00026_A16_FF_A_L0_VK_2244J230X-1994M_2025-11-07_20_00_27.svs
+# Также поддерживает: S25R00026_B4_FF_B_L0_P_2244J230X-1994M2025-11-20_19_01_05.svs (без _ перед датой)
+# COR ID всегда заканчивается на M, F или *
 new_filename_pattern = re.compile(
     r"^(?P<case_code>S\d{2}[RBECXSAY]\d{5})"
     r"_(?P<cassette>[A-Z0-9]+)"
@@ -81,8 +83,8 @@ new_filename_pattern = re.compile(
     r"_(?P<sample>[A-Z])"
     r"_L(?P<glass_number>\d+)"
     r"_(?P<staining>[A-Z0-9&]+)"
-    r"_(?P<cor_id>[A-Z0-9]+(?:-[A-Z0-9]+)?)"
-    r"_\d{4}-\d{2}-\d{2}_\d{2}_\d{2}_\d{2}"
+    r"_(?P<cor_id>[A-Z0-9]+(?:-[A-Z0-9]+)?[MF*])"  # COR ID заканчивается на M, F или *
+    r"_?\d{4}-\d{2}-\d{2}_\d{2}_\d{2}_\d{2}"  # Опциональный _ перед датой
     r"\.svs$",
     re.IGNORECASE
 )

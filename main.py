@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
-from prometheus_client import Counter, Histogram, CollectorRegistry, CONTENT_TYPE_LATEST, generate_latest, multiprocess
+from prometheus_client import Counter, Histogram, CONTENT_TYPE_LATEST, generate_latest
 
 from prometheus_fastapi_instrumentator import PrometheusFastApiInstrumentator
 
@@ -18,68 +18,41 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from fastapi_limiter import FastAPILimiter
 
 
-from cor_pass.repository.cerbo_service import (
+from cor_pass.repository.energy.cerbo_service import (
     close_modbus_client,
     create_modbus_client,
 )
 from cor_pass.version import __version__
-from cor_pass.routes import auth, person
 from cor_pass.database.db import get_db, async_session_maker
 from cor_pass.database.redis_db import redis_client
-from cor_pass.services.websocket_events_manager import websocket_events_manager
+from cor_pass.services.shared.websocket_events_manager import websocket_events_manager
+
 from cor_pass.routes import (
-    auth,
-    records,
-    password_generator,
-    cor_id,
-    otp_auth,
-    admin,
-    lawyer,
-    financier,
+    user,
     doctor,
-    websocket,
-    device_ws,
-    device_proxy,
-    cases,
-    samples,
-    cassettes,
-    glasses,
-    dicom_router,
-    printing_device,
-    printer,
-    websocket_events,
-    svs_router,
-    lab_assistants,
-    energy_managers,
-    cerbo_routes,
-    blood_pressures,
-    ecg_measurements,
-    excel_router,
-    scanner_router,
-    medicines,
-    first_aid_kits,
-    support,
-    ophthalmological_prescriptions,
-    prescriptions,
-    laboratories,
-    medicine_intakes,
-    sibionics_routes,
-    medical_cards,
-    medical_card_data,
-    fuel_station,
+    laboratory,
+    devices,
+    medical,
+    health,
+    medicine,
+    energy,
+    fuel,
+    roles,
+    shared,
 )
+
 from cor_pass.config.config import settings
-from cor_pass.services.ip2_location import initialize_ip2location
+from cor_pass.services.shared.ip2_location import initialize_ip2location
 from loguru import logger
-from cor_pass.services.auth import auth_service
+from cor_pass.services.user.auth import auth_service
 from fastapi.responses import JSONResponse
 from collections import defaultdict
 from jose import JWTError, jwt
 
-from cor_pass.services.websocket import check_session_timeouts, cleanup_auth_sessions, register_signature_expirer
+from cor_pass.services.shared.websocket import check_session_timeouts, cleanup_auth_sessions, register_signature_expirer
 
-from cor_pass.services.logger import setup_logging
-from cor_pass.services.prometheus_multiprocess import setup_prometheus_multiprocess
+from cor_pass.services.shared.logger import setup_logging
+from cor_pass.services.shared.prometheus_multiprocess import setup_prometheus_multiprocess
 
 setup_logging()
 setup_prometheus_multiprocess()
@@ -141,6 +114,21 @@ api_description += """
 *Все торговые марки являются собственностью их соответствующих владельцев.*
 """
 
+# порядок отображения тэгов в Swagger (сначала доменные)
+openapi_tags = [
+    {"name": "User Domain"},
+    {"name": "Roles Domain"},
+    {"name": "Doctor Domain"},
+    {"name": "Laboratory Domain"},
+    {"name": "Medical Domain"},
+    {"name": "Health Domain"},
+    {"name": "Medicine Domain"},
+    {"name": "Devices Domain"},
+    {"name": "Energy Domain"},
+    {"name": "Fuel Domain"},
+    {"name": "Shared Domain"},
+]
+
 app = FastAPI(
     title="COR-ID API",
     description=api_description,
@@ -148,15 +136,13 @@ app = FastAPI(
     openapi_url="/openapi.json" if settings.app_env in ["development", "lab-neuro"] else None,
     docs_url="/docs" if settings.app_env in ["development", "lab-neuro"] else None,
     redoc_url="/redoc" if settings.app_env in ["development", "lab-neuro"] else None,
+    openapi_tags=openapi_tags,
 )
 
 app.mount("/static", StaticFiles(directory="cor_pass/static"), name="static")
 
 origins = settings.allowed_redirect_urls
 
-# === Настройка Prometheus метрик с multiprocess поддержкой ===
-
-# Создаем собственные метрики которые работают в multiprocess mode
 HTTP_REQUESTS_TOTAL = Counter(
     "http_requests_total",
     "Total HTTP requests",
@@ -200,28 +186,14 @@ async def prometheus_metrics_middleware(request: Request, call_next):
     
     return response
 
-# Endpoint для метрик с multiprocess поддержкой
+# Endpoint для метрик
 @app.get("/metrics")
 async def metrics():
-    """Prometheus metrics endpoint с поддержкой multiprocess mode"""
+    """Prometheus metrics endpoint"""
     from prometheus_client import REGISTRY
     
-    prom_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR")
-    
-    # Если PROMETHEUS_MULTIPROC_DIR установлен - собираем метрики со всех workers
-    if prom_dir:
-        registry = CollectorRegistry()
-        multiprocess.MultiProcessCollector(registry)
-        data = generate_latest(registry)
-    else:
-        # В single-process режиме используем дефолтный registry
-        data = generate_latest(REGISTRY)
-    
-    # Если данных нет - возвращаем хотя бы дефолтный registry (для отладки)
-    if not data or len(data) < 100:
-        logger.warning(f"Metrics data is empty or too small: {len(data) if data else 0} bytes, falling back to REGISTRY")
-        data = generate_latest(REGISTRY)
-    
+    # Используем дефолтный registry со всеми метриками
+    data = generate_latest(REGISTRY)
     return Response(content=data, media_type=CONTENT_TYPE_LATEST)
 
 # Дополнительные кастомные метрики
@@ -360,46 +332,18 @@ async def shutdown_event():
 auth_attempts = defaultdict(list)
 blocked_ips = {}
 
-app.include_router(auth.router, prefix="/api")
-app.include_router(admin.router, prefix="/api")
-app.include_router(records.router, prefix="/api")
-app.include_router(password_generator.router, prefix="/api")
-app.include_router(person.router, prefix="/api")
-app.include_router(cor_id.router, prefix="/api")
-app.include_router(otp_auth.router, prefix="/api")
-app.include_router(lawyer.router, prefix="/api")
-app.include_router(financier.router, prefix="/api")
+# Domain-based router registration
+app.include_router(user.router, prefix="/api")
 app.include_router(doctor.router, prefix="/api")
-app.include_router(cases.router, prefix="/api")
-app.include_router(samples.router, prefix="/api")
-app.include_router(cassettes.router, prefix="/api")
-app.include_router(glasses.router, prefix="/api")
-app.include_router(websocket.router, prefix="/api")
-app.include_router(device_ws.router, prefix="/api")
-app.include_router(device_proxy.router, prefix="/api")
-app.include_router(dicom_router.router, prefix="/api")
-app.include_router(svs_router.router, prefix="/api")
-app.include_router(printing_device.router, prefix="/api")
-app.include_router(printer.router, prefix="/api")
-app.include_router(websocket_events.router, prefix="/api")
-app.include_router(lab_assistants.router, prefix="/api")
-app.include_router(cerbo_routes.router, prefix="/api")
-app.include_router(energy_managers.router, prefix="/api")
-app.include_router(blood_pressures.router, prefix="/api")
-app.include_router(ecg_measurements.router, prefix="/api")
-app.include_router(excel_router.router, prefix="/api")
-app.include_router(scanner_router.router, prefix="/api")
-app.include_router(medicines.router, prefix="/api")
-app.include_router(first_aid_kits.router, prefix="/api")
-app.include_router(support.router, prefix="/api")
-app.include_router(ophthalmological_prescriptions.router, prefix="/api")
-app.include_router(prescriptions.router, prefix="/api")
-app.include_router(sibionics_routes.router, prefix="/api")
-app.include_router(laboratories.router, prefix="/api")
-app.include_router(medicine_intakes.router, prefix="/api")
-app.include_router(medical_cards.router, prefix="/api")
-app.include_router(medical_card_data.router, prefix="/api")
-app.include_router(fuel_station.router, prefix="/api/fuel", tags=["Fuel Station"])
+app.include_router(laboratory.router, prefix="/api")
+app.include_router(devices.router, prefix="/api")
+app.include_router(medical.router, prefix="/api")
+app.include_router(health.router, prefix="/api")
+app.include_router(medicine.router, prefix="/api")
+app.include_router(energy.router, prefix="/api")
+app.include_router(fuel.router, prefix="/api")
+app.include_router(roles.router, prefix="/api")
+app.include_router(shared.router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run(

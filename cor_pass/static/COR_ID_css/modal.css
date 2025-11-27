@@ -7,8 +7,9 @@
     z-index: 9000;
     top: 50%;
     left: 50%;
-    background: radial-gradient(circle, #ffffff, #f1e9fc, #fcf7f2);
-   /* box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1); */
+    /* background: radial-gradient(circle, #ffffff, #f1e9fc, #fcf7f2); */
+    background: #EAE9ED;
+    /* box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.1); */
     border: 1px solid #ffffff;
     border-radius: 30px;
     transform: translate(-50%, -50%);
@@ -27,13 +28,19 @@
     box-sizing: border-box;
     margin-bottom: 15px;
     margin-top: 10px;
+    /* Оновлені стилі
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0 14px;
+     */
 }
 
 .modal-header h1,
 .modal-header h2,
 .modal-header h3 {
     color: #291161;
-    font-size: 18px;
+    font-size: 24px;
+    line-height: 30px;
     font-weight: 600;
     text-align: center;
     margin: 0;
@@ -57,11 +64,15 @@
     position: absolute;
     top: 10px;
     right: 20px;
+    /* Оновлені стилі
+    display: flex;
+    justify-content: end;
+     */
 }
 
 .modal-button {
-    width: 25px;
-    height: 25px;
+    width: 24px;
+    height: 24px;
     background-color: #ffffff;
     border: 1px solid #7B43F2;
     border-radius: 7px;
@@ -71,7 +82,8 @@
     font-size: 14px;
     cursor: pointer;
     color: #7B43F2;
-    margin: 0px;
+    margin: 0;
+    padding: 0;
 }
 
 
@@ -114,7 +126,7 @@
 
 
 /* Кнопка удаления в правом верхнем углу карточки */
-.session-delete-button {
+.session-delete-button { /* переробити хрестик */
     position: absolute;
     right: 10px;
     z-index: 10;
@@ -133,7 +145,7 @@
     padding-right: 30px;
 }
 
-  .session-delete-button:hover {
+  .session-delete-button:hover { /* переробити хрестик */
     background-color: #5e32c5;
 
   }
@@ -287,6 +299,12 @@
     box-sizing: border-box; /* Учитываем padding в ширине */
 }
 
+#addPatientModal .form-group-width {
+     width: 100%;
+     padding: 8px 8px 8px 14px;
+     box-sizing: border-box; /* Учитываем padding в ширине */
+}
+
 /* Стили для элементов внутри form-group-width */
 .form-group-width input[type="email"],
 .form-group-width input[type="range"],
@@ -294,9 +312,11 @@
 .form-group-width input[type="tel"],
 .form-group-width input[type="date"] {
     width: 100%;
-    padding: 10px;
-    margin-bottom: 10px;
+    padding: 16px;
+    background-color: rgba(255, 255, 255, 0.6);
+    color: #291161;
     border: 1px solid #ffffff;
+    outline: none;
     border-radius: 12px;
     box-sizing: border-box;
 }
@@ -305,16 +325,18 @@
 .form-group-width .hint {
     margin-top: 5px;
     padding-left: 0;
-    color: #7f69bd;
+    color: #B1A1DA;
     font-size: 12px;
 }
 
 /* Стиль для label */
 .form-group-width label {
-    color: #7f69bd;
-    font-size: 13px;
+    color: #B1A1DA;
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 400;
     display: block;
-    margin-bottom: 5px;
+    margin-bottom: 4px;
 }
 
 .date-selector {
@@ -352,25 +374,32 @@
     max-width: 420px;
     padding-left: 20px;
     gap: 20px;
-  /*  justify-content: space-between; */
+    justify-content: space-between;
+    /* Оновлені стилі
+    display: flex;
+    width: 100%;
+    gap: 20px;
+    justify-content: space-between;
+     */
 }
 
 .additional-fields .input-wrapper {
-
-        position: relative;
-        max-width: 200px;
-
+    position: relative;
+    max-width: 200px;
+    /* Оновлені стилі
+    position: relative;
+    width: 50%;
+     */
 }
 
 .additional-fields input {
-    background-color: rgba(255, 255, 255, 0.7);
-    border: 1px solid #D2CAE8;
+    background-color: rgba(255, 255, 255, 0.6);
+    border: 1px solid #fff;
     border-radius: 12px;
     padding-left: 10px;
     width: 200px;
     box-sizing: border-box;
     color: #5B4296;
-    cursor: not-allowed;
     margin-bottom: 1px;
 }
 
@@ -493,14 +522,26 @@
 .storage-option {
     width: 200px;
     height: 40px;
-    border: 1px solid #f0f0f0;
+    border: 1px solid #fff;
     border-radius: 12px;
-    background-color: white;
+    background-color: rgba(255, 255, 255, 0.6);
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     position: relative;
     cursor: pointer;
+    /* Оновлені стилі
+    padding: 16px;
+    width: 50%;
+    height: 56px;
+    border: 1px solid #fff;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.6);
+    align-items: center;
+    justify-content: flex-start;
+    position: relative;
+    cursor: pointer;
+     */
 }
 
 /* Общая иконка */
@@ -539,18 +580,15 @@
 /* Текст рядом с кнопкой */
 .storage-option span:last-child {
     color: #291161;
-    font-size: 13px;
-}
-
-/* Hover эффект */
-.storage-option:hover {
-    background-color: #f9f9f9;
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 400;
 }
 
 /* Стиль для выбранного текста */
 .storage-option input:checked ~ span:last-child {
     color: #5B4296;
-    font-weight: bold;
+    font-weight: 600;
 }
 
 /* Контейнер опций */
@@ -559,8 +597,6 @@
     gap: 15px;
     margin-bottom: 10px;
 }
-
-
 
 .settings-panel {
     width: 320px;
@@ -712,12 +748,12 @@
     display: flex;
     justify-content: center;
     margin: 00px 20px;
-    background-color: #fafafa;
-    /* border: 1px solid #e0e0e0; */
+    background-color: rgba(255, 255, 255, 0.6);
+    border: 1px solid #fff;
     border-radius: 12px;
-    height: 40px;
-    width: 420px;
-    /* padding: 0px; */
+    height: 48px;
+    width: 100%;
+    padding: 0px;
     overflow: hidden;
     align-items: center;
   }
@@ -727,32 +763,31 @@
     border: none;
     background: transparent;
     color: #b3a3d1;
-    font-size: 14px;
-    /* font-weight: 500; */
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 400;
     border-radius: 12px;
     cursor: pointer;
     transition: background-color 0.3s, color 0.3s, font-weight 0.3s;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 220px;
+    width: 50%;
+    height: 100%;
+    padding: 12px 16px;
   }
 
   .tab-button.active {
-    background-color: #ffffff;
+    background-color: #fff;
     color: #291161;
     font-weight: 600;
-    /* box-shadow: 0 0 0 2px #7f69bd; */
-    width: 240px;
-  }
-
-  .tab-button:hover:not(.active) {
-    background-color: rgba(127, 105, 189, 0.05); /* лёгкий фиолетовый намёк на hover */
+    transition: auto;
   }
 
   .tab-content {
     display: none;
     margin-top: 20px;
+    width: 100%;
   }
 
   .tab-content.active {
@@ -881,4 +916,24 @@
 
 #decryptRecordsBtn:hover {
     background-color: #f2eaff;
+}
+
+.custom-scroll {
+    overflow: auto;
+    width: 100%;
+}
+/* Кастомний скрол під дизайн, скопіювати і підставити 
+потрібний клас контейнера, де треба скрол */
+.custom-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+    border-radius: 3px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+    background: #B1A1DA;
+    border-radius: 3px;
 }

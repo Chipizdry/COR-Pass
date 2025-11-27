@@ -11,7 +11,6 @@
     border: none;
     padding: 16px;
     outline: none;
-    border-bottom-right-radius: 20px;
     color: #291161;
     font-size: 16px;
 }
@@ -26,28 +25,25 @@
 }
 .commentsWrapperButton{
     border: none;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.60);
     color: #7B43F2;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     padding: 4px 0;
     align-items: center;
+    justify-content: center;
     gap: 4px;
     display: none;
+}
+.commentsWrapper:focus-within .commentsWrapperButton {
+    display: inline-flex;
 }
 .commentsWrapperButton:focus-visible{
     outline: 2px solid #7B43F2;
     outline-offset: 2px;
 }
-.commentsWrapperButton.open{
-    display: inline-flex;
-}
 .commentsWrapperButtonIcon{
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-.commentsWrapperButtonLabel{
-    display: inline-block;
+    width: 17px;
+    height: 18px;
 }

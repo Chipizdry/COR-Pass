@@ -1,0 +1,111 @@
+from typing import List
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from cor_pass.database.db import get_db
+from cor_pass.schemas import (
+    CreatePrintingDevice,
+    ResponsePrintingDevice,
+    UpdatePrintingDevice,
+)
+from cor_pass.repository.devices.printing_device import (
+    create_printing_device,
+    get_all_printing_devices,
+    get_printing_device_by_device_class,
+    get_printing_device_by_id,
+    update_printing_device,
+    delete_printing_device_by_id,
+    get_printing_device_by_device_identifier,
+)
+from loguru import logger
+from cor_pass.services.shared.access import admin_access
+
+
+router = APIRouter(prefix="/printing_devices", tags=["Printing Devices"])
+
+
+@router.post(
+    "/",
+    dependencies=[Depends(admin_access)],
+    response_model=ResponsePrintingDevice,
+    status_code=201,
+)
+async def create_new_printing_device(
+    body: CreatePrintingDevice, db: AsyncSession = Depends(get_db)
+):
+    """Создает новое устройство печати."""
+    if body.device_class not in ["GlassPrinter", "scanner_docs", "CassetPrinter", "CassetPrinterHopper", "StickerPrinter"]:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Device class not allowed")
+    existing_device = await get_printing_device_by_device_identifier(
+        device_identifier=body.device_identifier, db=db
+    )
+    if existing_device:
+        logger.debug(f"{body.device_identifier} already exist")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Device already exists"
+        )
+    existing_class = await get_printing_device_by_device_class(db=db, device_class=body.device_class)
+    if existing_class:
+        logger.debug(f"{body.device_class} already exist")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Device already exists"
+        )
+    return await create_printing_device(db=db, body=body)
+
+
+@router.get(
+    "/all",
+    dependencies=[Depends(admin_access)],
+    response_model=List[ResponsePrintingDevice],
+)
+async def read_printing_devices(
+    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
+):
+    """Возвращает список всех устройств печати с пагинацией."""
+    return await get_all_printing_devices(skip=skip, limit=limit, db=db)
+
+
+@router.get(
+    "/{printing_device_id}",
+    dependencies=[Depends(admin_access)],
+    response_model=ResponsePrintingDevice,
+)
+async def read_printing_device(
+    printing_device_id: str, db: AsyncSession = Depends(get_db)
+):
+    """Возвращает устройство печати по его ID."""
+    printing_device = await get_printing_device_by_id(uuid=printing_device_id, db=db)
+    if not printing_device:
+        raise HTTPException(status_code=404, detail="Printing device not found")
+    return printing_device
+
+
+@router.put(
+    "/{printing_device_id}",
+    dependencies=[Depends(admin_access)],
+    response_model=ResponsePrintingDevice,
+)
+async def update_printing_device_by_id(
+    printing_device_id: str,
+    body: UpdatePrintingDevice,
+    db: AsyncSession = Depends(get_db),
+):
+    """Обновляет устройство печати по его ID."""
+    printing_device = await update_printing_device(
+        uuid=printing_device_id, body=body, db=db
+    )
+    if not printing_device:
+        raise HTTPException(status_code=404, detail="Printing device not found")
+    return printing_device
+
+
+@router.delete(
+    "/{printing_device_id}", dependencies=[Depends(admin_access)], status_code=204
+)
+async def delete_printing_device(
+    printing_device_id: str, db: AsyncSession = Depends(get_db)
+):
+    """Удаляет устройство печати по его ID."""
+    result = await delete_printing_device_by_id(uuid=printing_device_id, db=db)
+    return

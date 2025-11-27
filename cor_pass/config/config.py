@@ -69,6 +69,9 @@ class Settings(BaseSettings):
     telegram_battery_alert_threshold: int = 20  # Уровень заряда в % для отправки уведомления
     telegram_alert_cooldown_minutes: int = 60  # Интервал между повторными уведомлениями
     telegram_timezone: str = "Europe/Kiev"  # Часовой пояс для отображения времени
+    
+    # Fuel Station Offline TOTP Configuration
+    fuel_station_totp_secret: str = "FUEL_STATION_TOTP_SECRET"
 
     class Config:
 

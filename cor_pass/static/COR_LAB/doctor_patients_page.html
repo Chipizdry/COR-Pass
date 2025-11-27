@@ -143,13 +143,13 @@
 
 
         <section class="patients_card">
-            <div class="table-wrapper">
+            <div class="table-wrapper custom-scroll">
                 <table>
                     <thead>
                     <tr>
                         <th data-field="name" data-translate="fullName">Прізвище, ім'я, по-батькові</th>
                         <th data-field="id" data-translate="id">COR-ID</th>
-                        <th data-field="age" data-translate="age">Вік</th>
+                        <th data-field="age" data-translate="ageParam">Вік</th>
                         <th data-field="gender" data-translate="gender">Стать</th>
                         <th data-field="date" data-translate="explorationDate">Дослідження</th>
                         <th data-field="date" data-translate="changeDate">Дата змін</th>
@@ -168,27 +168,40 @@
 </div>
 
 <!-- Модальное окно добавления пациента -->
-<div id="addPatientModal" class="modal" style="display: none;">
-    <div class="modal-header">
-        <div class="modal-buttons">
-            <button class="modal-button close" data-action="close" id="cancelPatientBtn">✖</button>
+<div id="addPatientModal" class="modal">
+    <div class="modal-header" style="   width: 100%;
+                                        box-sizing: border-box;
+                                        padding: 0;
+                                        margin: 0 14px;
+                                        position: unset;">
+        <div class="modal-buttons" style="justify-content: end;
+                                         position: unset;">
+            <button class="modal-button close" data-action="close" id="cancelPatientBtn" style="
+                background-color: transparent;
+                border: none;
+                color: transparent;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M18.6872 5.31275C19.1042 5.72975 19.1042 6.40584 18.6872 6.82284L6.82284 18.6873C6.40584 19.1042 5.72975 19.1042 5.31275 18.6873C4.89575 18.2702 4.89575 17.5942 5.31275 17.1772L17.1772 5.31275C17.5942 4.89575 18.2702 4.89575 18.6872 5.31275Z" fill="#B1A1DA"></path>
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M18.6873 18.6873C18.2702 19.1042 17.5942 19.1042 17.1772 18.6873L5.31275 6.82284C4.89575 6.40584 4.89575 5.72975 5.31275 5.31275C5.72975 4.89575 6.40584 4.89575 6.82284 5.31275L18.6873 17.1772C19.1042 17.5942 19.1042 18.2702 18.6873 18.6873Z" fill="#B1A1DA"></path>
+                </svg>
+            </button>
         </div>
-        <h1 data-translate="newPatient">Новий пацієнт</h1>
+        <h1 data-translate="newPatient" style="padding: 12px 14px 0;">Новий пацієнт</h1>
     </div>
-
-    <div class="tab-buttons">
+<div class="padding-buttons-wrapper">
+    <div class="tab-buttons" style="margin: 28px 0px;">
         <button class="tab-button active" data-tab="byCorIdTab" data-translate="addPatientByCorId">Додати по COR-ID</button>
         <button class="tab-button" data-tab="registerPatientTab" data-translate="registerNewPatient">Регістрація пацієнта</button>
     </div>
-
-    <div class="tab-content active" id="byCorIdTab">
+</div>
+    <div class="tab-content active" id="byCorIdTab" style="margin: 0;">
         <div class="form-group-width">
             <label for="corIdInput" data-translate="corIdInput">Введіть COR-ID:</label>
             <input type="text" id="corIdInput" name="corIdInput" required maxlength="15">
         </div>
     </div>
-
-    <div class="tab-content" id="registerPatientTab">
+<div class="custom-scroll">
+    <div class="tab-content" id="registerPatientTab" style="margin: 0;">
         <div class="form-group-width">
             <label for="surname" data-translate="surname">Прізвище</label>
             <input type="text" id="surname" name="surname" required>
@@ -209,30 +222,38 @@
             <input type="date" id="birthDate" name="birthDate" required>
         </div>
 
-        <div class="form-group-width">
+        <div class="form-group-width" style="padding-bottom: 0;">
             <label data-translate="gender-label">Стать:</label>
         </div>
-        <div class="additional-fields">
-            <label class="storage-option">
+        <div class="additional-fields" style="padding: 0 8px 8px 16px;
+                                              width: 100%;
+                                              max-width: unset;">
+            <label class="storage-option" style="   padding: 16px;
+                                                    width: 50%;
+                                                    height: 56px;">
                 <input type="radio" name="gender" value="M">
                 <span class="custom-radio"></span>
-                <span data-translate="male-option">Чоловік</span>
+                <span data-translate="male-option">Чоловіча</span>
             </label>
 
-            <label class="storage-option">
+            <label class="storage-option" style="   padding: 16px;
+                                                    width: 50%;
+                                                    height: 56px;">
                 <input type="radio" name="gender" value="F">
                 <span class="custom-radio"></span>
-                <span data-translate="female-option">Жінка</span>
+                <span data-translate="female-option">Жіноча</span>
             </label>
         </div>
 
 
-        <div class="form-group-width  additional-fields">
-            <div class="input-wrapper">
+        <div class="form-group-width  additional-fields" style="max-width: unset;">
+            <div class="input-wrapper" style="max-width: unset;
+                                              width: 50%;">
                 <label for="patientEmail" data-translate="email">Ел. пошта</label>
                 <input type="text" id="patientEmail" name="patientEmail">
             </div>
-            <div class="input-wrapper">
+            <div class="input-wrapper" style="max-width: unset;
+                                              width: 50%;">
                 <label for="patientPhone" data-translate="phone">Телефон</label>
                 <input type="text" id="patientPhone" name="patientPhone" required>
             </div>
@@ -243,17 +264,22 @@
             <input type="text" id="address" name="address" required>
         </div>
     </div>
-
+</div>
     <button class="button" id="Add_Patient" data-translate="addPatient">Додати пацієнта</button>
 </div>
-
+<div class="modal-backdrop"><!-- затемнення --></div>
 
 <!-- Модалка: Добавить устройство -->
 <div id="addDeviceModal" class="modal" style="display:none;">
     <div class="modal-content">
         <div class="modal-header">
             <div class="modal-buttons">
-                <button class="modal-button close" data-action="close" id="closeAddDeviceModal">✖</button>
+                <button class="modal-button close" data-action="close" id="closeAddDeviceModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M18.6872 5.31275C19.1042 5.72975 19.1042 6.40584 18.6872 6.82284L6.82284 18.6873C6.40584 19.1042 5.72975 19.1042 5.31275 18.6873C4.89575 18.2702 4.89575 17.5942 5.31275 17.1772L17.1772 5.31275C17.5942 4.89575 18.2702 4.89575 18.6872 5.31275Z" fill="#B1A1DA"></path>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M18.6873 18.6873C18.2702 19.1042 17.5942 19.1042 17.1772 18.6873L5.31275 6.82284C4.89575 6.40584 4.89575 5.72975 5.31275 5.31275C5.72975 4.89575 6.40584 4.89575 6.82284 5.31275L18.6873 17.1772C19.1042 17.5942 19.1042 18.2702 18.6873 18.6873Z" fill="#B1A1DA"></path>
+                    </svg>
+                </button>
             </div>
             <h3 style="margin-top:30; color:#291161;font-size: 17px;" data-translate="newDevice">Новий пристрій</h3>
 
@@ -287,6 +313,7 @@
 
     </div>
 </div>
+<div class="modal-backdrop"><!-- затемнення --></div>
 
 <!-- ─── ЛОГИКА (сортировка, поиск, обработчики) ─── -->
 <script src="../COR_ID_Js/general_fun.js"></script>
@@ -333,7 +360,7 @@
             <td>${r.cases.length > 1 ? `${r.cases[0]} ...` : r.cases.length === 1 ? `${r.cases[0]}` : ""}</td>
             <td>${new Date(r.change_date).toLocaleDateString()}</td>
             <td><span class="status">${r.status ? `<span class="status-dot"></span>${r.status}</span>` : ""}</td>
-            <td class="ellipsis"><img src="./assets/actions.png" alt="Actions"></td>`;
+            <td class="ellipsis"><img src="../assets/actions.png" alt="Actions"></td>`;
             tr.onclick = () => {
                 const page = roles.includes('doctor') ? "direction" : "lab";
                 window.location.href = `/static/COR_LAB/${page}.html?userCorId=${r.patient_cor_id}`
@@ -486,7 +513,7 @@
         if (checkToken()) {
             const modal = document.getElementById('addPatientModal');
             if (modal) {
-                modal.style.display = 'block';
+                modal.classList.add('active');
                 // Инициализируем модальное окно (если нужно)
                 initModalControls('addPatientModal');
                 // Делаем окно перетаскиваемым
@@ -631,7 +658,8 @@
                     const dict = translations?.[lang] || {};
                     console.log(dict.patientAddedLog || 'Пацієнта успішно додано:', data);
                     alert(dict.patientAddedAlert || 'Пацієнта успішно додано!');
-                    document.getElementById('addPatientModal').style.display = 'none';
+                    const addPatientModal = document.getElementById('addPatientModal');
+                    addPatientModal.classList.remove('active');
                     window.location.reload();
                 })
                 .catch(error => {
@@ -689,6 +717,7 @@
         // Обработчик закрытия модального окна
         cancelPatientBtn?.addEventListener('click', function () {
             modal.style.display = 'none';
+            modal.classList.remove('active');
         });
 
         // Переключение между вкладками

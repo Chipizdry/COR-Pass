@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Conclusion Page</title>
     <link rel="stylesheet" href="./css/reset.css">
     <link rel="stylesheet" href="./css/general.css">
     <link rel="stylesheet" href="./css/header.css">
@@ -78,7 +78,7 @@
         <div class="header-row bottom">
             <div>
                 <div class="tabs">
-                    <button class="tab medCardPage" data-translate="medCardPage">Вся медкарта</button>
+                    <button class="tab medCardPage" data-translate="medCardPage">Медкарта</button>
                     <button class="tab directionPage" data-translate="direction">Направлення</button>
                     <button class="tab tenderloinPage" data-translate="tenderloin">Вирізка</button>
                     <button class="tab glassPage" data-translate="glass">Скельця</button>
@@ -108,7 +108,7 @@
                     Поточні кейси
                 </div>
             </div>
-            <div class="bottom">
+            <div class="bottom custom-scroll" style="padding-bottom: 20px">
                 <div id="caseItems" class="caseItems">
 
                 </div>
@@ -119,13 +119,16 @@
                 Заключення
             </div>
             <div class="bottom df ">
-                <div class="conclusionContent">
+                <div class="conclusionContent custom-scroll">
                     <div id="reportWrapper">
 
                     </div>
                 </div>
-                <div class="glassContent df" id="reportGlassWrapper">
-
+                <div class="glassContent df custom-scroll"  style="display: block; padding: 12px 0 0 12px;">
+                    <div class="glassWrapperLabel" data-translate="glass">Скельця</div>
+                    <div class="glassItems" id="reportGlassWrapper" style="display: inline-flex; flex-wrap: wrap;">
+                        <!-- скельця мають бути тут -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -314,7 +317,7 @@
             <div class="conclusionFormGroupLabel" data-translate="macrodes_short">
                 Макроопис
             </div>
-            <textarea class="conclusionFormGroupInput" name="report_macrodescription" style="height: 150px;resize: none">${caseOwnerReport?.report_macrodescription || currentReport.concatenated_macro_description || ""}</textarea>
+            <textarea class="conclusionFormGroupInput custom-scroll" name="report_macrodescription" style="height: 150px;resize: none">${caseOwnerReport?.report_macrodescription || currentReport.concatenated_macro_description || ""}</textarea>
         </div>
         <div class="conclusionFormGroup"  style="${!isMyCase ? disabledStyle : ""}">
             <div class="conclusionFormGroupLabel" data-translate="microdes_short">
@@ -358,7 +361,7 @@
         `
 
         if(!caseIsClosed){
-            reportHTmL += `<div class="conclusionActionBottom" style="margin-bottom: 20px" data-translate="updateReport">Оновити репорт</div>`
+            reportHTmL += `<div class="conclusionActionBottom" data-translate="update">Оновити</div>`
         }
 
         formNODE.innerHTML = reportHTmL

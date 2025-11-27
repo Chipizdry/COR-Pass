@@ -1,14 +1,20 @@
-.caseSettingsItemHeader{
+.caseSettingsItemHeader, .commentsWrapperTop{
     color: #291161;
     text-align: center;
     font-size: 18px;
     font-weight: 800;
     padding: 12px 16px;
     background: #FFF;
+    min-height: 78px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .caseSettingsItemContent{
-    gap: 8px;
+    gap: 4px;
     padding: 16px;
+    display: flex;
+    align-items: center;
 }
 .caseSettingsItemWrapper{
     width: 25%;
@@ -18,20 +24,24 @@
 }
 .caseSettingsItem{
     width: 100%;
+    min-height: 30px;
     padding: 6px 10px 4px;
     color: #5B4296;
     text-align: center;
+    align-content: center;
     font-weight: 800;
     border-radius: 6px;
     cursor: pointer;
     border: 1px solid transparent;
 }
 .caseSettingsItem.active{
+    color: #7527B2;
     background: rgba(255, 255, 255, 0.60);
     border: 1px solid #7527B2;
 }
 
 .caseSettingsItemContent input{
+    width: 100%;
     border-radius: 20px;
     border: 1px solid #FFF;
     background: rgba(255, 255, 255, 0.60);
@@ -39,10 +49,62 @@
     font-weight: 400;
     padding: 16px;
     outline: none;
-    border: none;
+}
+/* Для Chrome, Safari та Opera */
+input::-webkit-input-placeholder {
+  color: #B1A1DA;
+}
+/* Для Firefox */
+input::-moz-placeholder {
+  color: #B1A1DA;
+}
+/* Для Internet Explorer 10+ */
+input:-ms-input-placeholder {
+  color: #B1A1DA;
 }
 
 .caseSettingsContent{
     width: 100%;
     flex-wrap: wrap;
+}
+
+/* Тип матеріалу */
+.caseSettingsContent > .caseSettingsItemWrapper:nth-child(4) .caseSettingsItemContent {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+}
+/* літери всередині */
+.caseSettingsContent > .caseSettingsItemWrapper:nth-child(4) .caseSettingsItem {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.caseSettings {
+    border: 1px solid #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.4);
+}
+/* Фіксація */
+.caseSettingsContent > .caseSettingsItemWrapper:nth-child(7) .caseSettingsItemContent {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+}
+
+.caseSettingsItemWrapper {
+    border-right: 1px solid #EAE9EA;
+    border-bottom: 1px solid #EAE9EA;
+}
+/* Терміновість */
+.caseSettingsContent > .caseSettingsItemWrapper:nth-child(5) .caseSettingsItemContent {
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.caseSettingsScroll {
+    overflow-y: auto;
+    max-height: calc(80vh - 200px);
 }

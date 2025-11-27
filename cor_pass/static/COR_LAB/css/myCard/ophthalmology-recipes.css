@@ -225,3 +225,7 @@
 .recipesBottomTextareaGroup textarea::placeholder{
     color: #B1A1DA;
 }
+
+.recipesTop.custom-scroll::-webkit-scrollbar-track{
+    margin: 20px;
+}

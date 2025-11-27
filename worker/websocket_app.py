@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from cor_pass.database.db import get_db
 from cor_pass.database.models import User
 from cor_pass.config.config import settings
-from cor_pass.services.websocket_events_manager import websocket_events_manager
+from cor_pass.services.shared.websocket_events_manager import websocket_events_manager
 from cor_pass.database.redis_db import redis_client
 from passlib.context import CryptContext
 
@@ -32,6 +32,18 @@ class WSMessageBase(BaseModel):
     """Модель для отправки сообщений на энергетические устройства"""
     session_token: str
     data: Dict
+
+from cor_pass.services.shared.pi30_commands import (
+    PI30Command, 
+    PI30_COMMAND_DESCRIPTIONS,
+    format_pi30_command,
+    format_pi30_command_with_crc_hex
+)
+
+class Pi30CommandRequest(BaseModel):
+    """Запрос на отправку PI30 команды"""
+    session_token: str
+    pi30: PI30Command
 
 
 @asynccontextmanager
@@ -103,17 +115,23 @@ async def send_modbus_command_to_all_devices():
     """
     Фоновая задача для периодической отправки Modbus-команд всем подключенным энергетическим устройствам.
     Отправляет команды поочередно:
-    1. 09 03 00 00 00 10 45 4E
-    2. 09 03 00 00 00 0A C4 85
+    1. Modbus: 09 03 00 00 00 10 45 4E
+    2. Modbus: 09 03 00 00 00 0A C4 85
+    3. PI30:   QPIGS (с возвратом каретки, отправляется как ключ "pi30")
     """
     logger.info("🔄 Starting background task: send_modbus_command_to_all_devices")
     
-    # Список команд для поочередной отправки
-    commands = [
-        "09 03 00 00 00 10 45 4E",
-        "09 03 00 00 00 0A C4 85"
+    # Формируем PI30 команду QPIGS с CRC и CR в hex формате
+    # Используем новую функцию для автоматического форматирования
+    pi30_qpigs_hex = format_pi30_command_with_crc_hex("QPIGS")
+    
+    # Список команд: смешанный (modbus / pi30).
+    mixed_commands = [
+        # {"command_type": "modbus_read", "hex_data": "09 03 00 00 00 10 45 4E"},
+        # {"command_type": "modbus_read", "hex_data": "09 03 00 00 00 0A C4 85"},
+        {"command_type": "pi30", "pi30": pi30_qpigs_hex},  # PI30 команда: QPIGS + CRC + CR
     ]
-    command_index = 0
+    command_index = 0  # Индекс текущей команды
     
     while True:
         try:
@@ -126,12 +144,22 @@ async def send_modbus_command_to_all_devices():
                 logger.debug("No active energetic devices connected")
                 continue
             
-            # Выбираем команду из списка по очереди
-            hex_command = commands[command_index]
-            command_data = {
-                "command_type": "modbus_read",
-                "hex_data": hex_command
-            }
+            # Выбираем текущую команду из смешанного списка
+            current_command = mixed_commands[command_index]
+            
+            # Готовим данные для отправки: для pi30 distinta структура
+            if current_command["command_type"] == "pi30":
+                event_payload = {
+                    "command_type": "pi30",
+                    "pi30": current_command["pi30"]  
+                }
+                log_repr = repr(current_command["pi30"]).replace("\r", "\\r")
+            else:
+                event_payload = {
+                    "command_type": "modbus_read",
+                    "hex_data": current_command["hex_data"]
+                }
+                log_repr = current_command["hex_data"]
             
             # Отправляем команду каждому подключенному устройству
             for connection_id, conn_data in connections.items():
@@ -142,16 +170,22 @@ async def send_modbus_command_to_all_devices():
                 try:
                     await websocket_events_manager.send_to_session(
                         session_id=session_id,
-                        event_data=command_data
+                        event_data=event_payload
                     )
-                    logger.debug(f"📤 Sent Modbus command [{hex_command}] to device with session_id: {session_id}")
+                    if current_command["command_type"] == "pi30":
+                        logger.debug(f"📤 Sent PI30 command [QPIGS] -> [{log_repr}] to device with session_id: {session_id}")
+                    else:
+                        logger.debug(f"📤 Sent Modbus command [{log_repr}] to device with session_id: {session_id}")
                 except Exception as e:
                     logger.warning(f"Failed to send command to session {session_id}: {e}")
             
-            logger.info(f"✅ Modbus command [{hex_command}] broadcast complete. Sent to {len(connections)} devices")
+            if current_command["command_type"] == "pi30":
+                logger.info(f"✅ PI30 command [QPIGS] broadcast complete. Sent to {len(connections)} devices")
+            else:
+                logger.info(f"✅ Modbus command [{log_repr}] broadcast complete. Sent to {len(connections)} devices")
             
             # Переключаемся на следующую команду
-            command_index = (command_index + 1) % len(commands)
+            command_index = (command_index + 1) % len(mixed_commands)
             
         except asyncio.CancelledError:
             logger.info("Background task send_modbus_command_to_all_devices cancelled")
@@ -246,6 +280,7 @@ async def websocket_energetic_device_endpoint(
         password = auth_data.get("password")
         
         if not user_email or not password:
+            await websocket.send_json({"cloud_status": "Auth error: Missing credentials"})
             await websocket_events_manager.disconnect(connection_id)
             logger.warning(f"Missing credentials for session {session_id}")
             raise HTTPException(
@@ -256,6 +291,7 @@ async def websocket_energetic_device_endpoint(
         # Проверяем пользователя без использования auth_service
         user = await get_user_by_email(email=user_email, db=db)
         if user is None or not verify_password(plain_password=password, hashed_password=user.password):
+            await websocket.send_json({"cloud_status": "Auth error: Invalid credentials"})
             await websocket_events_manager.disconnect(connection_id)
             logger.warning(f"Invalid credentials for session {session_id}, email: {user_email}")
             raise HTTPException(
@@ -264,7 +300,7 @@ async def websocket_energetic_device_endpoint(
             )
         
         logger.info(f"Energetic device authenticated: session_id={session_id}, user={user_email}")
-        await websocket.send_json({"status": "authenticated"})
+        await websocket.send_json({"cloud_status": "authenticated"})
         
         # Основной цикл приема данных
         while True:
@@ -325,6 +361,76 @@ async def send_message_to_energetic_device(message: WSMessageBase, db: AsyncSess
             status_code=500, 
             detail=f"Ошибка при отправке сообщения: {str(e)}"
         )
+
+
+@app.post(
+    "/send_pi30_command",
+    status_code=status.HTTP_200_OK,
+    summary="Отправить PI30 команду на энергетическое устройство"
+)
+async def send_pi30_command(request: Pi30CommandRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Отправляет PI30 команду на энергетическое устройство через WebSocket.
+    Команда выбирается из предопределенного списка PI30Command.
+    
+    Команда отправляется в hex формате с CRC и CR: COMMAND (hex) + CRC + 0D
+    """
+    connection_id = await redis_client.get(f"ws:session:{request.session_token}")
+    if not connection_id:
+        logger.warning(f"No connection found for session_token {request.session_token}")
+        raise HTTPException(
+            status_code=404, 
+            detail=f"Сессия не найдена или устройство не подключено: {request.session_token}"
+        )
+    
+    command_str = request.pi30.value
+    description = PI30_COMMAND_DESCRIPTIONS.get(request.pi30, "PI30 command")
+    
+    # Форматируем команду в hex с CRC и CR
+    formatted_command_hex = format_pi30_command_with_crc_hex(command_str)
+    
+    try:
+        await websocket_events_manager.send_to_session(
+            session_id=request.session_token,
+            event_data={
+                "command_type": "pi30",
+                "pi30": formatted_command_hex,  # Hex строка с CRC и CR
+                "description": description
+            }
+        )
+        logger.info(f"PI30 command {command_str} (hex: {formatted_command_hex}) sent to device session {request.session_token}")
+        return {
+            "detail": "PI30 команда успешно отправлена",
+            "session_token": request.session_token,
+            "command": command_str,
+            "formatted_command_hex": formatted_command_hex,
+            "description": description
+        }
+    except Exception as e:
+        logger.error(f"Ошибка при отправке PI30 команды {command_str}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Ошибка при отправке PI30 команды: {str(e)}"
+        )
+
+
+@app.get(
+    "/pi30/commands",
+    status_code=status.HTTP_200_OK,
+    summary="Получить список доступных PI30 команд"
+)
+async def list_pi30_commands():
+    """
+    Возвращает список всех доступных PI30 команд с описаниями.
+    """
+    commands = [
+        {
+            "command": cmd.value,
+            "description": PI30_COMMAND_DESCRIPTIONS.get(cmd, "")
+        }
+        for cmd in PI30Command
+    ]
+    return {"commands": commands}
 
 
 @app.post(

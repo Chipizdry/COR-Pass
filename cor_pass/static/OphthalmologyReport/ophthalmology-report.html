@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../COR_LAB/css/reset.css">
+    <link rel="stylesheet" href="../COR_LAB/css/general.css">
+    <link rel="stylesheet" href="./ophthalmology-report.css">
+    <title>Рецепт на окуляри</title>
+</head>
+<body>
+<div class="wrapper">
+    <main class="report-page">
+        <section class="report-card">
+            <header class="report-header">
+                <h1 class="report-title">Рецепт на окуляри</h1>
+            </header>
+
+            <section class="info-card">
+                <div class="info-row">
+                    <span class="info-label">COR-ID</span>
+                    <span class="info-value" data-field="corId"></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Пацієнт</span>
+                    <span class="info-value" data-field="patientName"></span>
+                </div>
+                <div class="info-row info-row--split">
+                    <div class="info-cell">
+                        <span class="info-label">Дата народження</span>
+                        <span class="info-value" data-field="birthDate"></span>
+                    </div>
+                    <div class="info-cell">
+                        <span class="info-label">Стать</span>
+                        <span class="info-value" data-field="gender"></span>
+                    </div>
+                </div>
+            </section>
+
+            <section class="eyes-block">
+                <div class="eye-headings">
+                    <div class="eye-title">OD (Right)</div>
+                    <div class="eye-title">OS (Left)</div>
+                </div>
+                <div class="eye-grid">
+                    <div class="eye-card" data-eye="od">
+                        <div class="eye-rows">
+                            <div class="eye-row">
+                                <span class="eye-label">Sph</span>
+                                <span class="eye-value" data-eye-value="sph" data-eye="od"></span>
+                            </div>
+                            <div class="eye-row">
+                                <span class="eye-label">Cyl</span>
+                                <span class="eye-value" data-eye-value="cyl" data-eye="od"></span>
+                            </div>
+                            <div class="eye-row">
+                                <span class="eye-label">Ax</span>
+                                <span class="eye-value" data-eye-value="ax" data-eye="od"></span>
+                            </div>
+                            <div class="eye-row">
+                                <span class="eye-label">Prism</span>
+                                <span class="eye-value" data-eye-value="prism" data-eye="od"></span>
+                            </div>
+                            <div class="eye-row">
+                                <span class="eye-label">Base</span>
+                                <span class="eye-value" data-eye-value="base" data-eye="od"></span>
+                            </div>
+                            <div class="eye-row">
+                                <span class="eye-label">Add</span>
+                                <span class="eye-value" data-eye-value="add" data-eye="od"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="eye-card" data-eye="os">
+                        <div class="eye-rows">
+                            <div class="eye-row">
+                                <span class="eye-label">Sph</span>
+                                <span class="eye-value" data-eye-value="sph" data-eye="os"></span>
+                            </div>
+                            <div class="eye-row">
+                                <span class="eye-label">Cyl</span>
+                                <span class="eye-value" data-eye-value="cyl" data-eye="os"></span>
+                            </div>
+                            <div class="eye-row">
+                                <span class="eye-label">Ax</span>
+                                <span class="eye-value" data-eye-value="ax" data-eye="os"></span>
+                            </div>
+                            <div class="eye-row">
+                                <span class="eye-label">Prism</span>
+                                <span class="eye-value" data-eye-value="prism" data-eye="os"></span>
+                            </div>
+                            <div class="eye-row">
+                                <span class="eye-label">Base</span>
+                                <span class="eye-value" data-eye-value="base" data-eye="os"></span>
+                            </div>
+                            <div class="eye-row">
+                                <span class="eye-label">Add</span>
+                                <span class="eye-value" data-eye-value="add" data-eye="os"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="summary-card">
+                <div class="summary-row">
+                    <span class="summary-label">Призначення окулярів</span>
+                    <span class="summary-value" data-field="purpose"></span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Тип окулярів</span>
+                    <span class="summary-value" data-field="glassesType"></span>
+                </div>
+                <div class="summary-row summary-row--split">
+                    <div class="summary-cell">
+                        <span class="summary-label">Дата виписки рецепта</span>
+                        <span class="summary-value" data-field="issueDate"></span>
+                    </div>
+                    <div class="summary-cell">
+                        <span class="summary-label">Термін дії рецепта</span>
+                        <span class="summary-value" data-field="validity"></span>
+                    </div>
+                </div>
+                <div class="summary-note">
+                    <span class="summary-label">Примітка</span>
+                    <p class="note-text" data-field="noteText"></p>
+                </div>
+            </section>
+
+            <footer class="report-footer">
+                <div class="doctor">
+                    <span class="summary-label">Лікар</span>
+                    <div class="doctor-info">
+                        <span class="summary-value" data-field="doctorName"></span>
+                        <span class="signature-mark" aria-hidden="true"></span>
+                    </div>
+                </div>
+            </footer>
+        </section>
+    </main>
+</div>
+
+<script src="./ophthalmology-report.js"></script>
+</body>
+</html>

@@ -194,6 +194,9 @@ document.addEventListener("DOMContentLoaded", (event) => {
                     <div class="directorModalFormGroup-select">
                         <div class="directorModalFormGroup-input input-box">
                             <span class="label" style="color: ${ (formDataField || data.defaultValue) ? "#23155b" : "#a9a4c6"}">${defaultDataLabel || data.placeholder}</span>
+                            <svg class="selectArrow" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12.7241 16.0865L12.7269 16.0834L18.7453 9.65889L18.7499 9.65396L18.7511 9.65252C19.1032 9.25733 19.0719 8.66929 18.7194 8.30513L18.7167 8.30066L18.7158 8.29968L18.7122 8.29599L18.7114 8.29678C18.3519 7.90305 17.7346 7.90088 17.3434 8.29665L17.3412 8.29895L17.3399 8.30027L17.3377 8.30263L12.0041 13.964L6.66231 8.29402L6.66086 8.2954C6.49594 8.09985 6.23847 8 5.97981 8C5.45224 8 5 8.43581 5 8.99434C5 9.25792 5.09722 9.48996 5.26063 9.65679L5.26438 9.66067L11.3137 16.0847L11.3169 16.0882L11.342 16.1139L11.3527 16.1241L11.3555 16.1268C11.7488 16.488 12.3668 16.4838 12.7241 16.0865Z" fill="#5B4296"/>
+                            </svg>
                         </div>
                         <ul class="directorModalFormGroup-list">
                             <li class="disabled">${data.placeholder}</li>

@@ -1,6 +1,7 @@
 .layout {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
     min-height: 100vh;
     gap: 24px;
     background: #EFECF8;
@@ -240,14 +241,19 @@
 }
 
 .dropdown {
+    padding: 16px;
+    padding-right: 10px;
     position: absolute;
-    top: calc(100% + 8px);
+    bottom: -300px;
     right: 0;
     background: #ffffff;
     border: 1px solid #e4e6f0;
     border-radius: 14px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, .06);
-    min-width: 220px;
+    max-width: 280px;
+    max-height: 280px;
+    overflow-y: auto;
+    overflow-x: hidden;
     display: none;
     flex-direction: column;
     z-index: 10
@@ -259,13 +265,14 @@
 
 .dropdown button {
     all: unset;
-    padding: 12px 16px;
+    padding: 8px 12px 6px 12px;
     cursor: pointer;
-    font-size: 14px
+    font-size: 16px;
 }
 
 .dropdown button:hover {
-    background: rgba(0, 0, 0, .04)
+    background: #EFECF8;
+    border-radius: 12px;
 }
 
 .patients_card {
@@ -308,11 +315,12 @@
 }
 
 .table-wrapper thead th {
-    background: rgba(255, 255, 255, 0.60);
+    background: rgba(255, 255, 255);
     text-align: left;
+    align-content: center;
     color: #5B4296;
     padding: 14px 16px;
-    cursor: pointer
+    cursor: pointer;
 }
 
 tbody tr {
@@ -373,30 +381,27 @@ tbody td {
 
 #Add_Patient {
     position: absolute;
-    bottom: 10px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
-    background-color: #7B43F2;
+    background-color: #7527B2;
     color: white;
-    padding: 10px 20px;
-    border-radius: 12px;
+    padding: 20px 26px;
+    border-radius: 20px;
     border: none;
     cursor: pointer;
-    font-size: 16px;
-}
-
-#Add_Patient:hover {
-    background-color: #5e32c5;
+    font-size: 18px;
+    line-height: 24px;
 }
 
 #Add_Patient:active {
-    background-color: #5F41B2;
     transform: translateX(-50%) translateY(2px);
 }
 
 #corIdInput {
     text-align: center; /* Центрирование текста */
     width: 100%; /* Чтобы поле занимало всю доступную ширину */
+    height: 56px;
 }
 
 /* Закргулить верхние края таблицы */
@@ -476,7 +481,74 @@ table td:nth-child(6) {
     text-decoration: none;
 }
 
-.add-button:hover {
-    background-color: #5f1b91;
+#addPatientModal {
+    display: none;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+    min-width: 660px !important;
+    height: 90% !important;
+    width: fit-content !important;
+    padding: 16px 16px 124px 16px !important;
 }
 
+#addPatientModal.active {
+    display: flex !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+}
+
+.close:hover svg {
+    background: #EAE9ED;
+    border: none;
+    outline: none;
+}
+
+.padding-buttons-wrapper {
+    padding: 0 14px;
+    margin: 0;
+    width: 100%;
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(54, 41, 84, 0.5);
+    z-index: 8900;
+    opacity: 0;
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+#addPatientModal.active + .modal-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dropdown::-webkit-scrollbar-track {
+    border-radius: 3px;
+    margin: 16px;
+}
+
+.dropdown::-webkit-scrollbar-thumb {
+    background: #B1A1DA;
+    border-radius: 3px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+    background: #fff;
+}
+/* браузер автоматично підставляє іконку календаря, тож стилізувала її */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(74%) sepia(14%) saturate(816%) hue-rotate(215deg) brightness(94%) contrast(88%);
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+}

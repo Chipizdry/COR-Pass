@@ -4,7 +4,7 @@
     color: #5B4296;
     font-size: 18px;
     font-weight: 400;
-    border: 2px solid #f5f3fb;
+    border-bottom: 1px solid #EFECF8;
 }
 
 .specificMedItem.active{
@@ -48,8 +48,8 @@
     color:#B1A1DA;
     font-size: 18px;
     font-weight: 400;
-    border-right: 1px solid #eeecf8;
-    height: 60px;
+    border-right: 1px solid #EFECF8;
+    height: 66px;
     display: flex;
     align-items: center;
 }
@@ -65,12 +65,12 @@
     font-weight: 800;
 }
 .middle{
-    width: calc(100%  - 230px - 255px) !important;
+    width: calc(100%  - 255px - 256px) !important;
     min-width: 640px;
 }
 .middle .top{
     background: #f5f3fb;
-    border-bottom: 1px solid #eeecf8;
+    border-bottom: 1px solid #EFECF8;
     height: auto !important;
     padding: 0 !important;
 }
@@ -78,7 +78,25 @@
     width: 100%;
 }
 .right{
-    width: 230px;
-    min-width: 230px;
-    overflow: auto;
+    width: 256px;
+    min-width: 256px;
+}
+
+.top.borderRadiusLeft.df.aic {
+    border-bottom: 1px solid #EFECF8;
+    height: 70.5px;
+}
+
+.df.custom-scroll::-webkit-scrollbar-track{
+    background: #F5F3FB;
+    border-radius: 0;
+    border-bottom: 1px solid #EFECF8;
+}
+
+ .personalInfo.custom-scroll::-webkit-scrollbar-track{
+    margin-bottom: 20px;
+}
+
+.glassPageContent.df.jcsb.custom-scroll::-webkit-scrollbar-track{
+    margin: 20px;
 }

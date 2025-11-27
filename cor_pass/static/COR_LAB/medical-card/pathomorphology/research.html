@@ -80,7 +80,7 @@
         <div class="header-row bottom">
             <div>
                 <div class="tabs">
-                    <button class="tab medCardPage active" data-translate="medCardPage">Вся медкарта</button>
+                    <button class="tab medCardPage active" data-translate="medCardPage">Медкарта</button>
                     <button class="tab directionPage" data-translate="direction">Направлення</button>
                     <button class="tab tenderloinPage" data-translate="tenderloin">Вирізка</button>
                     <button class="tab glassPage" data-translate="glass">Скельця</button>
@@ -100,7 +100,7 @@
             </div>
         </div>
     </div>
-    <div class="glassPageContent df jcsb">
+    <div class="glassPageContent df jcsb custom-scroll" style="overflow-y: hidden;overflow-x: auto;">
         <div class="left">
             <div class="top borderRadiusLeft df aic">
                 <div class="glassPageRevert" style="display: none">
@@ -121,7 +121,7 @@
         </div>
         <div class="middle df fdc">
             <div class="top df aic jcsb">
-                <div class="df" style="flex-wrap: nowrap; overflow: auto; width: 100%">
+                <div class="df custom-scroll" style="flex-wrap: nowrap; overflow: auto; width: 100%; height: 72px;">
                     <div class="centralItem">
                         <p data-translate="latestRecords">Останні записи</p>
                     </div>
@@ -135,7 +135,7 @@
                         <p data-translate="prescription">Призначення</p>
                     </div>
                     <div class="centralItem">
-                        <p data-translate="disease">Захворювання</p>
+                        <p data-translate="diagnosis">Діагноз</p>
                     </div>
                     <div class="centralItem">
                         <p data-translate="vaccination">Щеплення</p>
@@ -145,7 +145,7 @@
                     </div>
                 </div>
             </div>
-            <div class="bottom df ">
+            <div class="bottom df custom-scroll">
                 <div style="width: 100%">
                     <div class="researchTop">
                         <div class="researchTopItem" data-translate="instrResearch">Інструментальні</div>
@@ -356,11 +356,11 @@
         const div = document.createElement('div');
         div.classList = "df fdc"
         div.innerHTML = (`
-            <div class="commentsWrapper df fdc" style="height: 100%">
-                <div class="commentsWrapperTop df aic jcc" style="min-height: 60px">
+            <div class="commentsWrapper df fdc" style="height: 100%; width: 256px;">
+                <div class="commentsWrapperTop df aic jcc" style="height: 70.5px; width: 256px;">
                     ${title}
                 </div>
-                <div class="personalInfo">
+                <div class="personalInfo custom-scroll" style="overflow-y: auto; overflow-x: hidden;">
 
                 </div>
             </div>
@@ -406,6 +406,7 @@
                 drawGeneralInfoBLock(dict.physiologicalParams || "Фізіологічні параметри", [
                     drawItemInfoBLock(dict.height || "Зріст (см)", ""),
                     drawItemInfoBLock(dict.weight || "Вага (кг)", ""),
+                    drawItemInfoBLock(dict.bloodPressure || "Тиск (SBP/DBP)", ""),
                     drawItemInfoBLock(dict.pulseParams || "Пульс (уд/хв)", ""),
                     drawItemInfoBLock(dict.sugar || "Цукор (ммоль/л)", ""),
                     drawItemInfoBLock(dict.saturation || "Сатурація (%)", ""),
@@ -414,7 +415,6 @@
                 drawGeneralInfoBLock(dict.contactInfo || "Контактна інформація", [
                     drawItemInfoBLock(dict.email || "Ел. пошта", ""),
                     drawItemInfoBLock(dict.phone || "Телефон", ""),
-                    drawItemInfoBLock(dict.bloodPressure || "Тиск (SBP/DBP)", ""), /* переставити у фізіологічні параметри */
                     drawItemInfoBLock(dict.birthCity || "Місто народження", ""),
                     drawItemInfoBLock(dict.address || "Адреса проживання", ""),
                 ])

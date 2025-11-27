@@ -30,7 +30,7 @@ from worker.telegram_bot import (
     send_connection_loss_notification,
     update_object_data  
 )
-from cor_pass.repository.cerbo_service import get_energetic_object
+from cor_pass.repository.energy.cerbo_service import get_energetic_object
 
 
 
