@@ -176,6 +176,10 @@ footer {
     left: 90px;
 }
 
+.GeneratorIcon {
+    top: 360px;
+    left: 290px;
+}
 .icon svg {
     display: block;
     margin: 0 auto; /* Для центрирования SVG внутри блока */
