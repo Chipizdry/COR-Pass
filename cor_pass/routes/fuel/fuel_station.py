@@ -5,6 +5,7 @@ import logging
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from cor_pass.database.db import get_db
@@ -483,6 +484,56 @@ async def generate_offline_qr(
     """
     return await fuel_station.generate_offline_qr_code(
         user=user
+    )
+
+
+@router.post(
+    "/offline/generate-qr-image",
+    response_class=Response,
+    summary="Сгенерировать офлайн QR-код (изображение)",
+    description="""
+    Генерирует офлайн QR-код и возвращает его как PNG изображение.
+    
+    Content-Type: image/png
+    """
+)
+async def generate_offline_qr_image(
+    user: User = Depends(user_access),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Генерация офлайн QR-кода как PNG изображение
+    """
+    # Получаем данные QR-кода
+    qr_data = await fuel_station.generate_offline_qr_code(user=user)
+    
+    # Генерируем QR-код из JSON строки
+    import qrcode
+    import io
+    import base64
+    
+    # Создаем QR-код из JSON данных
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(qr_data.qr_data_string)
+    qr.make(fit=True)
+    
+    # Создаем изображение
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Конвертируем в bytes
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    qr_bytes = buffer.getvalue()
+    
+    return Response(
+        content=qr_bytes,
+        media_type="image/png",
+        headers={"Content-Disposition": "inline; filename=offline-qr.png"}
     )
 
 

@@ -32,7 +32,8 @@ class FuelQRService:
         user: User,
         db: AsyncSession,
         totp_secret: str,
-        validity_minutes: int = DEFAULT_QR_VALIDITY_MINUTES
+        validity_minutes: int = DEFAULT_QR_VALIDITY_MINUTES,
+        totp_interval: Optional[int] = None
     ) -> FuelQRGenerateResponse:
         """
         Генерирует QR код для сотрудника
@@ -42,6 +43,7 @@ class FuelQRService:
             db: Сессия БД
             totp_secret: TOTP секрет пользователя (из его настроек)
             validity_minutes: Время действия QR кода в минутах
+            totp_interval: Интервал TOTP в секундах (если None - стандартный 30с)
             
         Returns:
             FuelQRGenerateResponse: Данные для QR кода
@@ -51,8 +53,11 @@ class FuelQRService:
             if validity_minutes > FuelQRService.MAX_QR_VALIDITY_MINUTES:
                 validity_minutes = FuelQRService.MAX_QR_VALIDITY_MINUTES
             
-            # Генерируем TOTP код
-            totp_code, time_remaining = totp_service.generate_totp_code(totp_secret)
+            # Генерируем TOTP код с кастомным интервалом для заправки
+            totp_code, time_remaining = totp_service.generate_totp_code(
+                totp_secret, 
+                interval=totp_interval
+            )
             
             # Генерируем timestamp токен
             timestamp_token = totp_service.generate_timestamp_token()

@@ -1015,11 +1015,15 @@ async def update_object(object_id: str, obj_data: EnergeticObjectUpdate, db: Asy
     return obj
 
 @router.delete("/{object_id}", tags=["Energetic Object CRUD"])
-async def delete_object(object_id: str, db: AsyncSession = Depends(get_db)):
-    success = await delete_energetic_object(db, object_id)
+async def delete_object(
+    object_id: str,
+    cascade: bool = Query(False, description="Удалить объект вместе со всеми связанными данными (измерениями и расписаниями)"),
+    db: AsyncSession = Depends(get_db)
+):
+    success = await delete_energetic_object(db, object_id, cascade=cascade)
     if not success:
         raise HTTPException(status_code=404, detail="Object not found")
-    return {"status": "deleted"}
+    return {"status": "deleted", "cascade": cascade}
 
 
 

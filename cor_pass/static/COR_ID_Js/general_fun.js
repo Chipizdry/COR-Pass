@@ -29,6 +29,7 @@ const modalConfigs = {
     RegistersModal: { width: '350px', height: 'auto', top: '50px', left: 'auto' },
     inverterModal: { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
     ExcelModal: { width: '350px', height: '550px', top: 'auto', left: 'auto' },
+    addObjectModal:  { width: '350px', height: 'auto', top: 'auto', left: 'auto' },
 };
 
 //Функция получения токена

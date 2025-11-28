@@ -852,3 +852,30 @@ select#deviceType:checked {
     max-height: none; /* Отключаем ограничение по высоте */
     display: none;
 }
+
+
+.form textarea {
+    width: 200px;              /* Фиксированная ширина как у input */
+    min-height: 40px;          /* Минимальная высота */
+    max-height: 300px;         /* Ограничение, чтобы окно не разрасталось бесконечно */
+    padding: 10px;
+    font-size: 14px;
+    color: #5B4296;            /* Фирменный фиолетовый */
+    border: 1px solid #ccc;
+    border-radius: 12px;       /* Скруглённые углы */
+    box-sizing: border-box;
+    resize: vertical;          /* Можно растягивать только вверх/вниз */
+    overflow-y: auto;          /* Появляется скролл при большой высоте */
+    background-color: white;
+}
+
+/* При фокусе — стиль как у input/select */
+.form textarea:focus {
+    outline: none;
+    border-color: #7527B2;
+    background-color: #ffffff;
+    color: #7527B2;
+    box-shadow: 0 0 5px rgba(117, 39, 178, 0.5);
+}
+
+

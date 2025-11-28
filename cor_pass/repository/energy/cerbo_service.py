@@ -968,6 +968,15 @@ async def get_energy_measurements_service(
 # CRUD по энергетическим обьектам / инверторам
 
 async def create_energetic_object(db: AsyncSession, obj_data: EnergeticObjectCreate) -> EnergeticObject:
+    existing = await db.execute(
+        select(EnergeticObject).where(EnergeticObject.name == obj_data.name)
+    )
+    if existing.scalars().first():
+        raise HTTPException(
+            status_code=409,
+            detail=f"Энергетический объект с именем '{obj_data.name}' уже существует"
+        )
+    
     db_obj = EnergeticObject(**obj_data.model_dump())
     db.add(db_obj)
     await db.commit()
@@ -990,7 +999,22 @@ async def update_energetic_object(
     db_obj = await get_energetic_object(db, object_id)
     if not db_obj:
         return None
+    
     update_data = obj_data.model_dump(exclude_unset=True)
+    
+    if "name" in update_data:
+        existing = await db.execute(
+            select(EnergeticObject).where(
+                EnergeticObject.name == update_data["name"],
+                EnergeticObject.id != object_id
+            )
+        )
+        if existing.scalars().first():
+            raise HTTPException(
+                status_code=409,
+                detail=f"Энергетический объект с именем '{update_data['name']}' уже существует"
+            )
+    
     for field, value in update_data.items():
         setattr(db_obj, field, value)
 
@@ -998,7 +1022,62 @@ async def update_energetic_object(
     await db.refresh(db_obj)
     return db_obj
 
-async def delete_energetic_object(db: AsyncSession, object_id: str) -> bool:
+async def delete_energetic_object(db: AsyncSession, object_id: str, cascade: bool = False) -> bool:
+    """
+    Удаляет энергетический объект.
+    
+    Args:
+        db: Сессия базы данных
+        object_id: ID объекта для удаления
+        cascade: Если True, удаляет объект вместе со всеми связанными данными
+    
+    Returns:
+        True если объект был удален, False если объект не найден
+    
+    Raises:
+        HTTPException(409): Если есть связанные данные и cascade=False
+    """
+    if cascade:
+        # Удаляем связанные измерения
+        await db.execute(
+            delete(CerboMeasurement).where(CerboMeasurement.energetic_object_id == object_id)
+        )
+        
+        # Удаляем связанные расписания
+        await db.execute(
+            delete(EnergeticSchedule).where(EnergeticSchedule.energetic_object_id == object_id)
+        )
+        
+        logger.info(f"Каскадное удаление связанных данных для объекта {object_id}")
+    else:
+        # Проверяем наличие связанных измерений
+        measurements_check = await db.execute(
+            select(func.count()).select_from(CerboMeasurement).where(
+                CerboMeasurement.energetic_object_id == object_id
+            )
+        )
+        measurements_count = measurements_check.scalar_one()
+        
+        if measurements_count > 0:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Невозможно удалить энергетический объект: найдено {measurements_count} связанных измерений. Используйте cascade=true для удаления всех связанных данных."
+            )
+        
+        # Проверяем наличие связанных расписаний
+        schedules_check = await db.execute(
+            select(func.count()).select_from(EnergeticSchedule).where(
+                EnergeticSchedule.energetic_object_id == object_id
+            )
+        )
+        schedules_count = schedules_check.scalar_one()
+        
+        if schedules_count > 0:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Невозможно удалить энергетический объект: найдено {schedules_count} связанных расписаний. Используйте cascade=true для удаления всех связанных данных."
+            )
+    
     result = await db.execute(delete(EnergeticObject).where(EnergeticObject.id == object_id))
     await db.commit()
     return result.rowcount > 0

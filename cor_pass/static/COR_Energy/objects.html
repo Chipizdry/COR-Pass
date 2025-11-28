@@ -55,51 +55,91 @@
     </div>
 
     <!-- Модальное окно для добавления объекта -->
-    <div id="addObjectModal" class="modal" style="display: none;">
-        <div class="modal-header">
-            <div class="modal-buttons">
-                <button class="modal-button close" data-action="close" id="closeAddObject">✖</button>
+        <div id="addObjectModal" class="modal" style="display: none;">
+            <div class="modal-header">
+                <div class="modal-buttons">
+                    <button class="modal-button close" id="closeAddObject">✖</button>
+                </div>
+                <h3 style="margin-top:30; color:#291161;font-size: 17px;">Добавить объект</h3>
             </div>
-            <h3 style="margin-top:30; color:#291161;font-size: 17px;">Добавить объект</h3>
+
+            <div class="modal-content">
+
+                <div class="form">
+                    <label>Название:</label>
+                    <input type="text" id="objectName" required>
+                </div>
+
+                <div class="form">
+                    <label>Описание:</label>
+                    <textarea id="objectDescription" required></textarea>
+                </div>
+
+                <div class="form">
+                    <label for="equipment">Вендор:</label>
+                    <select id="objectVendor" required>
+                        <option value="" disabled selected>Выберите вендора</option>
+                        <option value="modbus-rtu">COR-ID</option>
+                        <option value="sofar">POW Mr</option>
+                        <option value="saj">Victrone</option>
+                        <option value="deye">Deye</option>
+                        <option value="axioma">Axioma</option>
+                    </select>
+                </div>
+
+                <div class="form">
+                    <label for="objectProtocol">Протокол:</label>
+                    <select id="objectProtocol" required>
+                        <option value="" disabled selected>Выберите протокол</option>
+                        <option value="modbus-tcp">Modbus TCP</option>
+                        <option value="modbus-rtu">Modbus RTU</option>
+                        <option value="sunways">Modbus over TCP</option>
+                        <option value="saj">COR-Bridge</option>
+                    </select>
+                </div>
+
+                <div class="form">
+                    <label>IP адрес:</label>
+                    <input type="text" id="objectIp" placeholder="192.168.1.100" required>
+                </div>
+
+                <div class="form">
+                    <label>Порт:</label>
+                    <input type="number" id="objectPort" placeholder="502" required>
+                </div>
+
+                <div class="form">
+                    <label>Логин инвертора:</label>
+                    <input type="text" id="objectLogin">
+                </div>
+
+                <div class="form">
+                    <label>Пароль инвертора:</label>
+                    <input type="text" id="objectPassword">
+                </div>
+
+                <!--
+                <div class="form">
+                    <label>Активен:</label>
+                    <select id="objectIsActive">
+                        <option value="true">Да</option>
+                        <option value="false">Нет</option>
+                    </select>
+                </div> -->
+             <!--
+                <div class="form">
+                    <label>Timezone:</label>
+                    <input type="text" id="objectTimezone" value="Europe/Kiev">
+                </div> -->
+              <!--
+                <div class="form">
+                    <label>Modbus registers (JSON):</label>
+                    <textarea id="objectRegisters" placeholder='{"30001": { "type": "int", "desc": "Voltage" }}'></textarea>
+                </div>  -->
+
+                <button onclick="submitAddObjectForm()">Создать объект</button>
+            </div>
         </div>
-        <div class="modal-content">
-            <div class="form">
-                <label for="objectId">ID:</label>
-                <input type="text" id="objectId" name="objectId" required>
-            </div>
-
-            <div class="form">
-                <label for="objectName">Название:</label>
-                <input type="text" id="objectName" name="objectName" required>
-            </div>
-
-            <div class="form">
-                <label for="objectDescription">Описание:</label>
-                <textarea id="objectDescription" name="objectDescription" required></textarea>
-            </div>
-
-            <div class="form">
-                <label for="objectProtocol">Протокол:</label>
-                <input type="text" id="objectProtocol" name="objectProtocol" required>
-            </div>
-
-            <div class="form">
-                <label for="objectStatus">Статус:</label>
-                <select id="objectStatus" name="objectStatus" required>
-                    <option value="active">Активный</option>
-                    <option value="inactive">Неактивный</option>
-                </select>
-            </div>
-
-            <div class="form">
-                <label for="objectStatus">Действия:</label>
-                
-            </div>
-
-
-            <button onclick="submitAddObjectForm()">Добавить</button>
-        </div>
-    </div>
 
     <script>
 
@@ -322,6 +362,9 @@ function renderTable(objects) {
             modal.style.display = 'block';
         }
 
+        document.getElementById('closeAddObject').onclick = () => {
+            document.getElementById('addObjectModal').style.display = 'none';
+        };
 
         function handleEdit(obj) {
             console.log("Редактировать:", obj.id, obj);
@@ -403,7 +446,62 @@ function renderTable(objects) {
             console.error('Page error:', e.error);
         });
 
-  
+       
+
+      async function submitAddObjectForm() {
+
+                const name = document.getElementById('objectName').value.trim();
+                const description = document.getElementById('objectDescription').value.trim();
+                const vendor = document.getElementById('objectVendor').value;   // ← новый параметр
+                const protocol = document.getElementById('objectProtocol').value.trim();
+                const ip_address = document.getElementById('objectIp').value.trim();
+                const port = parseInt(document.getElementById('objectPort').value.trim());
+                const inverter_login = document.getElementById('objectLogin').value.trim();
+                const inverter_password = document.getElementById('objectPassword').value.trim();
+
+
+                const payload = {
+                    name,
+                    description,
+                    vendor,               // ← добавлено
+                    protocol,
+                    ip_address,
+                    port,
+                    inverter_login,
+                    inverter_password
+                };
+
+                console.log("Отправка:", payload);
+
+                try {
+                    const response = await fetch('/api/modbus/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        console.error("Ошибка:", result);
+                        alert("Ошибка: " + JSON.stringify(result));
+                        return;
+                    }
+
+                    alert("Объект успешно создан!");
+
+                    document.getElementById('addObjectModal').style.display = 'none';
+                    loadObjects(); // обновление таблицы
+
+                } catch (error) {
+                    console.error("Ошибка запроса:", error);
+                    alert("Ошибка отправки запроса");
+                }
+            }
+
+
     </script>
 </body>
 </html>

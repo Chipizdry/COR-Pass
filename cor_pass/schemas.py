@@ -2645,11 +2645,11 @@ class EnergeticObjectBase(BaseModel):
     name: str
     description: Optional[str] = None
     protocol: Optional[str] = Field(None, description="Протокол связи")
+    vendor: Optional[str] = Field(None, description="Производитель/вендор инвертора")
     ip_address: Optional[str] = Field(None, description="IP-адрес объекта")
     port: Optional[int] = Field(None, description="Порт объекта")
     inverter_login: Optional[str] = Field(None, description="Логин для доступа к инвертору")
     inverter_password: Optional[str] = Field(None, description="Пароль для доступа к инвертору")
-    modbus_registers: Optional[dict] = None
     is_active: Optional[bool] = None
     timezone: str = Field(default="Europe/Kiev", description="Часовой пояс объекта (например: Europe/Kiev, America/New_York)")
 
@@ -2660,11 +2660,11 @@ class EnergeticObjectUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     protocol: Optional[str] = Field(None, description="Протокол связи")
+    vendor: Optional[str] = Field(None, description="Производитель/вендор инвертора")
     ip_address: Optional[str] = Field(None, description="IP-адрес объекта")
     port: Optional[int] = Field(None, description="Порт объекта")
     inverter_login: Optional[str] = Field(None, description="Логин для доступа к инвертору")
     inverter_password: Optional[str] = Field(None, description="Пароль для доступа к инвертору")
-    modbus_registers: Optional[dict] = None
     is_active: Optional[bool] = None
     timezone: Optional[str] = Field(None, description="Часовой пояс объекта (например: Europe/Kiev, America/New_York)")
 
@@ -3454,7 +3454,7 @@ class FuelOfflineQRData(BaseModel):
     cor_id: str = Field(..., description="COR ID сотрудника")
     totp_code: str = Field(..., description="TOTP код (6 цифр)")
     timestamp: int = Field(..., description="Unix timestamp генерации QR")
-    company_id: Optional[str] = Field(None, description="ID компании (опционально)")
+    # company_id: Optional[str] = Field(None, description="ID компании (опционально)")
 
 
 class FuelOfflineQRGenerateResponse(BaseModel):
@@ -3475,7 +3475,7 @@ class FuelOfflineQRVerifyResponse(BaseModel):
     is_valid: bool = Field(..., description="Валиден ли QR код")
     message: str = Field(..., description="Сообщение о результате")
     user_cor_id: Optional[str] = Field(None, description="COR ID пользователя")
-    company_id: Optional[str] = Field(None, description="ID компании")
+    # company_id: Optional[str] = Field(None, description="ID компании")
     verified_at: Optional[datetime] = Field(None, description="Время верификации")
 
 

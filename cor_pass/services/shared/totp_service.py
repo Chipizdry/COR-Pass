@@ -34,24 +34,28 @@ class TOTPService:
         return pyotp.random_base32()
     
     @staticmethod
-    def generate_totp_code(secret: str) -> Tuple[str, int]:
+    def generate_totp_code(secret: str, interval: Optional[int] = None) -> Tuple[str, int]:
         """
         Генерирует текущий TOTP код
         
         Args:
             secret: Base32-encoded секрет
+            interval: Интервал TOTP в секундах. Если None - используется стандартный
             
         Returns:
             Tuple[str, int]: (TOTP код, время до истечения в секундах)
         """
         try:
+            if interval is None:
+                interval = TOTPService.TOTP_INTERVAL
+                
             totp = pyotp.TOTP(
                 secret,
-                interval=TOTPService.TOTP_INTERVAL,
+                interval=interval,
                 digits=TOTPService.TOTP_DIGITS
             )
             code = totp.now()
-            time_remaining = TOTPService.TOTP_INTERVAL - (int(time.time()) % TOTPService.TOTP_INTERVAL)
+            time_remaining = interval - (int(time.time()) % interval)
             
             return code, time_remaining
         except Exception as e:
@@ -62,7 +66,7 @@ class TOTPService:
             )
     
     @staticmethod
-    def verify_totp_code(secret: str, code: str, window: Optional[int] = None) -> bool:
+    def verify_totp_code(secret: str, code: str, window: Optional[int] = None, interval: Optional[int] = None) -> bool:
         """
         Проверяет TOTP код
         
@@ -70,6 +74,7 @@ class TOTPService:
             secret: Base32-encoded секрет
             code: TOTP код для проверки
             window: Окно проверки (±N интервалов). По умолчанию TOTP_WINDOW
+            interval: Интервал TOTP в секундах. Если None - используется стандартный
             
         Returns:
             bool: True если код валиден, False иначе
@@ -77,10 +82,12 @@ class TOTPService:
         try:
             if window is None:
                 window = TOTPService.TOTP_WINDOW
+            if interval is None:
+                interval = TOTPService.TOTP_INTERVAL
                 
             totp = pyotp.TOTP(
                 secret,
-                interval=TOTPService.TOTP_INTERVAL,
+                interval=interval,
                 digits=TOTPService.TOTP_DIGITS
             )
             

@@ -1,13 +1,12 @@
 
-
 .energy-container {
-    background-color:rgba(255, 255, 255, 0.6);
+    background-color: rgba(255, 255, 255, 0.6);
     padding: 19px;
     border-radius: 30px;
-    max-width: 900px;
+    max-width: 890px;
     width: 900px !important;
     text-align: center;
-    height: 800px;
+    height: 780px;
     flex-shrink: 0;
 }
 
@@ -1096,3 +1095,34 @@ footer {
 .actions-menu button:hover {
     background: rgba(41,17,97,0.06);
 }
+
+
+
+.form select {
+    width: 200px;
+    padding: 10px;
+    font-size: 14px;
+    color: #5B4296;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    box-sizing: border-box;
+    background-color: white;
+    appearance: none;
+    margin-bottom: 10px;
+}
+
+/* При фокусе — как у input */
+.form select:focus {
+    outline: none;
+    border-color: #7527B2;
+    background-color: #ffffff;
+    color: #7527B2;
+    box-shadow: 0 0 5px rgba(117, 39, 178, 0.5);
+}
+
+/* Активная выбранная опция */
+.form select option:checked {
+    background-color: #5B4296;
+    color: white;
+} 
+

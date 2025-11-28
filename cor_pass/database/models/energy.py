@@ -21,23 +21,19 @@ class EnergeticObject(Base):
     name = Column(String, nullable=False, unique=True, comment="Имя/название объекта")
     description = Column(String, nullable=True, comment="Описание объекта")
     protocol = Column(String, nullable=True, comment="Протокол связи")
+    vendor = Column(String, nullable=True, comment="Производитель/вендор инвертора")
     ip_address = Column(String, nullable=True, comment="IP-адрес объекта")
     port = Column(Integer, nullable=True, comment="Порт объекта")
     inverter_login = Column(String, nullable=True, comment="Логин для доступа к инвертору")
     inverter_password = Column(String, nullable=True, comment="Пароль для доступа к инвертору")
     timezone = Column(
         String,
-        nullable=False,
+        nullable=True,
         default='Europe/Kiev',
         server_default='Europe/Kiev',
         comment="Часовой пояс объекта (например: Europe/Kiev)"
     )
 
-    modbus_registers = Column(
-        JSONB,
-        nullable=True,
-        comment="Карта регистров Modbus (динамическая структура в формате JSON)"
-    )
     is_active = Column(Boolean, default=False, comment="Активен ли фоновый опрос")
 
     # Relationships

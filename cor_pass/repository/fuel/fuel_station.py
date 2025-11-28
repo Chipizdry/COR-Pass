@@ -122,7 +122,8 @@ async def generate_qr_code_for_user(
             user=user,
             db=db,
             totp_secret=totp_secret,
-            validity_minutes=body.validity_minutes
+            validity_minutes=body.validity_minutes,
+            totp_interval=auth_config.totp_interval  # Используем интервал из конфигурации
         )
         
         logger.info(f"QR code generated for user {user.cor_id}")
@@ -1134,6 +1135,8 @@ async def create_account_member_in_finance(
 # Offline QR Code Functions (Офлайн QR коды для заправки)
 # ============================================================================
 
+FUEL_STATION_TOTP_INTERVAL=120
+
 async def get_offline_totp_secret(
     user: User,
 ) -> FuelOfflineTOTPSecretResponse:
@@ -1190,7 +1193,6 @@ async def generate_offline_qr_code(
     
     Args:
         user: Авторизованный пользователь
-        company_id: ID компании (опционально)
         
     Returns:
         FuelOfflineQRGenerateResponse с данными для QR кода
@@ -1207,7 +1209,10 @@ async def generate_offline_qr_code(
         
         # Генерируем текущий TOTP код
         totp_service_instance = TOTPService()
-        totp_code, time_remaining = totp_service_instance.generate_totp_code(totp_secret)
+        totp_code, time_remaining = totp_service_instance.generate_totp_code(
+            totp_secret, 
+            interval=FUEL_STATION_TOTP_INTERVAL
+        )
         
         # Текущий timestamp
         current_timestamp = int(time.time())
@@ -1216,21 +1221,23 @@ async def generate_offline_qr_code(
         qr_data = FuelOfflineQRData(
             cor_id=user.cor_id,
             totp_code=totp_code,
-            timestamp=current_timestamp,
-            company_id=company_id
+            timestamp=current_timestamp
         )
         
 
         import json
         qr_data_string = json.dumps(qr_data.model_dump(), ensure_ascii=False)
         
+        # Экранируем строку для безопасной передачи в JSON запросах
+        qr_data_string_escaped = qr_data_string.replace('"', '\\"')
+        
         logger.info(f"Generated offline QR code for user {user.cor_id}")
         
         return FuelOfflineQRGenerateResponse(
             qr_data=qr_data,
-            qr_data_string=qr_data_string,
+            qr_data_string=qr_data_string_escaped,
             expires_in_seconds=time_remaining,
-            totp_interval=TOTPService.TOTP_INTERVAL
+            totp_interval=FUEL_STATION_TOTP_INTERVAL
         )
         
     except HTTPException:
@@ -1261,9 +1268,21 @@ async def verify_offline_qr_code(
         # Парсим данные QR кода
         import json
         try:
-            qr_data_dict = json.loads(body.qr_data_string)
+            # Логируем полученную строку для отладки
+            logger.debug(f"Received QR data string: {body.qr_data_string}")
+            
+            # Если строка была экранирована, разэкранируем её
+            unescaped_string = body.qr_data_string.replace('\\"', '"')
+            
+            qr_data_dict = json.loads(unescaped_string)
             qr_data = FuelOfflineQRData(**qr_data_dict)
-        except (json.JSONDecodeError, Exception) as e:
+        except json.JSONDecodeError as e:
+            logger.warning(f"JSON decode error in offline QR code: {e}")
+            return FuelOfflineQRVerifyResponse(
+                is_valid=False,
+                message=f"Невалидный JSON формат QR кода: {e}"
+            )
+        except Exception as e:
             logger.warning(f"Invalid offline QR code format: {e}")
             return FuelOfflineQRVerifyResponse(
                 is_valid=False,
@@ -1290,12 +1309,13 @@ async def verify_offline_qr_code(
                 message=f"QR код слишком старый ({timestamp_diff}s)"
             )
         
-        # Проверяем TOTP код (с окном ±3 интервала = ±90 секунд)
+        # Проверяем TOTP код (с окном ±3 интервала)
         totp_service_instance = TOTPService()
         is_valid_totp = totp_service_instance.verify_totp_code(
             secret=totp_secret,
             code=qr_data.totp_code,
-            window=3
+            window=3,
+            interval=FUEL_STATION_TOTP_INTERVAL
         )
         
         if not is_valid_totp:
@@ -1312,7 +1332,7 @@ async def verify_offline_qr_code(
             is_valid=True,
             message="QR код валиден",
             user_cor_id=qr_data.cor_id,
-            company_id=qr_data.company_id,
+            # company_id=qr_data.company_id,
             verified_at=datetime.utcnow()
         )
         
