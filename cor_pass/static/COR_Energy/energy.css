@@ -23,15 +23,15 @@ body {
 }
 
 
- .tabs {
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-        overflow-x: hidden;
-        white-space: normal;
-        border-bottom: 1px solid #ccc; 
-        box-sizing: border-box;
-    }
+.tabs {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    overflow-x: hidden;
+    white-space: normal;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
 
 /* Стили для каждой вкладки */
 .tab {
@@ -40,8 +40,12 @@ body {
     cursor: pointer;
     padding: 10px;
     background-color: #f1f1f1;
-    border-right: 1px solid #ccc; /* Горизонтальная граница между вкладками */
+    border-radius: 12px ; 
+   /* border-right: 1px solid #ccc; /* Горизонтальная граница между вкладками */
     box-sizing: border-box; /* Учет padding и border в ширину */
+    color: #7527B2;         /* более бледный текст */
+    font-weight: 300;    /* тонкий шрифт */
+    opacity: 0.45;        /* визуально делает ещё бледнее */
 }
 /* Убираем правую границу у последней вкладки */
 .tab:last-child {
@@ -51,7 +55,8 @@ body {
 /* Контент вкладок */
 .tabcontent {
     display: none;
-    border: 1px solid #ccc;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 22px;
     border-top: none;
     margin-top: 0;
     padding: 6px;
@@ -63,8 +68,11 @@ body {
 
 /* Стиль для активной вкладки */
 .tab.active {
-    background-color: #2ccb32;
-    border-bottom: 1px solid #fff; /* Имитируем активную вкладку */
+    background-color: #fff;
+    font-weight: bold;
+    color: #7527B2;
+    opacity: 1.0;
+    /*border-bottom: 1px solid #fff; /* Имитируем активную вкладку */
 }
 
 /* Активный контент вкладки */

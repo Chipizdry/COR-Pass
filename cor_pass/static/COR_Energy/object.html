@@ -43,9 +43,8 @@
             Соединение с сервером 
         </div>
              
-        <button class="link-button" onclick="goBack('/static/COR_ID/mainscreen.html')" data-translate="back-link-text"><<<назад<<<</button>
-        <h3>COR-Energy Трасса E-95</h3>
-
+        <button class="link-button" onclick="goBack('/static/COR_Energy/objects.html')" data-translate="back-link-text"><<<назад<<<</button>
+        <h3 id="objectTitle">   </h3>
 
         <!-- Вкладки -->
         <div class="tabs">
@@ -656,21 +655,7 @@
               <button id="process-excel-btn">Карта регистров</button>
               <div class="ess-settings-display">
                 <h4>ESS расширенные настройки</h4>
-                <table>
-                    <tr><td>Setpoint AC:</td><td id="ac_setpoint">--</td></tr>
-                    <tr><td>Setpoint (fine):</td><td id="fine_setpoint">--</td></tr>
-                    <tr><td>Макс. заряд %:</td><td id="charge_limit">--</td></tr>
-                    <tr><td>Макс. разряд %:</td><td id="discharge_limit">--</td></tr>
-                    <tr><td>Ограничение по разряду (Вт):</td><td id="discharge_power">--</td></tr>
-                    <tr><td>Макс. ток заряда (DC):</td><td id="dvcc_current">--</td></tr>
-                    <tr><td>Ограничение Feed-in:</td><td id="feedin_power">--</td></tr>
-                    <tr><td>Feed-in от DC-PV:</td><td id="feedin_dc">--</td></tr>
-                    <tr><td>Feed-in от AC-PV:</td><td id="feedin_ac">--</td></tr>
-                    <tr><td>Состояние Grid Limiting:</td><td id="grid_limit">--</td></tr>
-                    <tr><td>Ограничение напряжения заряда:</td><td id="charge_voltage">--</td></tr>
-                    <tr><td>Источник AC 1:</td><td id="input1_src">--</td></tr>
-                    <tr><td>Источник AC 2:</td><td id="input2_src">--</td></tr>
-                </table>
+               
             </div>
 
         </div>
@@ -1066,7 +1051,18 @@
             soh: 0       // Состояние здоровья батареи (%)
         };
 
+document.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    const objectId = params.get("object_Id");
 
+    if (!objectId) {
+        console.error("objectId не найден в URL");
+        return;
+    }
+
+    // Загружаем настройки объекта
+    loadObjectSettings(objectId);
+});
 
         updateBatteryFill(batteryData.soc);
             // Закрытие модального окна (если нужно)
@@ -1226,6 +1222,60 @@ function getCurrentTimeFormatted() {
 
  
   
+
+async function loadObjectSettings(objectId) {
+    try {
+        const response = await fetch(`/api/modbus/${objectId}`, {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Ошибка загрузки объекта");
+        }
+
+        const data = await response.json();
+
+        console.log("Объект:", data);
+        // Установка заголовка
+        document.getElementById("objectTitle").textContent = data.name || "    ";
+        // Запускаем обработчик в зависимости от протокола
+        handleObjectByProtocol(data);
+
+    } catch (err) {
+        console.error("Ошибка:", err);
+    }
+}
+
+
+function handleObjectByProtocol(objectData) {
+
+    switch (objectData.protocol) {
+
+        case "modbus-rtu":
+           // loadModbusRTUSettings(objectData);
+            break;
+
+        case "modbus-tcp":
+          //  loadModbusTCPSettings(objectData);
+            break;
+
+        case "saj":
+         //   loadSajSettings(objectData);
+            break;
+
+        case "sunways":
+        //    loadSunwaysSettings(objectData);
+            break;
+
+        default:
+            console.warn("Неизвестный протокол:", objectData.protocol);
+            break;
+    }
+}
+
     </script>
     
 </body>
