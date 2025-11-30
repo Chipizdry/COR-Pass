@@ -37,14 +37,17 @@
 </head>
 <body>
     <div class="energy-container">
-    
+     <button class="link-button" onclick="goBack('/static/COR_Energy/objects.html')" data-translate="back-link-text"><<<назад<<<</button>
+      <div class="object-header">
+        <h3 id="objectTitle" style="margin:0px">   </h3>
+
         <div class="connection-status">
             <span id="connectionIndicator" class="status-indicator"></span>
             Соединение с сервером 
         </div>
-             
-        <button class="link-button" onclick="goBack('/static/COR_Energy/objects.html')" data-translate="back-link-text"><<<назад<<<</button>
-        <h3 id="objectTitle">   </h3>
+      </div>      
+       
+       
 
         <!-- Вкладки -->
         <div class="tabs">
@@ -59,31 +62,77 @@
     
              <!-- Иконка батареи -->
              <div class="icon battery-icon" id="batteryIcon">
-                <div id="batteryFlowLabel" style="text-align: center; margin-bottom: -20px; font-size: 14px; font-weight: bold;">
-                    Заряд/Разряд батареи
+                <div id="batteryFlowLabel" style="text-align: center; margin-bottom:4px; font-size: 14px;color:#291161; font-weight: bold;">
+                    Батарея
                 </div>
-                  <svg width="140" height="69" viewBox="0 0 80 39" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M73.0562 6.28855C73.3817 6.28855 73.6465 6.55336 73.6465 6.87884V31.8644C73.6465 32.1899 
-                    73.3817 32.4547 73.0562 32.4547H14.7964C14.4709 32.4547 14.2061 32.1899 14.2061 31.8644V6.87884C14.2061 
-                    6.55336 14.4709 6.28855 14.7964 6.28855H73.0562ZM73.0562 3.98086H14.7964C13.1959 3.98086 11.8984 
-                    5.27833 11.8984 6.87884V31.8644C11.8984 33.4649 13.1959 34.7624 14.7964 34.7624H73.0562C74.6567 
-                    34.7624 75.9542 33.4649 75.9542 31.8644V6.87884C75.9542 5.27833 74.6567 3.98086 73.0562 3.98086Z" fill="#5B4296"/>
-                    <path d="M73.462 0H14.4617C10.8509 0 7.92377 2.92715 7.92377 6.53797V8.76876H3.93547C1.76196 8.76876 0 10.5307 0 
-                    12.7042V26.0395C0 28.213 1.76196 29.975 3.93547 29.975H7.92377V32.2058C7.92377 35.8166 10.8509 38.7438 14.4617 
-                    38.7438H73.462C77.0729 38.7438 80 35.8166 80 32.2058V6.53797C80 2.92715 77.0729 0 73.462 0ZM7.91572 27.6673H3.93547C3.03792 
-                    27.6673 2.30769 26.9371 2.30769 26.0395V12.7042C2.30769 11.8067 3.03792 11.0764 3.93547 11.0764H7.91572V27.6673ZM77.6923 
-                    32.2058C77.6923 34.5384 75.7946 36.4361 73.462 36.4361H14.4617C12.1292 36.4361 10.2315 34.5384 10.2315 32.2058V6.53797C10.2315 
-                    4.2054 12.1292 2.30769 14.4617 2.30769H73.462C75.7946 2.30769 77.6923 4.2054 77.6923 6.53797V32.2058Z" fill="#5B4296"/>
-                  </svg>
+                <svg width="140" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"></rect>
+                    <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"></rect>
+                    <path d="M114 1H110V31H114V1Z" fill="#41D51F"></path>
+                    <path d="M114 1V31" stroke="#291161" stroke-dasharray="2 2"></path>
+                </svg>
+                 <svg width="140" height="130" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.8574 26.2861H74.286V53.7147H22.8575L22.8574 26.2861Z" fill="#41D51F"/>
+                    <path d="M73.0562 26.9165C73.3817 26.9165 73.6465 27.1813 73.6465 27.5068V52.4924C73.6465 
+                    52.8178 73.3817 53.0827 73.0562 53.0827H14.7964C14.4709 53.0827 14.2061 52.8178 14.2061 
+                    52.4924V27.5068C14.2061 27.1813 14.4709 26.9165 14.7964 26.9165H73.0562ZM73.0562 
+                    24.6088H14.7964C13.1959 24.6088 11.8984 25.9063 11.8984 27.5068V52.4924C11.8984 
+                    54.0929 13.1959 55.3903 14.7964 55.3903H73.0562C74.6567 55.3903 75.9542 54.0929 
+                    75.9542 52.4924V27.5068C75.9542 25.9063 74.6567 24.6088 73.0562 24.6088Z" fill="#5B4296"/>
+                    <path d="M73.462 20.6279H14.4617C10.8509 20.6279 7.92377 23.5551 7.92377 
+                    27.1659V29.3967H3.93547C1.76196 29.3967 0 31.1587 0 33.3322V46.6675C0 48.8409 
+                    1.76196 50.6029 3.93547 50.6029H7.92377V52.8337C7.92377 56.4445 10.8509 59.3717 
+                    14.4617 59.3717H73.462C77.0729 59.3717 80 56.4445 80 52.8337V27.1659C80 23.5551 
+                    77.0729 20.6279 73.462 20.6279ZM7.91572 48.2952H3.93547C3.03792 48.2952 2.30769 
+                    47.565 2.30769 46.6675V33.3322C2.30769 32.4346 3.03792 31.7044 3.93547 
+                    31.7044H7.91572V48.2952ZM77.6923 52.8337C77.6923 55.1663 75.7946 57.064 
+                    73.462 57.064H14.4617C12.1292 57.064 10.2315 55.1663 10.2315 52.8337V27.1659C10.2315 
+                    24.8333 12.1292 22.9356 14.4617 22.9356H73.462C75.7946 22.9356 77.6923 24.8333 
+                    77.6923 27.1659V52.8337Z" fill="#5B4296"/>
+                    <path d="M38.4004 26.9155V53.0843" stroke="#DF1125" stroke-width="0.8"/>
+                    <path d="M47.0556 37.7842C47.3596 37.7842 47.6263 37.8562 47.8556 
+                    38.0002C48.0849 38.1389 48.2609 38.3335 48.3836 38.5842C48.5116 
+                    38.8349 48.5756 39.1202 48.5756 39.4402V42.2002H47.8956V39.6482C47.8956 
+                    39.3922 47.8556 39.1709 47.7756 38.9842C47.7009 38.7975 47.5889 38.6562 
+                    47.4396 38.5602C47.2956 38.4589 47.1223 38.4082 46.9196 38.4082C46.6049 
+                    38.4082 46.3329 38.5442 46.1036 38.8162C45.8796 39.0829 45.7676 39.4135 
+                    45.7676 39.8082V42.2002H45.1036V39.6482C45.1036 39.2589 45.0156 38.9549 
+                    44.8396 38.7362C44.6689 38.5175 44.4289 38.4082 44.1196 38.4082C43.9649 
+                    38.4082 43.8156 38.4455 43.6716 38.5202C43.5329 38.5895 43.4103 38.6855 
+                    43.3036 38.8082C43.2023 38.9309 43.1196 39.0802 43.0556 39.2562C42.9969 
+                    39.4269 42.9676 39.6109 42.9676 39.8082V42.2002H42.2876V37.8802H42.7756L42.8876 
+                    38.4722C42.9676 38.3655 43.0583 38.2695 43.1596 38.1842C43.2663 38.0989 43.3783 
+                    38.0269 43.4956 37.9682C43.6129 37.9095 43.7383 37.8642 43.8716 37.8322C44.0049 
+                    37.8002 44.1383 37.7842 44.2716 37.7842C44.5756 37.7842 44.8423 37.8589 45.0716 
+                    38.0082C45.3009 38.1522 45.4743 38.3522 45.5916 38.6082C45.6983 38.4375 45.8289 
+                    38.2909 45.9836 38.1682C46.1383 38.0455 46.3063 37.9522 46.4876 37.8882C46.6743 
+                    37.8189 46.8636 37.7842 47.0556 37.7842ZM49.8572 
+                    37.1282V36.3522H50.5932V37.1282H49.8572ZM49.8892 
+                    42.2002V37.8802H50.5692V42.2002H49.8892ZM54.096 37.7842C54.6027 37.7842 55.0054 
+                    37.9549 55.304 38.2962C55.608 38.6375 55.76 39.0775 55.76 
+                    39.6162V42.2002H55.08V39.7762C55.08 39.4829 55.0347 39.2349 
+                    54.944 39.0322C54.8587 38.8295 54.728 38.6749 54.552 38.5682C54.3814 
+                    38.4615 54.1707 38.4082 53.92 38.4082C53.552 38.4082 53.2427 38.5469 
+                    52.992 38.8242C52.7414 39.0962 52.616 39.4349 52.616 
+                    39.8402V42.2002H51.936V37.8802H52.416L52.552 38.5602C52.6587 38.3949 52.7894 
+                    38.2562 52.944 38.1442C53.0987 38.0269 53.2747 37.9389 53.472 37.8802C53.6694 
+                    37.8162 53.8774 37.7842 54.096 37.7842Z" fill="#DF1125"/>
+                 </svg>
+
 
             </div>
 
 
               <!-- Иконка генератора -->
              <div class="icon GeneratorIcon" id="GeneratorIcon">
-                <div id="generatorFlowLabel" style="text-align: center; margin-bottom: -20px; font-size: 14px; font-weight: bold;">
-                    Мощность генератора 
+                <div id="generatorFlowLabel" style="text-align: center; margin-bottom:4px; font-size: 14px;color:#291161; font-weight: bold;">
+                    Мощность 
                 </div>
+                 <svg width="140" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"/>
+                    <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"/>
+                    <path d="M1 8C1 4.13401 4.13401 1 8 1H9V31H8C4.13401 31 1 27.866 1 24V8Z" fill="#41D51F"/>
+                 </svg>
                   <svg width="140" height="140" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M61.7113 51.0378L61.7075 51.0375L48.6094 51.0378C47.181 50.9936 45.8714 51.8789 
                     45.2938 53.292C44.7189 54.6989 45.0227 56.2313 46.0544 57.1833C46.7298 57.8584 47.6561 
@@ -168,7 +217,14 @@
 
                <!-- Иконка солнечной батареи -->
                <div class="icon solar-battery-icon" id="SolarBatteryIcon">
-                <div id="solarPowerLabel" style="text-align: center; margin-bottom: 4px; font-size: 14px; font-weight: bold;">Мощность: 0 Вт</div>
+                <div id="solarPowerLabel" style="text-align: center; margin-bottom: 4px; font-size: 14px; color:#291161; font-weight: bold;">Мощность: 0 Вт</div>
+
+                <svg width="140" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"/>
+                    <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"/>
+                    <path d="M1 8C1 4.13401 4.13401 1 8 1H9V31H8C4.13401 31 1 27.866 1 24V8Z" fill="#41D51F"/>
+                </svg>
+
                <svg width="140" height="140" viewBox="0 0 81 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M31.7069 12.1672C31.8889 12.583 32.3 12.8593 32.7557 12.872C32.8335 12.8626 32.9212 
                 12.8475 33.016 12.8233C33.1024 12.8012 33.1799 12.7753 33.2477 12.749C33.3226 12.7175 33.6966 
@@ -301,10 +357,18 @@
            
         </div>
         <!-- Иконка сети электропитания -->
-          <div class="icon power-grid-icon" id="power-grid-icon">
-            <div id="networkFlowLabel" style="text-align: center; margin-bottom: 4px; font-size: 14px; font-weight: bold;">
+         <div class="icon power-grid-icon" id="power-grid-icon">
+            <div id="networkFlowLabel" style="text-align: center; margin-bottom: 4px; font-size: 14px;color:#291161; font-weight: bold;">
                 Состояние сети
               </div>
+
+    <svg width="140" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"></rect>
+        <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"></rect>
+        <path d="M114 1H110V31H114V1Z" fill="#41D51F"></path>
+        <path d="M114 1V31" stroke="#291161" stroke-dasharray="2 2"></path>
+    </svg>
+
               <svg width="140" height="140" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M72.9408 40.029L62.4837 34.9164C62.328 34.832 62.1352 34.8002 62.019 34.8002H47.4947L45.0546 
                 20.0431H57.371V21.9023H57.0224C56.3252 21.9023 55.8605 22.3671 55.8605 23.0642V27.1311C55.8605 27.8283 
@@ -352,19 +416,24 @@
                 38.6347ZM12.4041 39.913L18.0976 37.1243H32.0411L31.5764 39.913H12.4041ZM31.1114 57.4587L38.1993 63.5009L28.9037 
                 71.4022L31.1114 57.4587ZM54.6994 75.4691C55.6289 75.4691 56.5585 76.3987 56.5585 77.4444V77.6768H23.4429V77.3282C23.4429 
                 76.2825 24.2563 75.4691 25.302 75.4691H54.6994ZM48.7733 57.4586L51.0972 71.4021L41.6854 63.5008L48.7733 57.4586ZM48.3085 
-                39.9129L47.8438 37.1242H61.7873L67.4808 39.9129H48.3085Z" fill="#5B4296"/>
+                39.9129L47.8438 37.1242H61.7873L67.4808 39.9129H48.3085Z" fill="#5B4296"></path>
               </svg>
 
            
            
         </div>
 
-
             <!-- Иконка нагрузки -->
             <div class="icon power-icon" id="loadIcon">
-                <div id="loadIndicatorLabel" style="text-align: center; margin-bottom: -16px; font-size: 14px; font-weight: bold;">
-                    Состояние сети
+                <div id="loadIndicatorLabel" style="text-align: center; margin-bottom:4px;color:#291161; font-size: 14px; font-weight: bold;">
+                    Нагрузка
                   </div>
+
+                    <svg width="140" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"/>
+                        <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"/>
+                        <path d="M1 8C1 4.13401 4.13401 1 8 1H9V31H8C4.13401 31 1 27.866 1 24V8Z" fill="#41D51F"/>
+                    </svg>
                <svg width="140" height="140" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M39.9983 12.3068C28.1842 12.3068 18.5725 21.7883 18.5725 33.4427C18.5725 39.8333 22.9626 46.064
                      24.3011 47.8121C27.1212 51.7117 28.8542 55.1654 29.3134 57.7996C29.3317 57.9049 29.3678 58.2044 29.4039 
@@ -449,7 +518,7 @@
         </div>
 
     <div class="svg-wrapper"> 
-        <svg width="540" height="600" xmlns="http://www.w3.org/2000/svg">
+        <svg width="700" height="600" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="flowLoad" patternUnits="userSpaceOnUse" width="20" height="20">
                     <rect id="loadFlowRect" width="10" height="20" fill="#ffffff"></rect>
@@ -484,15 +553,23 @@
             <polyline points="20,200 165,200" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
             <polyline id="networkFlowLine" points="20,200 165,200" fill="none" stroke="url(#flowGrid)" stroke-width="6" stroke-linejoin="round"></polyline>
             <!--Линия солнечных панелей-->
-            <polyline points="280,340 280,523" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
-            <polyline points="280,518 460,518" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
-            <polyline id="solarLineV" points="280,340 280,521" fill="none" stroke="url(#flowSolarV)" stroke-width="6" stroke-linejoin="round"></polyline>
-            <polyline id="solarLineH" points="277,518 460,518" fill="none" stroke="url(#flowSolarH)" stroke-width="6" stroke-linejoin="round"></polyline>
+             <path d="M 380 280 
+                H 625 
+                A 20 20 0 0 1 645 300 
+                V 360" fill="none" stroke="#ff1010" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">  
+                <animate attributeName="stroke-dashoffset" from="0" to="-50" dur="1s" repeatCount="indefinite"></animate>
+            </path>
+           
             <!--Линия батарей-->
-            <polyline points="200,340, 200,523" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
-            <polyline points="200,518 65,518" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
-            <polyline id="batteryLineV" points="200,340, 200,521" fill="none" stroke="url(#flowBatteryV)" stroke-width="6" stroke-linejoin="round"></polyline>
-            <polyline id="batteryLineH" points="200,518 65,518" fill="none" stroke="url(#flowBatteryH)" stroke-width="6" stroke-linejoin="round"></polyline>       
+
+           <path d="
+                M 250 280
+                H 40
+                A 20 20 0 0 0 25 300
+                V 360 " fill="none" stroke="#ff1010" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">
+                <animate attributeName="stroke-dashoffset" from="0" to="-50" dur="1s" repeatCount="indefinite"></animate>
+            </path>
+      
           </svg>
         </div>  
        

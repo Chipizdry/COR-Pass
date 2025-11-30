@@ -150,29 +150,17 @@ footer {
     text-align: center; /* Центрирование текста под иконкой */
 } 
 
-.battery-icon {
-    top: 350px;  /* Вертикальная позиция */
-    left: 20px; /* Горизонтальная позиция */
-}
-.solar-battery-icon {
-    top: 360px;
-    left: 570px;
-}
+.battery-icon {  top: 380px; left: 50px;}
 
-.inverter-icon {
-    top: 180px;
-    left: 332px;
-}
+.solar-battery-icon { top: 380px; left: 670px;}
 
-.power-grid-icon {
-    top: 10px;
-    left: 10px;
-}
+.inverter-icon { top: 180px; left: 340px; }
 
-.power-icon {
-    top: 10px;
-    left:600px;
-}
+.power-grid-icon { top: 30px; left: 50px; }
+
+.power-icon { top: 30px; left: 670px;}
+
+.GeneratorIcon { top: 390px; left: 340px;}
 
 .WindTurbineIcon {
     top: 100px;
@@ -184,10 +172,7 @@ footer {
     left: 90px;
 }
 
-.GeneratorIcon {
-    top: 360px;
-    left: 290px;
-}
+
 .icon svg {
     display: block;
     margin: 0 auto; /* Для центрирования SVG внутри блока */
@@ -1138,3 +1123,10 @@ footer {
     color: white;
 } 
 
+.object-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 10px;
+}
