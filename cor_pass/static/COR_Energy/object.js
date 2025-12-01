@@ -15,38 +15,29 @@ g = Math.round(255 * (1 - k));
 }
 return `rgb(${r}, ${g}, 0)`;
 }
-
 function updatePowerElement(id, value) {
 const el = document.getElementById(id);
 if (!el) return;
 
-
-const v = Math.max(0, Math.min(100, value));
+const v = Math.max(0, Math.min(100, Math.abs(value))); // используем модуль для цвета
 
 if (el.tagName.toLowerCase() === "path") {
-    // Линия
     const animate = el.querySelector("animate");
     if (v === 0) {
         el.style.stroke = "rgba(120,120,120,0.3)";
         el.style.opacity = "0.3";
-        if (animate) {
-            animate.setAttribute("from", "0");
-            animate.setAttribute("to", "0");
-        }
+        if (animate) animate.setAttribute("from", "0"), animate.setAttribute("to", "0");
         return;
     }
     el.style.stroke = getGradientColor(v);
     el.style.opacity = "1";
-    if (animate) {
-        animate.setAttribute("from", "0");
-        animate.setAttribute("to", value > 0 ? "-50" : "50");
-    }
+    if (animate) animate.setAttribute("from", "0"), animate.setAttribute("to", value > 0 ? "-50" : "50");
 } else if (el.tagName.toLowerCase() === "rect") {
-    // Прогресс-бар
     const svg = el.ownerSVGElement;
     if (!svg) return;
     const vb = svg.viewBox.baseVal;
     const fullWidth = vb.width || svg.getBoundingClientRect().width;
+
     const centerBars = ["BatteryBar", "gridBar"];
     const isCenter = centerBars.includes(id);
     el.setAttribute("fill", v === 0 ? "rgba(120,120,120,0.4)" : getGradientColor(v));
@@ -54,8 +45,15 @@ if (el.tagName.toLowerCase() === "path") {
     if (isCenter) {
         const centerX = fullWidth / 2;
         const halfWidth = (fullWidth / 2) * (v / 100);
-        el.setAttribute("x", centerX - halfWidth);
-        el.setAttribute("width", halfWidth * 2);
+        if (value >= 0) {
+            // вправо от центра
+            el.setAttribute("x", centerX);
+            el.setAttribute("width", halfWidth);
+        } else {
+            // влево от центра
+            el.setAttribute("x", centerX - halfWidth);
+            el.setAttribute("width", halfWidth);
+        }
     } else {
         const padding = 2;
         const width = Math.round((fullWidth - padding * 2) * (v / 100));
@@ -63,7 +61,6 @@ if (el.tagName.toLowerCase() === "path") {
         el.setAttribute("width", width);
     }
 }
-
 
 }
 

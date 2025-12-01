@@ -528,7 +528,7 @@
             <path id="generatorLine" d="
                     M 320 370
                     V 305
-                " fill="none" stroke="#ff1010" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">
+                " fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">
                 <animate attributeName="stroke-dashoffset" from="0" to="50" dur="1s" repeatCount="indefinite"></animate>
             </path>
             <!--Линия нагрузки-->
@@ -538,7 +538,7 @@
                 V 140        
                 A 20 20 0 0 1 370 120  
                 H 560         
-                " fill="none" stroke="#ff1010" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">
+                " fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">
                 <animate attributeName="stroke-dashoffset" from="0" to="-50" dur="1s" repeatCount="indefinite"></animate>
             </path>
 
@@ -549,7 +549,7 @@
                 V 140         
                 A 20 20 0 0 0 270 120  
                 H 100        
-                " fill="none" stroke="#ff1010" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">
+                " fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">
                 <animate attributeName="stroke-dashoffset" from="0" to="50" dur="1s" repeatCount="indefinite"></animate>
             </path>
  
@@ -557,7 +557,7 @@
              <path id="solarLine"  d="M 380 280 
                 H 625 
                 A 20 20 0 0 1 645 300 
-                V 360" fill="none" stroke="#ff1010" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">  
+                V 360" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">  
                 <animate attributeName="stroke-dashoffset" from="0" to="50" dur="1s" repeatCount="indefinite"></animate>
             </path>
            
@@ -567,7 +567,7 @@
                 M 250 280
                 H 40
                 A 20 20 0 0 0 25 300
-                V 360 " fill="none" stroke="#ff1010" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">
+                V 360 " fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">
                 <animate attributeName="stroke-dashoffset" from="0" to="-50" dur="1s" repeatCount="indefinite"></animate>
             </path>
       
@@ -1354,9 +1354,9 @@ function handleObjectByProtocol(objectData) {
     }
 }
 
-updatePowerByName("Battery", 95);
+updatePowerByName("Battery",-95);
 updatePowerByName("Generator", 15);
-updatePowerByName("Grid", -65);
+updatePowerByName("Grid", 65);
 updatePowerByName("Solar", 75);
 updatePowerByName("Load", 35);
 
