@@ -24,6 +24,7 @@
 
     <title>COR-Energy</title>
     <script src="/static/COR_Energy/scripts.js"></script>
+     <script src="/static/COR_Energy/object.js"></script>
     <script src="/static/COR_Energy/power-settings.js"></script>
     <script src="/static/COR_Energy/chart.js"></script>
     <script src="/static/COR_Energy/line_chart.js"></script>
@@ -65,7 +66,7 @@
                 <div id="batteryFlowLabel" style="text-align: center; margin-bottom:4px; font-size: 14px;color:#291161; font-weight: bold;">
                     Батарея
                 </div>
-                <svg width="140" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="138" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"></rect>
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"></rect>
                     <path d="M114 1H110V31H114V1Z" fill="#41D51F"></path>
@@ -128,7 +129,7 @@
                 <div id="generatorFlowLabel" style="text-align: center; margin-bottom:4px; font-size: 14px;color:#291161; font-weight: bold;">
                     Мощность 
                 </div>
-                 <svg width="140" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                 <svg width="138" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"/>
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"/>
                     <path d="M1 8C1 4.13401 4.13401 1 8 1H9V31H8C4.13401 31 1 27.866 1 24V8Z" fill="#41D51F"/>
@@ -219,7 +220,7 @@
                <div class="icon solar-battery-icon" id="SolarBatteryIcon">
                 <div id="solarPowerLabel" style="text-align: center; margin-bottom: 4px; font-size: 14px; color:#291161; font-weight: bold;">Мощность: 0 Вт</div>
 
-                <svg width="140" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="138" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"/>
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"/>
                     <path d="M1 8C1 4.13401 4.13401 1 8 1H9V31H8C4.13401 31 1 27.866 1 24V8Z" fill="#41D51F"/>
@@ -362,7 +363,7 @@
                 Состояние сети
               </div>
 
-    <svg width="140" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="138" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"></rect>
         <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"></rect>
         <path d="M114 1H110V31H114V1Z" fill="#41D51F"></path>
@@ -429,7 +430,7 @@
                     Нагрузка
                   </div>
 
-                    <svg width="140" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="138" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"/>
                         <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"/>
                         <path d="M1 8C1 4.13401 4.13401 1 8 1H9V31H8C4.13401 31 1 27.866 1 24V8Z" fill="#41D51F"/>
@@ -519,7 +520,7 @@
 
     <div class="svg-wrapper"> 
         <svg width="700" height="600" xmlns="http://www.w3.org/2000/svg">
-            <defs>
+        <!--    <defs>
               <pattern id="flowLoad" patternUnits="userSpaceOnUse" width="20" height="20">
                     <rect id="loadFlowRect" width="10" height="20" fill="#ffffff"></rect>
                     <animateTransform id="loadFlowAnim" attributeName="patternTransform" type="translate" from="0,0" to="40,0" dur="1s" repeatCount="indefinite"></animateTransform>
@@ -544,25 +545,49 @@
                     <rect id="batteryFlowRectV" width="20" height="10" fill="#ffffff"></rect>
                     <animateTransform id="batteryFlowAnimV" attributeName="patternTransform" type="translate" from="0,0" to="0,40" dur="1s" repeatCount="indefinite"></animateTransform>
               </pattern>
-            </defs>
+            </defs>-->
 
+
+            <!--Линия генератора-->
+            <path id="generatorLine" d="
+                    M 320 370
+                    V 305
+                " fill="none" stroke="#ff1010" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">
+                <animate attributeName="stroke-dashoffset" from="0" to="50" dur="1s" repeatCount="indefinite"></animate>
+            </path>
             <!--Линия нагрузки-->
-            <polyline points="320,200 530,200" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
-            <polyline id="loadFlowLine" points="320,200 530,200" fill="none" stroke="url(#flowLoad)" stroke-width="6" stroke-linejoin="round"></polyline>
+
+           <path  id="loadLine"  d="
+                M 350 185    
+                V 140        
+                A 20 20 0 0 1 370 120  
+                H 560         
+                " fill="none" stroke="#ff1010" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">
+                <animate attributeName="stroke-dashoffset" from="0" to="-50" dur="1s" repeatCount="indefinite"></animate>
+            </path>
+
             <!--Линия сети-->
-            <polyline points="20,200 165,200" fill="none" stroke="black" stroke-width="10" stroke-linejoin="round"></polyline>
-            <polyline id="networkFlowLine" points="20,200 165,200" fill="none" stroke="url(#flowGrid)" stroke-width="6" stroke-linejoin="round"></polyline>
+
+           <path  id="gridLine"  d="
+                M 290 185     
+                V 140         
+                A 20 20 0 0 0 270 120  
+                H 100        
+                " fill="none" stroke="#ff1010" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">
+                <animate attributeName="stroke-dashoffset" from="0" to="50" dur="1s" repeatCount="indefinite"></animate>
+            </path>
+ 
             <!--Линия солнечных панелей-->
-             <path d="M 380 280 
+             <path id="solarLine"  d="M 380 280 
                 H 625 
                 A 20 20 0 0 1 645 300 
                 V 360" fill="none" stroke="#ff1010" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">  
-                <animate attributeName="stroke-dashoffset" from="0" to="-50" dur="1s" repeatCount="indefinite"></animate>
+                <animate attributeName="stroke-dashoffset" from="0" to="50" dur="1s" repeatCount="indefinite"></animate>
             </path>
            
             <!--Линия батарей-->
 
-           <path d="
+           <path  id="batteryLine" d="
                 M 250 280
                 H 40
                 A 20 20 0 0 0 25 300
@@ -1352,6 +1377,12 @@ function handleObjectByProtocol(objectData) {
             break;
     }
 }
+
+
+updatePowerLine("batteryLine", 65);
+updatePowerLine("gridLine", 80);
+updatePowerLine("loadLine", 20);
+updatePowerLine("generatorLine", 10);
 
     </script>
     
