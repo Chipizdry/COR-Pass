@@ -69,7 +69,7 @@
                 <svg width="138" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"></rect>
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"></rect>
-                    <path d="M114 1H110V31H114V1Z" fill="#41D51F"></path>
+                    <rect id="BatteryBar" x="113" y="1" width="0" height="30" fill="#41D51F"/>
                     <path d="M114 1V31" stroke="#291161" stroke-dasharray="2 2"></path>
                 </svg>
                  <svg width="140" height="130" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -132,7 +132,8 @@
                  <svg width="138" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"/>
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"/>
-                    <path d="M1 8C1 4.13401 4.13401 1 8 1H9V31H8C4.13401 31 1 27.866 1 24V8Z" fill="#41D51F"/>
+                    <rect id="GeneratorBar" x="1" y="1" width="0" height="30" fill="#41D51F"/>
+                    
                  </svg>
                   <svg width="140" height="140" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M61.7113 51.0378L61.7075 51.0375L48.6094 51.0378C47.181 50.9936 45.8714 51.8789 
@@ -223,7 +224,7 @@
                 <svg width="138" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"/>
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"/>
-                    <path d="M1 8C1 4.13401 4.13401 1 8 1H9V31H8C4.13401 31 1 27.866 1 24V8Z" fill="#41D51F"/>
+                    <rect id="SunPanelBar" x="1" y="1" width="0" height="30" fill="#41D51F"/>
                 </svg>
 
                <svg width="140" height="140" viewBox="0 0 81 80" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -360,15 +361,16 @@
         <!-- Иконка сети электропитания -->
          <div class="icon power-grid-icon" id="power-grid-icon">
             <div id="networkFlowLabel" style="text-align: center; margin-bottom: 4px; font-size: 14px;color:#291161; font-weight: bold;">
-                Состояние сети
+                Электросеть
               </div>
 
-    <svg width="138" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"></rect>
-        <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"></rect>
-        <path d="M114 1H110V31H114V1Z" fill="#41D51F"></path>
-        <path d="M114 1V31" stroke="#291161" stroke-dasharray="2 2"></path>
-    </svg>
+                    <svg width="138" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"></rect>
+                        <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"></rect>
+                        <rect id="gridBar" x="113" y="1" width="0" height="30" fill="#41D51F"/>
+                        <path d="M114 1V31" stroke="#291161" stroke-dasharray="2 2"></path>
+                    </svg>
+
 
               <svg width="140" height="140" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M72.9408 40.029L62.4837 34.9164C62.328 34.832 62.1352 34.8002 62.019 34.8002H47.4947L45.0546 
@@ -433,7 +435,7 @@
                     <svg width="138" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"/>
                         <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"/>
-                        <path d="M1 8C1 4.13401 4.13401 1 8 1H9V31H8C4.13401 31 1 27.866 1 24V8Z" fill="#41D51F"/>
+                        <rect id="PowerBar" x="1" y="1" width="0" height="30" fill="#41D51F"/>
                     </svg>
                <svg width="140" height="140" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M39.9983 12.3068C28.1842 12.3068 18.5725 21.7883 18.5725 33.4427C18.5725 39.8333 22.9626 46.064
@@ -520,33 +522,7 @@
 
     <div class="svg-wrapper"> 
         <svg width="700" height="600" xmlns="http://www.w3.org/2000/svg">
-        <!--    <defs>
-              <pattern id="flowLoad" patternUnits="userSpaceOnUse" width="20" height="20">
-                    <rect id="loadFlowRect" width="10" height="20" fill="#ffffff"></rect>
-                    <animateTransform id="loadFlowAnim" attributeName="patternTransform" type="translate" from="0,0" to="40,0" dur="1s" repeatCount="indefinite"></animateTransform>
-              </pattern>
-              <pattern id="flowGrid" patternUnits="userSpaceOnUse" width="20" height="20">
-                <rect id="gridFlowRect" width="10" height="20" fill="#ffffff"></rect>
-                <animateTransform id="gridFlowAnim" attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
-              </pattern>
-              <pattern id="flowSolarV" patternUnits="userSpaceOnUse" width="20" height="20">
-                    <rect id="solarFlowRectV" width="20" height="10" fill="#ffffff"></rect>
-                    <animateTransform id="solarFlowAnimV" attributeName="patternTransform" type="translate" from="0,40" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
-              </pattern>
-              <pattern id="flowSolarH" patternUnits="userSpaceOnUse" width="20" height="20">
-                    <rect id="solarFlowRectH" width="10" height="20" fill="#ffffff"></rect>
-                    <animateTransform id="solarFlowAnimH" attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
-              </pattern>
-              <pattern id="flowBatteryH" patternUnits="userSpaceOnUse" width="20" height="20">
-                <rect id="batteryFlowRectH" width="10" height="20" fill="#ffffff"></rect>
-                <animateTransform id="batteryFlowAnimH" attributeName="patternTransform" type="translate" from="40,0" to="0,0" dur="1s" repeatCount="indefinite"></animateTransform>
-              </pattern>
-              <pattern id="flowBatteryV" patternUnits="userSpaceOnUse" width="20" height="20">
-                    <rect id="batteryFlowRectV" width="20" height="10" fill="#ffffff"></rect>
-                    <animateTransform id="batteryFlowAnimV" attributeName="patternTransform" type="translate" from="0,0" to="0,40" dur="1s" repeatCount="indefinite"></animateTransform>
-              </pattern>
-            </defs>-->
-
+     
 
             <!--Линия генератора-->
             <path id="generatorLine" d="
@@ -1378,11 +1354,12 @@ function handleObjectByProtocol(objectData) {
     }
 }
 
+updatePowerByName("Battery", 95);
+updatePowerByName("Generator", 15);
+updatePowerByName("Grid", -65);
+updatePowerByName("Solar", 75);
+updatePowerByName("Load", 35);
 
-updatePowerLine("batteryLine", 65);
-updatePowerLine("gridLine", 80);
-updatePowerLine("loadLine", 20);
-updatePowerLine("generatorLine", 10);
 
     </script>
     
