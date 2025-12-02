@@ -79,4 +79,22 @@ updatePowerElement(ids.line, value);
 updatePowerElement(ids.bar, value);
 }
 
+function updateBatteryFill(value) {
+    const fill = document.getElementById("batteryFill");
+    if (!fill) return;
 
+    const v = Math.max(0, Math.min(100, value)); // clamp 0..100
+
+    const x_left  = 14.7964;
+    const x_right = 73.0562;
+    const maxWidth = x_right - x_left; // 58.2598
+
+    const newWidth = maxWidth * (v / 100);
+
+    // смещаем x так, чтобы заполнялось справа → налево
+    const newX = x_right - newWidth;
+
+    fill.setAttribute("x", newX.toFixed(2));
+    fill.setAttribute("width", newWidth.toFixed(2));
+    fill.setAttribute("fill", getGradientColor(v));
+}

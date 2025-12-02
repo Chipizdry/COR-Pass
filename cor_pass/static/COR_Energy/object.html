@@ -73,7 +73,8 @@
                     <path d="M114 1V31" stroke="#291161" stroke-dasharray="2 2"></path>
                 </svg>
                  <svg width="140" height="130" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22.8574 26.2861H74.286V53.7147H22.8575L22.8574 26.2861Z" fill="#41D51F"/>
+                    <rect id="batteryFill" x="14.8" y="26.92" width="0" height="26.17" fill="rgb(0,255,0)" />
+
                     <path d="M73.0562 26.9165C73.3817 26.9165 73.6465 27.1813 73.6465 27.5068V52.4924C73.6465 
                     52.8178 73.3817 53.0827 73.0562 53.0827H14.7964C14.4709 53.0827 14.2061 52.8178 14.2061 
                     52.4924V27.5068C14.2061 27.1813 14.4709 26.9165 14.7964 26.9165H73.0562ZM73.0562 
@@ -545,19 +546,20 @@
             <!--Линия сети-->
 
            <path  id="gridLine"  d="
-                M 290 185     
-                V 140         
-                A 20 20 0 0 0 270 120  
-                H 100        
+                M 100 120
+                H 270
+                A 20 20 0 0 1 290 140
+                V 185
                 " fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">
                 <animate attributeName="stroke-dashoffset" from="0" to="50" dur="1s" repeatCount="indefinite"></animate>
             </path>
  
             <!--Линия солнечных панелей-->
-             <path id="solarLine"  d="M 380 280 
-                H 625 
-                A 20 20 0 0 1 645 300 
-                V 360" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">  
+             <path id="solarLine" d="M 645 360
+                V 300
+                A 20 20 0 0 0 625 280
+                H 380"
+                fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">  
                 <animate attributeName="stroke-dashoffset" from="0" to="50" dur="1s" repeatCount="indefinite"></animate>
             </path>
            
@@ -1340,6 +1342,10 @@ function handleObjectByProtocol(objectData) {
           //  loadModbusTCPSettings(objectData);
             break;
 
+         case "modbus-over-tcp":
+          //  loadModbusTCPSettings(objectData);
+            break;
+
         case "saj":
          //   loadSajSettings(objectData);
             break;
@@ -1354,14 +1360,17 @@ function handleObjectByProtocol(objectData) {
     }
 }
 
-updatePowerByName("Battery",-95);
+updatePowerByName("Battery",95);
 updatePowerByName("Generator", 15);
-updatePowerByName("Grid", 65);
+updatePowerByName("Grid", -65);
 updatePowerByName("Solar", 75);
 updatePowerByName("Load", 35);
-
+updateBatteryFill(55);
 
     </script>
     
 </body>
 </html>
+
+
+
