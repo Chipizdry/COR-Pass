@@ -24,7 +24,9 @@
 
     <title>COR-Energy</title>
     <script src="/static/COR_Energy/scripts.js"></script>
-     <script src="/static/COR_Energy/object.js"></script>
+    <script src="/static/COR_Energy/object.js"></script>
+    <script src="/static/COR_Energy/protocols/deye.js"></script>
+
     <script src="/static/COR_Energy/power-settings.js"></script>
     <script src="/static/COR_Energy/chart.js"></script>
     <script src="/static/COR_Energy/line_chart.js"></script>
@@ -1366,6 +1368,12 @@ updatePowerByName("Grid", -65);
 updatePowerByName("Solar", 75);
 updatePowerByName("Load", 35);
 updateBatteryFill(55);
+// Пример вызова:
+readDeyeRegisters("195.8.40.53", 502, 1).then(console.log);
+
+readSunPanelRegisters("195.8.40.53", 502, 1).then(console.log);
+
+readGeneratorRegisters("195.8.40.53", 502, 1).then(console.log);
 
     </script>
     

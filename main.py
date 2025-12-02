@@ -41,6 +41,8 @@ from cor_pass.routes import (
     shared,
 )
 
+from cor_pass.routes.energy import modbus_tcp
+
 from cor_pass.config.config import settings
 from cor_pass.services.shared.ip2_location import initialize_ip2location
 from loguru import logger
@@ -344,6 +346,8 @@ app.include_router(energy.router, prefix="/api")
 app.include_router(fuel.router, prefix="/api")
 app.include_router(roles.router, prefix="/api")
 app.include_router(shared.router, prefix="/api")
+app.include_router(modbus_tcp.router, prefix="/api")
+
 
 if __name__ == "__main__":
     uvicorn.run(
