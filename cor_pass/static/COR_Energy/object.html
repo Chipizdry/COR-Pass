@@ -1369,11 +1369,47 @@ updatePowerByName("Solar", 75);
 updatePowerByName("Load", 35);
 updateBatteryFill(55);
 // Пример вызова:
-readDeyeRegisters("195.8.40.53", 502, 1).then(console.log);
+async function startMonitoring(host, port, slave) {
+    const INTERVAL = 2000; // задержка между циклами (2 секунды)
 
-readSunPanelRegisters("195.8.40.53", 502, 1).then(console.log);
+    while (true) {
+        console.log("---- Цикл обновления ----");
 
-readGeneratorRegisters("195.8.40.53", 502, 1).then(console.log);
+        try {
+            const grid = await readDeyeRegisters(host, port, slave);
+            console.log("Grid data:", grid);
+        } catch (e) {
+            console.error("Ошибка чтения сети:", e);
+        }
+
+        try {
+            const sun = await readSunPanelRegisters(host, port, slave);
+            console.log("Sun panel data:", sun);
+        } catch (e) {
+            console.error("Ошибка чтения солнечных панелей:", e);
+        }
+
+        try {
+            const gen = await readGeneratorRegisters(host, port, slave);
+            console.log("Generator data:", gen);
+        } catch (e) {
+            console.error("Ошибка чтения генератора:", e);
+        }
+
+         try {
+            const gen = await readInverterGridRegisters(host, port, slave);
+            console.log("Generator data:", gen);
+        } catch (e) {
+            console.error("Ошибка чтения сети:", e);
+        }
+        // Пауза между циклами
+        await new Promise(resolve => setTimeout(resolve, INTERVAL));
+    }
+}
+
+// Запуск
+startMonitoring("195.8.40.53", 502, 1);
+
 
     </script>
     

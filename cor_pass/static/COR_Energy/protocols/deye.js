@@ -10,20 +10,22 @@ try {
     });
     const data1 = await resp1.json();
     console.log("Данные первого блока:", data1); 
-    if (data1.result && data1.result.length === 12) {
-        results.phaseVoltageA = data1.result[0] * 0.1;
-        results.phaseVoltageB = data1.result[1] * 0.1;
-        results.phaseVoltageC = data1.result[2] * 0.1;
-        results.lineVoltageAB = data1.result[3] * 0.1;
-        results.lineVoltageBC = data1.result[4] * 0.1;
-        results.lineVoltageCA = data1.result[5] * 0.1;
-        results.powerA = data1.result[6] * 1;
-        results.powerB = data1.result[7] * 1;
-        results.powerC = data1.result[8] * 1;
-        results.totalPower = data1.result[9] * 1;
-        results.totalApparentPower = data1.result[10] * 1;
-        results.gridFrequency = data1.result[11] * 1;
-    }
+    if (data1.ok && data1.data && data1.data.length === 12) {
+            results.phaseVoltageA = data1.data[0] * 0.1;
+            results.phaseVoltageB = data1.data[1] * 0.1;
+            results.phaseVoltageC = data1.data[2] * 0.1;
+            results.lineVoltageAB = data1.data[3] * 0.1;
+            results.lineVoltageBC = data1.data[4] * 0.1;
+            results.lineVoltageCA = data1.data[5] * 0.1;
+
+            results.powerA = data1.data[6];
+            results.powerB = data1.data[7];
+            results.powerC = data1.data[8];
+
+            results.totalPower = data1.data[9];
+            results.totalApparentPower = data1.data[10];
+            results.gridFrequency = data1.data[11];
+        }
 } catch (err) {
     console.error("Ошибка чтения первого блока регистров:", err);
 }
@@ -35,19 +37,19 @@ try {
     });
     const data2 = await resp2.json();
     console.log("Данные второго блока:", data2); 
-    if (data2.result && data2.result.length === 11) {
-        results.currentA = data2.result[0] * 0.01;
-        results.currentB = data2.result[1] * 0.01;
-        results.currentC = data2.result[2] * 0.01;
-        results.outCurrentA = data2.result[3] * 0.01;
-        results.outCurrentB = data2.result[4] * 0.01;
-        results.outCurrentC = data2.result[5] * 0.01;
-        results.outPowerA = data2.result[6] * 1;
-        results.outPowerB = data2.result[7] * 1;
-        results.outPowerC = data2.result[8] * 1;
-        results.outTotalPower = data2.result[9] * 1;
-        results.outTotalApparentPower = data2.result[10] * 1;
-    }
+    if (data2.ok && data2.data && data2.data.length === 11) {
+            results.currentA = data2.data[0] * 0.01;
+            results.currentB = data2.data[1] * 0.01;
+            results.currentC = data2.data[2] * 0.01;
+            results.outCurrentA = data2.data[3] * 0.01;
+            results.outCurrentB = data2.data[4] * 0.01;
+            results.outCurrentC = data2.data[5] * 0.01;
+            results.outPowerA = data2.data[6];
+            results.outPowerB = data2.data[7];
+            results.outPowerC = data2.data[8];
+            results.outTotalPower = data2.data[9];
+            results.outTotalApparentPower = data2.data[10];
+        }
 } catch (err) {
     console.error("Ошибка чтения второго блока регистров:", err);
 }
@@ -91,11 +93,12 @@ async function readSunPanelRegisters(host, port, slave) {
         const data = await resp.json();
         console.log("Сырые данные SUN Panel:", data);
 
-        if (data.result && data.result.length === count) {
+        if (data.ok && data.data && data.data.length === count) {
             registers.forEach((reg, idx) => {
-                results[reg.name] = data.result[idx] * reg.scale;
+                results[reg.name] = data.data[idx] * reg.scale;
             });
         }
+
     } catch (err) {
         console.error("Ошибка чтения SUN Panel регистров:", err);
     }
@@ -127,11 +130,10 @@ async function readGeneratorRegisters(host, port, slave) {
             headers: { 'accept': 'application/json' }
         });
         const data = await resp.json();
-        console.log("Сырые данные генератора:", data);
-
-        if (data.result && data.result.length === count) {
+          console.log("Сырые данные Generator:", data);
+          if (data.ok && data.data && data.data.length === count) {
             registers.forEach((reg, idx) => {
-                results[reg.name] = data.result[idx] * reg.scale;
+                results[reg.name] = data.data[idx] * reg.scale;
             });
         }
     } catch (err) {
@@ -141,6 +143,66 @@ async function readGeneratorRegisters(host, port, slave) {
     console.log("Обработанные результаты генератора:", results);
     return results;
 }
+
+
+async function readInverterGridRegisters(host, port, slave) {
+    const results = {};
+
+    const registers = [
+        { start: 621, name: "GridTotalApparentPower", scale: 1 },      // 621
+        { start: 622, name: "GridPowerFactor", scale: 0.001 },         // 622 (value * 1000)
+        { start: 623, name: "GridPowerA", scale: 1 },                  // 623
+        { start: 624, name: "GridPowerB", scale: 1 },                  // 624
+        { start: 625, name: "GridPowerC", scale: 1 },                  // 625
+
+        // Output voltages
+        { start: 627, name: "InverterVoltageA", scale: 0.1 },          // R41
+        { start: 628, name: "InverterVoltageB", scale: 0.1 },          // R42
+        { start: 629, name: "InverterVoltageC", scale: 0.1 },          // R43
+
+        // Output currents
+        { start: 630, name: "InverterCurrentA", scale: 0.01 },         // 44 S16
+        { start: 631, name: "InverterCurrentB", scale: 0.01 },         // 45 S16
+        { start: 632, name: "InverterCurrentC", scale: 0.01 },         // 46 S16
+
+        // Output powers
+        { start: 633, name: "InverterPowerA", scale: 1 },              // R47
+        { start: 634, name: "InverterPowerB", scale: 1 },              // R48
+        { start: 635, name: "InverterPowerC", scale: 1 },              // 49
+
+        // Totals
+        { start: 636, name: "InverterTotalPower", scale: 1 },          // R50
+        { start: 637, name: "InverterTotalApparentPower", scale: 1 },  // 51
+
+        // Frequency
+        { start: 638, name: "InverterFrequency", scale: 0.01 },        // 52 (correct!)
+    ];
+
+    const startRegister = registers[0].start;
+    const count = registers.length;
+
+    try {
+        const resp = await fetch(
+            `/api/modbus_tcp/read?host=${host}&port=${port}&slave=${slave}&start=${startRegister}&count=${count}&func=3`,
+            { headers: { 'accept': 'application/json' } }
+        );
+
+        const data = await resp.json();
+        console.log("Raw inverter grid data:", data);
+
+       if (data.ok && data.data && data.data.length === count) {
+            registers.forEach((reg, idx) => {
+                results[reg.name] = data.data[idx] * reg.scale;
+            });
+        }
+    } catch (err) {
+        console.error("Error reading inverter registers:", err);
+    }
+
+    console.log("Processed inverter grid data:", results);
+    return results;
+}
+
 
 // Пример вызова:
 //readDeyeRegisters("195.8.40.53", 502, 1).then(console.log);
