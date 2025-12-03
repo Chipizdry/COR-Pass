@@ -1,4 +1,69 @@
 
+async function startMonitoringDeye(objectData) {
+    const INTERVAL = 2000; // интервал между циклами
+   
+    while (true) {
+        console.log("---- Цикл обновления Deye ----");
+
+        try {
+            let gridData, solarData, genData, battData;
+          
+            const host = objectData.ip_address; 
+            const port = objectData.port;
+            const slave = objectData.slave || 1;  // если slave нет в базе — ставим 1
+            const protocol = objectData.protocol;
+
+            switch (protocol) {
+                case "modbus_tcp":
+                    gridData  = await readInverterGridRegisters(host, port, slave);
+                    solarData = await readSunPanelRegisters(host, port, slave);
+                    genData   = await readGeneratorRegisters(host, port, slave);
+                    battData  = await readBatteryRegisters(host, port, slave);
+                /*
+                    updatePowerByName("Battery",95);
+                    updatePowerByName("Generator", 15);
+                    updatePowerByName("Grid", -65);
+                    updatePowerByName("Solar", 75);
+                    updatePowerByName("Load", 35);
+                    updateBatteryFill(55);  */
+                    break;
+
+                case "COR-Bridge":
+                    gridData  = await readInverterGridWS(host, port, slave);
+                    solarData = await readSunPanelWS(host, port, slave);
+                    genData   = await readGeneratorWS(host, port, slave);
+                    battData  = await readBatteryWS(host, port, slave);
+                    break;
+
+                default:
+                    console.warn("Неизвестный протокол Deye:", protocol);
+                    return; // выход из функции
+            }
+
+            // Обновляем UI
+            if (gridData) updatePowerByName("Grid", gridData.totalPower);
+            if (solarData) updatePowerByName("Solar", solarData.PV1InputPower);
+            if (genData) updatePowerByName("Generator", genData.GenTotalPower);
+            if (battData) {
+                updatePowerByName("Battery", battData.battery1Power);
+                updateBatteryFill(battData.battery1SOC);
+            }
+
+        } catch (err) {
+            console.error("Ошибка мониторинга Deye:", err);
+        }
+
+        await new Promise(resolve => setTimeout(resolve, INTERVAL));
+    }
+}
+
+
+
+
+
+
+
+
 
 async function readDeyeRegisters(host, port, slave) {
 const results = {};

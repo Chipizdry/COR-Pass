@@ -1331,43 +1331,41 @@ async function loadObjectSettings(objectId) {
     }
 }
 
-
 function handleObjectByProtocol(objectData) {
 
     switch (objectData.vendor) {
 
-        case "Axioma":
-           // loadModbusRTUSettings(objectData);
-            break;
-
         case "Deye":
-          //  loadModbusTCPSettings(objectData);
+            startMonitoringDeye(objectData);
             break;
 
-         case "Victron":
-          //  loadModbusTCPSettings(objectData);
+        case "Victron":
+            startMonitoringVictron(objectData);
+            break;
+
+        case "Axioma":
+            startMonitoringAxioma(objectData);
             break;
 
         case "Pow Mr":
-         //   loadSajSettings(objectData);
+            startMonitoringPowMr(objectData);
+            break;
+
+        case "Pylontech":
+            startMonitoringPylontech(objectData);
             break;
 
         case "COR-ID":
-        //    loadSunwaysSettings(objectData);
+            startMonitoringCorID(objectData);
             break;
 
         default:
-            console.warn("Неизвестный протокол:", objectData.protocol);
+            console.warn("Неизвестный производитель:", objectData.vendor);
             break;
     }
 }
 
-updatePowerByName("Battery",95);
-updatePowerByName("Generator", 15);
-updatePowerByName("Grid", -65);
-updatePowerByName("Solar", 75);
-updatePowerByName("Load", 35);
-updateBatteryFill(55);
+
 // Пример вызова:
 async function startMonitoring(host, port, slave) {
     const INTERVAL = 2000; // задержка между циклами (2 секунды)
@@ -1415,7 +1413,7 @@ async function startMonitoring(host, port, slave) {
 }
 
 // Запуск
-startMonitoring("195.8.40.53", 502, 1);
+//startMonitoring("195.8.40.53", 502, 1);
 
 
     </script>
