@@ -1334,25 +1334,25 @@ async function loadObjectSettings(objectId) {
 
 function handleObjectByProtocol(objectData) {
 
-    switch (objectData.protocol) {
+    switch (objectData.vendor) {
 
-        case "modbus-rtu":
+        case "Axioma":
            // loadModbusRTUSettings(objectData);
             break;
 
-        case "modbus-tcp":
+        case "Deye":
           //  loadModbusTCPSettings(objectData);
             break;
 
-         case "modbus-over-tcp":
+         case "Victron":
           //  loadModbusTCPSettings(objectData);
             break;
 
-        case "saj":
+        case "Pow Mr":
          //   loadSajSettings(objectData);
             break;
 
-        case "sunways":
+        case "COR-ID":
         //    loadSunwaysSettings(objectData);
             break;
 

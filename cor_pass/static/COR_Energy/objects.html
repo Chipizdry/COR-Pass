@@ -79,11 +79,11 @@
                     <label for="equipment">Вендор:</label>
                     <select id="objectVendor" required>
                         <option value="" disabled selected>Выберите вендора</option>
-                        <option value="modbus-rtu">COR-ID</option>
-                        <option value="sofar">POW Mr</option>
-                        <option value="saj">Victrone</option>
-                        <option value="deye">Deye</option>
-                        <option value="axioma">Axioma</option>
+                        <option value="COR-ID">COR-ID</option>
+                        <option value="POW Mr">POW Mr</option>
+                        <option value="Victrone">Victrone</option>
+                        <option value="Deye">Deye</option>
+                        <option value="Axioma">Axioma</option>
                     </select>
                 </div>
 
@@ -91,10 +91,10 @@
                     <label for="objectProtocol">Протокол:</label>
                     <select id="objectProtocol" required>
                         <option value="" disabled selected>Выберите протокол</option>
-                        <option value="modbus-tcp">Modbus TCP</option>
-                        <option value="modbus-rtu">Modbus RTU</option>
-                        <option value="sunways">Modbus over TCP</option>
-                        <option value="saj">COR-Bridge</option>
+                        <option value="Modbus TCP">Modbus TCP</option>
+                        <option value="Modbus RTU">Modbus RTU</option>
+                        <option value="Modbus over TCP">Modbus over TCP</option>
+                        <option value="COR-Bridge">COR-Bridge</option>
                     </select>
                 </div>
 
@@ -121,6 +121,77 @@
                 <button onclick="submitAddObjectForm()">Создать объект</button>
             </div>
         </div>
+
+
+
+        <!-- Модальное окно для редактирования объекта -->
+<div id="editObjectModal" class="modal" style="display: none;">
+    <div class="modal-header">
+        <div class="modal-buttons">
+            <button class="modal-button close" id="closeEditObject">✖</button>
+        </div>
+        <h3 style="margin-top:30; color:#291161;font-size: 17px;">Редактировать объект</h3>
+    </div>
+
+    <div class="modal-content">
+
+        <div class="form">
+            <label>Название:</label>
+            <input type="text" id="editObjectName" required>
+        </div>
+
+        <div class="form">
+            <label>Описание:</label>
+            <textarea id="editObjectDescription" required></textarea>
+        </div>
+
+        <div class="form">
+            <label for="equipment">Вендор:</label>
+            <select id="editObjectVendor" required>
+                <option value="" disabled selected>Выберите вендора</option>
+                <option value="COR-ID">COR-ID</option>
+                <option value="POW Mr">POW Mr</option>
+                <option value="Victrone">Victrone</option>
+                <option value="Deye">Deye</option>
+                <option value="Axioma">Axioma</option>
+                <option value="Pylontech">Pylontech</option>
+            </select>
+        </div>
+
+        <div class="form">
+            <label for="objectProtocol">Протокол:</label>
+            <select id="editObjectProtocol" required>
+                <option value="" disabled selected>Выберите протокол</option>
+                <option value="Modbus TCP">Modbus TCP</option>
+                <option value="Modbus RTU">Modbus RTU</option>
+                <option value="Modbus over TCP">Modbus over TCP</option>
+                <option value="COR-Bridge">COR-Bridge</option>
+            </select>
+        </div>
+
+        <div class="form">
+            <label>IP адрес:</label>
+            <input type="text" id="editObjectIp" required>
+        </div>
+
+        <div class="form">
+            <label>Порт:</label>
+            <input type="number" id="editObjectPort" required>
+        </div>
+
+        <div class="form">
+            <label>Логин инвертора:</label>
+            <input type="text" id="editObjectLogin">
+        </div>
+
+        <div class="form">
+            <label>Пароль инвертора:</label>
+            <input type="text" id="editObjectPassword">
+        </div>
+
+        <button onclick="submitEditObjectForm()">Сохранить изменения</button>
+    </div>
+</div>
 
     <script>
 
@@ -210,9 +281,7 @@ function renderTable(objects) {
         row.innerHTML = `
             <td>${obj.name || 'Не указано'}</td>
             <td>${obj.description || 'Не указано'}</td>
-            <td title="${modbusRegisters}">
-                ${modbusRegisters.length > 50 ? modbusRegisters.substring(0, 50) + '...' : modbusRegisters}
-            </td>
+            <td>${obj.protocol || 'Не указано'}</td>
             <td class="${statusClass}">${statusText}</td>
 
             <td class="actions">
@@ -348,9 +417,32 @@ function renderTable(objects) {
         };
 
         function handleEdit(obj) {
-            console.log("Редактировать:", obj.id, obj);
-            // TODO открыть модалку редактирования
+          console.log("Редактировать:", obj);
+
+            // Заполняем поля модалки
+            document.getElementById("editObjectName").value = obj.name || "";
+            document.getElementById("editObjectDescription").value = obj.description || "";
+            document.getElementById("editObjectVendor").value = obj.vendor || "";
+            document.getElementById("editObjectProtocol").value = obj.protocol || "";
+            document.getElementById("editObjectIp").value = obj.ip_address || "";
+            document.getElementById("editObjectPort").value = obj.port || "";
+            document.getElementById("editObjectLogin").value = obj.inverter_login || "";
+            document.getElementById("editObjectPassword").value = obj.inverter_password || "";
+
+            // Запоминаем ID текущего объекта
+            window.currentEditObjectId = obj.id;
+
+            // Показываем модалку
+            document.getElementById("editObjectModal").style.display = "block";
+
+          
         }
+
+
+          document.getElementById("closeEditObject").onclick = () => {
+           document.getElementById("editObjectModal").style.display = "none";
+           };
+
 
         function handleDelete(obj) {
             console.log("Удалить:", obj.id);     
@@ -482,7 +574,49 @@ function renderTable(objects) {
                 }
             }
 
+async function submitEditObjectForm() {
 
+    const id = window.currentEditObjectId;
+
+    const payload = {
+        name: document.getElementById("editObjectName").value.trim(),
+        description: document.getElementById("editObjectDescription").value.trim(),
+        vendor: document.getElementById("editObjectVendor").value,
+        protocol: document.getElementById("editObjectProtocol").value,
+        ip_address: document.getElementById("editObjectIp").value.trim(),
+        port: parseInt(document.getElementById("editObjectPort").value),
+        inverter_login: document.getElementById("editObjectLogin").value.trim(),
+        inverter_password: document.getElementById("editObjectPassword").value.trim()
+    };
+
+    console.log("Отправка PUT:", payload);
+
+    try {
+        const response = await fetch(`/api/modbus/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            alert("Ошибка: " + JSON.stringify(result));
+            return;
+        }
+
+        alert("Объект обновлён!");
+
+        document.getElementById("editObjectModal").style.display = "none";
+        loadObjects(); // обновляем таблицу
+
+    } catch (error) {
+        console.error("Ошибка:", error);
+        alert("Ошибка запроса");
+    }
+}
 
         async function deleteObject(objectId) {
             if (!confirm("Удалить объект безвозвратно?")) return;
@@ -511,6 +645,29 @@ function renderTable(objects) {
                 alert("Ошибка: " + e.message);
             }
         }
+
+        function updateProtocolFields(protocolSelectId, ipFieldId, portFieldId) {
+            const protocol = document.getElementById(protocolSelectId).value;
+            const ipField = document.getElementById(ipFieldId).closest(".form");
+            const portField = document.getElementById(portFieldId).closest(".form");
+
+            if (protocol === "COR-Bridge") {
+                ipField.style.display = "none";
+                portField.style.display = "none";
+            } else {
+                ipField.style.display = "block";
+                portField.style.display = "block";
+            }
+        }
+
+
+        document.getElementById("objectProtocol").addEventListener("change", () => {
+            updateProtocolFields("objectProtocol", "objectIp", "objectPort");
+        });
+
+        document.getElementById("editObjectProtocol").addEventListener("change", () => {
+            updateProtocolFields("editObjectProtocol", "editObjectIp", "editObjectPort");
+        });
 
 
 
