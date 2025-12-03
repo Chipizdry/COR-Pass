@@ -353,8 +353,8 @@ function renderTable(objects) {
         }
 
         function handleDelete(obj) {
-            console.log("Удалить:", obj.id);
-            // TODO запрос DELETE на сервер + обновление таблицы
+            console.log("Удалить:", obj.id);     
+            deleteObject(obj.id);
         }
 
         function handleStop(obj) {
@@ -481,6 +481,37 @@ function renderTable(objects) {
                     alert("Ошибка отправки запроса");
                 }
             }
+
+
+
+        async function deleteObject(objectId) {
+            if (!confirm("Удалить объект безвозвратно?")) return;
+
+            try {
+                const response = await fetch(`/api/modbus/${objectId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || "Ошибка удаления");
+                }
+
+                // Удаляем строку из таблицы
+                const row = document.querySelector(`tr[data-id="${objectId}"]`);
+                if (row) row.remove();
+
+                alert("Объект удалён");
+
+            } catch (e) {
+                console.error(e);
+                alert("Ошибка: " + e.message);
+            }
+        }
+
 
 
     </script>
