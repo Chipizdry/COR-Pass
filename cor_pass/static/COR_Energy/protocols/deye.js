@@ -204,6 +204,57 @@ async function readInverterGridRegisters(host, port, slave) {
 }
 
 
+
+async function readBatteryRegisters(host, port, slave) {
+    const results = {};
+
+    const registers = [
+        { start: 586, name: "battery1Temperature", scale: 0.1 },        // °C
+        { start: 587, name: "battery1Voltage", scale: 0.1 },           // V
+        { start: 588, name: "battery1SOC", scale: 1 },                  // %
+        { start: 589, name: "battery2SOC", scale: 1 },                  // %
+        { start: 590, name: "battery1Power", scale: 10, signed: true }, // W (S16)
+        { start: 591, name: "battery1Current", scale: 0.01, signed: true }, // A (S16)
+        { start: 592, name: "batteryCorrectedAh", scale: 1 },           // Ah
+        { start: 593, name: "battery2Voltage", scale: 0.1 },           // V
+        { start: 594, name: "battery2Current", scale: 0.01, signed: true }, // A (S16)
+        { start: 595, name: "battery2Power", scale: 10, signed: true },      // W
+        { start: 596, name: "battery2Temperature", scale: 0.1 }         // °C
+    ];
+
+    const startRegister = registers[0].start;
+    const count = registers.length;
+
+    try {
+        const resp = await fetch(
+            `/api/modbus_tcp/read?host=${host}&port=${port}&slave=${slave}` +
+            `&start=${startRegister}&count=${count}&func=3`,
+            { headers: { "accept": "application/json" } }
+        );
+
+        const data = await resp.json();
+        console.log("Raw battery data:", data);
+
+        if (data.ok && data.data && data.data.length === count) {
+
+            registers.forEach((reg, idx) => {
+                let val = data.data[idx];
+
+                // Обработка signed (S16)
+                if (reg.signed && val > 0x7FFF) val = val - 0x10000;
+
+                results[reg.name] = val * reg.scale;
+            });
+        }
+
+    } catch (err) {
+        console.error("Ошибка чтения регистров батареи:", err);
+    }
+
+    console.log("Battery parsed results:", results);
+    return results;
+}
+
 // Пример вызова:
 //readDeyeRegisters("195.8.40.53", 502, 1).then(console.log);
 //readSunPanelRegisters("195.8.40.53", 502, 1).then(console.log);

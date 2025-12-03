@@ -1397,10 +1397,17 @@ async function startMonitoring(host, port, slave) {
         }
 
          try {
-            const gen = await readInverterGridRegisters(host, port, slave);
-            console.log("Generator data:", gen);
+            const pwr = await readInverterGridRegisters(host, port, slave);
+            console.log("Inverter Grid:", pwr);
         } catch (e) {
             console.error("Ошибка чтения сети:", e);
+        }
+
+         try {
+            const batt = await readBatteryRegisters(host, port, slave);
+            console.log("Inverter Battery:", batt);
+        } catch (e) {
+            console.error("Ошибка чтения батареи:", e);
         }
         // Пауза между циклами
         await new Promise(resolve => setTimeout(resolve, INTERVAL));
