@@ -150,7 +150,7 @@
         <button class="custom-button"id="Lawyer">
             <!-- Первая SVG-иконка -->       
             
-           <svg width="24" height="24" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+           <svg width="24" height="24" viewBox="0 0 50 52" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect width="50" height="50" rx="25" fill="#7527B2"/>
                 <path d="M23.297 29.7939C23.5176 31.1015 23.9857 32.3558 24.6926 33.4938C25.1809 32.7112 
                 25.5558 31.8819 25.8086 31.0157C25.9285 30.6157 26.0185 30.207 26.0881 29.794C25.6854 
@@ -243,6 +243,48 @@
             </svg>
         </button>
 
+        <button class="custom-button"id="Manager">
+            <!-- Первая SVG-иконка -->       
+            
+          <svg width="24" height="24" viewBox="0 0 50 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="50" height="50" rx="25" fill="#4AAF63"/>
+            <path d="M35.8617 19.9084C35.5715 19.2953 35.2301 18.7078 34.8413 18.152L30.751 
+            20.0732H30.7558L27.3987 21.6542C26.657 21.1237 25.7601 20.8542 24.8488 20.888C23.9374 
+            20.9217 23.063 21.2568 22.3625 21.8407C21.662 22.4245 21.175 23.2243 20.9777 
+            24.1146C20.7804 25.0049 20.8841 25.9355 21.2724 26.7605L18.1428 28.2327C17.438 
+            26.7462 17.2369 25.0705 17.5699 23.4594C17.9028 21.8483 18.7517 20.3896 19.988 
+            19.3042C21.2243 18.2187 22.7807 17.5656 24.4215 17.4437C26.0622 17.3219 27.698 
+            17.738 29.0811 18.6289L33.5067 16.5507C31.3933 14.4178 28.5563 13.1555 25.5568 
+            13.0134C22.5573 12.8714 19.6137 13.86 17.3081 15.7837C15.0025 17.7074 13.5027 
+            20.4261 13.1054 23.4022C12.7081 26.3784 13.4422 29.3953 15.1625 31.8563L22.6089 
+            28.3589C23.3507 28.8894 24.2475 29.1589 25.1588 29.1252C26.0702 29.0914 26.9446 
+            28.7564 27.6451 28.1725C28.3456 27.5886 28.8327 26.7889 29.0299 25.8986C29.2272 
+            25.0083 29.1235 24.0777 28.7352 23.2526L31.8658 21.7833C32.5694 23.2704 32.7692 
+            24.9463 32.435 26.5571C32.1008 28.168 31.2507 29.626 30.0135 30.7105C28.7763 
+            31.795 27.2194 32.4469 25.5785 32.5674C23.9376 32.6879 22.3022 32.2705 20.9198 
+            31.3784L16.4961 33.4576C18.4875 35.4629 21.1232 36.7006 23.9382 36.9523C26.7533 
+            37.204 29.5668 36.4536 31.8825 34.8335C34.1982 33.2133 35.8673 30.8275 36.5953 
+            28.0968C37.3233 25.3662 37.0635 22.4662 35.8617 19.9084Z" fill="white"/>
+          </svg>
+
+
+                
+                
+                
+            <!-- Текст кнопки -->
+            <span class="button-text">Менеджер АЗК</span> 
+            <!-- Вторая SVG-иконка -->
+            <svg class="icon-right" width="24" height="24" viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1.125" y="0.625" width="28.75" height="28.75" rx="14.375" stroke="#7527B2" stroke-width="1.25"/>
+                <path d="M20.1161 14.3274L20.1132 14.3248L14.1478 8.73647L14.1432 8.73226L14.1418 8.7311C13.7749 8.40419 
+                13.2289 8.43324 12.8907 8.76051L12.8866 8.76302L12.8857 8.76387L12.8823 8.76723L12.883 8.76796C12.5174 
+                9.10176 12.5154 9.67494 12.8829 10.0382L12.885 10.0403L12.8862 10.0415L12.8884 10.0435L18.1453 
+                14.996L12.8804 19.956L12.8817 19.9574C12.7001 20.1105 12.6074 20.3496 12.6074 20.5897C12.6074 21.0796 
+                13.0121 21.4995 13.5307 21.4995C13.7755 21.4995 13.9909 21.4093 14.1458 21.2575L14.1494 21.254L20.1144 
+                15.637L20.1176 15.634L20.1415 15.6107L20.151 15.6008L20.1535 15.5982C20.4888 15.233 20.4849 14.6591 
+                20.1161 14.3274Z" fill="#7527B2"/>
+            </svg>
+        </button>
 
 
         <button class="custom-button"id="COR-ERP">
@@ -698,6 +740,15 @@
 
 
 
+          // Обработчик для кнопки "Менеджер АЗК"
+    document.getElementById('Manager').addEventListener('click', function() {
+        if (checkToken()) {          
+            window.location.href = '/static/COR_Energy/COR_Energy_AZK-companies.html';
+        } 
+    });
+
+
+
 
        // Обработчик для кнопки "Финансы"
        document.getElementById('COR-Finance').addEventListener('click', function() {
@@ -861,13 +912,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const doctorButton = document.getElementById('Doctor');
     const financierButton = document.getElementById('COR-Finance');
     const LawyerButton = document.getElementById('Lawyer');
+    const ManagerButton = document.getElementById('Manager');
 
     // Сначала скрываем все кнопки по умолчанию
     corErpButton.classList.add('hidden');
     energyManagerButton.classList.add('hidden');
     doctorButton.classList.add('hidden');
     financierButton.classList.add('hidden');
-    LawyerButton.classList.add('hidden');   
+    LawyerButton.classList.add('hidden'); 
+    ManagerButton.classList.add('hidden');  
     adminButtonContainer.innerHTML = '';
 
     if (!accessToken) {
@@ -921,6 +974,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 case 'lawyer':
                     LawyerButton.classList.remove('hidden');
+                    ManagerButton.classList.remove('hidden');
+
                     break;   
     
 
