@@ -8,7 +8,6 @@ from worker.modbus_client import (
     BATTERY_ID,
     INVERTER_ID,
     ESS_UNIT_ID,
-    SOLAR_CHARGER_SLAVE_IDS,
     REGISTERS,
     decode_signed_16,
     decode_signed_32,
@@ -224,6 +223,7 @@ async def get_battery_status(modbus_client: AsyncModbusTcpClient, transaction_id
         raw = result.registers
         def get_value(name: str) -> int:
             return raw[REGISTERS[name] - start]
+        logger.debug(f"[{transaction_id}] Battery SOC: {get_value('soc') / 10}%")
         return {"soc": get_value("soc") / 10}
     except Exception as e:
         register_modbus_error()

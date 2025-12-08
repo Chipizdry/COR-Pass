@@ -117,6 +117,14 @@ class User(Base):
         "MedicineIntake", back_populates="user", cascade="all, delete-orphan"
     )
     
+    # SIBIONICS CGM - ручные устройства для ввода глюкозы
+    sibionics_manual_devices = relationship(
+        "SibionicsDevice", 
+        foreign_keys="[SibionicsDevice.user_id]",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    
     # Медицинская карта 
     medical_card = relationship(
         "MedicalCard", back_populates="owner", foreign_keys="[MedicalCard.owner_cor_id]", 

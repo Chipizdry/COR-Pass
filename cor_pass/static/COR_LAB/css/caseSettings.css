@@ -108,3 +108,7 @@ input:-ms-input-placeholder {
     overflow-y: auto;
     max-height: calc(80vh - 200px);
 }
+
+.caseSettingsScroll::-webkit-scrollbar-track {
+    background: #fff;
+}

@@ -8,7 +8,7 @@ from loguru import logger
 from cor_pass.database.db import async_session_maker
 from cor_pass.schemas import FullDeviceMeasurementCreate
 from worker.modbus_client import (
-    get_modbus_client_singleton,
+    get_or_create_modbus_client,
     register_modbus_success,
     get_modbus_error_stats
 )
@@ -49,7 +49,23 @@ async def set_inverter_parameters(
     battery_level_percent: int,
     charge_battery_value: int
 ):
-    modbus_client_instance = await get_modbus_client_singleton()
+    # Получаем IP-адрес объекта из базы
+    async with async_session_maker() as db:
+        obj = await get_energetic_object(db, object_id)
+        if not obj or not obj.ip_address:
+            logger.error(f"[{object_id}] IP-адрес объекта не найден")
+            return
+        
+        ip_address = obj.ip_address
+        port = obj.port
+        protocol = obj.protocol
+    
+    modbus_client_instance = await get_or_create_modbus_client(
+        protocol=protocol,
+        ip_address=ip_address,
+        port=port,
+        object_id=object_id
+    )
     if not modbus_client_instance:
         logger.error(f"[{object_id}] Не удалось получить Modbus клиент для установки параметров инвертора.")
         return
@@ -66,9 +82,25 @@ async def cerbo_collection_task_worker(object_id: str, object_name: str):
 
     CONSECUTIVE_ERROR_THRESHOLD = 10  # После 10 последовательных ошибок - уведомление
     
+    # Получаем IP-адрес объекта один раз при старте
+    async with async_session_maker() as db:
+        obj = await get_energetic_object(db, object_id)
+        if not obj or not obj.ip_address:
+            logger.error(f"[{object_id}] IP-адрес объекта не найден, завершение задачи")
+            return
+        
+        ip_address = obj.ip_address
+        port = obj.port
+        protocol = obj.protocol
+    
     while True:
         transaction_id = uuid4()
-        modbus_client_instance = await get_modbus_client_singleton()
+        modbus_client_instance = await get_or_create_modbus_client(
+            protocol=protocol,
+            ip_address=ip_address,
+            port=port,
+            object_id=object_id
+        )
 
         try:
             if not modbus_client_instance or not modbus_client_instance.connected:
@@ -109,12 +141,22 @@ async def cerbo_collection_task_worker(object_id: str, object_name: str):
                 # Проверяем порог последовательных ошибок
                 if consecutive_errors == CONSECUTIVE_ERROR_THRESHOLD:
                     if settings.app_env == "development":
+                        chat_ids = None
+                        try:
+                            async with async_session_maker() as db:
+                                obj = await get_energetic_object(db, object_id)
+                                if obj and getattr(obj, 'telegram_chat_ids', None):
+                                    chat_ids = [cid.strip() for cid in str(obj.telegram_chat_ids).split(',') if cid.strip()]
+                        except Exception:
+                            pass
+
                         await send_connection_loss_notification(
                             object_id=object_id,
                             object_name=object_name,
                             is_connection_lost=True,
                             consecutive_errors=consecutive_errors,
-                            error_rate_percent=0.0
+                            error_rate_percent=0.0,
+                            chat_ids=chat_ids
                         )
                 
                 await asyncio.sleep(COLLECTION_INTERVAL_SECONDS)
@@ -134,12 +176,22 @@ async def cerbo_collection_task_worker(object_id: str, object_name: str):
                 
                 if consecutive_errors == CONSECUTIVE_ERROR_THRESHOLD:
                     if settings.app_env == "development":
+                        chat_ids = None
+                        try:
+                            async with async_session_maker() as db:
+                                obj = await get_energetic_object(db, object_id)
+                                if obj and getattr(obj, 'telegram_chat_ids', None):
+                                    chat_ids = [cid.strip() for cid in str(obj.telegram_chat_ids).split(',') if cid.strip()]
+                        except Exception:
+                            pass
+
                         await send_connection_loss_notification(
                             object_id=object_id,
                             object_name=object_name,
                             is_connection_lost=True,
                             consecutive_errors=consecutive_errors,
-                            error_rate_percent=0.0
+                            error_rate_percent=0.0,
+                            chat_ids=chat_ids
                         )
                 
                 await asyncio.sleep(COLLECTION_INTERVAL_SECONDS)
@@ -153,12 +205,22 @@ async def cerbo_collection_task_worker(object_id: str, object_name: str):
                 time_since_error = (datetime.now() - error_stats['last_error_time']).total_seconds()
                 if time_since_error < 60: 
                     if settings.app_env == "development":
+                        chat_ids = None
+                        try:
+                            async with async_session_maker() as db:
+                                obj = await get_energetic_object(db, object_id)
+                                if obj and getattr(obj, 'telegram_chat_ids', None):
+                                    chat_ids = [cid.strip() for cid in str(obj.telegram_chat_ids).split(',') if cid.strip()]
+                        except Exception:
+                            pass
+
                         await send_connection_loss_notification(
                             object_id=object_id,
                             object_name=object_name,
                             is_connection_lost=False,
                             consecutive_errors=0,
-                            error_rate_percent=0.0
+                            error_rate_percent=0.0,
+                            chat_ids=chat_ids
                         )
             
             full_measurement = FullDeviceMeasurementCreate(**collected_data)
@@ -183,13 +245,24 @@ async def cerbo_collection_task_worker(object_id: str, object_name: str):
             # Проверяем уровень заряда батареи и отправляем уведомление в Telegram (только в development)
             if settings.app_env == "development":
                 try:
+                    # Получаем chat_ids из объекта для уведомлений
+                    chat_ids = None
+                    try:
+                        async with async_session_maker() as db:
+                            obj = await get_energetic_object(db, object_id)
+                            if obj and getattr(obj, 'telegram_chat_ids', None):
+                                chat_ids = [cid.strip() for cid in str(obj.telegram_chat_ids).split(',') if cid.strip()]
+                    except Exception:
+                        pass
+                    
                     telegram_monitor = get_telegram_monitor()
                     await telegram_monitor.check_battery_level(
                         object_id=object_id,
                         object_name=object_name,
                         battery_soc=collected_data.get("battery_soc", 0),
                         battery_voltage=collected_data.get("battery_voltage"),
-                        battery_power=collected_data.get("general_battery_power")
+                        battery_power=collected_data.get("general_battery_power"),
+                        chat_ids=chat_ids
                     )
                 except Exception as e:
                     logger.error(f"[{object_id}] Error checking battery level for Telegram: {e}", exc_info=True)
@@ -197,6 +270,16 @@ async def cerbo_collection_task_worker(object_id: str, object_name: str):
                 # Проверяем потерю электроэнергии на входе (только если есть данные ESS)
                 if "ess_total_input_power" in collected_data:
                     try:
+                        # Получаем chat_ids для уведомлений
+                        chat_ids = None
+                        try:
+                            async with async_session_maker() as db:
+                                obj = await get_energetic_object(db, object_id)
+                                if obj and getattr(obj, 'telegram_chat_ids', None):
+                                    chat_ids = [cid.strip() for cid in str(obj.telegram_chat_ids).split(',') if cid.strip()]
+                        except Exception:
+                            pass
+                        
                         voltage_l1 = collected_data.get("input_voltage_l1", 0)
                         voltage_l2 = collected_data.get("input_voltage_l2", 0)
                         voltage_l3 = collected_data.get("input_voltage_l3", 0)
@@ -226,6 +309,7 @@ async def cerbo_collection_task_worker(object_id: str, object_name: str):
                             voltage_l1=voltage_l1,
                             voltage_l2=voltage_l2,
                             voltage_l3=voltage_l3,
+                            chat_ids=chat_ids,
                         )
                     except Exception as e:
                         logger.error(f"[{object_id}] Error checking power loss for Telegram: {e}", exc_info=True)
@@ -241,12 +325,23 @@ async def cerbo_collection_task_worker(object_id: str, object_name: str):
             if consecutive_errors == CONSECUTIVE_ERROR_THRESHOLD:
                 if settings.app_env == "development":
                     try:
+                        # Получаем chat_ids для уведомлений
+                        chat_ids = None
+                        try:
+                            async with async_session_maker() as db:
+                                obj = await get_energetic_object(db, object_id)
+                                if obj and getattr(obj, 'telegram_chat_ids', None):
+                                    chat_ids = [cid.strip() for cid in str(obj.telegram_chat_ids).split(',') if cid.strip()]
+                        except Exception:
+                            pass
+                        
                         await send_connection_loss_notification(
                             object_id=object_id,
                             object_name=object_name,
                             is_connection_lost=True,
                             consecutive_errors=consecutive_errors,
-                            error_rate_percent=0.0
+                            error_rate_percent=0.0,
+                            chat_ids=chat_ids
                         )
                     except Exception as notification_error:
                         logger.error(

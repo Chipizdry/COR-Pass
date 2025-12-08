@@ -97,13 +97,25 @@ class CorporateClient(Base):
         comment="Статус: pending (на рассмотрении), active (активна), blocked (заблокирована), rejected (отклонена), limit_exceeded (превышен лимит)"
     )
     
-    # Лимит компании
+    # Лимит компании (кредитный лимит)
     fuel_limit = Column(
         Numeric(10, 2), 
         nullable=False, 
         default=16000.00,
         server_default="16000.00",
-        comment="Лимит компании на топливо (грн)"
+        comment="Кредитный лимит - на сколько компания может уйти в минус (грн)"
+    )
+    
+    # Баланс компании (синхронизируется с финбэком через вебхук)
+    current_balance = Column(
+        Numeric(15, 2),
+        nullable=True,
+        comment="Текущий баланс компании в финбэке (обновляется через вебхук)"
+    )
+    last_balance_update = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="Время последнего обновления баланса из финбэка"
     )
     
     # ID в finance backend (создаётся после одобрения)

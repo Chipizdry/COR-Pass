@@ -1,0 +1,262 @@
+{
+    "vendor": "Victron Energy",
+    "model": "Cerbo GX",
+    "protocol": "modbus_tcp",
+    "description": "Modbus register map for Victron Cerbo GX energy monitoring system",
+    "unit_id": 100,
+    "port": 502,
+    "register_groups": {
+        "battery": {
+            "description": "Battery status registers",
+            "registers": [
+                {
+                    "name": "battery_voltage",
+                    "address": 840,
+                    "count": 1,
+                    "type": "uint16",
+                    "scale": 0.01,
+                    "unit": "V",
+                    "description": "Battery voltage"
+                },
+                {
+                    "name": "battery_current",
+                    "address": 841,
+                    "count": 1,
+                    "type": "int16",
+                    "scale": 0.1,
+                    "unit": "A",
+                    "description": "Battery current (positive = charging, negative = discharging)"
+                },
+                {
+                    "name": "battery_power",
+                    "address": 842,
+                    "count": 1,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Battery power (positive = charging, negative = discharging)"
+                },
+                {
+                    "name": "soc",
+                    "address": 843,
+                    "count": 1,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "%",
+                    "description": "Battery State of Charge (%)"
+                },
+                {
+                    "name": "battery_state",
+                    "address": 844,
+                    "count": 1,
+                    "type": "uint16",
+                    "scale": 1,
+                    "unit": "",
+                    "description": "Battery state (0=idle, 1=charging, 2=discharging)"
+                },
+                {
+                    "name": "consumed_amphours",
+                    "address": 845,
+                    "count": 1,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "Ah",
+                    "description": "Consumed Amphours"
+                },
+                {
+                    "name": "time_to_go",
+                    "address": 846,
+                    "count": 1,
+                    "type": "uint16",
+                    "scale": 0.01,
+                    "unit": "s",
+                    "description": "Time to go (seconds)"
+                }
+            ]
+        },
+        "ac_power": {
+            "description": "AC power status registers",
+            "registers": [
+                {
+                    "name": "ac_load_power",
+                    "address": 850,
+                    "count": 1,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "AC Load Power"
+                },
+                {
+                    "name": "ac_load_l1",
+                    "address": 851,
+                    "count": 1,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "AC Load L1"
+                },
+                {
+                    "name": "ac_load_l2",
+                    "address": 852,
+                    "count": 1,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "AC Load L2"
+                },
+                {
+                    "name": "ac_load_l3",
+                    "address": 853,
+                    "count": 1,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "AC Load L3"
+                }
+            ]
+        },
+        "solar": {
+            "description": "Solar charger registers",
+            "registers": [
+                {
+                    "name": "pv_power",
+                    "address": 860,
+                    "count": 1,
+                    "type": "uint16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Total PV power from all solar chargers"
+                },
+                {
+                    "name": "pv_current",
+                    "address": 861,
+                    "count": 1,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "A",
+                    "description": "Total PV current"
+                },
+                {
+                    "name": "pv_voltage",
+                    "address": 862,
+                    "count": 1,
+                    "type": "uint16",
+                    "scale": 0.01,
+                    "unit": "V",
+                    "description": "PV voltage"
+                },
+                {
+                    "name": "yield_today",
+                    "address": 865,
+                    "count": 1,
+                    "type": "uint16",
+                    "scale": 0.01,
+                    "unit": "kWh",
+                    "description": "Yield today"
+                }
+            ]
+        },
+        "grid": {
+            "description": "Grid meter registers",
+            "registers": [
+                {
+                    "name": "grid_power",
+                    "address": 870,
+                    "count": 1,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Grid power (positive = importing, negative = exporting)"
+                },
+                {
+                    "name": "grid_l1",
+                    "address": 871,
+                    "count": 1,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Grid L1 power"
+                },
+                {
+                    "name": "grid_l2",
+                    "address": 872,
+                    "count": 1,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Grid L2 power"
+                },
+                {
+                    "name": "grid_l3",
+                    "address": 873,
+                    "count": 1,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Grid L3 power"
+                }
+            ]
+        },
+        "inverter": {
+            "description": "Inverter/Charger registers",
+            "registers": [
+                {
+                    "name": "inverter_state",
+                    "address": 31,
+                    "count": 1,
+                    "type": "uint16",
+                    "scale": 1,
+                    "unit": "",
+                    "description": "Inverter state (0=Off, 1=Low Power, 2=Fault, 3=Bulk, 4=Absorption, 5=Float, 6=Storage, 7=Equalize, 9=Inverting, 252=ESS)"
+                },
+                {
+                    "name": "ac_out_voltage",
+                    "address": 15,
+                    "count": 1,
+                    "type": "uint16",
+                    "scale": 0.01,
+                    "unit": "V",
+                    "description": "AC output voltage"
+                },
+                {
+                    "name": "ac_out_current",
+                    "address": 16,
+                    "count": 1,
+                    "type": "int16",
+                    "scale": 0.1,
+                    "unit": "A",
+                    "description": "AC output current"
+                }
+            ]
+        }
+    },
+    "polling_presets": {
+        "full_monitoring": {
+            "description": "Полный мониторинг всех параметров",
+            "groups": [
+                "battery",
+                "ac_power",
+                "solar",
+                "grid",
+                "inverter"
+            ],
+            "interval_seconds": 5
+        },
+        "battery_only": {
+            "description": "Только данные батареи",
+            "groups": [
+                "battery"
+            ],
+            "interval_seconds": 10
+        },
+        "power_monitoring": {
+            "description": "Мониторинг мощности (AC + Solar + Grid)",
+            "groups": [
+                "ac_power",
+                "solar",
+                "grid"
+            ],
+            "interval_seconds": 5
+        }
+    }
+}

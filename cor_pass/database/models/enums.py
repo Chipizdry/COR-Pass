@@ -203,3 +203,12 @@ class MedicalCardPurpose(enum.Enum):
     RELATIVE = "relative"  # Для родственника
     DOCTOR = "doctor"  # Для врача
     OTHER = "other"  # Другое
+
+
+# Energy Enums
+class PollingTaskType(enum.Enum):
+    """Типы задач фонового опроса устройств"""
+    CERBO_COLLECTION = "cerbo_collection"  # Сбор данных с Cerbo GX
+    SCHEDULE_CHECK = "schedule_check"  # Проверка и применение расписания
+    MODBUS_REGISTERS = "modbus_registers"  # Чтение Modbus регистров
+    CUSTOM_COMMAND = "custom_command"  # Пользовательская команда

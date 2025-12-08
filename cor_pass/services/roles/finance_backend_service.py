@@ -626,6 +626,145 @@ class FinanceBackendService:
         except Exception as e:
             logger.error(f"Failed to create account member: {e}")
             return {"error": f"Internal error: {str(e)}"}
+    
+    async def get_company_summary_by_cor_id(
+        self, 
+        db: AsyncSession,
+        cor_id: str
+    ) -> Optional[Any]:
+        """
+        Получает сводку по компании или информацию о сотруднике по COR-ID.
+        
+        Endpoint: GET /v1/partner_companies/{cor_id}/summary
+        
+        Возвращает:
+        - List[PartnerCompanySummary] если пользователь - владелец компаний
+        - AccountMemberWithDetails если пользователь - сотрудник  
+        - None если пользователь не найден
+        
+        Args:
+            db: Database session
+            cor_id: COR-ID пользователя
+            
+        Returns:
+            Данные от finance backend или None
+        """
+        try:
+            # Получаем конфигурацию из БД
+            auth_config = await self._get_auth_config(db)
+            if not auth_config:
+                logger.error("Finance backend auth config not found in database")
+                return None
+            
+            # Формируем URL из конфига БД
+            url = f"{auth_config.api_endpoint}/v1/partner_companies/{cor_id}/summary"
+            
+            # Получаем TOTP токен для авторизации (временно не используем header)
+            headers = {}
+            # try:
+            #     auth_data = await self._generate_auth_totp(db)
+            #     if auth_data:
+            #         headers["token"] = auth_data["totp_code"]
+            # except Exception as totp_error:
+            #     logger.warning(f"Failed to generate TOTP token: {totp_error}")
+            #     # Продолжаем без токена, если API не требует авторизации
+            
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.get(url, headers=headers)
+                
+                # Если 404 - пользователь не найден, это нормально
+                if response.status_code == 404:
+                    logger.info(f"User {cor_id} not found in finance backend")
+                    return None
+                
+                # Проверяем успешность
+                response.raise_for_status()
+                
+                # Возвращаем данные
+                data = response.json()
+                logger.info(f"Finance backend returned data for {cor_id}: type={type(data)}")
+                return data
+                
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Finance backend HTTP error for {cor_id}: {e.response.status_code}")
+            return None
+        except httpx.TimeoutException:
+            logger.error(f"Finance backend timeout for {cor_id}")
+            return None
+        except httpx.RequestError as e:
+            logger.error(f"Finance backend connection error: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error calling finance backend: {e}", exc_info=True)
+            return None
+
+    async def update_partner_company_limits(
+        self,
+        company_id: int,
+        payload: Dict[str, Any],
+        db: AsyncSession,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Обновляет лимиты компании в финансовом бэкенде (PUT запрос).
+        
+        Обновляет:
+        - credit_limit - кредитный лимит (на сколько можно лазить в минус)
+        - balance_level_alert_limit - уровень баланса, при котором послать вебхук
+        - balance_level_hook_url - URL вебхука для уведомления о превышении лимита
+        
+        Args:
+            company_id: ID компании в финбэке
+            payload: Dict с полями для обновления
+            db: Сессия БД
+            
+        Returns:
+            Данные от finance backend с обновленной компанией или None
+        """
+        try:
+            # Получаем конфигурацию из БД
+            auth_config = await self._get_auth_config(db)
+            if not auth_config:
+                logger.error("Finance backend auth config not found in database")
+                return None
+            
+            # Формируем URL для PUT запроса
+            url = f"{auth_config.api_endpoint}/v1/partner_companies/{company_id}"
+            
+            # Генерируем TOTP токен для авторизации
+            headers = {}
+            # try:
+            #     auth_data = await self._generate_auth_totp(db)
+            #     if auth_data:
+            #         headers["token"] = auth_data["totp_code"]
+            # except Exception as totp_error:
+            #     logger.warning(f"Failed to generate TOTP token: {totp_error}")
+            
+            logger.info(f"Updating company limits in finance backend: company_id={company_id}, payload={payload}")
+            
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.put(url, json=payload, headers=headers)
+                
+                # Проверяем успешность
+                if response.status_code >= 400:
+                    error_text = response.text
+                    logger.error(f"Failed to update company limits: {response.status_code} - {error_text}")
+                    return {"error": f"Status {response.status_code}: {error_text}"}
+                
+                # Возвращаем данные
+                data = response.json()
+                logger.info(f"Company limits updated successfully in finance backend: {company_id}")
+                return data
+                
+        except httpx.TimeoutException:
+            logger.error(f"Finance backend timeout when updating company {company_id}")
+            return {"error": "Timeout connecting to finance backend"}
+        except httpx.RequestError as e:
+            logger.error(f"Finance backend connection error: {e}")
+            return {"error": f"Connection error: {str(e)}"}
+        except Exception as e:
+            logger.error(f"Unexpected error updating company limits: {e}", exc_info=True)
+            return {"error": f"Error: {str(e)}"}
+
 
 
 # Singleton instance

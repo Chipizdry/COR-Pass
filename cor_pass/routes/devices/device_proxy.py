@@ -11,6 +11,7 @@ from loguru import logger
 
 from cor_pass.services.shared.access import user_access
 from cor_pass.services.shared.pi30_commands import PI30Command
+from pydantic import Field
 
 
 class Pi30ProxyRequest(BaseModel):
@@ -176,3 +177,148 @@ async def list_pi30_commands_via_proxy():
         for cmd in PI30Command
     ]
     return {"commands": commands}
+
+
+# ===================== Broadcast Task Proxy =====================
+
+from typing import Optional
+
+
+class BroadcastTaskCreateProxy(BaseModel):
+    """Запрос на создание фоновой рассылки команд"""
+    task_name: str = Field(..., description="Название задачи")
+    session_id: str = Field(..., description="ID устройства для отправки команд")
+    command_type: str = Field(..., description="Тип команды: 'pi30' или 'modbus_read'")
+    pi30_command: Optional[str] = Field(None, description="PI30 команда (например 'QPIGS') - только для command_type='pi30'")
+    hex_data: Optional[str] = Field(None, description="Hex данные (например '09 03 00 00 00 10 45 4E') - только для command_type='modbus_read'")
+    interval_seconds: int = Field(..., ge=1, le=3600, description="Интервал отправки команд в секундах")
+    is_active: bool = Field(True, description="Запускать задачу сразу после создания")
+    created_by: Optional[str] = Field(None, description="ID пользователя, создавшего задачу")
+
+
+@router.get("/broadcast/tasks", dependencies=[Depends(user_access)])
+async def list_broadcast_tasks_proxy():
+    """
+    Получить список всех фоновых рассылок команд.
+    Возвращает задачи со статусом is_running и информацией о session_id.
+    """
+    url = f"{ENERGETIC_WS_SERVER_URL}/broadcast/tasks"
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(url)
+            if response.status_code == 200:
+                return response.json()
+            detail_msg = f"Upstream error {response.status_code} from modbus_worker: {response.text}"
+            logger.warning(detail_msg)
+            raise HTTPException(status_code=response.status_code, detail=detail_msg)
+    except httpx.TimeoutException as e:
+        logger.error(f"Timeout connecting to modbus_worker at {url}: {e}")
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail="Timeout connecting to energetic device WebSocket server")
+    except httpx.RequestError as e:
+        logger.error(f"Connection failure to modbus_worker at {url}: {e}")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Energetic device WebSocket server is unavailable")
+
+
+@router.get("/broadcast/tasks/session/{session_id}", dependencies=[Depends(user_access)])
+async def get_session_broadcast_tasks_proxy(session_id: str):
+    """
+    Получить все фоновые рассылки для конкретного устройства.
+    Возвращает задачи, привязанные к session_id, с количеством активных задач.
+    """
+    url = f"{ENERGETIC_WS_SERVER_URL}/broadcast/tasks/session/{session_id}"
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(url)
+            if response.status_code == 200:
+                return response.json()
+            if response.status_code == 404:
+                raise HTTPException(status_code=404, detail=f"Device {session_id} has no broadcast tasks")
+            detail_msg = f"Upstream error {response.status_code} from modbus_worker: {response.text}"
+            logger.warning(detail_msg)
+            raise HTTPException(status_code=response.status_code, detail=detail_msg)
+    except httpx.TimeoutException as e:
+        logger.error(f"Timeout connecting to modbus_worker at {url}: {e}")
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail="Timeout connecting to energetic device WebSocket server")
+    except httpx.RequestError as e:
+        logger.error(f"Connection failure to modbus_worker at {url}: {e}")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Energetic device WebSocket server is unavailable")
+
+
+@router.post("/broadcast/tasks", dependencies=[Depends(user_access)], status_code=status.HTTP_201_CREATED)
+async def create_broadcast_task_proxy(req: BroadcastTaskCreateProxy):
+    """
+    Создать новую фоновую рассылку команд на устройство.
+    
+    **Для PI30 команд:**
+    - command_type="pi30", pi30_command="QPIGS" (команда автоматически форматируется с CRC)
+    
+    **Для Modbus команд:**
+    - command_type="modbus_read", hex_data="09 03 00 00 00 10 45 4E"
+    
+    Задача сохраняется в БД и автоматически запускается если is_active=True.
+    """
+    url = f"{ENERGETIC_WS_SERVER_URL}/broadcast/tasks"
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.post(url, json=req.model_dump())
+            if response.status_code in (200, 201):
+                return response.json()
+            detail_msg = f"Upstream error {response.status_code} from modbus_worker: {response.text}"
+            logger.warning(detail_msg)
+            raise HTTPException(status_code=response.status_code, detail=detail_msg)
+    except httpx.TimeoutException as e:
+        logger.error(f"Timeout connecting to modbus_worker at {url}: {e}")
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail="Timeout connecting to energetic device WebSocket server")
+    except httpx.RequestError as e:
+        logger.error(f"Connection failure to modbus_worker at {url}: {e}")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Energetic device WebSocket server is unavailable")
+
+
+@router.patch("/broadcast/tasks/{task_id}/toggle", dependencies=[Depends(user_access)])
+async def toggle_broadcast_task_proxy(task_id: str):
+    """
+    Включить/выключить фоновую рассылку команд.
+    Переключает is_active и запускает/останавливает задачу без удаления из БД.
+    """
+    url = f"{ENERGETIC_WS_SERVER_URL}/broadcast/tasks/{task_id}/toggle"
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.patch(url)
+            if response.status_code == 200:
+                return response.json()
+            if response.status_code == 404:
+                raise HTTPException(status_code=404, detail=f"Broadcast task '{task_id}' not found")
+            detail_msg = f"Upstream error {response.status_code} from modbus_worker: {response.text}"
+            logger.warning(detail_msg)
+            raise HTTPException(status_code=response.status_code, detail=detail_msg)
+    except httpx.TimeoutException as e:
+        logger.error(f"Timeout connecting to modbus_worker at {url}: {e}")
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail="Timeout connecting to energetic device WebSocket server")
+    except httpx.RequestError as e:
+        logger.error(f"Connection failure to modbus_worker at {url}: {e}")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Energetic device WebSocket server is unavailable")
+
+
+@router.delete("/broadcast/tasks/{task_id}", dependencies=[Depends(user_access)])
+async def delete_broadcast_task_proxy(task_id: str):
+    """
+    Удалить фоновую рассылку команд.
+    Останавливает задачу и удаляет из БД.
+    """
+    url = f"{ENERGETIC_WS_SERVER_URL}/broadcast/tasks/{task_id}"
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.delete(url)
+            if response.status_code == 200:
+                return response.json()
+            if response.status_code == 404:
+                raise HTTPException(status_code=404, detail=f"Broadcast task '{task_id}' not found")
+            detail_msg = f"Upstream error {response.status_code} from modbus_worker: {response.text}"
+            logger.warning(detail_msg)
+            raise HTTPException(status_code=response.status_code, detail=detail_msg)
+    except httpx.TimeoutException as e:
+        logger.error(f"Timeout connecting to modbus_worker at {url}: {e}")
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail="Timeout connecting to energetic device WebSocket server")
+    except httpx.RequestError as e:
+        logger.error(f"Connection failure to modbus_worker at {url}: {e}")
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Energetic device WebSocket server is unavailable")

@@ -2537,6 +2537,116 @@ class EnergeticScheduleResponse(BaseModel):
         from_attributes = True
 
 
+# ============================================================================
+# Device Polling Tasks Schemas (Задачи фонового опроса устройств)
+# ============================================================================
+
+class PollingTaskTypeEnum(str, Enum):
+    """Типы задач фонового опроса"""
+    CERBO_COLLECTION = "cerbo_collection"
+    SCHEDULE_CHECK = "schedule_check"
+    MODBUS_REGISTERS = "modbus_registers"
+    CUSTOM_COMMAND = "custom_command"
+
+
+class DevicePollingTaskBase(BaseModel):
+    """Базовая схема задачи опроса"""
+    task_type: PollingTaskTypeEnum = Field(..., description="Тип задачи опроса")
+    command_config: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Конфигурация команды в JSON (какие регистры читать, параметры)"
+    )
+    interval_seconds: int = Field(
+        5,
+        ge=1,
+        le=3600,
+        description="Интервал опроса в секундах (1-3600)"
+    )
+    is_active: bool = Field(True, description="Активна ли задача")
+
+
+class DevicePollingTaskCreate(DevicePollingTaskBase):
+    """Схема создания задачи опроса"""
+    energetic_object_id: str = Field(..., description="ID энергетического объекта")
+
+
+class DevicePollingTaskUpdate(BaseModel):
+    """Схема обновления задачи опроса"""
+    task_type: Optional[PollingTaskTypeEnum] = None
+    command_config: Optional[Dict[str, Any]] = None
+    interval_seconds: Optional[int] = Field(None, ge=1, le=3600)
+    is_active: Optional[bool] = None
+
+
+class DevicePollingTaskResponse(DevicePollingTaskBase):
+    """Схема ответа с задачей опроса"""
+    id: str = Field(..., description="ID задачи")
+    energetic_object_id: str = Field(..., description="ID энергетического объекта")
+    created_at: datetime = Field(..., description="Дата создания")
+    updated_at: datetime = Field(..., description="Дата обновления")
+    
+    class Config:
+        from_attributes = True
+
+
+class DevicePollingTaskListResponse(BaseModel):
+    """Список задач опроса для объекта"""
+    energetic_object_id: str
+    energetic_object_name: str
+    tasks: List[DevicePollingTaskResponse]
+    total_tasks: int
+    active_tasks: int
+
+
+# WebSocket Broadcast Task Schemas
+class WebSocketBroadcastTaskBase(BaseModel):
+    task_name: str = Field(..., description="Имя задачи (уникальное)")
+    session_id: str = Field(..., description="Session ID устройства")
+    command_type: str = Field(..., description="Тип команды: pi30 или modbus_read")
+    command_payload: Dict[str, Any] = Field(..., description="Данные команды")
+    interval_seconds: int = Field(5, ge=1, le=3600, description="Интервал отправки (1-3600 сек)")
+    is_active: bool = Field(True, description="Активна ли задача")
+
+
+class WebSocketBroadcastTaskCreate(BaseModel):
+    task_name: str = Field(..., description="Имя задачи")
+    session_id: str = Field(..., description="Session ID устройства")
+    command_type: str = Field(..., description="pi30 или modbus_read")
+    
+    # Для pi30 команд
+    pi30_command: Optional[str] = Field(None, description="PI30 команда (будет автоматически отформатирована)")
+    
+    # Для modbus команд  
+    hex_data: Optional[str] = Field(None, description="Hex данные для modbus_read")
+    
+    interval_seconds: int = Field(5, ge=1, le=3600, description="Интервал в секундах")
+    is_active: bool = Field(True, description="Активна ли задача")
+    created_by: Optional[str] = Field(None, description="ID пользователя")
+
+
+class WebSocketBroadcastTaskUpdate(BaseModel):
+    task_name: Optional[str] = None
+    interval_seconds: Optional[int] = Field(None, ge=1, le=3600)
+    is_active: Optional[bool] = None
+    command_payload: Optional[Dict[str, Any]] = None
+
+
+class WebSocketBroadcastTaskResponse(WebSocketBroadcastTaskBase):
+    id: str
+    created_at: datetime
+    updated_at: datetime
+    created_by: Optional[str]
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WebSocketBroadcastTaskListResponse(BaseModel):
+    session_id: str
+    tasks: List[WebSocketBroadcastTaskResponse]
+    total_tasks: int
+    active_tasks: int
+
+
 class RegisterWriteRequest(BaseModel):
     slave_id: int
     register_number: int
@@ -2652,6 +2762,8 @@ class EnergeticObjectBase(BaseModel):
     inverter_password: Optional[str] = Field(None, description="Пароль для доступа к инвертору")
     is_active: Optional[bool] = None
     timezone: str = Field(default="Europe/Kiev", description="Часовой пояс объекта (например: Europe/Kiev, America/New_York)")
+    telegram_chat_ids: Optional[str] = Field(None, description="Telegram Chat ID для уведомлений")
+    modbus_config_file: Optional[str] = Field(None, description="Имя файла конфигурации Modbus (например: victron_cerbo_gx.json)")
 
 class EnergeticObjectCreate(EnergeticObjectBase):
     pass
@@ -2667,6 +2779,8 @@ class EnergeticObjectUpdate(BaseModel):
     inverter_password: Optional[str] = Field(None, description="Пароль для доступа к инвертору")
     is_active: Optional[bool] = None
     timezone: Optional[str] = Field(None, description="Часовой пояс объекта (например: Europe/Kiev, America/New_York)")
+    telegram_chat_ids: Optional[str] = Field(None, description="Telegram Chat ID для уведомлений")
+    modbus_config_file: Optional[str] = Field(None, description="Имя файла конфигурации Modbus")
 
 class EnergeticObjectResponse(EnergeticObjectBase):
     id: str
@@ -2915,7 +3029,6 @@ class MedicineIntakeResponse(BaseModel):
     # name: str
     # medicine_dosage: Optional[float] = None
     # medicine_unit: Optional[str] = None
-
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -3567,8 +3680,10 @@ class CorporateClientResponse(BaseModel):
     email: str
     tax_id: str
     status: str  # pending, active, blocked, rejected, limit_exceeded
-    fuel_limit: float  # Лимит компании на топливо
+    fuel_limit: float  # Кредитный лимит (на сколько компания может уйти в минус)
     finance_company_id: Optional[int]
+    current_balance: Optional[float] = None  # Текущий баланс из финансового бэкенда
+    last_balance_update: Optional[datetime] = None  # Время последнего обновления баланса
     reviewed_by: Optional[str]
     reviewed_at: Optional[datetime]
     rejection_reason: Optional[str]
@@ -3606,7 +3721,7 @@ class CorporateClientUpdate(BaseModel):
     address: Optional[str] = Field(None, min_length=1, max_length=500)
     phone_number: Optional[str] = Field(None, min_length=10, max_length=20)
     email: Optional[EmailStr] = None
-    fuel_limit: Optional[float] = Field(None, ge=0, description="Лимит компании на топливо")
+    fuel_limit: Optional[float] = Field(None, ge=0, description="Кредитный лимит (на сколько компания может уйти в минус)")
 
 
 class FinancePartnerLoginResponse(BaseModel):
@@ -3658,6 +3773,72 @@ class FinanceCreateCompanyResponse(BaseModel):
     id: int  # company_id в finance backend
     name: str
     owner_id: int
+
+
+# ============================================================================
+# Finance Backend Integration - Company Summary (Финансы компании)
+# ============================================================================
+
+class FinanceTransaction(BaseModel):
+    """Транзакция от финансового бэкенда"""
+    person: str = Field(..., description="Имя человека совершившего транзакцию")
+    date: datetime = Field(..., description="Дата транзакции")
+    amount: str = Field(..., description="Сумма транзакции (строка)")
+    cor_id: str = Field(..., description="COR-ID человека")
+
+
+class FinanceCompanySummaryItem(BaseModel):
+    """Сводка по компании от финансового бэкенда (для владельца)"""
+    company_type: str = Field(..., description="Тип компании")
+    company_name: str = Field(..., description="Название компании")
+    balance: str = Field(..., description="Баланс компании (строка)")
+    transactions: List[FinanceTransaction] = Field(default_factory=list, description="Транзакции компании")
+
+
+class FinanceEmployeeSummary(BaseModel):
+    """
+    Информация о сотруднике от финансового бэкенда (AccountMemberWithDetails).
+    """
+    first_name: str
+    last_name: str
+    cor_id: str
+    account_id: int
+    limit_amount: Optional[str] = Field(None, description="Лимит сотрудника (строка)")
+    limit_period: Optional[str] = Field(None, description="Период лимита: day/week/month/year")
+    disabled_at: Optional[datetime] = None
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    deleted_at: Optional[datetime] = None
+    role: Optional[str] = Field(None, description="Роль в компании (по умолчанию 'account member')")
+    balance: Optional[str] = Field(None, description="Баланс сотрудника (строка)")
+    company_name: Optional[str] = Field(None, description="Название компании")
+    transactions: Optional[List[FinanceTransaction]] = Field(None, description="Транзакции сотрудника")
+
+
+class MyCorporateStatusResponse(BaseModel):
+    """
+    Компактный ответ о статусе пользователя в корпоративной системе.
+    Содержит информацию по заявкам, кор ID и роль в финансовом бекенде.
+    """
+    # Локальные заявки пользователя
+    applications: List[CorporateClientResponse] = Field(
+        default_factory=list,
+        description="Заявки пользователя (компании, статусы, details)"
+    )
+    
+    # Кор ID пользователя 
+    cor_id: Optional[str] = Field(
+        None,
+        description="COR ID пользователя в финансовом бекенде"
+    )
+    
+    # Роль в финансовой системе
+    finance_role: Optional[str] = Field(
+        None,
+        description="Роль в финансовой системе: 'owner' | 'account_member' | None"
+    )
+
 
 
 class SibionicsGlucoseListResponse(BaseModel):
@@ -3832,3 +4013,123 @@ class SibionicsActionResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class ManualGlucoseRequest(BaseModel):
+    """Запрос на ручное добавление значения глюкозы"""
+    glucose_value: float = Field(..., ge=0.0, le=33.3, description="Уровень глюкозы в mmol/L (0-33.3)")
+    timestamp: Optional[datetime] = Field(None, description="Время измерения (если не указано - текущее время)")
+    
+    @field_validator("timestamp")
+    @classmethod
+    def validate_timestamp(cls, v: Optional[datetime]) -> Optional[datetime]:
+        """Проверка, что время не в будущем"""
+        if v and v > datetime.now(timezone.utc):
+            raise ValueError("Timestamp cannot be in the future")
+        return v
+
+
+class ManualGlucoseResponse(BaseModel):
+    """Ответ после добавления ручного значения глюкозы"""
+    id: str = Field(..., description="ID записи")
+    device_id: str = Field(..., description="ID виртуального устройства")
+    glucose_value: float = Field(..., description="Уровень глюкозы в mmol/L")
+    timestamp: datetime = Field(..., description="Время измерения")
+    trend: Optional[int] = Field(None, description="Тренд изменения")
+    alarm_status: Optional[int] = Field(None, description="Статус тревоги")
+    created_at: datetime = Field(..., description="Время создания записи")
+    
+    class Config:
+        from_attributes = True
+
+
+class AllDevicesGlucoseResponse(BaseModel):
+    """Данные глюкозы со всех устройств пользователя"""
+    device_id: str = Field(..., description="ID устройства в БД")
+    device_name: Optional[str] = Field(None, description="Название устройства")
+    device_type: str = Field(..., description="Тип устройства (cgm или manual)")
+    sibionics_device_id: Optional[str] = Field(None, description="ID устройства в SIBIONICS (null для manual)")
+    glucose_data: List[SibionicsGlucoseResponse] = Field(..., description="Данные глюкозы")
+    last_sync: Optional[datetime] = Field(None, description="Время последней синхронизации (для CGM)")
+    
+    class Config:
+        from_attributes = True
+
+
+# ============================================================================
+# USER INVITATION SCHEMAS (Приглашение пользователей)
+# ============================================================================
+
+class InviteUserRequest(BaseModel):
+    """Запрос на создание приглашения пользователя"""
+    email: EmailStr = Field(..., description="Email приглашаемого пользователя")
+    expires_in_days: Optional[int] = Field(
+        7, 
+        ge=1, 
+        le=30,
+        description="Срок действия приглашения в днях (по умолчанию 7 дней)"
+    )
+
+
+class InviteUserResponse(BaseModel):
+    """Ответ с данными приглашения"""
+    invitation_id: str = Field(..., description="ID приглашения")
+    email: str = Field(..., description="Email приглашённого пользователя")
+    token: str = Field(..., description="Уникальный токен приглашения")
+    invitation_link: str = Field(..., description="Полная ссылка для регистрации")
+    expires_at: datetime = Field(..., description="Дата истечения приглашения")
+    created_at: datetime = Field(..., description="Дата создания приглашения")
+    
+    class Config:
+        from_attributes = True
+
+
+class ValidateInvitationRequest(BaseModel):
+    """Запрос на проверку валидности токена приглашения"""
+    token: str = Field(..., min_length=32, description="Токен приглашения из URL")
+
+
+class ValidateInvitationResponse(BaseModel):
+    """Ответ с данными валидного приглашения"""
+    is_valid: bool = Field(..., description="Валиден ли токен")
+    email: Optional[str] = Field(None, description="Email для регистрации (readonly)")
+    expires_at: Optional[datetime] = Field(None, description="Когда истекает")
+    message: Optional[str] = Field(None, description="Сообщение об ошибке, если невалидно")
+
+
+class AcceptInvitationRequest(BaseModel):
+    """Запрос на регистрацию по приглашению"""
+    token: str = Field(..., min_length=32, description="Токен приглашения")
+    password: str = Field(..., min_length=8, max_length=32, description="Пароль пользователя")
+    birth: Optional[int] = Field(
+        None, 
+        ge=1900, 
+        description="Год рождения (например: 1990)"
+    )
+    user_sex: Optional[Literal["M", "F", "*"]] = Field(
+        None, 
+        description="Пол: 'M' (мужской), 'F' (женский), '*' (другое)"
+    )
+
+    @field_validator("birth")
+    @classmethod
+    def validate_birth_year(cls, v: Optional[int]) -> Optional[int]:
+        """Валидация года рождения - не может быть в будущем"""
+        if v is None:
+            return v
+        
+        current_year = datetime.now().year
+        if v > current_year:
+            raise ValueError(f"Год рождения не может быть больше текущего года ({current_year})")
+        
+        return v
+
+
+class AcceptInvitationResponse(BaseModel):
+    """Ответ после успешной регистрации по приглашению"""
+    user: UserDb = Field(..., description="Данные созданного пользователя")
+    access_token: str = Field(..., description="JWT access token")
+    refresh_token: str = Field(..., description="JWT refresh token")
+    token_type: str = Field(default="bearer", description="Тип токена")
+    device_id: str = Field(..., description="ID устройства/сессии")
+    message: str = Field(default="Регистрация по приглашению успешно завершена")

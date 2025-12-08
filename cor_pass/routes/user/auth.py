@@ -27,6 +27,11 @@ COR-ID Authentication API
   POST /auth/signup                    - Регистрация нового пользователя
   POST /auth/login                     - Вход по email и паролю
   
+ПРИГЛАШЕНИЯ ПОЛЬЗОВАТЕЛЕЙ:
+  POST /auth/invite                    - Создать приглашение (с автоматической отправкой email)
+  POST /auth/validate-invitation       - Проверить токен приглашения
+  POST /auth/accept-invitation         - Регистрация по приглашению
+  
 OAuth-LIKE FLOW (для сторонних приложений):
   POST /auth/v1/initiate-login         - [ШАГ 1] Создать сессию авторизации (мобильные)
   POST /auth/web/initiate-login        - [ШАГ 1] Создать сессию для веб-фронтенда
@@ -120,6 +125,7 @@ from cor_pass.schemas import (
     RecoveryResponseModel,
     SessionLoginStatus,
     UserModel,
+    UserDb,
     ResponseUser,
     EmailSchema,
     VerificationModel,
@@ -129,18 +135,26 @@ from cor_pass.schemas import (
     WebInitiateLoginRequest,
     WebInitiateLoginResponse,
     QrScannedRequest,
-    UserMeResponse
+    UserMeResponse,
+    InviteUserRequest,
+    InviteUserResponse,
+    ValidateInvitationRequest,
+    ValidateInvitationResponse,
+    AcceptInvitationRequest,
+    AcceptInvitationResponse,
 )
 from cor_pass.database.models import User
 from cor_pass.repository.user import person as repository_person
 from cor_pass.repository.user import user_session as repository_session
 from cor_pass.repository.user import cor_id as repository_cor_id
+from cor_pass.repository.user import invitation as repository_invitation
 from cor_pass.services.user.auth import auth_service
 from cor_pass.services.shared import device_info as di
 from cor_pass.services.shared.qr_code import generate_qr_code
 from cor_pass.services.shared.email import (
     send_email_code,
     send_email_code_forgot_password,
+    send_invitation_email,
 )
 from cor_pass.services.shared.websocket_events_manager import websocket_events_manager
 from cor_pass.services.user.cipher import decrypt_data, decrypt_user_key, encrypt_data
@@ -1969,3 +1983,322 @@ async def upload_recovery_file(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid recovery file"
         )
+
+
+# ============================================================================
+# USER INVITATION ENDPOINTS (Приглашение пользователей)
+# ============================================================================
+
+@router.post(
+    "/invite",
+    response_model=InviteUserResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RateLimiter(times=10, seconds=60))],
+)
+async def invite_user(
+    body: InviteUserRequest,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(auth_service.get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    **Создание приглашения для нового пользователя**
+    
+    Создаёт приглашение с уникальным токеном, которое можно отправить пользователю
+    для регистрации в системе. Email из приглашения будет доступен только для чтения
+    при регистрации.
+    
+    **После создания приглашения автоматически отправляется email с ссылкой для регистрации.**
+    
+    ---
+
+    **Workflow:**
+    1. Администратор создаёт приглашение
+    2. Система генерирует уникальный токен
+    3. **Автоматически отправляется email с ссылкой на регистрацию**
+    4. Пользователь переходит по ссылке и видит форму регистрации
+    5. Email в форме предзаполнен и readonly
+    6. После регистрации приглашение помечается как использованное
+    
+    ---
+    
+    **Возможные ошибки:**
+    - 409 Conflict - Уже существует активное приглашение для этого email
+    - 409 Conflict - Пользователь с таким email уже зарегистрирован
+    - 401 Unauthorized - Не авторизован
+    - 429 Too Many Requests - Превышен rate limit
+    """
+    email = body.email.lower()
+    
+    existing_user = await repository_person.get_user_by_email(email, db)
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Пользователь с email {email} уже зарегистрирован"
+        )
+    
+    existing_invitation = await repository_invitation.get_pending_invitation_by_email(email, db)
+    if existing_invitation:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Активное приглашение для {email} уже существует (истекает {existing_invitation.expires_at})"
+        )
+    
+    invitation = await repository_invitation.create_invitation(
+        email=email,
+        invited_by_id=current_user.id,
+        expires_in_days=body.expires_in_days or 7,
+        db=db
+    )
+    
+    base_url = "https://dev-corid.cor-medical.ua/api"  # или из settings
+    invitation_link = f"{base_url}/signup?token={invitation.token}"
+    
+    # Отправляем email в фоновом режиме
+    background_tasks.add_task(
+        send_invitation_email,
+        email=email,
+        invitation_link=invitation_link,
+        invited_by_email=current_user.email,
+        expires_at=invitation.expires_at.isoformat(),
+    )
+    
+    logger.info(
+        f"User {current_user.email} created invitation for {email}, "
+        f"token={invitation.token[:12]}..., expires_at={invitation.expires_at}, "
+        f"email will be sent in background"
+    )
+    
+    return InviteUserResponse(
+        invitation_id=invitation.id,
+        email=invitation.email,
+        token=invitation.token,
+        invitation_link=invitation_link,
+        expires_at=invitation.expires_at,
+        created_at=invitation.created_at
+    )
+
+
+@router.post(
+    "/validate-invitation",
+    response_model=ValidateInvitationResponse,
+    dependencies=[Depends(RateLimiter(times=30, seconds=60))],
+)
+async def validate_invitation(
+    body: ValidateInvitationRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    **Проверка валидности токена приглашения**
+    
+    Используется фронтендом для проверки токена перед показом формы регистрации.
+    Возвращает email, который нужно использовать при регистрации.
+    
+    ---
+    
+    **Параметры:**
+    - `token` (str) - Токен приглашения из URL query параметра
+    
+    ---
+    
+    **Возвращает:**
+    - `is_valid` (bool) - Валиден ли токен
+    - `email` (str, optional) - Email для регистрации (если валиден)
+    - `expires_at` (datetime, optional) - Когда истекает (если валиден)
+    - `message` (str, optional) - Сообщение об ошибке (если невалиден)
+    
+    ---
+    
+    **Невалидные случаи:**
+    - Приглашение не найдено
+    - Приглашение уже использовано
+    - Приглашение истекло
+    
+    ---
+    
+    **Безопасность:**
+    - Rate limit: 30 проверок в минуту
+    - Не требует авторизации (публичный endpoint)
+    """
+    invitation = await repository_invitation.get_invitation_by_token(body.token, db)
+    
+    if not invitation:
+        return ValidateInvitationResponse(
+            is_valid=False,
+            message="Приглашение не найдено"
+        )
+    
+    if invitation.is_used:
+        return ValidateInvitationResponse(
+            is_valid=False,
+            message="Это приглашение уже было использовано"
+        )
+    
+    if invitation.expires_at < datetime.now():
+        return ValidateInvitationResponse(
+            is_valid=False,
+            message=f"Приглашение истекло {invitation.expires_at}"
+        )
+    
+    return ValidateInvitationResponse(
+        is_valid=True,
+        email=invitation.email,
+        expires_at=invitation.expires_at
+    )
+
+
+@router.post(
+    "/accept-invitation",
+    response_model=AcceptInvitationResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(RateLimiter(times=5, seconds=60))],
+)
+async def accept_invitation(
+    body: AcceptInvitationRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    device_info: dict = Depends(di.get_device_header),
+):
+    """
+    **Регистрация пользователя по приглашению**
+    
+    Создаёт нового пользователя на основе валидного токена приглашения.
+    Email берётся из приглашения (readonly), пользователь указывает только пароль
+    и опциональные персональные данные.
+    
+    ---
+    
+    **Параметры:**
+    - `token` (str) - Токен приглашения
+    - `password` (str) - Пароль пользователя (8-32 символа)
+    - `birth` (int, optional) - Год рождения (>= 1900)
+    - `user_sex` (str, optional) - Пол: 'M', 'F', '*'
+    
+    ---
+    
+    **Безопасность:**
+    - Rate limit: 5 регистраций в минуту
+    - Приглашение одноразовое (is_used=True)
+    - Email readonly (берётся из приглашения)
+    - Пароль хешируется перед сохранением
+    
+    ---
+    
+    **Возможные ошибки:**
+    - 404 Not Found - Приглашение не найдено
+    - 400 Bad Request - Приглашение уже использовано
+    - 400 Bad Request - Приглашение истекло
+    - 409 Conflict - Пользователь с таким email уже существует
+    - 429 Too Many Requests - Превышен rate limit
+    """
+    # Проверяем валидность приглашения
+    invitation = await repository_invitation.get_valid_invitation_by_token(body.token, db)
+    
+    if not invitation:
+        # Проверяем, существует ли приглашение вообще
+        any_invitation = await repository_invitation.get_invitation_by_token(body.token, db)
+        
+        if not any_invitation:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Приглашение не найдено"
+            )
+        
+        if any_invitation.is_used:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Это приглашение уже было использовано"
+            )
+        
+        if any_invitation.expires_at < datetime.now():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Приглашение истекло {any_invitation.expires_at}"
+            )
+    
+    email = invitation.email
+    
+    # Проверяем, не зарегистрирован ли уже пользователь
+    existing_user = await repository_person.get_user_by_email(email, db)
+    if existing_user:
+        # Помечаем приглашение как использованное даже если пользователь уже существует
+        await repository_invitation.mark_invitation_used(invitation, db)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Пользователь с этим email уже зарегистрирован"
+        )
+    
+    # Создаём пользователя
+    user_data = UserModel(
+        email=email,
+        password=body.password,
+        birth=body.birth,
+        user_sex=body.user_sex
+    )
+    user_data.password = auth_service.get_password_hash(user_data.password)
+    
+    new_user = await repository_person.create_user(user_data, db)
+    
+    if not new_user.cor_id:
+        await repository_cor_id.create_new_corid(new_user, db)
+    
+    logger.info(f"User {email} registered via invitation (invited_by={invitation.invited_by})")
+    
+    # Помечаем приглашение как использованное
+    await repository_invitation.mark_invitation_used(invitation, db)
+    
+    # Получаем роли пользователя
+    user_roles = await repository_person.get_user_roles(email=new_user.email, db=db)
+    
+    # Создаём токены
+    access_token, access_token_jti = await auth_service.create_access_token(
+        data={"oid": str(new_user.id), "corid": new_user.cor_id, "roles": user_roles}
+    )
+    refresh_token = await auth_service.create_refresh_token(
+        data={"oid": str(new_user.id), "corid": new_user.cor_id, "roles": user_roles}
+    )
+    
+    # Создаём сессию
+    device_information = di.get_device_info(request)
+    app_id = device_information.get("app_id")
+    device_id = device_information.get("device_id")
+    legacy_device_info = device_information.get("device_info")
+    
+    if not device_id:
+        device_id = str(uuid4())
+    if not app_id:
+        app_id = "unknown app"
+    
+    session_data = {
+        "user_id": new_user.cor_id,
+        "app_id": app_id,
+        "device_id": device_id,
+        "device_type": device_information["device_type"],
+        "device_info": legacy_device_info,
+        "ip_address": device_information["ip_address"],
+        "device_os": device_information["device_os"],
+        "jti": access_token_jti,
+        "refresh_token": refresh_token,
+        "access_token": access_token,
+    }
+    
+    new_session = await repository_session.create_user_session(
+        body=UserSessionModel(**session_data),
+        user=new_user,
+        db=db,
+    )
+    
+    logger.info(
+        f"User {new_user.email} successfully registered via invitation, "
+        f"session created: device_id={device_id}, app_id={app_id}"
+    )
+    
+    return AcceptInvitationResponse(
+        user=UserDb.model_validate(new_user),
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        device_id=device_id,
+        message="Регистрация по приглашению успешно завершена"
+    )

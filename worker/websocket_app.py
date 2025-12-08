@@ -4,7 +4,7 @@ FastAPI приложение для WebSocket соединений с энерг
 """
 import asyncio
 from contextlib import asynccontextmanager
-from typing import Dict
+from typing import Dict, List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,16 +12,225 @@ from sqlalchemy import select
 from loguru import logger
 from pydantic import BaseModel
 
-from cor_pass.database.db import get_db
+from cor_pass.database.db import get_db, async_session_maker
 from cor_pass.database.models import User
+from cor_pass.database.models.energy import WebSocketBroadcastTask
 from cor_pass.config.config import settings
 from cor_pass.services.shared.websocket_events_manager import websocket_events_manager
 from cor_pass.database.redis_db import redis_client
 from passlib.context import CryptContext
+from cor_pass.schemas import (
+    WebSocketBroadcastTaskCreate,
+    WebSocketBroadcastTaskUpdate,
+    WebSocketBroadcastTaskResponse,
+    WebSocketBroadcastTaskListResponse,
+)
 
 
 # Глобальная переменная для хранения фоновых задач
 background_tasks = []
+
+# Менеджер пользовательских фоновых рассылок команд с поддержкой БД
+class BroadcastTaskManager:
+    """Менеджер задач периодической рассылки команд на конкретные устройства через WebSocket."""
+    def __init__(self):
+        # db_task_id -> {"task": asyncio.Task, "db_task": WebSocketBroadcastTask}
+        self.tasks: Dict[str, Dict] = {}
+
+    async def load_from_db(self):
+        """Загружает активные задачи из БД и запускает их"""
+        try:
+            async with async_session_maker() as db:
+                from sqlalchemy import select
+                result = await db.execute(
+                    select(WebSocketBroadcastTask).where(WebSocketBroadcastTask.is_active == True)
+                )
+                db_tasks = result.scalars().all()
+                
+                for db_task in db_tasks:
+                    if db_task.id not in self.tasks:
+                        await self._start_task(db_task)
+                
+                logger.info(f"📂 Loaded {len(db_tasks)} active broadcast tasks from DB")
+        except Exception as e:
+            logger.error(f"Error loading broadcast tasks from DB: {e}", exc_info=True)
+
+    async def _start_task(self, db_task: WebSocketBroadcastTask):
+        """Внутренний метод для запуска задачи"""
+        task_id = db_task.id
+        session_id = db_task.session_id
+        interval = db_task.interval_seconds
+        
+        # Формируем payload для отправки
+        payload = {
+            "command_type": db_task.command_type,
+            **db_task.command_payload
+        }
+
+        async def _runner():
+            logger.info(f"🔄 Broadcast task '{db_task.task_name}' started for session {session_id} (interval={interval}s)")
+            while True:
+                try:
+                    await asyncio.sleep(interval)
+                    
+                    # Проверяем, подключено ли устройство
+                    connections = websocket_events_manager.active_connections
+                    target_conn = None
+                    
+                    for connection_id, conn_data in connections.items():
+                        if conn_data.get("session_id") == session_id:
+                            target_conn = connection_id
+                            break
+                    
+                    if not target_conn:
+                        logger.debug(f"[{db_task.task_name}] Device {session_id} not connected, skipping")
+                        continue
+                    
+                    # Отправляем команду конкретному устройству
+                    try:
+                        await websocket_events_manager.send_to_session(
+                            session_id=session_id,
+                            event_data=payload
+                        )
+                        logger.debug(f"📤 [{db_task.task_name}] Sent {db_task.command_type} command to {session_id}")
+                    except Exception as e:
+                        logger.warning(f"[{db_task.task_name}] Failed to send to {session_id}: {e}")
+                    
+                except asyncio.CancelledError:
+                    logger.info(f"Broadcast task '{db_task.task_name}' cancelled")
+                    break
+                except Exception as e:
+                    logger.error(f"[{db_task.task_name}] Error in broadcast task: {e}", exc_info=True)
+                    await asyncio.sleep(3)
+
+        t = asyncio.create_task(_runner())
+        self.tasks[task_id] = {"task": t, "db_task": db_task}
+        logger.info(f"✅ Started broadcast task '{db_task.task_name}' (ID: {task_id})")
+
+    async def create_and_start(self, task_data: WebSocketBroadcastTaskCreate) -> WebSocketBroadcastTask:
+        """Создаёт задачу в БД и запускает её"""
+        # Формируем command_payload в зависимости от типа команды
+        command_payload = {}
+        
+        if task_data.command_type == "pi30":
+            if not task_data.pi30_command:
+                raise ValueError("pi30_command required for pi30 command_type")
+            # Автоматически форматируем PI30 команду
+            formatted_hex = format_pi30_command_with_crc_hex(task_data.pi30_command)
+            command_payload = {"pi30": formatted_hex}
+            logger.info(f"📝 Formatted PI30 command '{task_data.pi30_command}' -> {formatted_hex}")
+        elif task_data.command_type == "modbus_read":
+            if not task_data.hex_data:
+                raise ValueError("hex_data required for modbus_read command_type")
+            command_payload = {"hex_data": task_data.hex_data}
+        else:
+            raise ValueError(f"Unknown command_type: {task_data.command_type}")
+        
+        # Создаём запись в БД
+        async with async_session_maker() as db:
+            new_task = WebSocketBroadcastTask(
+                task_name=task_data.task_name,
+                session_id=task_data.session_id,
+                command_type=task_data.command_type,
+                command_payload=command_payload,
+                interval_seconds=task_data.interval_seconds,
+                is_active=task_data.is_active,
+                created_by=task_data.created_by
+            )
+            
+            db.add(new_task)
+            await db.commit()
+            await db.refresh(new_task)
+            
+            logger.info(f"💾 Created broadcast task '{new_task.task_name}' in DB (ID: {new_task.id})")
+        
+        # Запускаем задачу, если она активна
+        if new_task.is_active:
+            await self._start_task(new_task)
+        
+        return new_task
+
+    async def stop_and_delete(self, task_id: str):
+        """Останавливает задачу и удаляет из БД"""
+        # Останавливаем asyncio task
+        if task_id in self.tasks:
+            self.tasks[task_id]["task"].cancel()
+            try:
+                await self.tasks[task_id]["task"]
+            except asyncio.CancelledError:
+                pass
+            del self.tasks[task_id]
+        
+        # Удаляем из БД
+        async with async_session_maker() as db:
+            from sqlalchemy import select
+            result = await db.execute(
+                select(WebSocketBroadcastTask).where(WebSocketBroadcastTask.id == task_id)
+            )
+            db_task = result.scalar_one_or_none()
+            
+            if db_task:
+                await db.delete(db_task)
+                await db.commit()
+                logger.info(f"🗑️ Deleted broadcast task '{db_task.task_name}' from DB")
+
+    async def toggle_task(self, task_id: str):
+        """Включает/выключает задачу"""
+        async with async_session_maker() as db:
+            from sqlalchemy import select
+            result = await db.execute(
+                select(WebSocketBroadcastTask).where(WebSocketBroadcastTask.id == task_id)
+            )
+            db_task = result.scalar_one_or_none()
+            
+            if not db_task:
+                raise RuntimeError(f"Task {task_id} not found in DB")
+            
+            db_task.is_active = not db_task.is_active
+            await db.commit()
+            await db.refresh(db_task)
+            
+            # Останавливаем или запускаем
+            if db_task.is_active:
+                if task_id not in self.tasks:
+                    await self._start_task(db_task)
+            else:
+                if task_id in self.tasks:
+                    self.tasks[task_id]["task"].cancel()
+                    try:
+                        await self.tasks[task_id]["task"]
+                    except asyncio.CancelledError:
+                        pass
+                    del self.tasks[task_id]
+            
+            return db_task
+
+    async def list_all(self) -> list:
+        """Получает все задачи из БД с их статусом"""
+        async with async_session_maker() as db:
+            from sqlalchemy import select
+            result = await db.execute(select(WebSocketBroadcastTask))
+            db_tasks = result.scalars().all()
+            
+            tasks_info = []
+            for db_task in db_tasks:
+                is_running = db_task.id in self.tasks and not self.tasks[db_task.id]["task"].done()
+                tasks_info.append({
+                    "id": db_task.id,
+                    "task_name": db_task.task_name,
+                    "session_id": db_task.session_id,
+                    "command_type": db_task.command_type,
+                    "interval_seconds": db_task.interval_seconds,
+                    "is_active": db_task.is_active,
+                    "is_running": is_running,
+                    "created_at": db_task.created_at.isoformat(),
+                    "created_by": db_task.created_by
+                })
+            
+            return tasks_info
+
+
+broadcast_manager = BroadcastTaskManager()
 
 # Интервал отправки команд (в секундах)
 COMMAND_SEND_INTERVAL = 5  # Отправлять команду каждые 5 секунд
@@ -44,9 +253,6 @@ class Pi30CommandRequest(BaseModel):
     """Запрос на отправку PI30 команды"""
     session_token: str
     pi30: PI30Command
-
-
-@asynccontextmanager
 async def lifespan(app: FastAPI):
     """Управление жизненным циклом приложения"""
     logger.info("Starting Energetic Devices WebSocket Server...")
@@ -55,10 +261,9 @@ async def lifespan(app: FastAPI):
     await websocket_events_manager.init_redis_listener()
     logger.info("Redis listener initialized for WebSocket events")
     
-    # Запускаем фоновую задачу для отправки Modbus-команд
-    modbus_task = asyncio.create_task(send_modbus_command_to_all_devices())
-    background_tasks.append(modbus_task)
-    logger.info(f"Background task started: Modbus command sender (interval: {COMMAND_SEND_INTERVAL}s)")
+    # Загружаем фоновые задачи broadcast из БД
+    await broadcast_manager.load_from_db()
+    logger.info("Broadcast tasks loaded from database")
     
     yield
     
@@ -68,6 +273,10 @@ async def lifespan(app: FastAPI):
     # Отменяем все фоновые задачи
     for task in background_tasks:
         task.cancel()
+    
+    # Останавливаем все broadcast задачи
+    for task_id, task_data in list(broadcast_manager.tasks.items()):
+        task_data["task"].cancel()
     
     # Ждем завершения всех задач
     await asyncio.gather(*background_tasks, return_exceptions=True)
@@ -79,6 +288,10 @@ app = FastAPI(
     description="WebSocket сервер для энергетических устройств (Cerbo/Modbus)",
     lifespan=lifespan
 )
+
+# HTTP API for Modbus operations
+from worker import modbus_routes as modbus_http_routes
+app.include_router(modbus_http_routes.router)
 
 # Добавляем CORS middleware для поддержки WebSocket соединений из браузера
 app.add_middleware(
@@ -194,6 +407,108 @@ async def send_modbus_command_to_all_devices():
             logger.error(f"Error in send_modbus_command_to_all_devices: {e}", exc_info=True)
             # Продолжаем работу даже при ошибке
             await asyncio.sleep(3)
+
+
+class CreateBroadcastTaskRequest(BaseModel):
+    task_id: str
+    interval_seconds: int
+    payload: Dict
+
+
+@app.get(
+    "/broadcast/tasks",
+    status_code=status.HTTP_200_OK,
+    summary="Список фоновых рассылок",
+    response_model=List[dict]
+)
+async def list_broadcast_tasks():
+    """Получает список всех задач из БД"""
+    tasks = await broadcast_manager.list_all()
+    return tasks
+
+
+@app.get(
+    "/broadcast/tasks/session/{session_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Получить задачи конкретного устройства",
+    response_model=WebSocketBroadcastTaskListResponse
+)
+async def get_session_broadcast_tasks(session_id: str):
+    """Возвращает все задачи для конкретного session_id"""
+    async with async_session_maker() as db:
+        from sqlalchemy import select
+        result = await db.execute(
+            select(WebSocketBroadcastTask).where(
+                WebSocketBroadcastTask.session_id == session_id
+            )
+        )
+        tasks = result.scalars().all()
+        
+        active_count = sum(1 for task in tasks if task.is_active)
+        
+        return WebSocketBroadcastTaskListResponse(
+            session_id=session_id,
+            tasks=[WebSocketBroadcastTaskResponse.model_validate(task) for task in tasks],
+            total_tasks=len(tasks),
+            active_tasks=active_count
+        )
+
+
+@app.post(
+    "/broadcast/tasks",
+    status_code=status.HTTP_201_CREATED,
+    summary="Создать фоновую рассылку команд",
+    response_model=WebSocketBroadcastTaskResponse
+)
+async def create_broadcast_task(task_data: WebSocketBroadcastTaskCreate):
+    """
+    Создаёт новую задачу фоновой рассылки команд.
+    
+    **Для PI30 команд:**
+    - Укажите `command_type="pi30"` и `pi30_command="QPIGS"` (или другую команду)
+    - Команда **автоматически** отформатируется с CRC и CR
+    
+    **Для Modbus команд:**
+    - Укажите `command_type="modbus_read"` и `hex_data="09 03 00 00 00 10 45 4E"`
+    """
+    try:
+        new_task = await broadcast_manager.create_and_start(task_data)
+        return WebSocketBroadcastTaskResponse.model_validate(new_task)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error creating broadcast task: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.patch(
+    "/broadcast/tasks/{task_id}/toggle",
+    status_code=status.HTTP_200_OK,
+    summary="Включить/выключить задачу",
+    response_model=WebSocketBroadcastTaskResponse
+)
+async def toggle_broadcast_task(task_id: str):
+    """Переключает статус активности задачи"""
+    try:
+        updated_task = await broadcast_manager.toggle_task(task_id)
+        return WebSocketBroadcastTaskResponse.model_validate(updated_task)
+    except RuntimeError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.delete(
+    "/broadcast/tasks/{task_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Удалить фоновую рассылку"
+)
+async def delete_broadcast_task(task_id: str):
+    """Останавливает и удаляет задачу"""
+    try:
+        await broadcast_manager.stop_and_delete(task_id)
+        return {"detail": "Broadcast task deleted", "task_id": task_id}
+    except Exception as e:
+        logger.error(f"Error deleting task: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/health")

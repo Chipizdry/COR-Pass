@@ -1,0 +1,198 @@
+﻿<!DOCTYPE html>
+<html lang="uk" class="layout-page">
+
+<head>
+   <link rel="icon" type="image/png" href="./favicon.png">
+   <meta charset="UTF-8" />
+   <title>Lawyer Cabinet</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500&display=swap" rel="stylesheet" />
+   <link rel="stylesheet" type="text/css" href="../../COR_LAB/css/reset.css">
+   <link rel="stylesheet" type="text/css" href="../../COR_LAB/css/general.css">
+   <link rel="stylesheet" type="text/css" href="../../COR_ID_css/doctors-page.css">
+   <link rel="stylesheet" type="text/css" href="../../COR_LAB/css/header.css">
+   <link rel="stylesheet" type="text/css" href="../../COR_ID_css/modal.css">
+
+   <!-- приховуємо сторінку, щоб переклалось без FOUC -->
+   <style>
+      html.i18n-loading body {
+         visibility: hidden;
+      }
+   </style>
+
+   <script>
+      document.documentElement.classList.add('i18n-loading');
+   </script>
+
+   <!-- Захист від зависання і пустої сторінки! -->
+   <script>
+      function removeI18nMask() {
+         document.documentElement.classList.remove('i18n-loading');
+      }
+      // Якщо translation.js викликає applySavedLanguage() — знімай після неї
+      document.addEventListener('i18n:ready', removeI18nMask);
+      // fallback: знімаємо при повному завантаженні сторінки
+      window.addEventListener('load', removeI18nMask, { once: true });
+      // запасний таймер, якщо переклад завис
+      setTimeout(removeI18nMask, 2500);
+   </script>
+   <!-- підключаємо переклад та видаляємо зайвий клас -->
+   <script src="../../COR_ID_js/translation.js"></script>
+
+   <noscript>
+      <style>
+         html.i18n-loading body {
+            visibility: visible !important;
+         }
+      </style>
+   </noscript>
+</head>
+
+<body class="layout-page">
+   <div class="layout">
+      <main class="main">
+
+         <div class="header-container">
+            <div class="header-row top">
+               <div class="role-container" style="margin-right: 20px">
+                  <a href="../../COR_ID/mainscreen.html" class="role-icon">
+                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                           d="M1 11.6067L11.1031 2.86212C11.2208 2.74732 11.3607 2.65625 11.5146 2.59411C11.6685 2.53198 11.8334 2.5 12 2.5C12.1666 2.5 12.3315 2.53198 12.4854 2.59411C12.6393 2.65625 12.7792 2.74732 12.8969 2.86212L23 11.6067M3.53846 9.40792V20.2633C3.53846 20.946 4.10708 21.5 4.80769 21.5H9.46154V16.1411C9.46154 15.4585 10.0302 14.9045 10.7308 14.9045H13.2692C13.9698 14.9045 14.5385 15.4585 14.5385 16.1411V21.5H19.1923C19.8929 21.5 20.4615 20.946 20.4615 20.2633V9.40792"
+                           stroke="#7527B2" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                     </svg>
+                  </a>
+               </div>
+               <div class="search-container">
+                  <input type="text" placeholder="Search" id="searchInput" data-translate="searchPlaceholder">
+                  <svg class="search-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                     <path fill-rule="evenodd" clip-rule="evenodd"
+                        d="M11.2 5.60001C8.10722 5.60001 5.60001 8.10722 5.60001 11.2C5.60001 14.2928 8.10722 16.8001 11.2 16.8001C12.7087 16.8001 14.0781 16.2035 15.085 15.2333C15.1061 15.2058 15.1292 15.1794 15.1544 15.1543C15.1795 15.1291 15.2059 15.106 15.2334 15.0849C16.2035 14.078 16.8 12.7087 16.8 11.2C16.8 8.10722 14.2928 5.60001 11.2 5.60001ZM16.8256 15.6942C17.8109 14.4624 18.4001 12.9 18.4001 11.2C18.4001 7.22357 15.1765 4 11.2 4C7.22356 4 4 7.22357 4 11.2C4 15.1765 7.22356 18.4001 11.2 18.4001C12.9001 18.4001 14.4625 17.8109 15.6942 16.8255L18.6344 19.7657C18.9468 20.0781 19.4533 20.0781 19.7658 19.7657C20.0782 19.4533 20.0782 18.9467 19.7658 18.6343L16.8256 15.6942Z"
+                        fill="#B1A1DA" />
+                  </svg>
+               </div>
+            </div>
+         </div>
+
+         <div class="filters-bar">
+
+            <div id="filterBtn">
+            </div>
+
+            <div style="position:relative">
+               <div class="sort" id="sortBtn">
+                  <span id="sortIcon"><svg width="19" height="16" viewBox="0 0 19 16" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path
+                           d="M4.12219 14.9006V1.90039M4.12219 14.9006L0.899902 11.6784M4.12219 14.9006L7.34447 11.6784"
+                           stroke="#5B4296" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                        <path
+                           d="M14.1222 0.900146L14.1222 13.9004M14.1222 0.900146L17.3445 4.12243M14.1222 0.900146L10.8999 4.12243"
+                           stroke="#5B4296" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                     </svg>
+                     <span data-translate="sort">Сортування:</span>&nbsp;</span>
+                  <span id="sortLabel">
+                     <span data-translate="nameAsc">Прізвище: від А до Я</span>
+                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                           d="M12.7241 16.0865L12.7269 16.0834L18.7453 9.65889L18.7499 9.65396L18.7511 9.65252C19.1032 9.25733 19.0719 8.66929 18.7194 8.30513L18.7167 8.30066L18.7158 8.29968L18.7122 8.29599L18.7114 8.29678C18.3519 7.90305 17.7346 7.90088 17.3434 8.29665L17.3412 8.29895L17.3399 8.30027L17.3377 8.30263L12.0041 13.964L6.66231 8.29402L6.66086 8.2954C6.49594 8.09985 6.23847 8 5.97981 8C5.45224 8 5 8.43581 5 8.99434C5 9.25792 5.09722 9.48996 5.26063 9.65679L5.26438 9.66067L11.3137 16.0847L11.3169 16.0882L11.342 16.1139L11.3527 16.1241L11.3555 16.1268C11.7488 16.488 12.3668 16.4838 12.7241 16.0865Z"
+                           fill="#5B4296" />
+                     </svg>
+                  </span>
+
+               </div>
+               <div class="dropdown" id="sortDropdown">
+                  <button data-field="name" data-dir="asc" data-translate="nameAsc">Прізвище: від А до Я</button>
+                  <button data-field="name" data-dir="desc" data-translate="nameDesc">Прізвище: від Я до А</button>
+                  <button data-field="id" data-dir="asc" data-translate="idAsc">COR ID: ↑</button>
+                  <button data-field="id" data-dir="desc" data-translate="idDesc">COR ID: ↓</button>
+                  <button data-field="age" data-dir="asc" data-translate="ageAsc">Вік: ↑</button>
+                  <button data-field="age" data-dir="desc" data-translate="ageDesc">Вік: ↓</button>
+                  <button data-field="gender" data-dir="asc" data-translate="genderAsc">Стать: від А до Я</button>
+                  <button data-field="gender" data-dir="desc" data-translate="genderDesc">Стать: від Я до А</button>
+                  <button data-field="specialization" data-dir="asc" data-translate="specializationAsc">Посада: від А до Я</button>
+                  <button data-field="specialization" data-dir="desc" data-translate="specializationDesc">Посада: від Я до А</button>
+                  <button data-field="clinic" data-dir="asc" data-translate="clinicAsc">Клініка: від А до Я</button>
+                  <button data-field="clinic" data-dir="desc" data-translate="clinicDesc">Клініка: від Я до А</button>
+                  <button data-field="status" data-dir="asc" data-translate="statusAsc">Статус: від А до Я</button>
+                  <button data-field="status" data-dir="desc" data-translate="statusDesc">Статус: від Я до А</button>
+               </div>
+            </div>
+         </div>
+
+
+         <section class="patients_card">
+            <div class="table-wrapper custom-scroll">
+               <table>
+                  <thead>
+                     <tr>
+                        <th data-field="name" data-translate="fullName">Прізвище, ім'я, по-батькові</th>
+                        <th data-field="id" data-translate="id">COR-ID</th>
+                        <th data-field="age" data-translate="ageParam">Вік</th>
+                        <th data-field="gender" data-translate="gender">Стать</th>
+                        <!-- <th data-field="date" data-translate="changeDate">Дата змін</th> -->
+                        <th data-field="position" data-translate="position">Посада</th>
+                        <th data-field="clinic" data-translate="clinic">Клініка</th>
+                        <th data-field="status" data-translate="status">Статус</th>
+                     </tr>
+                  </thead>
+                  <tbody id="tableBody">
+                  </tbody>
+               </table>
+            </div>
+
+            <div class="footer" id="footerInfo"></div>
+         </section>
+      </main>
+   </div>
+
+   <!-- ─── ЛОГИКА (сортировка, поиск, обработчики) ─── -->
+   <script src="../../COR_LAB/js/general.js"></script>
+   <script src="../../COR_ID_Js/general_fun.js"></script>
+   <script src="../../COR_ID_Js/lawyer_doctors.js"></script>
+
+   <style>
+      .status-dropdown {
+         animation: fadeIn 0.15s ease-out;
+      }
+      .status-dropdown .status-option {
+         display: flex;
+         align-items: center;
+         gap: 8px;
+         width: 100%;
+         padding: 10px 16px;
+         border: none;
+         background: white;
+         cursor: pointer;
+         font-size: 14px;
+         text-align: left;
+         transition: background 0.15s;
+      }
+      .status-dropdown .status-option:hover {
+         background: #f5f4fc;
+      }
+      .status-dropdown .status-option.active {
+         background: #EFECF8;
+         font-weight: 600;
+      }
+      .status-dropdown .status-dot {
+         width: 8px;
+         height: 8px;
+         border-radius: 50%;
+         flex-shrink: 0;
+      }
+      .status-menu-trigger {
+         cursor: pointer;
+         transition: opacity 0.15s;
+      }
+      .status-menu-trigger:hover {
+         opacity: 0.7;
+      }
+      @keyframes fadeIn {
+         from { opacity: 0; transform: translateY(-5px); }
+         to { opacity: 1; transform: translateY(0); }
+      }
+   </style>
+</body>
+
+</html>

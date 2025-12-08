@@ -514,6 +514,64 @@ async def get_user_corporate_client(
         )
 
 
+async def get_user_corporate_status_with_finance(
+    user: User,
+    db: AsyncSession,
+):
+    """
+    Получает оптимизированный статус пользователя:
+    1. Список заявок пользователя
+    2. Корпоративный ID 
+    3. Роль в финансовой системе 
+    Args:
+        user: Авторизованный пользователь
+        db: Сессия базы данных
+        
+    Returns:
+        MyCorporateStatusResponse с информацией по заявке, кор ID и роли
+    """
+    from cor_pass.schemas import MyCorporateStatusResponse
+    
+    try:
+        applications = await get_user_corporate_client(user=user, db=db)
+        cor_id = user.cor_id
+        finance_role = None
+        if cor_id:
+            try:
+                finance_service = FinanceBackendService()
+                finance_data = await finance_service.get_company_summary_by_cor_id(
+                    db=db,
+                    cor_id=cor_id
+                )
+                
+                if finance_data and isinstance(finance_data, dict):
+                    finance_role = finance_data.get("role")
+                    if not finance_role:
+                        finance_role = finance_data.get("role", "account member")
+                
+            except HTTPException as http_err:
+                if http_err.status_code == 404:
+                    logger.debug(f"User {cor_id} not found in finance backend (404)")
+                    finance_role = None
+                else:
+                    logger.warning(f"Finance backend error for user {cor_id}: {http_err.detail}")
+                    
+            except Exception as finance_error:
+                logger.warning(f"Finance backend request failed for user {cor_id}: {finance_error}")
+        return MyCorporateStatusResponse(
+            applications=applications,
+            cor_id=cor_id,
+            finance_role=finance_role
+        )
+        
+    except Exception as e:
+        logger.error(f"Error getting user corporate status with finance: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get corporate status: {str(e)}"
+        )
+
+
 async def get_corporate_client_requests(
     db: AsyncSession,
     status_filter: Optional[str] = None,
@@ -556,7 +614,6 @@ async def get_corporate_client_requests(
             user = user_result.scalar_one_or_none()
             
             client_dict = CorporateClientResponse.model_validate(client).model_dump()
-            # TODO: Расшифровать first_name/last_name из Profile когда понадобится
             client_dict["owner_first_name"] = None  # user.first_name if user else None
             client_dict["owner_last_name"] = None  # user.last_name if user else None
             client_dict["owner_email"] = user.email if user else None
@@ -681,6 +738,9 @@ async def approve_corporate_client_request(
         
         logger.info(f"Partner company owner created in finance backend: {client.owner_cor_id}")
         
+        # Используем current_balance как стартовый баланс (если не задан, то 0)
+        start_balance = float(client.current_balance) if client.current_balance else 0.0
+        
         company_response = await finance_service.create_partner_company(
             name=client.company_name,
             company_format=client.company_format,
@@ -689,7 +749,7 @@ async def approve_corporate_client_request(
             address=client.address,
             owner_id_or_cor_id=client.owner_cor_id,
             email=client.email,
-            start_balance=0.0,
+            start_balance=start_balance,
             db=db
         )
         
@@ -714,6 +774,18 @@ async def approve_corporate_client_request(
         client.finance_company_id = finance_company_id
         client.reviewed_by = admin_user.cor_id
         client.reviewed_at = datetime.utcnow()
+        
+        # Устанавливаем credit_limit (fuel_limit) в финбэке если задан
+        if client.fuel_limit and float(client.fuel_limit) > 0:
+            try:
+                await finance_service.update_partner_company_limits(
+                    company_id=finance_company_id,
+                    payload={"credit_limit": float(client.fuel_limit)},
+                    db=db
+                )
+                logger.info(f"Credit limit set for company {finance_company_id}: {client.fuel_limit}")
+            except Exception as limit_err:
+                logger.warning(f"Failed to set credit limit for company {finance_company_id}: {limit_err}")
         
         await db.commit()
         await db.refresh(client)
@@ -940,6 +1012,190 @@ async def update_corporate_client(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update corporate client: {str(e)}"
         )
+
+
+async def update_company_limits_in_finance(
+    finance_company_id: int,
+    credit_limit: Optional[float] = None,
+    balance_level_alert_limit: Optional[float] = None,
+    balance_level_hook_url: Optional[str] = None,
+    db: AsyncSession = None,
+    update_local_fuel_limit: bool = True,
+) -> dict:
+    """
+    Обновляет лимиты компании в финансовом бэкенде.
+    
+    Обновляет:
+    - credit_limit - кредитный лимит (на сколько можно лазить в минус) - сохраняется в fuel_limit локально
+    - balance_level_alert_limit - уровень баланса, при котором послать вебхук
+    - balance_level_hook_url - URL вебхука для уведомления о превышении лимита
+    
+    Args:
+        finance_company_id: ID компании в финбэке
+        credit_limit: Кредитный лимит (будет сохранён в fuel_limit локально)
+        balance_level_alert_limit: Оборот для отправки вебхука
+        balance_level_hook_url: URL вебхука
+        db: Сессия базы данных
+        update_local_fuel_limit: Обновлять ли локальное поле fuel_limit при изменении credit_limit
+        
+    Returns:
+        dict с данными от финбэке
+    """
+    try:
+        finance_service = FinanceBackendService()
+        
+        # Формируем тело реквеста
+        update_payload = {}
+        if credit_limit is not None:
+            update_payload["credit_limit"] = credit_limit
+        if balance_level_alert_limit is not None:
+            update_payload["balance_level_alert_limit"] = balance_level_alert_limit
+        if balance_level_hook_url is not None:
+            update_payload["balance_level_hook_url"] = balance_level_hook_url
+        
+        if not update_payload:
+            raise ValueError("No fields to update")
+        
+        result = await finance_service.update_partner_company_limits(
+            company_id=finance_company_id,
+            payload=update_payload,
+            db=db
+        )
+        
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to communicate with finance backend"
+            )
+        
+        if "error" in result:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Finance backend error: {result['error']}"
+            )
+        
+        # Обновляем локальное поле fuel_limit если изменён credit_limit
+        if credit_limit is not None and update_local_fuel_limit and db:
+            try:
+                query = select(CorporateClient).where(
+                    CorporateClient.finance_company_id == finance_company_id,
+                    CorporateClient.deleted_at.is_(None)
+                )
+                db_result = await db.execute(query)
+                local_client = db_result.scalar_one_or_none()
+                
+                if local_client:
+                    local_client.fuel_limit = credit_limit
+                    await db.commit()
+                    logger.info(f"Local fuel_limit updated for company {local_client.id}: {credit_limit}")
+            except Exception as local_err:
+                logger.warning(f"Failed to update local fuel_limit: {local_err}")
+        
+        logger.info(f"Company limits updated in finance backend: {finance_company_id}")
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating company limits in finance backend: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update company limits: {str(e)}"
+        )
+
+
+async def handle_balance_level_webhook(
+    payload: dict,
+    db: AsyncSession,
+) -> dict:
+    """
+    Обрабатывает вебхук от финансового бэкенда с информацией о текущем балансе.
+    
+    При превышении лимита:
+    - Обновляем статус компании на 'limit_exceeded'
+    - Обновляем текущий баланс
+    
+    Payload от финбэке:
+    {
+        "company_id": int,
+        "company_owner_id": int,
+        "current_balance": float,
+        "company_name": str,
+        "cor_id_of_owner": str,
+        "timestamp": str,
+        "account_id": int
+    }
+    
+    Args:
+        payload: Вебхук payload от финбэке
+        db: Сессия базы данных
+        
+    Returns:
+        dict с результатом обработки
+    """
+    try:
+        finance_company_id = payload.get("company_id")
+        current_balance = payload.get("current_balance")
+        cor_id_owner = payload.get("cor_id_of_owner")
+        timestamp = payload.get("timestamp")
+        
+        logger.info(f"Received balance webhook: company_id={finance_company_id}, balance={current_balance}, owner={cor_id_owner}")
+        
+        if not finance_company_id or cor_id_owner is None:
+            raise ValueError("Missing required fields: company_id or cor_id_of_owner")
+        
+        # Сначала пытаемся найти компанию по finance_company_id
+        query = select(CorporateClient).where(
+            CorporateClient.finance_company_id == finance_company_id,
+            CorporateClient.deleted_at.is_(None)
+        )
+        result = await db.execute(query)
+        corporate_client = result.scalar_one_or_none()
+        
+        # Если не найдена по finance_company_id, ищем по cor_id владельца (дополнительная проверка)
+        if not corporate_client:
+            logger.warning(f"Corporate client not found for finance_company_id={finance_company_id}, trying to find by owner cor_id={cor_id_owner}")
+            
+            query_by_owner = select(CorporateClient).where(
+                CorporateClient.owner_cor_id == cor_id_owner,
+                CorporateClient.finance_company_id == finance_company_id,
+                CorporateClient.deleted_at.is_(None)
+            )
+            result_owner = await db.execute(query_by_owner)
+            corporate_client = result_owner.scalar_one_or_none()
+        
+        if not corporate_client:
+            logger.warning(f"Corporate client not found for finance_company_id={finance_company_id} and owner cor_id={cor_id_owner}")
+            return {"status": "warning", "message": "Corporate client not found for this company and owner"}
+        
+        # Логируем найденную компанию
+        logger.info(f"Found corporate client: {corporate_client.id}, company_name={corporate_client.company_name}, owner_cor_id={corporate_client.owner_cor_id}")
+        
+        # Обновляем статус на 'limit_exceeded'
+        corporate_client.status = "limit_exceeded"
+        corporate_client.current_balance = float(current_balance) if current_balance else None
+        corporate_client.last_balance_update = datetime.utcnow()
+        
+        await db.commit()
+        await db.refresh(corporate_client)
+        
+        logger.info(f"Corporate client status updated to 'limit_exceeded': {corporate_client.id}, balance={current_balance}")
+        
+        return {
+            "status": "success",
+            "message": "Webhook processed successfully",
+            "client_id": corporate_client.id,
+            "company_name": corporate_client.company_name,
+            "balance": current_balance
+        }
+        
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error handling balance webhook: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "message": f"Error processing webhook: {str(e)}"
+        }
 
 
 async def delete_corporate_client(

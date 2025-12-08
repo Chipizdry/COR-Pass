@@ -6,6 +6,7 @@ from .base import Base
 
 
 from .user import *
+from .invitation import *
 from .doctor import *
 from .laboratory import *
 from .devices import *

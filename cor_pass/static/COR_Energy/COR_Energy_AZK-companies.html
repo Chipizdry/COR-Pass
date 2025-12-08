@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="uk" class="layout-page">
+
+<head>
+   <link rel="icon" type="image/png" href="./favicon.png">
+   <meta charset="UTF-8" />
+   <title>COR-Energy AZK - companies</title>
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500&display=swap" rel="stylesheet" />
+   <link rel="stylesheet" type="text/css" href="../COR_LAB/css/reset.css">
+   <link rel="stylesheet" type="text/css" href="../COR_LAB/css/general.css">
+   <link rel="stylesheet" type="text/css" href="companies-page.css">
+   <link rel="stylesheet" type="text/css" href="../COR_LAB/css/header.css">
+   <link rel="stylesheet" type="text/css" href="../COR_ID_css/modal.css">
+
+   <!-- приховуємо сторінку, щоб переклалось без FOUC -->
+   <style>
+      html.i18n-loading body {
+         visibility: hidden;
+      }
+   </style>
+
+   <script>
+      document.documentElement.classList.add('i18n-loading');
+   </script>
+
+   <!-- Захист від зависання і пустої сторінки! -->
+   <script>
+      function removeI18nMask() {
+         document.documentElement.classList.remove('i18n-loading');
+      }
+      // Якщо translation.js викликає applySavedLanguage() — знімай після неї
+      document.addEventListener('i18n:ready', removeI18nMask);
+      // fallback: знімаємо при повному завантаженні сторінки
+      window.addEventListener('load', removeI18nMask, { once: true });
+      // запасний таймер, якщо переклад завис
+      setTimeout(removeI18nMask, 2500);
+   </script>
+   <!-- підключаємо переклад та видаляємо зайвий клас -->
+   <script src="../COR_ID_js/translation.js"></script>
+
+   <noscript>
+      <style>
+         html.i18n-loading body {
+            visibility: visible !important;
+         }
+      </style>
+   </noscript>
+</head>
+
+<body class="layout-page">
+   <div id="header-hole"></div>
+   <div class="layout">
+      <main class="main">
+
+         <div class="header-container">
+            <div class="header-row top">
+               <div class="role-container" style="margin-right: 20px">
+                  <a href="../COR_ID/mainscreen.html" class="role-icon">
+                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                           d="M1 11.6067L11.1031 2.86212C11.2208 2.74732 11.3607 2.65625 11.5146 2.59411C11.6685 2.53198 11.8334 2.5 12 2.5C12.1666 2.5 12.3315 2.53198 12.4854 2.59411C12.6393 2.65625 12.7792 2.74732 12.8969 2.86212L23 11.6067M3.53846 9.40792V20.2633C3.53846 20.946 4.10708 21.5 4.80769 21.5H9.46154V16.1411C9.46154 15.4585 10.0302 14.9045 10.7308 14.9045H13.2692C13.9698 14.9045 14.5385 15.4585 14.5385 16.1411V21.5H19.1923C19.8929 21.5 20.4615 20.946 20.4615 20.2633V9.40792"
+                           stroke="#7527B2" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                     </svg>
+                  </a>
+               </div>
+               <div class="search-container">
+                  <input type="text" placeholder="Search" id="searchInput" data-translate="searchPlaceholder">
+                  <svg class="search-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                     <path fill-rule="evenodd" clip-rule="evenodd"
+                        d="M11.2 5.60001C8.10722 5.60001 5.60001 8.10722 5.60001 11.2C5.60001 14.2928 8.10722 16.8001 11.2 16.8001C12.7087 16.8001 14.0781 16.2035 15.085 15.2333C15.1061 15.2058 15.1292 15.1794 15.1544 15.1543C15.1795 15.1291 15.2059 15.106 15.2334 15.0849C16.2035 14.078 16.8 12.7087 16.8 11.2C16.8 8.10722 14.2928 5.60001 11.2 5.60001ZM16.8256 15.6942C17.8109 14.4624 18.4001 12.9 18.4001 11.2C18.4001 7.22357 15.1765 4 11.2 4C7.22356 4 4 7.22357 4 11.2C4 15.1765 7.22356 18.4001 11.2 18.4001C12.9001 18.4001 14.4625 17.8109 15.6942 16.8255L18.6344 19.7657C18.9468 20.0781 19.4533 20.0781 19.7658 19.7657C20.0782 19.4533 20.0782 18.9467 19.7658 18.6343L16.8256 15.6942Z"
+                        fill="#B1A1DA" />
+                  </svg>
+               </div>
+            </div>
+         </div>
+
+         <section class="companies_card">
+            <div class="table-wrapper custom-scroll">
+               <table>
+                  <thead>
+                     <tr>
+                        <th data-field="company_form" data-translate="company_form">Форма підприємства</th>
+                        <th data-field="full_company_name" data-translate="full_company_name">Повна назва підприємства</th>
+                        <th data-field="company_address" data-translate="company_address">Адреса підприємства</th>
+                        <th data-field="phone" data-translate="phone">Телефон</th>
+                        <th data-field="email" data-translate="email">Ел.адреса</th>
+                        <th data-field="edrpou" data-translate="edrpou">ЄДРПОУ</th>
+                        <th data-field="balance" data-translate="balance">Баланс</th>
+                        <th data-field="company_status" data-translate="company_status">Статус підприємства</th>
+                     </tr>
+                  </thead>
+                  <tbody id="tableBody">
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Центр Інноваційних Технологій "ЕнергоСфера"</td>
+                        <td>м. Київ, вул. Васильківська, 55, оф. 214</td>
+                        <td>+380 (67) 754 12 90</td>
+                        <td>info@energosfera.ua</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #49AC26;"></span>
+                                 <span class="status-label">Активний користувач</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>"Глобальні Логістичні Рішення та Дистрибуція"</td>
+                        <td>м. Харків, просп. Науки, 27Б</td>
+                        <td>+380 (50) 992 44 11</td>
+                        <td>logistics.global@gmail.com</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #FD7441;"></span>
+                                 <span class="status-label">Перевищення ліміту</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>"Український Науково-Медичний Центр Біотехнологічних Розробок"</td>
+                        <td>м. Львів, вул. Михайла Грушевського, 18</td>
+                        <td>+380 (93) 381 76 02</td>
+                        <td>biotech.center.ua@gmail.com</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #0B90C9;"></span>
+                                 <span class="status-label">Заявка на розгляді</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Товариство з Обмеженою Відповідальністю "Агропромисловий Комплекс Зелена Долина"</td>
+                        <td>м. Дніпро, вул. Слобожанський проспект, 94</td>
+                        <td>+380 (97) 660 45 23</td>
+                        <td>office@zelenadolyna.com</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg>
+                           </span></td>
+                     </tr>
+                  </tbody>
+               </table>
+            </div>
+
+            <div class="footer" id="footerInfo"></div>
+         </section>
+      </main>
+   </div>
+
+   <!-- ─── ЛОГИКА (сортировка, поиск, обработчики) ─── -->
+   <script src="../../COR_LAB/js/general.js"></script>
+   <script src="../../COR_ID_Js/general_fun.js"></script>
+<!--    <script>
+      let searchParams = new URLSearchParams(document.location.search);
+      const accessToken = searchParams.get("access_token")
+
+      if (accessToken) {
+         localStorage.setItem('access_token', accessToken)
+      }
+
+
+   </script>
+   <script>
+      /* Массив‑заглушка с трёмя пациентами */
+      let patientList = [];
+      let filtredPatientList = [];
+      let currentSort = {
+         field: "date",
+         dir: "desc"
+      };
+
+      /* DOM‑ссылки */
+      const tbody = document.getElementById("tableBody");
+      const footerInfo = document.getElementById("footerInfo");
+      const STATUS_COLORS = {
+         pending: "#0B90C9",
+         approved: "#49AC26",
+         agreed: "#30D5C8",
+         rejected: "#DF1125",
+         need_revision: "#F8A441"
+      };
+      const statusKey = r.status;
+      const color = STATUS_COLORS[statusKey];
+      const lang = getSavedLang();
+
+      const renderTableData = (doctorsData) => {
+         const roles = decodeToken(getToken())?.roles
+         tbody.innerHTML = "";
+         doctorsData.forEach(r => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+            <td>
+              ${r.avatar ? `<img class="avatar" src="${r.avatar}" alt="">` : ""}${r.name}
+            </td>
+            <td>${r.doctor_id}</td>
+            <td>${r.age ? `${r.age}&nbsp;<span data-translate="yearsSuffix">р.</span>` : ""}</td>
+            <td>${r.sex === "F" ? '<span data-translate="f">Жін</span>' : '<span data-translate="m">Чол</span>'}</td>
+            /* <td>${new Date(r.change_date).toLocaleDateString()}</td> */
+            <td>${r.specialization || ""}</th>
+            <td>${r.clinic || ""}</th>
+            <td><span class="status"><span class="status-container">
+            <span class="status-dot" style="background:${color}"></span>
+            <span class="status-label"
+                  data-translate="status_${statusKey}">
+                  ${translations[lang][`status_${statusKey}`]}
+            </span><svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                 <path
+                                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                    fill="#B1A1DA" />
+                                 <path
+                                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                    fill="#B1A1DA" />
+                              </svg></span></td>`;
+            tr.onclick = () => {
+               const page = roles.includes('lawyer') ? "lawyer_specific-doctor" : "lawyer_doctors-page";
+               window.location.href = `/static/COR_ID/lawyers_cabinet/${page}.html?userCorId=${r.doctor_id}`
+            }
+            tbody.appendChild(tr);
+         });
+         const lang = getSavedLang();
+         const dict = translations?.[lang] || {};
+         footerInfo.textContent = `${dict.totalDoctors || 'Всього'}: ${doctorsData.length} ${dict.doctors || 'лікарів'}`;
+      }
+
+      const sortTableRows = (field, dir) => {
+         filtredDoctorList.sort((a, b) => dir === "asc" ? compare(a, b, field) : -compare(a, b, field));
+
+         renderTableData(filtredDoctorList);
+      }
+      const getDoctors = () => {
+         if (checkToken()) {
+            fetch(`${API_BASE_URL}/api/lawyer/doctors`, { /* звідки має бути фетч? */
+               method: "GET",
+               headers: {
+                  'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+                  "Content-Type": "application/json"
+               },
+            })
+               .then(res => res.json())
+               .then(userList => {
+                  const { doctors } = userList;
+                  const formattedUserList = doctors.map(doctor => {
+                     return {
+                        ...doctor,
+                        change_date: "2025-05-09T07:19:51.498743",
+                        name: getFulName(doctor.surname, doctor.first_name, doctor.middle_name),
+                        age: doctor.birth_date ? getAge(doctor.birth_date) : null, // добавить
+                        status: doctor?.status,
+                     }
+                  })
+
+                  doctorList = formattedUserList;
+                  filtredDoctorList = [...doctorList];
+
+                  /* Стартовый рендер */
+                  sortTableRows(currentSort.field, currentSort.dir);
+               })
+         }
+      }
+
+
+      const goToCasesHanlder = () => {
+         const roles = decodeToken(getToken())?.roles
+
+         document.querySelector('#goToCases').addEventListener('click', () => {
+            const page = roles.includes('lawyer') ? "lawyer_specific-doctor" : "lawyer_doctors-page";
+            window.location.href = `/static/COR_ID/lawyers_cabinet/${page}.html?userCorId=${r.doctor_id}`
+         })
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+         goToCasesHanlder()
+         getDoctors()
+      })
+
+
+      /* Утилита: превращаем "дд.мм.гггг" в Date */
+      /*     function parseDate(str) {
+              const [d, m, y] = str.split(".").map(Number);
+              return new Date(y, m - 1, d);
+          } */
+      /* change_date зберігається у ISO-форматі (2025-05-09T07:19:51.498743), а parseDate() очікує дд.мм.рррр. Через це сортування по даті працюватиме некоректно. */
+      /* Компаратор для сортировки по полю */
+      function compare(a, b, field) {
+         if (field === "date") {
+            return new Date(a.change_date) - new Date(b.change_date);
+         }
+         if (field === "age") return (a.age ?? 0) - (b.age ?? 0);
+         const av = a[field] != null ? a[field].toString() : '';
+         const bv = b[field] != null ? b[field].toString() : '';
+         return av.localeCompare(bv, "ru", { sensitivity: "base" });
+      }
+
+
+      const getFulName = (lastName, firstName, middleName) => {
+         let result = []
+
+         if (lastName) {
+            result.push(lastName)
+         }
+         if (firstName) {
+            result.push(firstName)
+         }
+         if (middleName) {
+            result.push(middleName)
+         }
+
+         return result.join(' ');
+      }
+
+      /* === Поиск по таблице === */
+      document.getElementById("searchInput").addEventListener("input", e => {
+         const q = e.target.value.toLowerCase();
+         filtredPatientList = patientList.filter(r =>
+            Object.values(r).some(val => val.toString().toLowerCase().includes(q))
+         );
+         sortTableRows(currentSort.field, currentSort.dir);
+      });
+
+      /* Чек‑бокс «выбрать всё» */
+      const selectAll = document.getElementById("selectAll");
+      if (selectAll) {
+         selectAll.addEventListener("change", e => {
+            document.querySelectorAll(".rowChk").forEach(chk => chk.checked = e.target.checked);
+         });
+      }
+
+      /* Dropdown с вариантами сортировки */
+      const sortBtn = document.getElementById("sortBtn");
+      const sortDropdown = document.getElementById("sortDropdown");
+      const sortLabel = document.getElementById("sortLabel");
+
+      sortBtn.addEventListener("click", e => {
+         e.stopPropagation();
+         sortDropdown.classList.toggle("visible");
+      });
+      window.addEventListener("click", () => sortDropdown.classList.remove("visible"));
+
+      sortDropdown.addEventListener("click", e => {
+         if (e.target.matches("button")) {
+            const { field, dir } = e.target.dataset;
+            currentSort = { field, dir };
+            sortLabel.querySelector('span').textContent = e.target.textContent;
+            sortDropdown.classList.remove("visible");
+            sortTableRows(field, dir);
+         }
+      });
+
+      /* Клик по шапке таблицы = быстрая сортировка */
+      document.querySelectorAll("thead th[data-field]").forEach(th => {
+         th.addEventListener("click", () => {
+            const field = th.dataset.field;
+            if (field === "select") return;
+            const dir = currentSort.field === field && currentSort.dir === "asc" ? "desc" : "asc";
+            currentSort = { field, dir };
+            sortLabel.textContent = `Сортування: ${th.textContent.trim()} ${dir === "asc" ? "↑" : "↓"}`;
+            sortTableRows(field, dir);
+         });
+      });
+   </script> -->
+</body>
+
+</html>

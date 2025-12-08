@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from cor_pass.database.db import get_db
 from cor_pass.database.models import User
-from cor_pass.services.shared.access import user_access, admin_access
+from cor_pass.services.shared.access import user_access, admin_access, lawyer_access
 from cor_pass.schemas import (
     FuelQRGenerateRequest,
     FuelQRGenerateResponse,
@@ -31,6 +31,7 @@ from cor_pass.schemas import (
     FinancePartnerLoginResponse,
     CreateAccountMemberRequest,
     AccountMemberResponse,
+    MyCorporateStatusResponse,
 )
 from cor_pass.repository.fuel import fuel_station
 
@@ -186,6 +187,28 @@ async def create_corporate_request(
 
 
 @router.get(
+    "/corporate-client/my-status",
+    response_model=MyCorporateStatusResponse,
+    summary="Полный статус пользователя в корпоративной системе",
+    description="""
+    Возвращает объединённые данные о статусе пользователя в корпоративной системе
+    Требует авторизации пользователя.
+    """
+)
+async def get_my_corporate_status(
+    user: User = Depends(user_access),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Получение полного статуса пользователя (локальные заявки + финансы)
+    """
+    return await fuel_station.get_user_corporate_status_with_finance(
+        user=user,
+        db=db
+    )
+
+
+@router.get(
     "/corporate-client/my-request",
     response_model=list[CorporateClientResponse],
     summary="Список своих компаний и заявок",
@@ -223,7 +246,7 @@ async def get_my_corporate_request(
 @router.post(
     "/admin/corporate-requests/{request_id}/approve",
     response_model=CorporateClientResponse,
-    summary="Подтверждение заявки (админ)",
+    summary="Подтверждение заявки (админ/юрист)",
     description="""
     Подтверждает заявку на регистрацию — переводит статус pending → active.
     После подтверждения:
@@ -231,12 +254,12 @@ async def get_my_corporate_request(
     2. Статус изменяется на active
     3. Заполняется finance_company_id
     
-    Только для администраторов.
+    Только для администраторов/юристов.
     """
 )
 async def approve_corporate_request(
     request_id: str,
-    user: User = Depends(admin_access),
+    user: User = Depends(lawyer_access),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -252,17 +275,17 @@ async def approve_corporate_request(
 @router.post(
     "/admin/corporate-requests/{request_id}/reject",
     response_model=CorporateClientResponse,
-    summary="Отклонение заявки (админ)",
+    summary="Отклонение заявки (админ/юрист)",
     description="""
     Отклоняет заявку — переводит статус pending → rejected с указанием причины.
     
-    Только для администраторов.
+    Только для администраторов/юристов.
     """
 )
 async def reject_corporate_request(
     request_id: str,
     body: CorporateClientReject,
-    user: User = Depends(admin_access),
+    user: User = Depends(lawyer_access),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -279,17 +302,17 @@ async def reject_corporate_request(
 @router.post(
     "/admin/corporate-clients/{client_id}/block",
     response_model=CorporateClientResponse,
-    summary="Блокировка корпоративного клиента (админ)",
+    summary="Блокировка корпоративного клиента (админ/юрист)",
     description="""
     Блокирует компанию — переводит статус active → blocked.
     
-    Только для администраторов.
+    Только для администраторов/юристов.
     """
 )
 async def block_corporate_client(
     client_id: str,
     body: CorporateClientBlock,
-    user: User = Depends(admin_access),
+    user: User = Depends(lawyer_access),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -306,7 +329,7 @@ async def block_corporate_client(
 @router.get(
     "/admin/corporate-clients",
     response_model=list[CorporateClientWithOwner],
-    summary="Список корпоративных клиентов (админ)",
+    summary="Список корпоративных клиентов (админ/юрист)",
     description="""
     Возвращает список корпоративных клиентов и заявок.
     Можно фильтровать по статусу.
@@ -316,18 +339,18 @@ async def block_corporate_client(
     - **skip**: Пропустить записей (пагинация)
     - **limit**: Максимум записей (пагинация, максимум 100)
     
-    Только для администраторов.
+    Только для администраторов/юристов.
     """
 )
 async def get_corporate_clients(
     status: Optional[str] = None,
     skip: int = 0,
     limit: int = 100,
-    user: User = Depends(admin_access),
+    user: User = Depends(lawyer_access),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Получение списка корпоративных клиентов (админ)
+    Получение списка корпоративных клиентов (админ  / юрист)
     """
     return await fuel_station.get_corporate_clients(
         db=db,
@@ -340,22 +363,22 @@ async def get_corporate_clients(
 @router.patch(
     "/admin/corporate-clients/{client_id}",
     response_model=CorporateClientResponse,
-    summary="Обновление данных корпоративного клиента (админ)",
+    summary="Обновление данных корпоративного клиента (админ/юрист)",
     description="""
     Обновляет данные корпоративного клиента.
     Можно обновить название, адрес, телефон, email.
     
-    Только для администраторов.
+    Только для администраторов/юристов.
     """
 )
 async def update_corporate_client(
     client_id: str,
     body: CorporateClientUpdate,
-    user: User = Depends(admin_access),
+    user: User = Depends(lawyer_access),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Обновление корпоративного клиента (админ)
+    Обновление корпоративного клиента (админ/юрист)
     """
     return await fuel_station.update_corporate_client(
         client_id=client_id,
@@ -366,22 +389,20 @@ async def update_corporate_client(
 
 @router.delete(
     "/admin/corporate-clients/{client_id}",
-    summary="Удаление корпоративного клиента (админ)",
+    summary="Удаление корпоративного клиента (админ/юрист)",
     description="""
-    Удаляет корпоративного клиента из системы.
+    Удаляет корпоративного клиента из системы. (Soft delete)
     
-    **Внимание:** Удаление необратимо!
-    
-    Только для администраторов.
+    Только для администраторов/юристов.
     """
 )
 async def delete_corporate_client(
     client_id: str,
-    user: User = Depends(admin_access),
+    user: User = Depends(lawyer_access),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Удаление корпоративного клиента (админ)
+    Удаление корпоративного клиента (админ/юрист)
     """
     return await fuel_station.delete_corporate_client(
         client_id=client_id,
@@ -556,3 +577,78 @@ async def verify_offline_qr(
     return await fuel_station.verify_offline_qr_code(
         body=body
     )
+
+
+# ============================================================================
+# Лимиты и баланс компании (финансовый бэкенд)
+# ============================================================================
+
+@router.put(
+    "/admin/corporate-clients/{id}/limits",
+    response_model=dict,
+    summary="Обновить лимиты компании в финансовом бэкенде",
+    description="""
+    Обновляет кредитный лимит, уровень баланса и URL вебхука в финансовом бэкенде.
+    
+    **Параметры:**
+    - **credit_limit** - положительная сумма, на которую компания может залазить в минус
+    - **balance_level_alert_limit** - уровень баланса, при котором послать пинг (может быть отрицательным)
+    - **balance_level_hook_url** - URL вебхука для уведомления о превышении лимита ("https://dev-corid.cor-medical.ua/api/webhooks/balance-level-alert")
+    
+    Только для администраторов.
+    """
+)
+async def update_company_limits(
+    id: str,
+    credit_limit: Optional[float] = None,
+    balance_level_alert_limit: Optional[float] = None,
+    balance_level_hook_url: Optional[str] = None,
+    user: User = Depends(lawyer_access),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Обновление лимитов компании
+    """
+    # Получаем компанию
+    from sqlalchemy import select
+    from cor_pass.database.models import CorporateClient
+    
+    query = select(CorporateClient).where(CorporateClient.id == id)
+    result = await db.execute(query)
+    client = result.scalar_one_or_none()
+    
+    if not client or not client.finance_company_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Corporate client not found or not linked to finance backend"
+        )
+    
+    return await fuel_station.update_company_limits_in_finance(
+        finance_company_id=client.finance_company_id,
+        credit_limit=credit_limit,
+        balance_level_alert_limit=balance_level_alert_limit,
+        balance_level_hook_url=balance_level_hook_url,
+        db=db
+    )
+
+
+@router.post(
+    "/webhooks/balance-level-alert",
+    response_model=dict,
+    summary="Вебхук для уведомления о превышении лимита",
+    description="""
+    Вебхук от финансового бэкенда для уведомления о превышении лимита компании.
+    """
+)
+async def handle_balance_alert_webhook(
+    payload: dict,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Обработка вебхука о превышении лимита баланса
+    """
+    return await fuel_station.handle_balance_level_webhook(
+        payload=payload,
+        db=db
+    )
+

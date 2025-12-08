@@ -33,12 +33,21 @@ class EnergeticObject(Base):
         server_default='Europe/Kiev',
         comment="Часовой пояс объекта (например: Europe/Kiev)"
     )
+    
+    modbus_config_file = Column(
+        String,
+        nullable=True,
+        comment="Имя файла конфигурации Modbus регистров (например: victron_cerbo_gx.json)"
+    )
+
+    telegram_chat_ids = Column(String, nullable=True)
 
     is_active = Column(Boolean, default=False, comment="Активен ли фоновый опрос")
 
     # Relationships
     measurements = relationship("CerboMeasurement", back_populates="energetic_object", cascade="all, delete-orphan")
     schedules = relationship("EnergeticSchedule", back_populates="energetic_object", cascade="all, delete-orphan")
+    polling_tasks = relationship("DevicePollingTask", back_populates="energetic_object", cascade="all, delete-orphan")
 
 
 class CerboMeasurement(Base):
@@ -112,4 +121,100 @@ class EnergeticSchedule(Base):
             f"grid_feed_w={self.grid_feed_w}, battery_level_percent={self.battery_level_percent}, "
             f"charge_battery_value={self.charge_battery_value}, is_active={self.is_active}, "
             f"is_manual_mode={self.is_manual_mode})>"
+        )
+
+
+class DevicePollingTask(Base):
+    """
+    Задача фонового опроса устройства - настройка периодического опроса энергетических объектов
+    """
+    __tablename__ = "device_polling_tasks"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    energetic_object_id = Column(String(36), ForeignKey("energetic_objects.id"), nullable=False, index=True)
+    
+    task_type = Column(
+        String, 
+        nullable=False, 
+        comment="Тип задачи: cerbo_collection | schedule_check | modbus_registers | custom_command"
+    )
+    
+    command_config = Column(
+        JSONB,
+        nullable=True,
+        comment="Конфигурация команд в JSON формате (какие регистры читать, параметры команды)"
+    )
+    
+    interval_seconds = Column(
+        Integer,
+        nullable=False,
+        default=5,
+        comment="Интервал опроса в секундах"
+    )
+    
+    is_active = Column(
+        Boolean,
+        nullable=False,
+        default=True,
+        comment="Активна ли задача опроса"
+    )
+    
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    energetic_object = relationship("EnergeticObject", back_populates="polling_tasks")
+    
+    def __repr__(self):
+        return (
+            f"<DevicePollingTask(id='{self.id}', object_id='{self.energetic_object_id}', "
+            f"task_type='{self.task_type}', interval={self.interval_seconds}s, is_active={self.is_active})>"
+        )
+
+
+class WebSocketBroadcastTask(Base):
+    """
+    Задача фоновой рассылки команд через WebSocket на конкретное устройство
+    """
+    __tablename__ = "websocket_broadcast_tasks"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    task_name = Column(String, nullable=False, comment="Имя задачи")
+    session_id = Column(String, nullable=False, index=True, comment="Session ID устройства")
+    
+    command_type = Column(
+        String,
+        nullable=False,
+        comment="Тип команды: pi30 | modbus_read"
+    )
+    
+    command_payload = Column(
+        JSONB,
+        nullable=False,
+        comment="Полезная нагрузка команды (для pi30: {pi30: hex}, для modbus_read: {hex_data: ...})"
+    )
+    
+    interval_seconds = Column(
+        Integer,
+        nullable=False,
+        default=5,
+        comment="Интервал отправки команды в секундах"
+    )
+    
+    is_active = Column(
+        Boolean,
+        nullable=False,
+        default=True,
+        comment="Активна ли задача рассылки"
+    )
+    
+    created_at = Column(DateTime, nullable=False, default=func.now())
+    updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
+    created_by = Column(String, nullable=True, comment="Кто создал задачу (user_id или admin)")
+    
+    def __repr__(self):
+        return (
+            f"<WebSocketBroadcastTask(id='{self.id}', task_name='{self.task_name}', "
+            f"session_id='{self.session_id}', command_type='{self.command_type}', "
+            f"interval={self.interval_seconds}s, is_active={self.is_active})>"
         )

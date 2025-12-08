@@ -27,7 +27,10 @@ from cor_pass.schemas import (
     SibionicsCallbackResponse,
     SibionicsWebhookRequest,
     SibionicsWebhookResponse,
-    SibionicsWebhookGlucoseRecord
+    SibionicsWebhookGlucoseRecord,
+    ManualGlucoseRequest,
+    ManualGlucoseResponse,
+    AllDevicesGlucoseResponse,
 )
 from cor_pass.services.health.sibionics_service import sibionics_client
 from cor_pass.repository.health import sibionics_repository
@@ -839,3 +842,108 @@ async def get_user_actions(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to fetch user actions: {str(e)}"
         )
+
+
+@router.post(
+    "/manual-glucose",
+    response_model=ManualGlucoseResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Ручное добавление значения глюкозы"
+)
+async def add_manual_glucose(
+    body: ManualGlucoseRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user)
+):
+    """
+    Добавляет вручную введённое значение глюкозы.
+    
+    - Используется виртуальное устройство типа "manual"
+
+    **Параметры:**
+    - `glucose_value` - Уровень глюкозы в mmol/L (0-33.3) 
+    - `timestamp` - Время измерения
+
+    """
+    try:
+
+        manual_device = await sibionics_repository.get_or_create_manual_device(
+            db=db,
+            user_id=current_user.id
+        )
+        
+        measurement_time = body.timestamp or datetime.now(timezone.utc)
+        
+
+        glucose_record = await sibionics_repository.create_manual_glucose_record(
+            db=db,
+            device_db_id=manual_device.id,
+            glucose_value=body.glucose_value,
+            timestamp=measurement_time,
+            trend=None,
+            alarm_status=None
+        )
+        
+        logger.info(
+            f"✅ Manual glucose added for user {current_user.email}: "
+            f"{body.glucose_value} mmol/L at {measurement_time}"
+        )
+        
+        return ManualGlucoseResponse.model_validate(glucose_record)
+        
+    except Exception as e:
+        logger.error(f"❌ Error adding manual glucose: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to add manual glucose: {str(e)}"
+        )
+
+
+@router.get(
+    "/all-devices-glucose",
+    response_model=List[AllDevicesGlucoseResponse],
+    summary="Получить данные глюкозы со всех устройств пользователя"
+)
+async def get_all_devices_glucose(
+    start_time: Optional[datetime] = Query(None, description="Начало периода (ISO 8601)"),
+    end_time: Optional[datetime] = Query(None, description="Конец периода (ISO 8601)"),
+    limit_per_device: int = Query(1000, ge=1, le=10000, description="Макс. записей с каждого устройства"),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user)
+):
+    """
+    Получает данные глюкозы со всех устройств пользователя (CGM и ручной ввод).
+    
+    **Типы устройств:**
+    - `cgm` - Устройства SIBIONICS CGM (требуют авторизацию)
+    - `manual` - Виртуальное устройство для ручного ввода
+    
+    **Параметры:**
+    - `start_time` - Начало периода (опционально)
+    - `end_time` - Конец периода (опционально)
+    - `limit_per_device` - Макс. записей с каждого устройства (по умолчанию 1000)
+    
+    """
+    try:
+        all_devices_data = await sibionics_repository.get_all_user_devices_with_glucose(
+            db=db,
+            user_id=current_user.id,
+            start_time=start_time,
+            end_time=end_time,
+            limit_per_device=limit_per_device
+        )
+        
+        logger.info(
+            f"✅ Retrieved glucose data from {len(all_devices_data)} devices "
+            f"for user {current_user.email}"
+        )
+        
+        return all_devices_data
+        
+    except Exception as e:
+        logger.error(f"❌ Error fetching all devices glucose: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch glucose data: {str(e)}"
+        )
+

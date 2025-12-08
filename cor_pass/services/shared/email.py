@@ -228,4 +228,41 @@ async def send_report_email(
     fm = FastMail(conf)
     
 
-    await fm.send_message(message, template_name="report.html") 
+    await fm.send_message(message, template_name="report.html")
+
+
+async def send_invitation_email(
+    email: EmailStr,
+    invitation_link: str,
+    invited_by_email: str,
+    expires_at: str,
+):
+    """
+    Отправляет email с приглашением для регистрации в системе COR-ID.
+    
+    Args:
+        email: Email приглашаемого пользователя
+        invitation_link: Полная ссылка для регистрации с токеном
+        invited_by_email: Email пользователя, который создал приглашение
+        expires_at: Дата истечения приглашения (ISO format)
+    """
+    logger.debug(f"Sending invitation email to {email}")
+    try:
+        message = MessageSchema(
+            subject="Приглашение в COR-ID",
+            recipients=[email],
+            template_body={
+                "invitation_link": invitation_link,
+                "invited_by": invited_by_email,
+                "expires_at": expires_at,
+                "email": email,
+            },
+            subtype=MessageType.html,
+        )
+
+        fm = FastMail(conf)
+        await fm.send_message(message, template_name="invitation_email.html")
+        logger.info(f"Invitation email sent to {email}")
+    except ConnectionErrors as err:
+        logger.error(f"Failed to send invitation email to {email}: {err}")
+        raise 

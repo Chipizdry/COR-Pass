@@ -90,9 +90,13 @@ class SibionicsDevice(Base):
     __tablename__ = "sibionics_devices"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    auth_id = Column(String(36), ForeignKey("sibionics_auth.id", ondelete="CASCADE"), nullable=False)
-    device_id = Column(String(255), nullable=False)  # SIBIONICS Device ID
+    auth_id = Column(String(36), ForeignKey("sibionics_auth.id", ondelete="CASCADE"), nullable=True)  # NULL для ручных устройств
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=True)  # Только для ручных устройств
+    device_id = Column(String(255), nullable=False)  # SIBIONICS Device ID или "manual_entry"
     device_name = Column(String(255), nullable=True)
+    device_type = Column(String(50), nullable=True, default="cgm")  # "cgm" или "manual"
+    sn = Column(String(255), nullable=True)  # Serial Number
+    model = Column(String(255), nullable=True)  # Model name
     bluetooth_num = Column(String(255), nullable=True)
     serial_no = Column(String(255), nullable=True)
     status = Column(Integer, nullable=True)  # 0: Not started; 1: Monitoring; 2: Expired; 3: Init; 4: Abnormal
@@ -102,18 +106,20 @@ class SibionicsDevice(Base):
     data_gap = Column(Integer, nullable=True)  # Glucose index interval (minutes)
     enable_time = Column(DateTime(timezone=True), nullable=True)  # Device wearing start time
     last_time = Column(DateTime(timezone=True), nullable=True)  # Device wearing deadline
+    last_sync = Column(DateTime(timezone=True), nullable=True)  # Время последней синхронизации данных
     
     created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
 
     # Relationships
     auth = relationship("SibionicsAuth", back_populates="devices")
+    user = relationship("User", foreign_keys=[user_id])  # Для ручных устройств
     glucose_data = relationship("SibionicsGlucose", back_populates="device", cascade="all, delete-orphan")
 
     __table_args__ = (
         Index("idx_sibionics_device_auth_id", "auth_id"),
+        Index("idx_sibionics_device_user_id", "user_id"),
         Index("idx_sibionics_device_device_id", "device_id"),
-        UniqueConstraint("auth_id", "device_id", name="uq_auth_device"),
     )
 
 

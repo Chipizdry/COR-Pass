@@ -285,30 +285,30 @@ async def read_dvcc_max_charge_current(modbus_client: AsyncModbusTcpClient) -> O
         logger.error(f"Ошибка при чтении DVCC max charge current: {e}", exc_info=True)
         return None
 
-async def send_grid_feed_w_command(modbus_client: AsyncModbusTcpClient, grid_feed_w: int):
-    """Отправка команды для установки AC Power Setpoint Fine."""
-    if modbus_client is None:
-        return {"status": "error", "message": "Modbus client not available"}
-    try:
-        slave = INVERTER_ID
-        register_value = int(grid_feed_w / 100)
-        if register_value < 0:
-            register_value = (1 << 16) + register_value
-        if not (0 <= register_value <= 65535):
-            raise HTTPException(status_code=400, detail="Значение выходит за допустимые пределы")
-        await modbus_client.write_register(
-            address=2703,
-            value=register_value,
-            slave=slave
-        )
-        logger.debug(f"✅ grid_feed_w: {register_value} A (регистр 2703 = {register_value})")
-        return {"status": "ok", "value": grid_feed_w}
-    except Exception as e:
-        logger.error(
-            f" Unhandled error during periodic data collection: {e}",
-            exc_info=True,
-        )
-        raise
+# async def send_grid_feed_w_command(modbus_client: AsyncModbusTcpClient, grid_feed_w: int):
+#     """Отправка команды для установки AC Power Setpoint Fine."""
+#     if modbus_client is None:
+#         return {"status": "error", "message": "Modbus client not available"}
+#     try:
+#         slave = INVERTER_ID
+#         register_value = int(grid_feed_w / 100)
+#         if register_value < 0:
+#             register_value = (1 << 16) + register_value
+#         if not (0 <= register_value <= 65535):
+#             raise HTTPException(status_code=400, detail="Значение выходит за допустимые пределы")
+#         await modbus_client.write_register(
+#             address=2703,
+#             value=register_value,
+#             slave=slave
+#         )
+#         logger.debug(f"✅ grid_feed_w: {register_value} A (регистр 2703 = {register_value})")
+#         return {"status": "ok", "value": grid_feed_w}
+#     except Exception as e:
+#         logger.error(
+#             f" Unhandled error during periodic data collection: {e}",
+#             exc_info=True,
+#         )
+#         raise
 
 async def send_vebus_soc_command(modbus_client: AsyncModbusTcpClient, battery_level_percent: int):
     """Отправка команды для установки VE.Bus SoC."""

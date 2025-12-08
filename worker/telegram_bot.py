@@ -12,7 +12,6 @@ from cor_pass.config.config import settings
 
 
 TELEGRAM_BOT_TOKEN="8230955133:AAEssUmnoHAyef8PuPTh6spmQhKkT8A79S4"
-TELEGRAM_CHAT_ID=[-1001646233395, -1003050383090, -753415670, -5097812738]
 TELEGRAM_BATTERY_ALERT_THRESHOLD=70
 TELEGRAM_ALERT_COOLDOWN_MINUTES=60
 TELEGRAM_TIMEZONE="Europe/Kiev"
@@ -41,24 +40,12 @@ class TelegramBatteryMonitor:
         """
         self.bot_token = TELEGRAM_BOT_TOKEN or settings.telegram_bot_token
         
-        # Поддержка как одного chat_id, так и списка
+        # По умолчанию используем пустой список - chat_ids должны передаваться явно
+        # для каждого объекта из EnergeticObject.telegram_chat_ids
         if chat_ids:
             self.chat_ids = chat_ids if isinstance(chat_ids, list) else [chat_ids]
         else:
-            # Получаем из захардкоженных значений или настроек
-            chat_id_value = TELEGRAM_CHAT_ID
-            
-            # Если это уже список (захардкожено)
-            if isinstance(chat_id_value, list):
-                self.chat_ids = [str(cid) for cid in chat_id_value]
-            # Если это строка из settings
-            elif isinstance(chat_id_value, str):
-                if ',' in chat_id_value:
-                    self.chat_ids = [cid.strip() for cid in chat_id_value.split(',') if cid.strip()]
-                else:
-                    self.chat_ids = [chat_id_value] if chat_id_value else []
-            else:
-                self.chat_ids = []
+            self.chat_ids = []
         
         self.alert_threshold = TELEGRAM_BATTERY_ALERT_THRESHOLD or settings.telegram_battery_alert_threshold
         self.cooldown_minutes = TELEGRAM_ALERT_COOLDOWN_MINUTES or settings.telegram_alert_cooldown_minutes
@@ -71,8 +58,11 @@ class TelegramBatteryMonitor:
         
         logger.info(
             f"TelegramBatteryMonitor initialized: "
-            f"chats={len(self.chat_ids)}, threshold={self.alert_threshold}%, "
+            f"default_chats={len(self.chat_ids)}, threshold={self.alert_threshold}%, "
             f"cooldown={self.cooldown_minutes}min, timezone={self.timezone}"
+        )
+        logger.info(
+            "ℹ️ Chat IDs should be provided per object from EnergeticObject.telegram_chat_ids"
         )
     
     def _should_send_alert(self, object_id: str) -> bool:
@@ -94,18 +84,32 @@ class TelegramBatteryMonitor:
         
         return time_since_alert >= cooldown
     
-    async def send_message(self, text: str, chat_id: str = None) -> bool:
+    async def send_message(self, text: str, chat_id: str = None, chat_ids: Optional[List[str]] = None) -> bool:
         """
         Отправляет сообщение в Telegram чат
         
         Args:
             text: Текст сообщения
             chat_id: Конкретный chat_id (если None, отправляет во все)
+            chat_ids: Список chat_id для отправки
             
         Returns:
             True если сообщение отправлено успешно хотя бы в один чат
         """
-        target_chats = [chat_id] if chat_id else self.chat_ids
+        # Приоритет: chat_id (единственный) > chat_ids (список) > self.chat_ids (дефолт)
+        if chat_id:
+            target_chats = [chat_id]
+        elif chat_ids and len(chat_ids) > 0:
+            target_chats = chat_ids
+        else:
+            target_chats = self.chat_ids
+        
+        logger.info(f"📨 send_message called: chat_id={chat_id}, chat_ids={chat_ids}, target_chats={target_chats}")
+        
+        if not target_chats:
+            logger.warning("⚠️ No target chats specified, message not sent")
+            return False
+        
         success_count = 0
         
         for chat in target_chats:
@@ -117,20 +121,23 @@ class TelegramBatteryMonitor:
                     "parse_mode": "HTML"
                 }
                 
+                logger.debug(f"📤 Sending to chat {chat}: url={url}, payload={payload}")
+                
                 async with aiohttp.ClientSession() as session:
                     async with session.post(url, json=payload) as response:
                         if response.status == 200:
-                            logger.debug(f"Telegram message sent successfully to chat {chat}")
+                            result = await response.json()
+                            logger.info(f"✅ Telegram message sent successfully to chat {chat}, result={result}")
                             success_count += 1
                         else:
                             error_text = await response.text()
                             logger.error(
-                                f"Failed to send Telegram message to chat {chat}. "
+                                f"❌ Failed to send Telegram message to chat {chat}. "
                                 f"Status: {response.status}, Error: {error_text}"
                             )
             
             except Exception as e:
-                logger.error(f"Error sending Telegram message to chat {chat}: {e}", exc_info=True)
+                logger.error(f"💥 Error sending Telegram message to chat {chat}: {e}", exc_info=True)
         
         if success_count > 0:
             logger.info(f"Telegram message sent to {success_count}/{len(target_chats)} chats")
@@ -144,7 +151,8 @@ class TelegramBatteryMonitor:
         object_name: str,
         battery_soc: float,
         battery_voltage: Optional[float] = None,
-        battery_power: Optional[float] = None
+        battery_power: Optional[float] = None,
+        chat_ids: Optional[List[str]] = None
     ):
         """
         Проверяет уровень заряда батареи и отправляет уведомление при необходимости
@@ -155,6 +163,7 @@ class TelegramBatteryMonitor:
             battery_soc: Уровень заряда батареи (%)
             battery_voltage: Напряжение батареи (V)
             battery_power: Мощность батареи (W)
+            chat_ids: Список chat_id для отправки (из EnergeticObject.telegram_chat_ids)
         """
         # Проверяем порог
         if battery_soc > self.alert_threshold:
@@ -179,8 +188,8 @@ class TelegramBatteryMonitor:
             battery_power=battery_power
         )
         
-        # Отправляем уведомление
-        success = await self.send_message(message)
+        # Отправляем уведомление в чаты объекта
+        success = await self.send_message(message, chat_ids=chat_ids)
         
         if success:
             # Обновляем время последнего уведомления
@@ -366,6 +375,7 @@ async def send_power_loss_notification(
     voltage_l1: float = None,
     voltage_l2: float = None,
     voltage_l3: float = None,
+    chat_ids: Optional[List[str]] = None,
 ):
     """
     Отправляет уведомление о потере или восстановлении электроэнергии
@@ -432,7 +442,7 @@ async def send_power_loss_notification(
         
         message = "\n".join(message_parts)
         
-        await monitor.send_message(message)
+        await monitor.send_message(message, chat_ids=chat_ids)
         
         if is_power_lost:
             logger.warning(f"⚠️ Power loss notification sent for {object_name}")
@@ -449,6 +459,7 @@ async def send_connection_loss_notification(
     is_connection_lost: bool,
     consecutive_errors: int = 0,
     error_rate_percent: float = 0.0,
+    chat_ids: Optional[List[str]] = None,
 ):
     """
     Отправляет уведомление о потере или восстановлении связи с устройством
@@ -501,7 +512,7 @@ async def send_connection_loss_notification(
         
         message = "\n".join(message_parts)
         
-        await monitor.send_message(message)
+        await monitor.send_message(message, chat_ids=chat_ids)
         
         if is_connection_lost:
             logger.error(
@@ -540,16 +551,15 @@ async def init_telegram_monitor() -> bool:
     try:
         monitor = get_telegram_monitor()
         
-        # Проверяем что токен и chat_ids настроены
+        # Проверяем что токен настроен
         if not monitor.bot_token or monitor.bot_token == "TELEGRAM_BOT_TOKEN":
             logger.warning("Telegram bot token not configured, skipping initialization")
             return False
         
-        if not monitor.chat_ids or len(monitor.chat_ids) == 0:
-            logger.warning("Telegram chat IDs not configured, skipping initialization")
-            return False
+        # Chat IDs теперь берутся из EnergeticObject.telegram_chat_ids для каждого объекта
+        logger.info("✅ Telegram monitor initialized. Chat IDs will be loaded from EnergeticObject.telegram_chat_ids")
         
-        # Отправляем тестовое сообщение
+        # Отправляем тестовое сообщение (если есть дефолтные чаты для команд бота)
         success = await monitor.send_test_message()
         return success
     
@@ -577,6 +587,7 @@ def update_object_data(object_id: str, data: dict):
         **data,
         'last_update': datetime.now()
     }
+    logger.debug(f"📊 Updated object data for {object_id}: soc={data.get('soc')}%, power={data.get('general_battery_power')}W")
 
 
 async def handle_telegram_command(command: str, chat_id: str, message_id: int):
@@ -615,6 +626,10 @@ async def handle_telegram_command(command: str, chat_id: str, message_id: int):
             object_id = parts[1] if len(parts) > 1 else None
             await send_schedule_message(monitor, chat_id, object_id)
         
+        elif cmd == '/debug':
+            # Отладочная команда для проверки данных
+            await send_debug_message(monitor, chat_id)
+        
         else:
             await monitor.send_message(
                 f"❓ Неизвестная команда: {cmd}\nИспользуйте /help для списка команд",
@@ -635,6 +650,7 @@ async def send_help_message(monitor: TelegramBatteryMonitor, chat_id: str):
 /battery - Информация о батареях
 /power - Текущая мощность (ввод/вывод)
 /schedule [object_id] - Активное расписание
+/debug - Отладочная информация
 /help - Эта справка
 
 <b>Автоматические уведомления:</b>
@@ -651,9 +667,12 @@ async def send_help_message(monitor: TelegramBatteryMonitor, chat_id: str):
 
 async def send_status_message(monitor: TelegramBatteryMonitor, chat_id: str):
     """Отправляет общий статус всех объектов"""
+    logger.info(f"📞 send_status_message called, chat_id={chat_id}, _objects_data has {len(_objects_data)} objects")
+    logger.debug(f"Objects data keys: {list(_objects_data.keys())}")
+    
     if not _objects_data:
         await monitor.send_message(
-            "📊 Нет данных об объектах.\nДанные появятся после первого сбора.",
+            "📊 Нет данных об объектах.\n\n<b>Возможные причины:</b>\n• Фоновая задача сбора данных не запущена\n• Данные еще не собраны (подождите 2-3 секунды)\n• Проверьте, создана ли задача CERBO_COLLECTION в БД\n\nИспользуйте /help для справки",
             chat_id
         )
         return
@@ -705,8 +724,10 @@ async def send_status_message(monitor: TelegramBatteryMonitor, chat_id: str):
 
 async def send_battery_message(monitor: TelegramBatteryMonitor, chat_id: str):
     """Отправляет детальную информацию о батареях"""
+    logger.info(f"📞 send_battery_message called, chat_id={chat_id}, _objects_data has {len(_objects_data)} objects")
+    
     if not _objects_data:
-        await monitor.send_message("📊 Нет данных о батареях", chat_id)
+        await monitor.send_message("📊 Нет данных о батареях.\n\nВозможные причины:\n• Задача сбора данных не запущена\n• Данные еще не собраны (подождите 2-3 секунды)\n\nПроверьте статус через /status", chat_id)
         return
     
     message_parts = ["🔋 <b>СОСТОЯНИЕ БАТАРЕЙ</b>\n"]
@@ -778,9 +799,72 @@ async def send_schedule_message(monitor: TelegramBatteryMonitor, chat_id: str, o
     await monitor.send_message(message, chat_id)
 
 
+async def send_debug_message(monitor: TelegramBatteryMonitor, chat_id: str):
+    """Отправляет отладочную информацию"""
+    global _objects_data
+    
+    message_parts = ["🐛 <b>DEBUG INFO</b>\n"]
+    message_parts.append(f"📊 Objects in memory: {len(_objects_data)}")
+    
+    if _objects_data:
+        message_parts.append("\n<b>Object IDs:</b>")
+        for obj_id, data in _objects_data.items():
+            last_update = data.get('last_update', 'Never')
+            if isinstance(last_update, datetime):
+                age = (datetime.now() - last_update).total_seconds()
+                last_update = f"{age:.1f}s ago"
+            
+            message_parts.append(
+                f"\n• {obj_id[:8]}..."
+                f"\n  Name: {data.get('object_name', 'N/A')}"
+                f"\n  SoC: {data.get('soc', 'N/A')}%"
+                f"\n  Updated: {last_update}"
+            )
+    else:
+        message_parts.append("\n⚠️ No objects data available")
+        message_parts.append("\nCheck if CERBO_COLLECTION task is running")
+    
+    await monitor.send_message("\n".join(message_parts), chat_id)
+
+
 # Polling loop для обработки команд
 _last_update_id = 0
 _commands_task: Optional[asyncio.Task] = None
+
+
+async def load_all_chat_ids_from_db() -> List[str]:
+    """
+    Загружает все chat_ids из всех активных энергетических объектов
+    
+    Returns:
+        Список уникальных chat_ids
+    """
+    try:
+        from cor_pass.database.db import async_session_maker
+        from cor_pass.database.models import EnergeticObject
+        from sqlalchemy import select
+        
+        all_chat_ids = []
+        
+        async with async_session_maker() as db:
+            result = await db.execute(
+                select(EnergeticObject).where(EnergeticObject.is_active == True)
+            )
+            objects = result.scalars().all()
+            
+            for obj in objects:
+                if obj.telegram_chat_ids:
+                    chat_ids = [cid.strip() for cid in str(obj.telegram_chat_ids).split(',') if cid.strip()]
+                    all_chat_ids.extend(chat_ids)
+        
+        # Убираем дубликаты
+        unique_chat_ids = list(set(all_chat_ids))
+        logger.info(f"Loaded {len(unique_chat_ids)} unique chat IDs from {len(objects)} energetic objects")
+        return unique_chat_ids
+        
+    except Exception as e:
+        logger.error(f"Error loading chat IDs from DB: {e}", exc_info=True)
+        return []
 
 
 async def start_telegram_commands_handler():
@@ -793,8 +877,20 @@ async def start_telegram_commands_handler():
     monitor = get_telegram_monitor()
     logger.info("🤖 Starting Telegram commands handler...")
     
+    # Загружаем chat_ids из БД при старте
+    allowed_chat_ids = await load_all_chat_ids_from_db()
+    
+    # Периодически обновляем список разрешенных чатов
+    last_reload = datetime.now()
+    RELOAD_INTERVAL_MINUTES = 10
+    
     while True:
         try:
+            # Перезагружаем список чатов каждые 10 минут
+            if (datetime.now() - last_reload).total_seconds() > RELOAD_INTERVAL_MINUTES * 60:
+                allowed_chat_ids = await load_all_chat_ids_from_db()
+                last_reload = datetime.now()
+            
             async with aiohttp.ClientSession() as session:
                 url = f"{monitor.api_url}/getUpdates"
                 params = {
@@ -832,8 +928,8 @@ async def start_telegram_commands_handler():
                         chat_id = str(message['chat']['id'])
                         message_id = message['message_id']
                         
-                        # Проверяем что это наш чат
-                        if chat_id not in monitor.chat_ids:
+                        # Проверяем что это один из чатов наших объектов
+                        if chat_id not in allowed_chat_ids:
                             logger.debug(f"Ignoring command from unknown chat {chat_id}")
                             continue
                         

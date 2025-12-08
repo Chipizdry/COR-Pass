@@ -333,3 +333,188 @@ async def get_latest_glucose_index(
         .where(SibionicsGlucose.device_id == device_db_id)
     )
     return result.scalar_one_or_none()
+
+
+async def get_or_create_manual_device(
+    db: AsyncSession,
+    user_id: str
+) -> SibionicsDevice:
+    """
+    Получает или создаёт виртуальное устройство для ручного ввода глюкозы
+    
+    ВАЖНО: Ручное устройство НЕ создаёт SibionicsAuth, чтобы не мешать
+    настоящей авторизации SIBIONICS. Устройство связано напрямую с User.
+    
+    Args:
+        db: Database session
+        user_id: ID пользователя
+        
+    Returns:
+        SibionicsDevice object (виртуальное устройство типа "manual")
+    """
+    result = await db.execute(
+        select(SibionicsDevice).where(
+            and_(
+                SibionicsDevice.user_id == user_id,
+                SibionicsDevice.device_type == "manual"
+            )
+        )
+    )
+    manual_device = result.scalar_one_or_none()
+    
+    if not manual_device:
+        import uuid
+        manual_device = SibionicsDevice(
+            id=str(uuid.uuid4()),
+            auth_id=None,  
+            user_id=user_id,  
+            device_id="manual_entry",
+            device_name="Manual Entry",
+            device_type="manual", 
+            sn=None,
+            model=None
+        )
+        db.add(manual_device)
+        await db.commit()
+        await db.refresh(manual_device)
+        
+        logger.info(f"✅ Created manual device for user {user_id} WITHOUT SibionicsAuth")
+    
+    return manual_device
+
+
+async def create_manual_glucose_record(
+    db: AsyncSession,
+    device_db_id: str,
+    glucose_value: float,
+    timestamp: datetime,
+    trend: Optional[int] = None,
+    alarm_status: int = 1
+) -> SibionicsGlucose:
+    """
+    Создаёт запись глюкозы для ручного ввода
+    
+    Args:
+        db: Database session
+        device_db_id: ID виртуального устройства
+        glucose_value: Уровень глюкозы в mmol/L
+        timestamp: Время измерения
+        trend: Тренд изменения (опционально)
+        alarm_status: Статус тревоги (по умолчанию 1 = норма)
+        
+    Returns:
+        SibionicsGlucose object
+    """
+    import uuid
+    
+
+    last_index = await get_latest_glucose_index(db, device_db_id)
+    next_index = (last_index or 0) + 1
+    
+    glucose_record = SibionicsGlucose(
+        id=str(uuid.uuid4()),
+        device_id=device_db_id,
+        index=next_index,
+        glucose_value=glucose_value,
+        trend=trend or 0,  
+        alarm_status=alarm_status or 1,  
+        timestamp=timestamp
+    )
+    
+    db.add(glucose_record)
+    await db.commit()
+    await db.refresh(glucose_record)
+    
+    return glucose_record
+
+
+async def get_all_user_devices_with_glucose(
+    db: AsyncSession,
+    user_id: str,
+    start_time: Optional[datetime] = None,
+    end_time: Optional[datetime] = None,
+    limit_per_device: int = 1000
+) -> List[Dict[str, Any]]:
+    """
+    Получает все устройства пользователя с данными глюкозы
+    
+    Args:
+        db: Database session
+        user_id: ID пользователя
+        start_time: Начало периода (опционально)
+        end_time: Конец периода (опционально)
+        limit_per_device: Максимум записей с каждого устройства
+        
+    Returns:
+        List[Dict] с данными по каждому устройству
+    """
+    from cor_pass.schemas import AllDevicesGlucoseResponse, SibionicsGlucoseResponse
+    
+    all_devices_data = []
+    
+    result = await db.execute(
+        select(SibionicsAuth)
+        .where(SibionicsAuth.user_id == user_id)
+        .options(selectinload(SibionicsAuth.devices))
+    )
+    auths = result.scalars().all()
+    
+    for auth in auths:
+        for device in auth.devices:
+            glucose_data = await get_glucose_data(
+                db=db,
+                device_db_id=device.id,
+                start_time=start_time,
+                end_time=end_time,
+                limit=limit_per_device
+            )
+            
+            device_response = AllDevicesGlucoseResponse(
+                device_id=device.id,
+                device_name=device.device_name or "Unknown Device",
+                device_type="cgm",
+                sibionics_device_id=device.device_id,
+                glucose_data=[
+                    SibionicsGlucoseResponse.model_validate(record)
+                    for record in glucose_data
+                ],
+                last_sync=device.last_sync
+            )
+            
+            all_devices_data.append(device_response)
+    
+    result = await db.execute(
+        select(SibionicsDevice).where(
+            and_(
+                SibionicsDevice.user_id == user_id,
+                SibionicsDevice.device_type == "manual"
+            )
+        )
+    )
+    manual_device = result.scalar_one_or_none()
+    
+    if manual_device:
+        glucose_data = await get_glucose_data(
+            db=db,
+            device_db_id=manual_device.id,
+            start_time=start_time,
+            end_time=end_time,
+            limit=limit_per_device
+        )
+        
+        device_response = AllDevicesGlucoseResponse(
+            device_id=manual_device.id,
+            device_name=manual_device.device_name or "Manual Entry",
+            device_type="manual",
+            sibionics_device_id=None,
+            glucose_data=[
+                SibionicsGlucoseResponse.model_validate(record)
+                for record in glucose_data
+            ],
+            last_sync=None
+        )
+        
+        all_devices_data.append(device_response)
+    
+    return all_devices_data
+
