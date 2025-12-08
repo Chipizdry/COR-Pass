@@ -1,16 +1,20 @@
 
-
-
-
 .energy-container {
-    background-color: white;
+    background-color: rgba(255, 255, 255, 0.6);
     padding: 19px;
     border-radius: 30px;
-    max-width: 900px;
+    max-width: 890px;
     width: 900px !important;
     text-align: center;
-    height: 800px;
+    height: 780px;
     flex-shrink: 0;
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between; /* заголовок слева, кнопка справа */
+    align-items: center; /* выравнивание по вертикали */
+    margin-bottom: 20px;
 }
 
 body {
@@ -19,15 +23,15 @@ body {
 }
 
 
- .tabs {
-        display: flex;
-        justify-content: space-between;
-        width: 100%;
-        overflow-x: hidden;
-        white-space: normal;
-        border-bottom: 1px solid #ccc; 
-        box-sizing: border-box;
-    }
+.tabs {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    overflow-x: hidden;
+    white-space: normal;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
 
 /* Стили для каждой вкладки */
 .tab {
@@ -36,8 +40,12 @@ body {
     cursor: pointer;
     padding: 10px;
     background-color: #f1f1f1;
-    border-right: 1px solid #ccc; /* Горизонтальная граница между вкладками */
+    border-radius: 12px ; 
+   /* border-right: 1px solid #ccc; /* Горизонтальная граница между вкладками */
     box-sizing: border-box; /* Учет padding и border в ширину */
+    color: #7527B2;         /* более бледный текст */
+    font-weight: 300;    /* тонкий шрифт */
+    opacity: 0.45;        /* визуально делает ещё бледнее */
 }
 /* Убираем правую границу у последней вкладки */
 .tab:last-child {
@@ -47,7 +55,8 @@ body {
 /* Контент вкладок */
 .tabcontent {
     display: none;
-    border: 1px solid #ccc;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 22px;
     border-top: none;
     margin-top: 0;
     padding: 6px;
@@ -59,8 +68,11 @@ body {
 
 /* Стиль для активной вкладки */
 .tab.active {
-    background-color: #2ccb32;
-    border-bottom: 1px solid #fff; /* Имитируем активную вкладку */
+    background-color: #fff;
+    font-weight: bold;
+    color: #7527B2;
+    opacity: 1.0;
+    /*border-bottom: 1px solid #fff; /* Имитируем активную вкладку */
 }
 
 /* Активный контент вкладки */
@@ -138,29 +150,17 @@ footer {
     text-align: center; /* Центрирование текста под иконкой */
 } 
 
-.battery-icon {
-    top: 350px;  /* Вертикальная позиция */
-    left: 20px; /* Горизонтальная позиция */
-}
-.solar-battery-icon {
-    top: 360px;
-    left: 570px;
-}
+.battery-icon {  top: 380px; left: 50px;}
 
-.inverter-icon {
-    top: 180px;
-    left: 332px;
-}
+.solar-battery-icon { top: 380px; left: 670px;}
 
-.power-grid-icon {
-    top: 10px;
-    left: 10px;
-}
+.inverter-icon { top: 180px; left: 340px; }
 
-.power-icon {
-    top: 10px;
-    left:600px;
-}
+.power-grid-icon { top: 30px; left: 50px; }
+
+.power-icon { top: 30px; left: 670px;}
+
+.GeneratorIcon { top: 380px; left: 340px;}
 
 .WindTurbineIcon {
     top: 100px;
@@ -171,6 +171,7 @@ footer {
     top: 100px;
     left: 90px;
 }
+
 
 .icon svg {
     display: block;
@@ -369,6 +370,11 @@ footer {
     gap: 10px;
 }
 
+.button-controls {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: flex-end; 
+}
 .schedule-table-container {
     overflow-x: auto;
 }
@@ -885,4 +891,246 @@ footer {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+
+
+.btn-icon {
+    background: none;
+    border: none;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 6px;
+    transition: 0.2s;
+    max-width: 10px;
+}
+
+.btn-icon:hover {
+    transform: scale(1.2);
+    opacity: 0.8;
+    background: none;
+}
+
+.btn-icon:active {
+    transform: scale(0.95);
+    background: none;
+}
+
+
+.btn-icon:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    background: none;
+}
+
+.btn-icon svg {
+    width: 10px;
+    height: 10px;
+    fill: #333;
+}
+.btn-icon:hover svg {
+    fill: #2ccb32;
+}
+.btn-icon:disabled svg {
+    fill: #aaa;
+}
+
+
+.objects-table-container {
+    height: 630px;
+    overflow-y: auto;
+    /* border: 1px solid #ddd; */
+    border-radius: 20px;
+    padding: 0 10px 10px 10px;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+/* Чтобы заголовок был закреплён */
+.objects-table thead tr {
+    position: sticky;
+    top: 0;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 5;
+}
+
+.objects-table thead th:first-child {
+    border-top-left-radius: 20px;
+}
+
+.objects-table thead th:last-child {
+    border-top-right-radius: 20px;
+}
+
+/* Таблица должна растягиваться */
+.objects-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+/*
+.objects-table th{
+    height: 40px !important;
+    line-height: 40px !important;
+    padding: 0 10px !important;  
+    color: #5B4296;
+   border-bottom: 1px solid rgba(91, 66, 150, 0.25);/* Граница под заголовком */
+/* } */
+
+.objects-table th {
+    height: 40px !important;
+    line-height: 40px !important;
+    padding: 0 10px !important;
+    color: #5B4296;
+    position: relative;
+    border-bottom: none !important;
+    text-align: left;
+    padding-left: 8px;
+}
+
+.objects-table th::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+
+    width: 100%;
+    height: 1px;
+
+    background: linear-gradient(
+        to right,
+        rgba(91, 66, 150, 0) 0%,         /* край — растворение */
+        rgba(91, 66, 150, 0.25) 30%,      /* как border */
+        rgba(91, 66, 150, 0.25) 70%,      
+        rgba(91, 66, 150, 0) 100%        /* край — растворение */
+    );
+}
+
+
+.objects-table td {
+    height: 40px !important;
+    line-height: 40px !important;
+    padding: 0 10px !important;
+    color: #5B4296;
+    border-bottom: 1px solid rgba(91, 66, 150, 0.1);/* Граница под ячейками */
+    text-align: left;
+    padding-left: 10px;
+    cursor: pointer;
+}
+
+
+
+
+
+.objects-table tr {
+    height: 40px !important;
+    line-height: 40px !important;
+    padding: 0 10px !important;
+    color: #5B4296;
+    border-bottom: 1px solid #5B4296;
+}
+
+
+/* Столбец с действиями */
+.objects-table td.actions {
+    position: relative;
+    width: 40px;
+    text-align: center;
+}
+
+/* Кнопка три точки */
+.more-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 22px;
+    margin: 0px;
+    border-radius: 6px;
+    transition: 0.2s;
+    height: 35px;
+    padding: 2px;
+    color: #7527B2;
+}
+
+.more-btn:hover {
+    background: rgba(0,0,0,0.05);
+    border-radius: 6px;
+    margin: 0px;
+    transition: 0.2s;
+    height: 35px;
+    padding: 2px;
+}
+
+/* Выпадающее меню */
+.actions-menu {
+    position: absolute;
+    right: 0;
+    top: 45px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    padding: 10px 0;
+    width: 150px;
+    display: none;
+    z-index: 999;
+}
+
+.actions-menu.visible {
+    display: block;
+}
+
+.actions-menu button {
+    width: 100%;
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 10px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    color: #291161;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.actions-menu button:hover {
+    background: rgba(41,17,97,0.06);
+}
+
+
+
+.form select {
+    width: 200px;
+    padding: 10px;
+    font-size: 14px;
+    color: #5B4296;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    box-sizing: border-box;
+    background-color: white;
+    appearance: none;
+    margin-bottom: 10px;
+}
+
+/* При фокусе — как у input */
+.form select:focus {
+    outline: none;
+    border-color: #7527B2;
+    background-color: #ffffff;
+    color: #7527B2;
+    box-shadow: 0 0 5px rgba(117, 39, 178, 0.5);
+}
+
+/* Активная выбранная опция */
+.form select option:checked {
+    background-color: #5B4296;
+    color: white;
+} 
+
+.object-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 10px;
 }
