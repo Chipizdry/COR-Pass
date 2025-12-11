@@ -11,7 +11,7 @@ from cor_pass.services.shared.qr_code import generate_qr_code
 from cor_pass.services.user.recovery_file import generate_recovery_file
 from cor_pass.services.shared.email import send_email_code_with_qr, send_feedback_email, send_proposal_email
 from cor_pass.database.models import User
-from cor_pass.services.shared.access import user_access
+from cor_pass.services.shared.access import user_access, admin_access
 from loguru import logger
 from cor_pass.schemas import (
     DeleteMyAccount,
@@ -813,3 +813,33 @@ async def submit_proposal(
     )
     
     return {"message": "Спасибо за ваше предложение! Мы рассмотрим его и свяжемся с Вами при необходимости"}
+
+
+@router.get(
+    "/admin/get_user_by_email",
+    summary="Получить пользователя по email (только для админов)"
+)
+async def get_user_by_email_admin(
+    email: EmailStr,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(admin_access)
+):
+    """
+    **Получение основной информации пользователя по email-адресу**
+    
+    Доступ: только для администраторов
+    
+    Возвращает: cor_id, email, имя, фамилию и другую основную информацию пользователя.
+    """
+    user = await person.get_user_by_email(email, db)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with email '{email}' not found"
+        )
+    
+    return {
+        "cor_id": user.cor_id,
+        "email": user.email
+    }

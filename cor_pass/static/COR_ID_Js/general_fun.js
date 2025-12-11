@@ -31,6 +31,11 @@ const modalConfigs = {
     ExcelModal: { width: '350px', height: '550px', top: 'auto', left: 'auto' },
     addObjectModal:  { width: '250px', height: 'auto', top: 'auto', left: 'auto' },
     editObjectModal:  { width: '250px', height: 'auto', top: 'auto', left: 'auto' },
+
+    blockModal: { width: '660px', height: '378px', top: '50%', left: '50%' },
+    deleteModal: { width: '660px', height: '378px', top: '50%', left: '50%' },
+    limitModal: { width: '660px', height: 'auto', top: '50%', left: '50%' },
+    infoModal: { width: '660px', height: '671px', top: '50%', left: '50%' },
 };
 
 //Функция получения токена
@@ -492,7 +497,7 @@ function getTokenFromURL() {
 // Функция для проверки истечения токена + проверка ответа сервера
 async function checkToken() {
     let token = getToken();
-   
+
     if (!token) {
         showTokenExpiredModal();
         return false;

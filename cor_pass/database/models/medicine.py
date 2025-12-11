@@ -24,6 +24,7 @@ class FirstAidKit(Base):
     name = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)
     user_cor_id = Column(String(36), ForeignKey("users.cor_id", ondelete="CASCADE"), nullable=False)
+    is_primary = Column(Boolean, nullable=False, default=False, comment="Является ли аптечка основной")
 
     created_at = Column(DateTime, nullable=False, default=func.now())
     updated_at = Column(DateTime, nullable=False, default=func.now(), onupdate=func.now())
@@ -127,6 +128,7 @@ class MedicineIntake(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     schedule_id = Column(String(36), ForeignKey("medicine_schedules.id", ondelete="CASCADE"), nullable=False)
     user_cor_id = Column(String(36), ForeignKey("users.cor_id", ondelete="CASCADE"), nullable=False)
+    first_aid_kit_id = Column(String(36), ForeignKey("first_aid_kits.id", ondelete="SET NULL"), nullable=True, comment="Аптечка, из которой списано лекарство")
     
     # Запланированная дата и время приема
     planned_datetime = Column(DateTime(timezone=True), nullable=False)
@@ -134,6 +136,8 @@ class MedicineIntake(Base):
     actual_datetime = Column(DateTime(timezone=True), nullable=True)
     # Статус приема (запланирован/выполнен/пропущен/отложен)
     status = Column(Enum(MedicineIntakeStatus), nullable=False, default=MedicineIntakeStatus.PLANNED)
+    # Количество принятых таблеток/доз
+    taken_quantity = Column(Integer, nullable=True, comment="Количество принятых таблеток/доз")
     # Комментарий (например, причина пропуска/переноса)
     notes = Column(Text, nullable=True)
 
@@ -143,6 +147,7 @@ class MedicineIntake(Base):
     # Relationships
     schedule = relationship("MedicineSchedule", back_populates="intakes")
     user = relationship("User", back_populates="medicine_intakes")
+    first_aid_kit = relationship("FirstAidKit", foreign_keys=[first_aid_kit_id])
 
     @property
     def medicine_name(self) -> str:

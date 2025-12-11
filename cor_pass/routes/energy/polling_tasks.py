@@ -371,7 +371,6 @@ async def trigger_worker_reload(
     или просто возвращает success, полагаясь на автоматическую синхронизацию
     """
     try:
-        # TODO: Можно добавить webhook endpoint на воркере для немедленного обновления
         # Пока просто возвращаем успех, т.к. воркер сам синхронизируется каждые 5 сек
         
         logger.info("Worker reload triggered via API")

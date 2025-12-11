@@ -148,6 +148,7 @@ from cor_pass.repository.user import person as repository_person
 from cor_pass.repository.user import user_session as repository_session
 from cor_pass.repository.user import cor_id as repository_cor_id
 from cor_pass.repository.user import invitation as repository_invitation
+from cor_pass.repository.fuel import corporate_employee_invitation as repo_employee_invitation
 from cor_pass.services.user.auth import auth_service
 from cor_pass.services.shared import device_info as di
 from cor_pass.services.shared.qr_code import generate_qr_code
@@ -231,25 +232,26 @@ async def get_current_user_profile(
     
     if current_user.profile:
         try:
-            # Расшифровываем данные профиля, если они есть
-            user_key = await decrypt_user_key(current_user.unique_cipher_key)
+            # Расшифровываем данные профиля системным ключом
+            import base64
+            decoded_key = base64.b64decode(settings.aes_key)
             
             if current_user.profile.encrypted_first_name:
                 first_name = await decrypt_data(
                     encrypted_data=current_user.profile.encrypted_first_name,
-                    key=user_key
+                    key=decoded_key
                 )
             
             if current_user.profile.encrypted_surname:
                 surname = await decrypt_data(
                     encrypted_data=current_user.profile.encrypted_surname,
-                    key=user_key
+                    key=decoded_key
                 )
             
             if current_user.profile.encrypted_middle_name:
                 middle_name = await decrypt_data(
                     encrypted_data=current_user.profile.encrypted_middle_name,
-                    key=user_key
+                    key=decoded_key
                 )
         except Exception as e:
             logger.warning(f"Failed to decrypt profile data for user {current_user.email}: {e}")
@@ -345,6 +347,46 @@ async def signup(
 
     # Проверка ролей
     user_roles = await repository_person.get_user_roles(email=body.email, db=db)
+    
+    # ====== АВТОМАТИЧЕСКОЕ ЗАВЕРШЕНИЕ ПРИГЛАШЕНИЙ НА ДОБАВЛЕНИЕ В КОМПАНИЮ ======
+    # Проверяем, были ли приглашения на добавление в компанию для этого email
+    pending_invitations = await repo_employee_invitation.get_all_invitations_by_email(
+        db, body.email
+    )
+    
+    if pending_invitations:
+        from cor_pass.repository.fuel.fuel_station import create_account_member_in_finance
+        
+        for invitation in pending_invitations:
+            if not invitation.is_used:
+                try:
+                    # Добавляем пользователя в компанию через finance backend
+                    await create_account_member_in_finance(
+                        db=db,
+                        cor_id=new_user.cor_id,
+                        first_name=invitation.first_name,
+                        last_name=invitation.last_name,
+                        account_id=invitation.account_id,
+                        company_id=invitation.company_id,
+                        limit_amount=invitation.limit_amount,
+                        limit_period=invitation.limit_period,
+                    )
+                    
+                    # Помечаем приглашение как использованное
+                    await repo_employee_invitation.mark_invitation_as_used(
+                        db, invitation.id, new_user.cor_id
+                    )
+                    
+                    logger.info(
+                        f"Auto-completed employee invitation for {body.email} "
+                        f"to company {invitation.company_id} with cor_id {new_user.cor_id}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Failed to auto-complete employee invitation for {body.email}: {e}"
+                    )
+                    # Не прерываем процесс регистрации, даже если завершение приглашения не удалось
+
 
     # Создаём токены
     access_token, access_token_jti = await auth_service.create_access_token(

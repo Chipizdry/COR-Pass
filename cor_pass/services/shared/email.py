@@ -266,3 +266,79 @@ async def send_invitation_email(
     except ConnectionErrors as err:
         logger.error(f"Failed to send invitation email to {email}: {err}")
         raise 
+
+
+async def send_employee_invitation_email(
+    email: str,
+    first_name: str,
+    last_name: str,
+):
+    """
+    Отправляет email с приглашением для сотрудника компании на регистрацию.
+    
+    Args:
+        email: Email сотрудника
+        first_name: Имя сотрудника
+        last_name: Фамилия сотрудника
+    """
+    logger.debug(f"Sending employee invitation email to {email}")
+    try:
+        # iOS App Store link
+        ios_app_store_link = "https://apps.apple.com/ua/app/cor-energy-app/id6744608535?l=uk"
+        # Android Google Play link
+        android_play_store_link = "https://play.google.com/store/apps/details?id=com.cormed.corenergy.android&hl=ru"
+        
+        message = MessageSchema(
+            subject="Запрошення до програми корпоративних клієнтів COR-ENERGY",
+            recipients=[email],
+            template_body={
+                "first_name": first_name,
+                "last_name": last_name,
+                "email": email,
+                "ios_app_store_link": ios_app_store_link,
+                "android_play_store_link": android_play_store_link,
+            },
+            subtype=MessageType.html,
+        )
+
+        fm = FastMail(conf)
+        await fm.send_message(message, template_name="employee_invitation.html")
+        logger.info(f"Employee invitation email sent to {email} ({first_name} {last_name})")
+    except ConnectionErrors as err:
+        logger.error(f"Failed to send employee invitation email to {email}: {err}")
+        # Не пробрасываем исключение, чтобы не сломать основной процесс добавления
+        raise 
+
+
+async def send_employee_added_email(
+    email: str,
+    first_name: str,
+    last_name: str,
+):
+    """
+    Отправляет уведомление, что сотрудник успешно добавлен в корпоративную программу.
+    """
+    logger.debug(f"Sending employee added email to {email}")
+    try:
+        ios_app_store_link = "https://apps.apple.com/ua/app/cor-energy-app/id6744608535?l=uk"
+        android_play_store_link = "https://play.google.com/store/apps/details?id=com.cormed.corenergy.android&hl=ru"
+
+        message = MessageSchema(
+            subject="Вас додали до програми корпоративних клієнтів COR-ENERGY",
+            recipients=[email],
+            template_body={
+                "first_name": first_name,
+                "last_name": last_name,
+                "ios_app_store_link": ios_app_store_link,
+                "android_play_store_link": android_play_store_link,
+            },
+            subtype=MessageType.html,
+        )
+
+        fm = FastMail(conf)
+        await fm.send_message(message, template_name="employee_added.html")
+        logger.info(f"Employee added email sent to {email} ({first_name} {last_name})")
+    except ConnectionErrors as err:
+        logger.error(f"Failed to send employee added email to {email}: {err}")
+        # Не прерываем основной процесс
+        raise

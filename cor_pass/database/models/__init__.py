@@ -16,3 +16,4 @@ from .medicine import *
 from .energy import *
 from .fuel import *
 from .roles import *
+from .corporate_employee_invitation import *

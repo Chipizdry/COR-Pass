@@ -4,8 +4,9 @@ from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, joinedload
 
-from cor_pass.database.models import MedicineIntake, MedicineSchedule, MedicineIntakeStatus
+from cor_pass.database.models import MedicineIntake, MedicineSchedule, MedicineIntakeStatus, User
 from cor_pass.schemas import MedicineIntakeCreate, MedicineIntakeUpdate
+from cor_pass.repository.medicine.first_aid_kit import get_primary_first_aid_kit
 
 
 async def create_medicine_intake(
@@ -188,7 +189,10 @@ async def record_symptomatic_intake(
     db: AsyncSession,
     schedule: MedicineSchedule,
     actual_datetime: datetime,
-    notes: Optional[str] = None
+    notes: Optional[str] = None,
+    first_aid_kit_id: Optional[str] = None,
+    taken_quantity: Optional[int] = None,
+    user: Optional[User] = None
 ) -> MedicineIntake:
     """
     Регистрирует фактический прием симптоматического медикамента.
@@ -198,6 +202,9 @@ async def record_symptomatic_intake(
         schedule: MedicineSchedule - расписание приема лекарства
         actual_datetime: datetime - фактическое время приема
         notes: Optional[str] - комментарий к приему
+        first_aid_kit_id: Optional[str] - ID аптечки, если не указано - используется основная
+        taken_quantity: Optional[int] - количество принятых таблеток/доз
+        user: Optional[User] - пользователь (для получения основной аптечки)
         
     Returns:
         MedicineIntake - запись о приеме лекарства
@@ -205,13 +212,21 @@ async def record_symptomatic_intake(
     if not schedule.symptomatically:
         raise ValueError("This medicine is not for symptomatic use")
 
+    # Если аптечка не указана, используем основную
+    if not first_aid_kit_id and user:
+        primary_kit = await get_primary_first_aid_kit(db, user)
+        if primary_kit:
+            first_aid_kit_id = primary_kit.id
+
     intake = MedicineIntake(
         schedule_id=schedule.id,
         user_cor_id=schedule.user_cor_id,
         planned_datetime=datetime.combine(actual_datetime.date(), time(0, 0)),  
         actual_datetime=actual_datetime,  
         status=MedicineIntakeStatus.COMPLETED,
-        notes=notes
+        notes=notes,
+        first_aid_kit_id=first_aid_kit_id,
+        taken_quantity=taken_quantity
     )
     db.add(intake)
     await db.commit()

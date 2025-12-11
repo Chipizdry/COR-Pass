@@ -3010,6 +3010,8 @@ class MedicineIntakeUpdate(BaseModel):
     status: MedicineIntakeStatus = Field(..., description="Новый статус приема")
     actual_datetime: Optional[datetime] = Field(None, description="Фактическое время приема")
     notes: Optional[str] = Field(None, description="Комментарий к приему")
+    first_aid_kit_id: Optional[str] = Field(None, description="ID аптечки, из которой списано лекарство")
+    taken_quantity: Optional[int] = Field(None, description="Количество принятых таблеток/доз")
 
 class MedicineIntakeResponse(BaseModel):
     """Схема для ответа с информацией о приеме"""
@@ -3020,6 +3022,8 @@ class MedicineIntakeResponse(BaseModel):
     actual_datetime: Optional[datetime] = None
     status: MedicineIntakeStatus
     notes: Optional[str] = None
+    first_aid_kit_id: Optional[str] = None
+    taken_quantity: Optional[int] = None
     created_at: datetime
     updated_at: datetime
     name: str = Field(alias='medicine_name', description="Название лекарства")
@@ -3202,6 +3206,7 @@ class MedicineRead(MedicineBase):
 class FirstAidKitBase(BaseModel):
     name: str = Field(..., description="Название аптечки")
     description: Optional[str] = None
+    is_primary: bool = Field(default=False, description="Основная аптечка")
 
 
 
@@ -3211,6 +3216,7 @@ class FirstAidKitCreate(FirstAidKitBase):
 
 class FirstAidKitUpdate(FirstAidKitBase):
     name: Optional[str] = None
+    is_primary: Optional[bool] = None
 
 
 
@@ -3234,6 +3240,8 @@ class FirstAidKitItemRead(FirstAidKitItemBase):
     id: str
     created_at: datetime
     medicine: Optional[MedicineRead]
+    taken_quantity: int = Field(default=0, description="Количество принятых таблеток")
+    remaining_quantity: int = Field(default=0, description="Осталось в аптечке")
 
     class Config:
         orm_mode = True
@@ -3262,11 +3270,13 @@ class FirstAidKitRead(FirstAidKitBase):
 
 class FirstAidKitItemAddRead(BaseModel):
     id: str
+    medicine_id: str
+    medicine_name: str
     quantity: int
     expiration_date: Optional[date] = None
     created_at: datetime
-    medicine: MedicineRead
-    first_aid_kit: FirstAidKitRead
+    taken_quantity: int = Field(default=0, description="Количество принятых таблеток")
+    remaining_quantity: int = Field(default=0, description="Осталось в аптечке")
 
     class Config:
         orm_mode = True
@@ -3732,14 +3742,33 @@ class FinancePartnerLoginResponse(BaseModel):
 
 
 class CreateAccountMemberRequest(BaseModel):
-    """Запрос на добавление пользователя в компанию"""
+    """Запрос на добавление пользователя в компанию (по COR-ID)"""
     cor_id: str = Field(..., description="COR-ID пользователя")
     first_name: str = Field(..., description="Имя пользователя")
     last_name: str = Field(..., description="Фамилия пользователя")
-    account_id: int = Field(..., description="ID аккаунта в finance backend?")
+    phone_number: Optional[str] = Field(None, description="Телефон пользователя")
+    account_id: Optional[int] = Field(None, description="ID аккаунта в finance backend?")
     company_id: int = Field(..., description="ID компании в finance backend")
-    limit_amount: float = Field(..., ge=0, description="Лимит пользователя")
-    limit_period: Literal["day", "week", "month"] = Field(..., description="Период лимита")
+    limit_amount: Optional[float] = Field(None, ge=0, description="Лимит пользователя")
+    limit_period: Optional[Literal["day", "week", "month"]] = Field(None, description="Период лимита")
+
+
+class AddEmployeeByEmailRequest(BaseModel):
+    """Запрос на добавление сотрудника (одно поле для cor_id или email)."""
+    identifier: str = Field(..., description="Email сотрудника или его COR-ID")
+    first_name: str = Field(..., description="Имя сотрудника")
+    last_name: str = Field(..., description="Фамилия сотрудника")
+    phone_number: Optional[str] = Field(None, description="Телефон сотрудника")
+    company_id: int = Field(..., description="ID компании в finance backend")
+    account_id: Optional[int] = Field(None, description="ID аккаунта в finance backend")
+    limit_amount: Optional[float] = Field(None, ge=0, description="Лимит сотрудника")
+    limit_period: Optional[Literal["day", "week", "month"]] = Field(None, description="Период лимита")
+
+    @model_validator(mode="after")
+    def validate_identifier(self):
+        if not self.identifier or not self.identifier.strip():
+            raise ValueError("Нужно передать email или cor_id")
+        return self
 
 
 class AccountMemberResponse(BaseModel):
@@ -3748,13 +3777,48 @@ class AccountMemberResponse(BaseModel):
     first_name: str
     last_name: str
     cor_id: str
+    account_id: Optional[int] = None
+    limit_amount: Optional[str] = None
+    limit_period: Optional[str] = None
+    disabled_at: Optional[datetime] = None
+
+
+class CorporateEmployeeInvitationResponse(BaseModel):
+    """Публичное представление приглашения сотрудника"""
+    id: str
+    email: str
+    first_name: str
+    last_name: str
+    phone_number: Optional[str] = None
+    company_id: int
+    account_id: Optional[int] = None
+    limit_amount: Optional[float] = None
+    limit_period: Optional[str] = None
+    invited_by: Optional[str] = None
+    is_used: int
+    created_at: datetime
+    used_at: Optional[datetime] = None
+
+
+class FinanceAccountMemberResponse(BaseModel):
+    """Сотрудник из финансового бэкенда"""
+    id: int
+    first_name: str
+    last_name: str
+    cor_id: str
     account_id: int
-    limit_amount: str
+    limit_amount: str  # Decimal строка
     limit_period: str
     disabled_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
     deleted_at: Optional[datetime] = None
+
+
+class CompanyMembersUnifiedResponse(BaseModel):
+    """Объединённый список сотрудников и приглашений"""
+    existing_members: list[FinanceAccountMemberResponse] = []
+    pending_invitations: list[CorporateEmployeeInvitationResponse] = []
 
 
 class FinanceCreateCompanyRequest(BaseModel):

@@ -1311,10 +1311,10 @@ async def create_account_member_in_finance(
     cor_id: str,
     first_name: str,
     last_name: str,
-    account_id: int,
+    account_id: Optional[int],
     company_id: int,
-    limit_amount: float,
-    limit_period: str
+    limit_amount: Optional[float],
+    limit_period: Optional[str]
 ) -> dict:
     """
     Добавляет пользователя в компанию в финансовом бэкенде.
@@ -1598,3 +1598,267 @@ async def verify_offline_qr_code(
             is_valid=False,
             message=f"Ошибка верификации: {str(e)}"
         )
+
+
+async def add_employee_by_email(
+    db: AsyncSession,
+    identifier: str,
+    first_name: str,
+    last_name: str,
+    phone_number: str,
+    company_id: int,
+    account_id: Optional[int],
+    limit_amount: Optional[float],
+    limit_period: Optional[str],
+    invited_by_user_id: str,
+    background_tasks,
+) -> dict:
+    """
+    Добавляет сотрудника в компанию с поддержкой трёх сценариев (одно поле identifier):
+    1. identifier = cor_id → добавляем сразу (пользователь должен существовать)
+    2. identifier = email (существует в системе) → добавляем
+    3. identifier = email (пользователь не найден) → создаём приглашение и отправляем письмо
+    
+    Args:
+        db: Сессия БД
+        identifier: Email сотрудника или его COR-ID
+        first_name: Имя сотрудника
+        last_name: Фамилия сотрудника
+        phone_number: Телефон сотрудника
+        company_id: ID компании в finance backend
+        account_id: ID аккаунта в finance backend (опционально)
+        limit_amount: Лимит сотрудника
+        limit_period: Период лимита
+        invited_by_user_id: ID пользователя, пригласившего сотрудника
+        background_tasks: BackgroundTasks для отправки писем
+        
+    Returns:
+        dict: результат операции
+    """
+    from cor_pass.repository.user import person as repository_person
+    from cor_pass.repository.fuel import corporate_employee_invitation as repo_invitation
+    from cor_pass.services.shared.email import send_employee_invitation_email, send_employee_added_email
+    from cor_pass.schemas import AccountMemberResponse
+    from sqlalchemy import select
+
+    if not identifier or not identifier.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Нужно передать email или cor_id",
+        )
+
+    identifier_clean = identifier.strip()
+    # Простая эвристика: если есть '@' → email, иначе считаем cor_id
+    if "@" in identifier_clean:
+        email_lower = identifier_clean.lower()
+        cor_id_value = None
+    else:
+        email_lower = None
+        cor_id_value = identifier_clean
+
+    # ===== Сценарий 1: identifier как cor_id =====
+    if cor_id_value:
+        # Проверяем, что пользователь с таким COR-ID существует
+        user_stmt = select(User).where(User.cor_id == cor_id_value)
+        user_result = await db.execute(user_stmt)
+        user_obj = user_result.scalar_one_or_none()
+        if not user_obj:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Пользователь с cor_id {cor_id_value} не найден",
+            )
+
+        logger.info(f"Adding employee by cor_id={cor_id_value} to company {company_id}")
+        result = await create_account_member_in_finance(
+            db=db,
+            cor_id=cor_id_value,
+            first_name=first_name,
+            last_name=last_name,
+            account_id=account_id,
+            company_id=company_id,
+            limit_amount=limit_amount,
+            limit_period=limit_period,
+        )
+        account_member = AccountMemberResponse(**result)
+        account_member_data = account_member.model_dump()
+        # Отправляем уведомление о добавлении
+        background_tasks.add_task(
+            send_employee_added_email,
+            email=user_obj.email,
+            first_name=first_name,
+            last_name=last_name,
+        )
+        return {
+            "status": "success",
+            "message": f"Сотрудник {first_name} {last_name} добавлен в компанию",
+            "added_directly": True,
+            "cor_id": cor_id_value,
+            "account_member": account_member_data
+        }
+
+    # ===== Сценарий 2: identifier как email, пользователь существует =====
+    user = await repository_person.get_user_by_email(email_lower, db)
+    if user:
+        logger.info(f"User {email_lower} exists, adding to company {company_id}")
+
+        result = await create_account_member_in_finance(
+            db=db,
+            cor_id=user.cor_id,
+            first_name=first_name,
+            last_name=last_name,
+            account_id=account_id,
+            company_id=company_id,
+            limit_amount=limit_amount,
+            limit_period=limit_period,
+        )
+        account_member = AccountMemberResponse(**result)
+        account_member_data = account_member.model_dump()
+
+        background_tasks.add_task(
+            send_employee_added_email,
+            email=user.email,
+            first_name=first_name,
+            last_name=last_name,
+        )
+
+        return {
+            "status": "success",
+            "message": f"Сотрудник {first_name} {last_name} добавлен в компанию",
+            "added_directly": True,
+            "cor_id": user.cor_id,
+            "account_member": account_member_data
+        }
+
+    # ===== Сценарий 3: identifier как email, пользователя нет — создаём приглашение =====
+    logger.info(f"User {email_lower} does not exist, creating invitation")
+
+    invitation = await repo_invitation.create_employee_invitation(
+        db=db,
+        email=email_lower,
+        first_name=first_name,
+        last_name=last_name,
+        phone_number=phone_number,
+        company_id=company_id,
+        account_id=account_id,
+        limit_amount=limit_amount or 0,
+        limit_period=limit_period or "day",
+        invited_by_user_id=invited_by_user_id,
+    )
+
+    # Отправляем письмо с приглашением
+    background_tasks.add_task(
+        send_employee_invitation_email,
+        email=email_lower,
+        first_name=first_name,
+        last_name=last_name,
+    )
+
+    # Возвращаем приглашение в том же формате, что и pending_invitations
+    invitation_payload = {
+        "id": invitation.id,
+        "email": invitation.email,
+        "first_name": invitation.first_name,
+        "last_name": invitation.last_name,
+        "phone_number": invitation.phone_number,
+        "company_id": invitation.company_id,
+        "account_id": invitation.account_id,
+        "limit_amount": invitation.limit_amount,
+        "limit_period": invitation.limit_period,
+        "invited_by": invitation.invited_by,
+        "is_used": invitation.is_used,
+        "created_at": invitation.created_at,
+        "used_at": invitation.used_at,
+    }
+
+    return {
+        "status": "pending",
+        "message": f"Приглашение отправлено на {email_lower}. Сотрудник будет добавлен после регистрации.",
+        "added_directly": False,
+        "invitation": invitation_payload,
+    }
+
+
+async def get_company_invitations(
+    db: AsyncSession,
+    company_id: int,
+):
+    """
+    Возвращает список неиспользованных приглашений по компании.
+    """
+    from cor_pass.repository.fuel import corporate_employee_invitation as repo_invitation
+
+    invitations = await repo_invitation.get_invitations_by_company(db=db, company_id=company_id)
+    return invitations
+
+
+async def delete_company_invitation(
+    db: AsyncSession,
+    invitation_id: str,
+):
+    """
+    Удаляет неподтверждённое приглашение.
+    """
+    from cor_pass.repository.fuel import corporate_employee_invitation as repo_invitation
+
+    deleted = await repo_invitation.delete_pending_invitation(db=db, invitation_id=invitation_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Приглашение не найдено или уже использовано",
+        )
+    return {"status": "deleted", "invitation_id": invitation_id}
+
+
+async def get_account_members_from_finance(
+    finance_id: str,
+    db: AsyncSession,
+):
+    """
+    Получает список сотрудников компании из финансового бэкенда.
+    
+    Args:
+        finance_id: ID или COR-ID компании в финансовом бэкенде
+        db: Database session
+        
+    Returns:
+        Список сотрудников или None если ошибка при обращении к финбэку
+    """
+    import httpx
+    from cor_pass.config.config import settings
+    
+    try:
+        # Получаем конфиг финансового бэкенда
+        config = await get_active_finance_backend_config(db=db)
+        if not config or not config.api_endpoint:
+            logger.warning("Finance backend config not found")
+            return None
+        
+        # Формируем URL для получения сотрудников
+        base_url = config.api_endpoint.rstrip('/')
+        url = f"{base_url}/v1/partner_companies/{finance_id}/account-members"
+        
+        # Подготавливаем заголовки с авторизацией
+        headers = {}
+        # if config.totp_secret:
+        #     pass
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(url, headers=headers)
+            
+            if response.status_code == 200:
+                members_data = response.json()
+                logger.info(f"Got {len(members_data) if isinstance(members_data, list) else 0} members from finance backend")
+                return members_data
+            else:
+                logger.error(
+                    f"Finance backend error: {response.status_code} - {response.text}"
+                )
+                return None
+                
+    except httpx.RequestError as e:
+        logger.error(f"Error connecting to finance backend: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Error getting account members from finance: {e}", exc_info=True)
+        return None
+

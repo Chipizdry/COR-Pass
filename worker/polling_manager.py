@@ -149,20 +149,29 @@ class PollingManager:
                 # SQLAlchemy возвращает список Row(tuple), распаковываем явно
                 active_tasks = [(row[0], row[1]) for row in rows]
                 
+                logger.info(f"Found {len(active_tasks)} active polling tasks in DB")
+                
                 active_task_ids = {polling_task.id for (polling_task, _) in active_tasks}
                 
                 # Запускаем новые задачи
                 for polling_task, energetic_object in active_tasks:
                     
                     if polling_task.id not in self.tasks:
+                        logger.info(
+                            f"Starting new task {polling_task.id}: {polling_task.task_type} "
+                            f"for object {energetic_object.name} ({energetic_object.protocol})"
+                        )
                         await self.start_polling_task(polling_task, energetic_object)
+                    else:
+                        logger.debug(f"Task {polling_task.id} already running")
                 
                 # Останавливаем удалённые/неактивные задачи
                 for task_id in list(self.tasks.keys()):
                     if task_id not in active_task_ids:
+                        logger.info(f"Stopping inactive task {task_id}")
                         await self.stop_polling_task(task_id)
                 
-                logger.info(f"Reloaded tasks: {len(active_task_ids)} active")
+                logger.info(f"Polling manager status: {len(self.tasks)} tasks running")
                 
         except Exception as e:
             logger.error(f"Error reloading tasks from DB: {e}", exc_info=True)
@@ -274,7 +283,7 @@ class PollingManager:
             return
         
         # Основной цикл опроса
-        from worker.modbus_client import get_or_create_modbus_client
+        from worker.modbus_client import get_or_create_modbus_client, ModbusTCP
         
         # Получаем IP-адрес объекта из БД
         async with async_session_maker() as db:
@@ -288,21 +297,33 @@ class PollingManager:
             
             ip_address = obj.ip_address
             port = obj.port
-            protocol = obj.protocol
+            protocol = obj.protocol or modbus_config.get("protocol", "modbus_tcp")
+            slave_id = obj.slave_id if hasattr(obj, 'slave_id') and obj.slave_id else modbus_config.get("slave_id", 1)
+        
+        logger.info(f"[{task_id}] Protocol: {protocol}, IP: {ip_address}, Port: {port}, Slave: {slave_id}")
         
         while True:
             try:
+                # Получаем или создаём Modbus клиент
                 modbus_client = await get_or_create_modbus_client(
                     protocol=protocol,
                     ip_address=ip_address,
                     port=port,
-                    object_id=object_id
+                    object_id=object_id,
+                    slave_id=slave_id
                 )
                 
-                if not modbus_client or not modbus_client.connected:
-                    logger.warning(f"[{task_id}] Modbus client not connected, skipping cycle")
-                    await asyncio.sleep(interval)
-                    continue
+                # Для modbus_tcp проверяем connected, для modbus_over_tcp проверяем наличие клиента
+                if protocol == "modbus_tcp":
+                    if not modbus_client or not modbus_client.connected:
+                        logger.warning(f"[{task_id}] Modbus TCP client not connected, skipping cycle")
+                        await asyncio.sleep(interval)
+                        continue
+                elif protocol == "modbus_over_tcp":
+                    if not modbus_client or not isinstance(modbus_client, ModbusTCP):
+                        logger.warning(f"[{task_id}] Modbus over TCP client not available, skipping cycle")
+                        await asyncio.sleep(interval)
+                        continue
                 
                 collected_data = {}
                 
@@ -314,69 +335,146 @@ class PollingManager:
                         logger.warning(f"[{task_id}] Register group '{group_name}' not found")
                         continue
                     
-                    # Читаем регистры группы
-                    for register in group.get("registers", []):
+                    logger.debug(f"[{task_id}] Reading group '{group_name}'")
+                    
+                    # Для modbus_over_tcp (Deye) читаем всю группу за раз
+                    if protocol == "modbus_over_tcp":
                         try:
-                            # Чтение регистра
-                            address = register["address"]
-                            count = register.get("count", 1)
-                            reg_type = register.get("type", "uint16")
-                            scale = register.get("scale", 1.0)
-                            name = register["name"]
-                            unit_id = modbus_config.get("unit_id", 100)
+                            start_address = group.get("start_address")
+                            count = group.get("count")
+                            func_code = group.get("func_code", 3)
                             
-                            # Определяем тип регистра (holding/input)
-                            # По умолчанию используем input registers для чтения
-                            register_function = modbus_client.read_input_registers
+                            if start_address is None or count is None:
+                                logger.error(f"[{task_id}] Group '{group_name}' missing start_address or count")
+                                continue
                             
-                            # Если в конфиге указан тип функции
-                            if "function" in register:
-                                if register["function"] == "holding":
-                                    register_function = modbus_client.read_holding_registers
-                            
-                            # Читаем регистр
-                            result = await register_function(
-                                address=address,
-                                count=count,
-                                slave=unit_id
+                            logger.debug(
+                                f"[{task_id}] Reading {count} registers from address {start_address} "
+                                f"(func={func_code})"
                             )
                             
-                            if result.isError():
+                            # Читаем всю группу за один запрос
+                            result = modbus_client.read(start=start_address, count=count, func=func_code)
+                            
+                            if not result.get("ok"):
                                 logger.error(
-                                    f"[{task_id}] Modbus error reading {name} at {address}"
+                                    f"[{task_id}] Modbus over TCP error reading group '{group_name}': {result.get('error')}"
                                 )
                                 register_modbus_error(object_id)
                                 continue
                             
-                            # Декодируем значение в зависимости от типа
-                            raw_value = result.registers[0] if len(result.registers) > 0 else 0
+                            raw_registers = result.get("data", [])
+                            logger.debug(f"[{task_id}] Got {len(raw_registers)} registers: {raw_registers[:5]}...")
                             
-                            if reg_type == "int16":
-                                value = decode_signed_16(raw_value)
-                            elif reg_type == "uint16":
-                                value = raw_value
-                            elif reg_type == "int32" and len(result.registers) >= 2:
-                                value = decode_signed_32(result.registers[0], result.registers[1])
-                            elif reg_type == "uint32" and len(result.registers) >= 2:
-                                value = (result.registers[0] << 16) | result.registers[1]
-                            else:
-                                value = raw_value
-                            
-                            # Применяем масштабирование
-                            scaled_value = value * scale
-                            
-                            collected_data[name] = scaled_value
-                            
-                            logger.debug(
-                                f"[{task_id}] Read {name}={scaled_value} "
-                                f"(raw={raw_value}, scale={scale})"
-                            )
+                            # Обрабатываем каждый регистр в группе
+                            for register in group.get("registers", []):
+                                try:
+                                    offset = register.get("offset", 0)
+                                    reg_type = register.get("type", "uint16")
+                                    scale = register.get("scale", 1.0)
+                                    name = register["name"]
+                                    
+                                    if offset >= len(raw_registers):
+                                        logger.warning(f"[{task_id}] Offset {offset} out of range for {name}")
+                                        continue
+                                    
+                                    raw_value = raw_registers[offset]
+                                    
+                                    # Декодируем значение
+                                    if reg_type == "int16":
+                                        value = decode_signed_16(raw_value)
+                                    elif reg_type == "uint16":
+                                        value = raw_value
+                                    elif reg_type == "int32" and offset + 1 < len(raw_registers):
+                                        value = decode_signed_32(raw_registers[offset], raw_registers[offset + 1])
+                                    elif reg_type == "uint32" and offset + 1 < len(raw_registers):
+                                        value = (raw_registers[offset] << 16) | raw_registers[offset + 1]
+                                    else:
+                                        value = raw_value
+                                    
+                                    # Применяем масштабирование
+                                    scaled_value = value * scale
+                                    collected_data[name] = scaled_value
+                                    
+                                    logger.debug(
+                                        f"[{task_id}] {name}={scaled_value} (raw={raw_value}, scale={scale})"
+                                    )
+                                    
+                                except Exception as e:
+                                    logger.error(
+                                        f"[{task_id}] Error processing register {register.get('name')}: {e}"
+                                    )
                             
                         except Exception as e:
                             logger.error(
-                                f"[{task_id}] Error reading register {register.get('name')}: {e}"
+                                f"[{task_id}] Error reading group '{group_name}': {e}"
                             )
                             register_modbus_error(object_id)
+                    
+                    # Для modbus_tcp (Victron) читаем регистры по отдельности
+                    else:
+                        for register in group.get("registers", []):
+                            try:
+                                # Чтение регистра
+                                address = register["address"]
+                                count = register.get("count", 1)
+                                reg_type = register.get("type", "uint16")
+                                scale = register.get("scale", 1.0)
+                                name = register["name"]
+                                unit_id = modbus_config.get("unit_id", 100)
+                                
+                                # Определяем тип регистра (holding/input)
+                                # По умолчанию используем input registers для чтения
+                                register_function = modbus_client.read_input_registers
+                                
+                                # Если в конфиге указан тип функции
+                                if "function" in register:
+                                    if register["function"] == "holding":
+                                        register_function = modbus_client.read_holding_registers
+                                
+                                # Читаем регистр
+                                result = await register_function(
+                                    address=address,
+                                    count=count,
+                                    slave=unit_id
+                                )
+                                
+                                if result.isError():
+                                    logger.error(
+                                        f"[{task_id}] Modbus error reading {name} at {address}"
+                                    )
+                                    register_modbus_error(object_id)
+                                    continue
+                                
+                                # Декодируем значение в зависимости от типа
+                                raw_value = result.registers[0] if len(result.registers) > 0 else 0
+                                
+                                if reg_type == "int16":
+                                    value = decode_signed_16(raw_value)
+                                elif reg_type == "uint16":
+                                    value = raw_value
+                                elif reg_type == "int32" and len(result.registers) >= 2:
+                                    value = decode_signed_32(result.registers[0], result.registers[1])
+                                elif reg_type == "uint32" and len(result.registers) >= 2:
+                                    value = (result.registers[0] << 16) | result.registers[1]
+                                else:
+                                    value = raw_value
+                                
+                                # Применяем масштабирование
+                                scaled_value = value * scale
+                                
+                                collected_data[name] = scaled_value
+                                
+                                logger.debug(
+                                    f"[{task_id}] Read {name}={scaled_value} "
+                                    f"(raw={raw_value}, scale={scale})"
+                                )
+                                
+                            except Exception as e:
+                                logger.error(
+                                    f"[{task_id}] Error reading register {register.get('name')}: {e}"
+                                )
+                                register_modbus_error(object_id)
                 
                 if collected_data:
                     # Регистрируем успешное чтение

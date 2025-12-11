@@ -7,76 +7,6 @@
    background: #EFECF8;
 }
 
-.sidebar {
-   position: fixed;
-   /* Заставляем сайдбар всегда быть фиксированным */
-   top: 0;
-   left: 0;
-   height: 100vh;
-   /* Занимать всю высоту экрана */
-   width: 72px;
-   /* Ширина — как у тебя задано */
-
-   background: #fff;
-   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
-
-   display: flex;
-   flex-direction: column;
-   align-items: center;
-   gap: 40px;
-   padding-top: 24px;
-
-   z-index: 1000;
-   /* чтобы быть поверх контента если надо */
-}
-
-.nav {
-   display: flex;
-   flex-direction: column;
-   gap: 32px;
-   flex: 1 1 auto
-}
-
-.nav-item {
-   display: flex;
-   flex-direction: column;
-   align-items: center;
-   gap: 6px
-}
-
-.nav-btn {
-   all: unset;
-   cursor: pointer;
-   width: 48px;
-   height: 48px;
-   border-radius: 50%;
-   background: #7a3cff;
-   display: grid;
-   place-items: center;
-   transition: background .2s
-}
-
-.nav-btn:hover {
-   background: #6934e8
-}
-
-.nav-btn svg {
-   width: 22px;
-   height: 22px;
-   stroke: #fff;
-   stroke-width: 2;
-   fill: none
-}
-
-.nav-label {
-   font-size: 11px;
-   color: #5B4296;
-   text-align: center;
-   width: 72px;
-   line-height: 1.2;
-   font-weight: 500
-}
-
 .profile-wrapper {
    margin-bottom: 24px;
    display: flex;
@@ -100,35 +30,6 @@
    gap: 24px;
    overflow: visible;
 }
-
-.actions {
-   background: #F7F7FA;
-   border-radius: 20px;
-   padding: 16px 20px;
-   display: flex;
-   align-items: center;
-   gap: 16px;
-}
-
-
-/* Инпут на всю ширину контейнера */
-.actions .search input {
-   width: 100%;
-   height: 52px;
-   padding: 0 52px;
-   border: none;
-   border-radius: 14px;
-   background: #ffffff;
-   font-size: 16px;
-}
-
-
-/* Убираю внешние отступы у кнопок */
-.actions .btn-square,
-.actions .add-button {
-   margin: 0;
-}
-
 
 .search {
    flex: 1;
@@ -158,128 +59,9 @@
    height: 20px
 }
 
-.btn-primary {
-   display: inline-flex;
-   align-items: center;
-   gap: 12px;
-   height: 52px;
-   padding: 0 30px 0 18px;
-   background: #7a3cff;
-   border: none;
-   border-radius: 20px;
-   color: #fff;
-   font-size: 15px;
-   cursor: pointer;
-   transition: background .2s
-}
-
-.btn-primary:hover {
-   background: #6934e8
-}
-
-
 .icon-circle span {
    display: block;
    transform: translateY(-1px)
-}
-
-.filters-bar {
-   background: #F7F7FA;
-   ;
-   border: 1px solid white;
-   border-radius: 20px;
-   padding: 16px 20px;
-   display: flex;
-   align-items: center;
-   min-height: 52px
-}
-
-.filters-bar .filter {
-   background: #ffffff;
-   padding: 12px 18px;
-   display: inline-flex;
-   min-height: 35px;
-   align-items: center;
-   gap: 8px;
-   margin-right: 16px;
-   margin-left: 0;
-   cursor: pointer;
-   font-size: 18px;
-   color: #5B4296;
-   border-radius: 40px;
-}
-
-.filter,
-.sort {
-   display: inline-flex;
-   align-items: center;
-   gap: 8px;
-   cursor: pointer;
-   font-size: 18px;
-   color: #5B4296;
-   margin-left: auto;
-   background: transparent;
-   padding: 0;
-}
-
-#sortLabel {
-   background: rgba(255, 255, 255, 0.60);
-   border: 1px solid #FFF;
-   padding: 12px 18px;
-   min-height: 35px;
-   font-size: 18px;
-   border-radius: 52px;
-   color: #5B4296;
-   display: flex;
-   align-items: center;
-   gap: 10px;
-}
-
-/* у меня сортировка не уезжало вправо , поэтому сделал через второго ребенка */
-.filters-bar>div:last-child {
-   margin-left: auto;
-}
-
-
-.filter svg,
-.sort svg {
-   width: 24px;
-   height: 24px;
-}
-
-.dropdown {
-   padding: 16px;
-   padding-right: 10px;
-   position: absolute;
-   bottom: -300px;
-   right: 0;
-   background: #ffffff;
-   border: 1px solid #e4e6f0;
-   border-radius: 14px;
-   box-shadow: 0 4px 12px rgba(0, 0, 0, .06);
-   max-width: 280px;
-   max-height: 280px;
-   overflow-y: auto;
-   overflow-x: hidden;
-   display: none;
-   flex-direction: column;
-   z-index: 10
-}
-
-.dropdown.visible {
-   display: flex
-}
-
-.dropdown button {
-   all: unset;
-   padding: 8px 12px 6px 12px;
-   cursor: pointer;
-   font-size: 16px;
-}
-
-.dropdown button:hover {
-   background: #EFECF8;
-   border-radius: 12px;
 }
 
 .companies_card {
@@ -292,6 +74,7 @@
    flex-direction: column;
    flex: 1;
    overflow: hidden;
+   position: relative;
 }
 
 
@@ -300,10 +83,18 @@
    overflow: auto;
 }
 
-.companies_card table tbody td:nth-child(2) {
-   background: transparent !important;
+.companies_card::before {
+   content: "";
+   position: absolute;
+   top: 0;
+   right: 0;
+   width: 24px;
+   height: 60px;
+   background: #fff;
+   border-top-right-radius: 24px;
+   z-index: 2;
+   pointer-events: none;
 }
-
 
 .table-wrapper table {
    width: 100%;
@@ -314,16 +105,15 @@
    color: #291161;
 }
 
-.table-wrapper table tbody tr td:nth-child(1) {
-   font-weight: 800;
-}
-
 .table-wrapper table thead {
    position: sticky;
    top: 0;
 }
 
 .table-wrapper thead th {
+   min-height: 60px;
+   height: 60px !important;
+   max-height: 60px;
    background: rgba(255, 255, 255);
    text-align: left;
    align-content: center;
@@ -335,6 +125,7 @@
 tbody tr {
    border-bottom: 1px solid #e4e6f0;
    cursor: pointer;
+   height: 70;
 }
 
 tbody tr:hover {
@@ -356,29 +147,6 @@ tbody td {
    margin-right: 12px
 }
 
-.status {
-   display: inline-flex;
-   align-items: center;
-   gap: 6px
-}
-
-.status-dot {
-   width: 8px;
-   height: 8px;
-   border-radius: 50%;
-   background: #51d07c
-}
-
-.ellipsis {
-   cursor: pointer;
-}
-
-.ellipsis img {
-   width: 3.75px;
-   height: 16.25px;
-   display: block;
-}
-
 .footer {
    padding: 12px 16px;
    font-size: 18px;
@@ -388,131 +156,15 @@ tbody td {
    margin-top: auto;
 }
 
-
-
-#Add_Patient {
-   position: absolute;
-   bottom: 30px;
-   left: 50%;
-   transform: translateX(-50%);
-   background-color: #7527B2;
-   color: white;
-   padding: 20px 26px;
-   border-radius: 20px;
-   border: none;
-   cursor: pointer;
-   font-size: 18px;
-   line-height: 24px;
-}
-
-#Add_Patient:active {
-   transform: translateX(-50%) translateY(2px);
-}
-
-#corIdInput {
-   text-align: center;
-   /* Центрирование текста */
-   width: 100%;
-   /* Чтобы поле занимало всю доступную ширину */
-   height: 56px;
-}
-
 /* Закргулить верхние края таблицы */
 .companies_card table {
    border-collapse: separate;
    border-radius: 24px 24px 0 0;
 }
 
-table th:nth-child(2),
-table td:nth-child(2),
-table th:nth-child(3),
-table td:nth-child(3),
-table th:nth-child(4),
-table td:nth-child(4),
-table th:nth-child(5),
-table td:nth-child(5),
-table th:nth-child(6),
-table td:nth-child(6),
-table th:nth-child(7),
-table td:nth-child(7) {
-   width: 220.6px;
+table th,
+table td {
    width: fit-content;
-}
-
-/* Иконки */
-.filter .icon,
-.sort .icon {
-   width: 24px;
-   height: 24px;
-   vertical-align: middle;
-}
-
-.filter,
-.sort,
-#sortLabel {
-   font-size: 18px;
-}
-
-/* Квадратная кнопка*/
-.btn-square {
-   width: 52px;
-   height: 52px;
-   background-color: #FFFFFF !important;
-   border: none;
-   border-radius: 20px;
-   display: inline-flex;
-   align-items: center;
-   justify-content: center;
-   cursor: pointer;
-   transition: background-color 0.3s, transform 0.2s;
-}
-
-.btn-square img {
-   width: 24px;
-   height: 24px;
-}
-
-.btn-square:hover {
-   background: #6934e8;
-}
-
-/* Фиолетовая кнопка «Добавить пациента» */
-.add-button {
-   padding: 10px;
-   border: 1px solid #7527B2;
-   margin: 10px 0;
-   background-color: #7527B2;
-   color: white;
-   cursor: pointer;
-   border-radius: 16px;
-   width: 100%;
-   max-width: 240px;
-   height: 50px;
-   display: flex;
-   align-items: center;
-   justify-content: center;
-   gap: 10px;
-   font-size: 18px;
-   transition: background-color 0.3s, transform 0.2s;
-   text-decoration: none;
-}
-
-#addPatientModal {
-   display: none;
-   flex-direction: column;
-   justify-content: start;
-   align-items: center;
-   min-width: 660px !important;
-   height: 90% !important;
-   width: fit-content !important;
-   padding: 16px 16px 124px 16px !important;
-}
-
-#addPatientModal.active {
-   display: flex !important;
-   top: 50% !important;
-   left: 50% !important;
-   transform: translate(-50%, -50%) !important;
 }
 
 .close:hover svg {
@@ -521,58 +173,13 @@ table td:nth-child(7) {
    outline: none;
 }
 
-.padding-buttons-wrapper {
-   padding: 0 14px;
-   margin: 0;
-   width: 100%;
-}
-
-.modal-backdrop {
-   position: fixed;
-   inset: 0;
-   background: rgba(54, 41, 84, 0.5);
-   z-index: 8900;
-   opacity: 0;
-   backdrop-filter: blur(3px);
-   -webkit-backdrop-filter: blur(3px);
-   pointer-events: none;
-   transition: opacity 0.2s ease;
-}
-
-#addPatientModal.active+.modal-backdrop {
-   opacity: 1;
-   pointer-events: auto;
-}
-
-.dropdown::-webkit-scrollbar {
-   width: 6px;
-}
-
-.dropdown::-webkit-scrollbar-track {
-   border-radius: 3px;
-   margin: 16px;
-}
-
-.dropdown::-webkit-scrollbar-thumb {
-   background: #B1A1DA;
-   border-radius: 3px;
-}
-
 .table-wrapper::-webkit-scrollbar-track {
    margin-top: 60px;
 }
 
-/* браузер автоматично підставляє іконку календаря, тож стилізувала її */
-input[type="date"]::-webkit-calendar-picker-indicator {
-   filter: invert(74%) sepia(14%) saturate(816%) hue-rotate(215deg) brightness(94%) contrast(88%);
-   width: 24px;
-   height: 24px;
-   cursor: pointer;
-}
-
 .status {
    width: 100%;
-   display: flex;
+   display: inline-flex;
    align-items: center;
    justify-content: space-between;
 }
@@ -589,10 +196,25 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 }
 
 .status-dot {
-   width: 10px;
-   height: 10px;
-   border-radius: 50%;
-   flex-shrink: 0;
+   width: 10px !important;
+   height: 10px !important;
+   border-radius: 50% !important;
+   flex-shrink: 0 !important;
+}
+
+.status-menu-btn {
+   border: none;
+   background: transparent;
+   padding: 0;
+   margin-left: 8px;   /* як у макеті */
+   cursor: pointer;
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+}
+
+.status-menu-btn svg {
+   display: block;
 }
 
 .action {
@@ -605,38 +227,6 @@ td{
    border-right: 1px solid;
 } */
 
-table th:nth-child(1),
-table td:nth-child(1) {
-   min-width: 140px;
-}
-
-table th:nth-child(2),
-table td:nth-child(2),
-table th:nth-child(3),
-table td:nth-child(3) {
-   min-width: 350px;
-}
-
-table th:nth-child(4),
-table td:nth-child(4) {
-   min-width: 200px;
-}
-
-table th:nth-child(5),
-table td:nth-child(5) {
-   min-width: 250px;
-}
-
-table th:nth-child(7),
-table td:nth-child(7) {
-   min-width: 100px;
-}
-
-table th:nth-child(8),
-table td:nth-child(8) {
-   min-width: 280px;
-   width: 280px;
-}
 
 #sortIcon {
    font-size: 18px;
@@ -647,13 +237,316 @@ table td:nth-child(8) {
    gap: 10px;
 }
 
-#header-hole {
-   width: 24px;
-   height: 60px;
-   background: #fff;
+.actions-menu {
+   display: none;
+   width: fit-content;
+   padding: 8px;
+   border-radius: 8px;
+   background: #FEFCFB;
+   box-shadow: 0 4px 12px rgba(0, 0, 0, .06);
    position: absolute;
-   top: 160px;
-   right: 30px;
-   border-top-right-radius: 24px;
-   z-index: 1;
+   top: 300px;
+   right: 64px;
+   z-index: 9001;
+}
+
+.actions-menu.visible {
+   display: block;
+}
+
+.actions-button {
+   padding: 8px;
+   padding-bottom: 6px;
+   border-radius: 8px;
+   color: #5B4296;
+}
+
+.actions-button button {
+   display: flex;
+   flex-direction: row;
+   gap: 6px;
+   align-items: center;
+   border: none;
+   background: none;
+   padding: 0;
+   margin: 0;
+   color: #5B4296;
+   font-size: 14px;
+   line-height: 18px;
+   font-weight: 400;
+}
+
+#delete_company {
+   color: #DF1125;
+}
+
+.actions-button:hover {
+   background: #EFECF8;
+   cursor: pointer;
+}
+
+#blockModal,
+#deleteModal {
+   width: 660px;
+   height: 378px;
+   gap: 28px;
+   padding: 40px 30px;
+   display: none;
+}
+
+.exclamation-mark {
+   width: 80px;
+   height: 80px;
+   border-radius: 50%;
+   background: #fff;
+   display: flex;
+   flex-shrink: 0;
+   align-items: center;
+   justify-content: center;
+   position: relative;
+}
+
+.excl {
+   position: absolute;
+   top: 33.25px;
+   left: 38.4px;
+}
+
+.text-modal-container {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   justify-content: center;
+   gap: 20px;
+   color: #584296;
+   text-align: center;
+}
+
+.header-modal {
+   font-size: 24px;
+   line-height: 30px;
+   font-weight: 600;
+   text-align: center;
+}
+
+.text-modal {
+   font-size: 18px;
+   line-height: 24px;
+   font-weight: 400;
+}
+
+.buttons-modal {
+   width: fit-content;
+   min-width: 600px;
+   height: 64px;
+   display: flex;
+   justify-content: space-between;
+   gap: 12px;
+}
+
+.buttons-modal button {
+   width: 294px;
+   padding: 20px 26px;
+   border: 1px solid #7527B2;
+   border-radius: 20px;
+   font-size: 18px;
+   line-height: 24px;
+   cursor: pointer;
+}
+
+.blockBtn.enable,
+.deleteBtn.enable,
+.submitBtn.enable,
+.applyBtn.enable {
+   color: #fff;
+   background: #7527B2;
+   font-weight: 600;
+   pointer-events: all;
+}
+
+.cancelBtn,
+.resetLimitBtn.enable {
+   color: #7527B2;
+   background: #fff;
+   font-weight: 500;
+   pointer-events: all;
+}
+
+#limitModal {
+   width: 660px;
+   height: fit-content;
+   max-height: 90%;
+   padding: 16px 16px 40px 16px;
+   gap: 28px;
+   display: none;
+}
+
+.limit-container {
+   width: 600px;
+   display: flex;
+   flex-direction: row;
+   justify-content: space-between;
+   gap: 16px;
+   align-items: center;
+}
+
+.company_name_label,
+.company_name {
+   flex: 1;
+   font-size: 16px;
+   line-height: 20px;
+   text-align: left;
+}
+
+.company_name {
+   text-align: right;
+}
+
+#limitModal label {
+   margin-bottom: 4px;
+   color: #B1A1DA;
+   font-size: 16px;
+   line-height: 20px;
+   font-weight: 400;
+}
+
+.form-limit-modal {
+   display: flex;
+   flex-direction: column;
+}
+
+.time-grid {
+   min-width: 600px;
+   display: grid;
+   grid-template-columns: 1fr 1fr;
+   gap: 16px;
+}
+
+.time-grid .storage-option {
+   padding: 16px;
+   width: 100%;
+   min-height: 56px;
+}
+
+input.currency {
+   min-width: 600px;
+   min-height: 56px;
+   padding: 16px;
+   background: rgba(255, 255, 255, 0.60);
+   border: 1px solid #fff;
+   border-radius: 20px;
+   outline: none !important;
+   font-size: 18px;
+   line-height: 24px;
+   font-weight: 400;
+}
+
+::placeholder {
+   color: #B1A1DA;
+   opacity: 1;
+}
+
+/* Для браузерів, що послуговуються `:-ms-input-placeholder` */
+:-ms-input-placeholder {
+   color: #B1A1DA;
+}
+
+.applyBtn, .resetLimitBtn {
+   border-color: #D2CAE8 !important;
+   pointer-events: none;
+}
+
+.resetLimitBtn {
+   color: #D2CAE8;
+   background: rgba(255, 255, 255, 0.6);
+   font-weight: 500;
+}
+
+.applyBtn {
+   color: #fff;
+   background: #D2CAE8;
+   font-weight: 600;
+}
+
+#infoModal {
+   min-width: 660px;
+   height: 671px;
+   max-height: fit-content;
+   padding: 16px 16px 40px 16px;
+   gap: 28px;
+   display: none;
+}
+
+#infoModal h1 {
+   font-size: 24px;
+   line-height: 30px;
+}
+
+.info-container {
+   min-width: 600px;
+   height: fit-content;
+   padding: 20px;
+   border: 1px solid #fff;
+   border-radius: 20px;
+   background: rgba(255, 255, 255, 0.40);
+}
+
+.info-field {
+   row-gap: 4px;
+   padding: 12px 0;
+   font-size: 16px;
+   line-height: 20px;
+   font-weight: 400;
+   position: relative;
+}
+
+.info-field:not(:first-child)::before {
+   content: "";
+   position: absolute;
+   top: 0;
+   left: 0;
+   right: 0;
+   width: 100%;
+   height: 1px;
+   background: radial-gradient(circle, rgba(171, 119, 235, 0.5), rgba(171, 119, 235, 0));
+}
+
+.info-field:first-child {
+   padding-top: 0;
+}
+
+.info-field:last-child {
+   padding-bottom: 0;
+}
+
+.info-field div:first-child {
+   color: #B1A1DA;
+}
+
+.info-field div:last-child {
+   color: #5B4296;
+}
+
+.modal-backdrop {
+   position: fixed;
+   inset: 0;
+   background: rgba(54, 41, 84, 0.5);
+   z-index: 8900;
+   opacity: 0;
+   pointer-events: none;
+   transition: opacity 0.2s ease;
+}
+
+.modal.active+.modal-backdrop {
+   opacity: 1;
+   pointer-events: auto;
+}
+
+#blockModal.active,
+#deleteModal.active,
+#limitModal.active,
+#infoModal.active {
+   display: flex;
+   z-index: 100500;
+   transform: translate(-50%, -50%) !important;
 }

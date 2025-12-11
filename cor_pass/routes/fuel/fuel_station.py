@@ -4,7 +4,7 @@ API маршруты для работы с топливной системой 
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,8 +30,12 @@ from cor_pass.schemas import (
     FuelOfflineTOTPSecretResponse,
     FinancePartnerLoginResponse,
     CreateAccountMemberRequest,
+    AddEmployeeByEmailRequest,
     AccountMemberResponse,
     MyCorporateStatusResponse,
+    CorporateEmployeeInvitationResponse,
+    CompanyMembersUnifiedResponse,
+    FinanceAccountMemberResponse,
 )
 from cor_pass.repository.fuel import fuel_station
 
@@ -433,9 +437,10 @@ async def partner_finance_login(
 @router.post(
     "/partner/account-member",
     response_model=AccountMemberResponse,
-    summary="Добавить пользователя в компанию",
+    summary="Добавить пользователя в компанию по COR-ID",
     description="""
     Добавляет пользователя в компанию в финансовом бэкенде.
+    Требует COR-ID (пользователь должен существовать в системе).
     """
 )
 async def create_account_member(
@@ -444,7 +449,7 @@ async def create_account_member(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Добавление пользователя в компанию в finance backend
+    Добавление пользователя в компанию в finance backend по COR-ID
     """
     return await fuel_station.create_account_member_in_finance(
         db=db,
@@ -455,6 +460,133 @@ async def create_account_member(
         company_id=request.company_id,
         limit_amount=request.limit_amount,
         limit_period=request.limit_period
+    )
+
+
+@router.post(
+    "/partner/add-employee",
+    response_model=dict,
+    summary="Добавить сотрудника в компанию (по email с приглашением)",
+    description="""
+    Добавляет сотрудника в компанию по COR-ID или email.
+    
+    1. **identifier = cor_id** — пользователь уже есть, добавляется сразу
+    2. **identifier = email (пользователь найден)** — находится по email, добавляется
+    3. **identifier = email (пользователь не найден)** — создаётся приглашение и отправляется письмо
+    
+    При регистрации нового пользователя с email из приглашения он автоматически
+    добавляется в компанию.
+    """
+)
+async def add_employee_to_company(
+    request: AddEmployeeByEmailRequest,
+    user: User = Depends(user_access),
+    db: AsyncSession = Depends(get_db),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+):
+    """
+    Добавление сотрудника в компанию с поддержкой приглашений
+    """
+    return await fuel_station.add_employee_by_email(
+        db=db,
+        identifier=request.identifier,
+        first_name=request.first_name,
+        last_name=request.last_name,
+        phone_number=request.phone_number,
+        company_id=request.company_id,
+        account_id=request.account_id,
+        limit_amount=request.limit_amount,
+        limit_period=request.limit_period,
+        invited_by_user_id=user.id,
+        background_tasks=background_tasks,
+    )
+
+
+@router.get(
+    "/partner/company-invitations",
+    response_model=list[CorporateEmployeeInvitationResponse],
+    summary="Список приглашений компании",
+    description="Возвращает все неподтверждённые приглашения по company_id",
+)
+async def list_company_invitations(
+    company_id: int,
+    user: User = Depends(user_access),
+    db: AsyncSession = Depends(get_db),
+):
+    return await fuel_station.get_company_invitations(db=db, company_id=company_id)
+
+
+@router.delete(
+    "/partner/company-invitations/{invitation_id}",
+    response_model=dict,
+    summary="Удалить приглашение компании",
+    description="Удаляет неподтверждённое приглашение по ID",
+)
+async def delete_company_invitation(
+    invitation_id: str,
+    user: User = Depends(user_access),
+    db: AsyncSession = Depends(get_db),
+):
+    return await fuel_station.delete_company_invitation(db=db, invitation_id=invitation_id)
+
+
+@router.get(
+    "/partner/company-members",
+    response_model=CompanyMembersUnifiedResponse,
+    summary="Объединённый список сотрудников и приглашений",
+    description="""
+    Возвращает два списка в одном ответе:
+    
+    1. **existing_members** - Сотрудники из финансового бэкенда (уже добавлены и подтверждены)
+    2. **pending_invitations** - Ожидающие приглашения (ещё не зарегистрировались)
+    
+    Требует передачи:
+    - **company_id** - ID компании
+    """,
+)
+async def get_company_members_unified(
+    company_id: int,
+    user: User = Depends(user_access),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Получение объединённого списка сотрудников и приглашений компании
+    """
+    # Получаем существующих сотрудников из финансового бэкенда
+    existing_members = await fuel_station.get_account_members_from_finance(
+        finance_id=company_id,
+        db=db
+    )
+    
+    pending_invitations_raw = await fuel_station.get_company_invitations(
+        db=db,
+        company_id=company_id
+    )
+
+    pending_invitations = []
+    if pending_invitations_raw:
+        for invitation in pending_invitations_raw:
+            pending_invitations.append(
+                CorporateEmployeeInvitationResponse(
+                    id=invitation.id,
+                    email=invitation.email,
+                    first_name=invitation.first_name,
+                    last_name=invitation.last_name,
+                    phone_number=invitation.phone_number,
+                    company_id=invitation.company_id,
+                    account_id=invitation.account_id,
+                    limit_amount=invitation.limit_amount,
+                    limit_period=invitation.limit_period,
+                    invited_by=invitation.invited_by,
+                    is_used=invitation.is_used,
+                    created_at=invitation.created_at,
+                    used_at=invitation.used_at,
+                )
+            )
+    
+    return CompanyMembersUnifiedResponse(
+        existing_members=existing_members or [],
+        pending_invitations=pending_invitations
     )
 
 

@@ -13,9 +13,11 @@ from cor_pass.schemas import (
     MedicineIntakeResponse,
     PaginatedMedicineIntakeResponse,
     GroupedMedicineIntakesResponse,
+    FirstAidKitRead,
 )
 from cor_pass.services.shared.access import user_access
 from cor_pass.repository.medicine.medicine import get_user_schedule_by_id
+from cor_pass.repository.medicine.first_aid_kit import get_user_first_aid_kits
 
 router = APIRouter(prefix="/medicine-intakes", tags=["Medicine Intakes"])
 
@@ -53,10 +55,20 @@ router = APIRouter(prefix="/medicine-intakes", tags=["Medicine Intakes"])
 async def create_symptomatic_intake(
     schedule_id: str,
     notes: Optional[str] = None,
+    first_aid_kit_id: Optional[str] = None,
+    taken_quantity: Optional[int] = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(auth_service.get_current_user)
 ):
-    """Регистрация симптоматического приема лекарства"""
+    """
+    Регистрация симптоматического приема лекарства.
+    
+    Параметры:
+    - schedule_id: ID расписания
+    - notes: Комментарий к приёму (опционально)
+    - first_aid_kit_id: ID аптечки для списания (опционально, по умолчанию - основная)
+    - taken_quantity: Количество принятых таблеток/доз (опционально)
+    """
     schedule = await get_user_schedule_by_id(db=db, schedule_id=schedule_id)
     if not schedule or schedule.user_cor_id != current_user.cor_id:
         raise HTTPException(status_code=404, detail="Расписание не найдено")
@@ -66,7 +78,10 @@ async def create_symptomatic_intake(
             db=db,
             schedule=schedule,
             actual_datetime=datetime.now(),
-            notes=notes
+            notes=notes,
+            first_aid_kit_id=first_aid_kit_id,
+            taken_quantity=taken_quantity,
+            user=current_user
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -93,6 +108,25 @@ async def update_intake(
         raise HTTPException(status_code=403, detail="Нет доступа к обновлению этой записи")
 
     return await repository.update_medicine_intake(db=db, intake_id=intake_id, intake_data=intake_data)
+
+
+@router.get(
+    "/available-kits",
+    response_model=List[FirstAidKitRead],
+    dependencies=[Depends(user_access)],
+    summary="Получить список доступных аптечек для списания"
+)
+async def get_available_first_aid_kits(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user)
+):
+    """
+    Возвращает список всех аптечек пользователя.
+    Основная аптечка отмечена флагом is_primary=True.
+    Используется при регистрации приёма лекарства для выбора аптечки.
+    """
+    kits = await get_user_first_aid_kits(db=db, user=current_user)
+    return kits
 
 
 @router.get(

@@ -338,7 +338,7 @@ class FinanceBackendService:
                     json=request_data,
                     headers={
                         "Content-Type": "application/json",
-                        "token": auth_data["totp_code"]  # TOTP в header
+                        # "token": auth_data["totp_code"]  # TOTP в header
                     }
                 )
                 
@@ -432,7 +432,7 @@ class FinanceBackendService:
                     json=request_data,
                     headers={
                         "Content-Type": "application/json",
-                        "token": auth_data["totp_code"]  # TOTP в header
+                        # "token": auth_data["totp_code"]  # TOTP в header
                     }
                 )
                 
@@ -539,10 +539,10 @@ class FinanceBackendService:
         first_name: str,
         last_name: str,
         cor_id: str,
-        account_id: int,
+        account_id: Optional[int],
         company_id: int,
-        limit_amount: float,
-        limit_period: str
+        limit_amount: Optional[float],
+        limit_period: Optional[str]
     ) -> Optional[Dict[str, Any]]:
         """
         Создаёт участника компании в финансовом бэкенде.
@@ -578,16 +578,19 @@ class FinanceBackendService:
             #     return None
             # totp_code = auth_data["totp_code"]
             
-            # Формируем payload
+            # Формируем payload (с дефолтными значениями для limit_amount и limit_period)
             payload = {
                 "first_name": first_name,
                 "last_name": last_name,
                 "cor_id": cor_id,
-                "account_id": account_id,
                 "company_id": company_id,
-                "limit_amount": limit_amount,
-                "limit_period": limit_period
+                "limit_amount": limit_amount if limit_amount is not None else 0,
+                "limit_period": limit_period if limit_period is not None else "day",
             }
+            
+            # Добавляем account_id только если он не None
+            if account_id is not None:
+                payload["account_id"] = account_id
             
             # Отправляем запрос
             async with httpx.AsyncClient(timeout=self.timeout) as client:

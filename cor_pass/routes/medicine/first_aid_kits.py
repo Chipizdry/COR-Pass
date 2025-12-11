@@ -26,6 +26,7 @@ from cor_pass.repository.medicine.first_aid_kit import (
     add_item_to_first_aid_kit,
     get_items_by_kit,
     update_item_in_first_aid_kit,
+    calculate_taken_quantity,
 )
 from cor_pass.services.user.auth import auth_service
 from cor_pass.services.shared.access import user_access
@@ -150,7 +151,21 @@ async def add_item(
     # Обязательно подгружаем связанные данные (иначе medicine будет None)
     await db.refresh(new_item, ["medicine", "first_aid_kit"])
 
-    return new_item
+    # Подсчитываем принятое количество (для нового элемента будет 0)
+    taken = await calculate_taken_quantity(db=db, kit_id=kit_id, medicine_id=new_item.medicine_id)
+    remaining = max(0, new_item.quantity - taken)
+    
+    # Формируем ответ вручную (только название лекарства, без деталей аптечки)
+    return FirstAidKitItemAddRead(
+        id=new_item.id,
+        medicine_id=new_item.medicine.id,
+        medicine_name=new_item.medicine.name,
+        quantity=new_item.quantity,
+        expiration_date=new_item.expiration_date,
+        created_at=new_item.created_at,
+        taken_quantity=taken,
+        remaining_quantity=remaining,
+    )
 
 @router.get(
     "/{kit_id}/medicines",
@@ -165,13 +180,34 @@ async def get_kit_items(
 ):
     """
     Возвращает список медикаментов, добавленных в аптечку пользователя.
+    Для каждого лекарства рассчитывается принятое и оставшееся количество.
     """
     kit = await get_first_aid_kit_by_id(db=db, kit_id=kit_id, user=current_user)
     if not kit:
         raise HTTPException(status_code=404, detail="Аптечка не найдена")
 
     items = await get_items_by_kit(db=db, kit_id=kit_id)
-    return items
+    
+    # Добавляем расчётные поля для каждого элемента (только название лекарства)
+    result = []
+    for item in items:
+        # Подсчитываем принятое количество из истории приёмов
+        taken = await calculate_taken_quantity(db=db, kit_id=kit_id, medicine_id=item.medicine_id)
+        remaining = max(0, item.quantity - taken)
+        
+        item_response = FirstAidKitItemAddRead(
+            id=item.id,
+            medicine_id=item.medicine.id,
+            medicine_name=item.medicine.name,
+            quantity=item.quantity,
+            expiration_date=item.expiration_date,
+            created_at=item.created_at,
+            taken_quantity=taken,
+            remaining_quantity=remaining,
+        )
+        result.append(item_response)
+    
+    return result
 
 
 @router.delete(
@@ -226,4 +262,16 @@ async def update_item_in_kit(
     await db.commit()
     await db.refresh(item, ["medicine", "first_aid_kit"])
 
-    return item
+    taken = await calculate_taken_quantity(db=db, kit_id=kit_id, medicine_id=item.medicine_id)
+    remaining = max(0, item.quantity - taken)
+
+    return FirstAidKitItemAddRead(
+        id=item.id,
+        medicine_id=item.medicine.id,
+        medicine_name=item.medicine.name,
+        quantity=item.quantity,
+        expiration_date=item.expiration_date,
+        created_at=item.created_at,
+        taken_quantity=taken,
+        remaining_quantity=remaining,
+    )

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Запрошення до програми корпоративних клієнтів COR-ENERGY</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .header h1 {
+            color: #4aaf63;
+            margin: 0;
+            font-size: 28px;
+        }
+
+        .content {
+            margin-bottom: 30px;
+        }
+
+        .content p {
+            margin: 15px 0;
+            color: #555;
+        }
+
+        .highlight {
+            font-weight: 600;
+            color: #4aaf63;
+        }
+
+        .app-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .app-button {
+            display: inline-block;
+            padding: 12px 20px;
+            background-color: #4aaf63;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .app-button:hover {
+            background-color: #1d4ed8;
+        }
+
+        .app-button.apple {
+            background-color: #000;
+        }
+
+        .app-button.apple:hover {
+            background-color: #333;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #f0f0f0;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .step {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #4aaf63;
+            border-radius: 4px;
+        }
+
+        .step-number {
+            font-weight: 700;
+            color: #4aaf63;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>COR-ENERGY</h1>
+            <p>Запрошення до програми корпоративних клієнтів COR-ENERGY</p>
+        </div>
+
+        <div class="content">
+            <p>Вітаємо, <span class="highlight">{{ first_name }} {{ last_name }}</span>!</p>
+
+            <p>Вас запросили приєднатися до компанії в системі <span class="highlight">COR-ENERGY</span>. Cor-energy -
+                інноваційний заправочний комплекс, який пропонує зручні та вигідні рішення для корпоративних клієнтів,
+                що прагнуть оптимізувати витрати на паливо та забезпечити своїх співробітників
+                сучасним паливом та сервісом.</p>
+
+            <h2 style="color: #4aaf63; margin-top: 30px;">Як почати роботу:</h2>
+
+            <div class="step">
+                <span class="step-number">1.</span>
+                Завантажте додаток COR-ENERGY на свій мобільний телефон
+            </div>
+
+            <div class="step">
+                <span class="step-number">2.</span>
+                Створіть акаунт, використовуючи цю електронну адресу: <span class="highlight">{{ email }}</span>
+            </div>
+
+            <div class="step">
+                <span class="step-number">3.</span>
+                Після реєстрації ви автоматично будете додані до компанії
+            </div>
+
+            <h3 style="color: #333; margin-top: 25px;">Завантажте додаток:</h3>
+
+            <div class="app-links">
+                <a href="{{ ios_app_store_link }}" class="app-button apple">
+                    🍎 iOS App Store
+                </a>
+                <a href="{{ android_play_store_link }}" class="app-button">
+                    🤖 Google Play
+                </a>
+            </div>
+
+            <p style="margin-top: 25px; color: #999; font-size: 14px;">
+                <strong>Важливо:</strong> Використовуйте при реєстрації email <span class="highlight">{{ email
+                    }}</span>,
+                щоб запрошення було застосовано автоматично.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>Якщо у вас є питання, зв'яжіться з адміністратором компанії.</p>
+            <p>&copy; 2025 COR-ENERGY. Всі права захищені.</p>
+        </div>
+    </div>
+</body>
+
+</html>

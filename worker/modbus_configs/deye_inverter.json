@@ -1,0 +1,658 @@
+{
+    "vendor": "Deye",
+    "model": "Hybrid Inverter",
+    "protocol": "modbus_over_tcp",
+    "description": "Modbus register map for Deye Hybrid Inverter",
+    "slave_id": 1,
+    "port": 502,
+    "register_groups": {
+        "grid_phase_voltage_power": {
+            "description": "Grid phase voltages and power (registers 598-609)",
+            "start_address": 598,
+            "count": 12,
+            "func_code": 3,
+            "registers": [
+                {
+                    "name": "phase_voltage_a",
+                    "offset": 0,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "Phase A voltage"
+                },
+                {
+                    "name": "phase_voltage_b",
+                    "offset": 1,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "Phase B voltage"
+                },
+                {
+                    "name": "phase_voltage_c",
+                    "offset": 2,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "Phase C voltage"
+                },
+                {
+                    "name": "line_voltage_ab",
+                    "offset": 3,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "Line voltage A-B"
+                },
+                {
+                    "name": "line_voltage_bc",
+                    "offset": 4,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "Line voltage B-C"
+                },
+                {
+                    "name": "line_voltage_ca",
+                    "offset": 5,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "Line voltage C-A"
+                },
+                {
+                    "name": "power_a",
+                    "offset": 6,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Phase A power"
+                },
+                {
+                    "name": "power_b",
+                    "offset": 7,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Phase B power"
+                },
+                {
+                    "name": "power_c",
+                    "offset": 8,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Phase C power"
+                },
+                {
+                    "name": "total_power",
+                    "offset": 9,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Total grid power"
+                },
+                {
+                    "name": "total_apparent_power",
+                    "offset": 10,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "VA",
+                    "description": "Total apparent power"
+                },
+                {
+                    "name": "grid_frequency",
+                    "offset": 11,
+                    "type": "uint16",
+                    "scale": 0.01,
+                    "unit": "Hz",
+                    "description": "Grid frequency"
+                }
+            ]
+        },
+        "grid_current": {
+            "description": "Grid currents and output power (registers 610-620)",
+            "start_address": 610,
+            "count": 11,
+            "func_code": 3,
+            "registers": [
+                {
+                    "name": "current_a",
+                    "offset": 0,
+                    "type": "int16",
+                    "scale": 0.01,
+                    "unit": "A",
+                    "description": "Phase A current"
+                },
+                {
+                    "name": "current_b",
+                    "offset": 1,
+                    "type": "int16",
+                    "scale": 0.01,
+                    "unit": "A",
+                    "description": "Phase B current"
+                },
+                {
+                    "name": "current_c",
+                    "offset": 2,
+                    "type": "int16",
+                    "scale": 0.01,
+                    "unit": "A",
+                    "description": "Phase C current"
+                },
+                {
+                    "name": "out_current_a",
+                    "offset": 3,
+                    "type": "int16",
+                    "scale": 0.01,
+                    "unit": "A",
+                    "description": "Output current A"
+                },
+                {
+                    "name": "out_current_b",
+                    "offset": 4,
+                    "type": "int16",
+                    "scale": 0.01,
+                    "unit": "A",
+                    "description": "Output current B"
+                },
+                {
+                    "name": "out_current_c",
+                    "offset": 5,
+                    "type": "int16",
+                    "scale": 0.01,
+                    "unit": "A",
+                    "description": "Output current C"
+                },
+                {
+                    "name": "out_power_a",
+                    "offset": 6,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Output power A"
+                },
+                {
+                    "name": "out_power_b",
+                    "offset": 7,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Output power B"
+                },
+                {
+                    "name": "out_power_c",
+                    "offset": 8,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Output power C"
+                },
+                {
+                    "name": "out_total_power",
+                    "offset": 9,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Total output power"
+                },
+                {
+                    "name": "out_total_apparent_power",
+                    "offset": 10,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "VA",
+                    "description": "Total output apparent power"
+                }
+            ]
+        },
+        "battery": {
+            "description": "Battery status (registers 586-596)",
+            "start_address": 586,
+            "count": 11,
+            "func_code": 3,
+            "registers": [
+                {
+                    "name": "battery1_temperature",
+                    "offset": 0,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "°C",
+                    "description": "Battery 1 temperature"
+                },
+                {
+                    "name": "battery1_voltage",
+                    "offset": 1,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "Battery 1 voltage"
+                },
+                {
+                    "name": "battery1_soc",
+                    "offset": 2,
+                    "type": "uint16",
+                    "scale": 1,
+                    "unit": "%",
+                    "description": "Battery 1 State of Charge"
+                },
+                {
+                    "name": "battery2_soc",
+                    "offset": 3,
+                    "type": "uint16",
+                    "scale": 1,
+                    "unit": "%",
+                    "description": "Battery 2 State of Charge"
+                },
+                {
+                    "name": "battery1_power",
+                    "offset": 4,
+                    "type": "int16",
+                    "scale": 10,
+                    "unit": "W",
+                    "description": "Battery 1 power (positive = charging, negative = discharging)"
+                },
+                {
+                    "name": "battery1_current",
+                    "offset": 5,
+                    "type": "int16",
+                    "scale": 0.01,
+                    "unit": "A",
+                    "description": "Battery 1 current (positive = charging, negative = discharging)"
+                },
+                {
+                    "name": "battery_corrected_ah",
+                    "offset": 6,
+                    "type": "uint16",
+                    "scale": 1,
+                    "unit": "Ah",
+                    "description": "Battery corrected Ah"
+                },
+                {
+                    "name": "battery2_voltage",
+                    "offset": 7,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "Battery 2 voltage"
+                },
+                {
+                    "name": "battery2_current",
+                    "offset": 8,
+                    "type": "int16",
+                    "scale": 0.01,
+                    "unit": "A",
+                    "description": "Battery 2 current"
+                },
+                {
+                    "name": "battery2_power",
+                    "offset": 9,
+                    "type": "int16",
+                    "scale": 10,
+                    "unit": "W",
+                    "description": "Battery 2 power"
+                },
+                {
+                    "name": "battery2_temperature",
+                    "offset": 10,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "°C",
+                    "description": "Battery 2 temperature"
+                }
+            ]
+        },
+        "solar": {
+            "description": "Solar PV inputs (registers 672-683)",
+            "start_address": 672,
+            "count": 12,
+            "func_code": 3,
+            "registers": [
+                {
+                    "name": "pv1_input_power",
+                    "offset": 0,
+                    "type": "uint16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "PV1 input power"
+                },
+                {
+                    "name": "pv2_input_power",
+                    "offset": 1,
+                    "type": "uint16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "PV2 input power"
+                },
+                {
+                    "name": "pv3_input_power",
+                    "offset": 2,
+                    "type": "uint16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "PV3 input power"
+                },
+                {
+                    "name": "pv4_input_power",
+                    "offset": 3,
+                    "type": "uint16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "PV4 input power"
+                },
+                {
+                    "name": "dc_voltage_1",
+                    "offset": 4,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "DC voltage 1"
+                },
+                {
+                    "name": "dc_current_1",
+                    "offset": 5,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "A",
+                    "description": "DC current 1"
+                },
+                {
+                    "name": "dc_voltage_2",
+                    "offset": 6,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "DC voltage 2"
+                },
+                {
+                    "name": "dc_current_2",
+                    "offset": 7,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "A",
+                    "description": "DC current 2"
+                },
+                {
+                    "name": "dc_voltage_3",
+                    "offset": 8,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "DC voltage 3"
+                },
+                {
+                    "name": "dc_current_3",
+                    "offset": 9,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "A",
+                    "description": "DC current 3"
+                },
+                {
+                    "name": "dc_voltage_4",
+                    "offset": 10,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "DC voltage 4"
+                },
+                {
+                    "name": "dc_current_4",
+                    "offset": 11,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "A",
+                    "description": "DC current 4"
+                }
+            ]
+        },
+        "generator": {
+            "description": "Generator status (registers 661-667)",
+            "start_address": 661,
+            "count": 7,
+            "func_code": 3,
+            "registers": [
+                {
+                    "name": "gen_phase_voltage_a",
+                    "offset": 0,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "Generator phase A voltage"
+                },
+                {
+                    "name": "gen_phase_voltage_b",
+                    "offset": 1,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "Generator phase B voltage"
+                },
+                {
+                    "name": "gen_phase_voltage_c",
+                    "offset": 2,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "Generator phase C voltage"
+                },
+                {
+                    "name": "gen_phase_power_a",
+                    "offset": 3,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Generator phase A power"
+                },
+                {
+                    "name": "gen_phase_power_b",
+                    "offset": 4,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Generator phase B power"
+                },
+                {
+                    "name": "gen_phase_power_c",
+                    "offset": 5,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Generator phase C power"
+                },
+                {
+                    "name": "gen_total_power",
+                    "offset": 6,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Generator total power"
+                }
+            ]
+        },
+        "inverter": {
+            "description": "Inverter status (registers 621-638)",
+            "start_address": 621,
+            "count": 18,
+            "func_code": 3,
+            "registers": [
+                {
+                    "name": "grid_total_apparent_power",
+                    "offset": 0,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "VA",
+                    "description": "Grid total apparent power"
+                },
+                {
+                    "name": "grid_power_factor",
+                    "offset": 1,
+                    "type": "int16",
+                    "scale": 0.001,
+                    "unit": "",
+                    "description": "Grid power factor"
+                },
+                {
+                    "name": "grid_power_a",
+                    "offset": 2,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Grid power A"
+                },
+                {
+                    "name": "grid_power_b",
+                    "offset": 3,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Grid power B"
+                },
+                {
+                    "name": "grid_power_c",
+                    "offset": 4,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Grid power C"
+                },
+                {
+                    "name": "inverter_voltage_a",
+                    "offset": 6,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "Inverter voltage A"
+                },
+                {
+                    "name": "inverter_voltage_b",
+                    "offset": 7,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "Inverter voltage B"
+                },
+                {
+                    "name": "inverter_voltage_c",
+                    "offset": 8,
+                    "type": "uint16",
+                    "scale": 0.1,
+                    "unit": "V",
+                    "description": "Inverter voltage C"
+                },
+                {
+                    "name": "inverter_current_a",
+                    "offset": 9,
+                    "type": "int16",
+                    "scale": 0.01,
+                    "unit": "A",
+                    "description": "Inverter current A"
+                },
+                {
+                    "name": "inverter_current_b",
+                    "offset": 10,
+                    "type": "int16",
+                    "scale": 0.01,
+                    "unit": "A",
+                    "description": "Inverter current B"
+                },
+                {
+                    "name": "inverter_current_c",
+                    "offset": 11,
+                    "type": "int16",
+                    "scale": 0.01,
+                    "unit": "A",
+                    "description": "Inverter current C"
+                },
+                {
+                    "name": "inverter_power_a",
+                    "offset": 12,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Inverter power A"
+                },
+                {
+                    "name": "inverter_power_b",
+                    "offset": 13,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Inverter power B"
+                },
+                {
+                    "name": "inverter_power_c",
+                    "offset": 14,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Inverter power C"
+                },
+                {
+                    "name": "inverter_total_power",
+                    "offset": 15,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "W",
+                    "description": "Inverter total power"
+                },
+                {
+                    "name": "inverter_total_apparent_power",
+                    "offset": 16,
+                    "type": "int16",
+                    "scale": 1,
+                    "unit": "VA",
+                    "description": "Inverter total apparent power"
+                },
+                {
+                    "name": "inverter_frequency",
+                    "offset": 17,
+                    "type": "uint16",
+                    "scale": 0.01,
+                    "unit": "Hz",
+                    "description": "Inverter frequency"
+                }
+            ]
+        }
+    },
+    "polling_presets": {
+        "full_monitoring": {
+            "description": "Полный мониторинг всех параметров Deye",
+            "groups": [
+                "grid_phase_voltage_power",
+                "grid_current",
+                "battery",
+                "solar",
+                "generator",
+                "inverter"
+            ],
+            "interval_seconds": 5
+        },
+        "grid_monitoring": {
+            "description": "Мониторинг сети (напряжения, мощности, токи)",
+            "groups": [
+                "grid_phase_voltage_power",
+                "grid_current"
+            ],
+            "interval_seconds": 3
+        },
+        "battery_solar": {
+            "description": "Батарея и солнечные панели",
+            "groups": [
+                "battery",
+                "solar"
+            ],
+            "interval_seconds": 5
+        },
+        "power_sources": {
+            "description": "Все источники питания (сеть, солнце, генератор, батарея)",
+            "groups": [
+                "grid_phase_voltage_power",
+                "solar",
+                "generator",
+                "battery"
+            ],
+            "interval_seconds": 5
+        }
+    }
+}
