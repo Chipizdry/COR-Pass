@@ -27,11 +27,11 @@
     <script src="/static/COR_Energy/object.js"></script>
     <script src="/static/COR_Energy/protocols/deye.js"></script>
 
-    <script src="/static/COR_Energy/power-settings.js"></script>
+   <!-- <script src="/static/COR_Energy/power-settings.js"></script>
     <script src="/static/COR_Energy/chart.js"></script>
     <script src="/static/COR_Energy/line_chart.js"></script>
     <script src="/static/COR_Energy/chart_settings.js"></script>
-    <script src="/static/COR_Energy/timetable.js"></script>
+    <script src="/static/COR_Energy/timetable.js"></script> -->
     <script src="/static/COR_ID_Js/general_fun.js"></script>
     <script src="/static/COR_Energy/xlsx.full.min.js"></script>
     <script src="/static/COR_Energy/chart.min.js"></script>
@@ -1407,6 +1407,20 @@ async function startMonitoring(host, port, slave) {
         } catch (e) {
             console.error("Ошибка чтения батареи:", e);
         }
+
+          try {
+            const PowerRead = await readPower32_V104(host, port, slave);
+            console.log("Power 32 V104:", PowerRead);
+        } catch (e) {
+            console.error("Ошибка чтения Power 32 V104:", e);
+        }
+
+          try {
+            const load = await readLoadRegisters(host, port, slave);
+            console.log("Load data:", load);
+        } catch (e) {
+            console.error("Ошибка чтения нагрузки:", e);
+        }   
         // Пауза между циклами
         await new Promise(resolve => setTimeout(resolve, INTERVAL));
     }
