@@ -66,17 +66,17 @@ if (el.tagName.toLowerCase() === "path") {
 
 // --- Обновление по логическому имени ---
 function updatePowerByName(name, value) {
-const map = {
-Battery: { line: "batteryLine", bar: "BatteryBar" },
-Generator: { line: "generatorLine", bar: "GeneratorBar" },
-Load: { line: "loadLine", bar: "PowerBar" },
-Grid: { line: "gridLine", bar: "gridBar" },
-Solar: { line: "solarLine", bar: "SunPanelBar" }
-};
-const ids = map[name];
-if (!ids) return;
-updatePowerElement(ids.line, value);
-updatePowerElement(ids.bar, value);
+    const map = {
+        Battery: { line: "batteryLine", bar: "BatteryBar" },
+        Generator: { line: "generatorLine", bar: "GeneratorBar" },
+        Load: { line: "loadLine", bar: "PowerBar" },
+        Grid: { line: "gridLine", bar: "gridBar" },
+        Solar: { line: "solarLine", bar: "SunPanelBar" }
+    };
+    const ids = map[name];
+    if (!ids) return;
+    updatePowerElement(ids.line, value);
+    updatePowerElement(ids.bar, value);
 }
 
 function updateBatteryFill(value) {
@@ -97,4 +97,56 @@ function updateBatteryFill(value) {
     fill.setAttribute("x", newX.toFixed(2));
     fill.setAttribute("width", newWidth.toFixed(2));
     fill.setAttribute("fill", getGradientColor(v));
+}
+
+function PowerToIndicator(powerW, maxPowerW) {
+    if (typeof powerW !== "number" || !isFinite(powerW)) return 0;
+
+    const percent = (powerW / maxPowerW) * 100;
+
+    // ограничиваем, но сохраняем знак
+    return Math.max(-100, Math.min(100, percent));
+}
+
+
+function formatPowerLabel(powerW, type) {
+    if (typeof powerW !== "number" || !isFinite(powerW)) {
+        return undefined; // ← textContent НЕ меняется
+    }
+
+    const absW = Math.abs(powerW);
+
+    //НЕТ ПОТОКА
+    if (absW === 0) {
+        return "Нет потока";
+    }
+
+    const formatValue = (w) => {
+        if (w < 10100) {
+            return `${Math.round(w)} Вт`;
+        }
+        return `${(w / 1000).toFixed(1)} КВт`;
+    };
+
+    switch (type) {
+        case "battery":
+            return powerW >= 0
+                ? `Разряд: ${formatValue(absW)}`
+                : `Заряд: ${formatValue(absW)}`;
+
+        case "grid":
+            return powerW >= 0
+                ? `Потребление: ${formatValue(absW)}`
+                : `Отдача: ${formatValue(absW)}`;
+
+        case "load":
+            return `Нагрузка: ${formatValue(absW)}`;
+
+        case "solar":
+        case "generator":
+            return `Генерация: ${formatValue(absW)}`;
+
+        default:
+            return formatValue(absW);
+    }
 }

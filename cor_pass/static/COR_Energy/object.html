@@ -23,18 +23,7 @@
     <link rel="stylesheet" href="/static/COR_Energy/monitoring.css">
 
     <title>COR-Energy</title>
-    <script src="/static/COR_Energy/scripts.js"></script>
-    <script src="/static/COR_Energy/object.js"></script>
-    <script src="/static/COR_Energy/protocols/deye.js"></script>
-
-   <!-- <script src="/static/COR_Energy/power-settings.js"></script>
-    <script src="/static/COR_Energy/chart.js"></script>
-    <script src="/static/COR_Energy/line_chart.js"></script>
-    <script src="/static/COR_Energy/chart_settings.js"></script>
-    <script src="/static/COR_Energy/timetable.js"></script> -->
-    <script src="/static/COR_ID_Js/general_fun.js"></script>
-    <script src="/static/COR_Energy/xlsx.full.min.js"></script>
-    <script src="/static/COR_Energy/chart.min.js"></script>
+    
 
 
 </head>
@@ -129,9 +118,7 @@
 
               <!-- Иконка генератора -->
              <div class="icon GeneratorIcon" id="GeneratorIcon">
-                <div id="generatorFlowLabel" style="text-align: center; margin-bottom:4px; font-size: 14px;color:#291161; font-weight: bold;">
-                    Мощность 
-                </div>
+                <div id="generatorFlowLabel" style="text-align: center; margin-bottom:4px; font-size: 14px;color:#291161; font-weight: bold;">Генератор</div>
                  <svg width="138" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"/>
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" stroke="#291161"/>
@@ -222,7 +209,7 @@
 
                <!-- Иконка солнечной батареи -->
                <div class="icon solar-battery-icon" id="SolarBatteryIcon">
-                <div id="solarPowerLabel" style="text-align: center; margin-bottom: 4px; font-size: 14px; color:#291161; font-weight: bold;">Мощность: 0 Вт</div>
+                <div id="solarPowerLabel" style="text-align: center; margin-bottom: 4px; font-size: 14px; color:#291161; font-weight: bold;">Панели</div>
 
                 <svg width="138" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"/>
@@ -566,15 +553,16 @@
             </path>
            
             <!--Линия батарей-->
-
-           <path  id="batteryLine" d="
-                M 250 280
-                H 40
-                A 20 20 0 0 0 25 300
-                V 360 " fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">
-                <animate attributeName="stroke-dashoffset" from="0" to="-50" dur="1s" repeatCount="indefinite"></animate>
+     
+            <path id="batteryLine" d="
+                M 25 360
+                V 300
+                A 20 20 0 0 1 40 280
+                H 250 " fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 16">
+                <animate attributeName="stroke-dashoffset"  from="0"  to="50" dur="1s" repeatCount="indefinite"/>
             </path>
-      
+
+
           </svg>
         </div>  
        
@@ -1027,9 +1015,23 @@
                 </div>
             </div>
 
+    <script src="/static/COR_Energy/scripts.js"></script>
+    <script src="/static/COR_Energy/object.js"></script>
+    <script src="/static/COR_Energy/protocols/deye.js"></script>
 
+   <!-- <script src="/static/COR_Energy/power-settings.js"></script>
+    <script src="/static/COR_Energy/chart.js"></script>
+    <script src="/static/COR_Energy/line_chart.js"></script>
+    <script src="/static/COR_Energy/chart_settings.js"></script>
+    <script src="/static/COR_Energy/timetable.js"></script> -->
+    <script src="/static/COR_ID_Js/general_fun.js"></script>
+    <script src="/static/COR_Energy/xlsx.full.min.js"></script>
+    <script src="/static/COR_Energy/chart.min.js"></script>
         <script>
 // Глобальные переменные
+ let gridData, solarData, genData, battData , InvGridOut , loadData;
+ let deyeMonitorRunning = false;
+
             let initialSocValue = 40;
             let socChangeTimeout = null;
             let isSliderChanged = false; // Флаг изменения ползунка
@@ -1364,70 +1366,6 @@ function handleObjectByProtocol(objectData) {
             break;
     }
 }
-
-
-// Пример вызова:
-async function startMonitoring(host, port, slave) {
-    const INTERVAL = 2000; // задержка между циклами (2 секунды)
-
-    while (true) {
-        console.log("---- Цикл обновления ----");
-
-        try {
-            const grid = await readDeyeRegisters(host, port, slave);
-            console.log("Grid data:", grid);
-        } catch (e) {
-            console.error("Ошибка чтения сети:", e);
-        }
-
-        try {
-            const sun = await readSunPanelRegisters(host, port, slave);
-            console.log("Sun panel data:", sun);
-        } catch (e) {
-            console.error("Ошибка чтения солнечных панелей:", e);
-        }
-
-        try {
-            const gen = await readGeneratorRegisters(host, port, slave);
-            console.log("Generator data:", gen);
-        } catch (e) {
-            console.error("Ошибка чтения генератора:", e);
-        }
-
-         try {
-            const pwr = await readInverterGridRegisters(host, port, slave);
-            console.log("Inverter Grid:", pwr);
-        } catch (e) {
-            console.error("Ошибка чтения сети:", e);
-        }
-
-         try {
-            const batt = await readBatteryRegisters(host, port, slave);
-            console.log("Inverter Battery:", batt);
-        } catch (e) {
-            console.error("Ошибка чтения батареи:", e);
-        }
-
-          try {
-            const PowerRead = await readPower32_V104(host, port, slave);
-            console.log("Power 32 V104:", PowerRead);
-        } catch (e) {
-            console.error("Ошибка чтения Power 32 V104:", e);
-        }
-
-          try {
-            const load = await readLoadRegisters(host, port, slave);
-            console.log("Load data:", load);
-        } catch (e) {
-            console.error("Ошибка чтения нагрузки:", e);
-        }   
-        // Пауза между циклами
-        await new Promise(resolve => setTimeout(resolve, INTERVAL));
-    }
-}
-
-// Запуск
-//startMonitoring("195.8.40.53", 502, 1);
 
 
     </script>

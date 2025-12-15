@@ -1,12 +1,12 @@
 
 async function startMonitoringDeye(objectData) {
     const INTERVAL = 2000; // интервал между циклами
-   
+    const INVERTER_MAX_POWER = 80000; // 80 кВт
     while (true) {
         console.log("---- Цикл обновления Deye ----");
 
         try {
-            let gridData, solarData, genData, battData , InvGridOut ;
+           
           
             const host = objectData.ip_address;
             const port = objectData.port;
@@ -23,13 +23,6 @@ async function startMonitoringDeye(objectData) {
                     InvGridOut = await readInverterGridRegisters(host, port, slave, object_id, protocol);
                     gridDataPower = await readPower32_V104(host, port, slave, object_id, protocol);
                     LoadData = await readLoadRegisters(host, port, slave, object_id, protocol);
-                /*
-                    updatePowerByName("Battery",95);
-                    updatePowerByName("Generator", 15);
-                    updatePowerByName("Grid", -65);
-                    updatePowerByName("Solar", 75);
-                    updatePowerByName("Load", 35);
-                    updateBatteryFill(55);  */
                     break;
 
                 case "COR-Bridge":
@@ -42,15 +35,6 @@ async function startMonitoringDeye(objectData) {
                 default:
                     console.warn("Неизвестный протокол Deye:", protocol);
                     return; // выход из функции
-            }
-
-            // Обновляем UI
-            if (gridData) updatePowerByName("Grid", gridData.totalPower);
-            if (solarData) updatePowerByName("Solar", solarData.PV1InputPower);
-            if (genData) updatePowerByName("Generator", genData.GenTotalPower);
-            if (battData) {
-                updatePowerByName("Battery", battData.battery1Power);
-                updateBatteryFill(battData.battery1SOC);
             }
 
         } catch (err) {
@@ -100,7 +84,7 @@ async function readGeneratorRegisters(host, port, slave_id, object_id, protocol)
         const resp = await fetch(url, { headers: { accept: "application/json" } });
         const data = await resp.json();
 
-        console.log("Raw Generator data:", data);
+       // console.log("Raw Generator data:", data);
 
         if (data.ok && data.data?.length === count) {
 
@@ -140,23 +124,21 @@ async function readGeneratorRegisters(host, port, slave_id, object_id, protocol)
 
 
 
-
 async function readBatteryRegisters(host, port, slave_id, object_id, protocol) {
     const results = {};
 
-    // Перечень регистров батареи
     const registers = [
         { start: 586, name: "battery1Temperature", scale: 0.1 },        // °C
-        { start: 587, name: "battery1Voltage", scale: 0.1 },           // V
-        { start: 588, name: "battery1SOC", scale: 1 },                  // %
-        { start: 589, name: "battery2SOC", scale: 1 },                  // %
-        { start: 590, name: "battery1Power", scale: 10, signed: true }, // W (S16)
-        { start: 591, name: "battery1Current", scale: 0.01, signed: true }, // A (S16)
-        { start: 592, name: "batteryCorrectedAh", scale: 1 },           // Ah
-        { start: 593, name: "battery2Voltage", scale: 0.1 },           // V
-        { start: 594, name: "battery2Current", scale: 0.01, signed: true }, // A (S16)
-        { start: 595, name: "battery2Power", scale: 10, signed: true },      // W
-        { start: 596, name: "battery2Temperature", scale: 0.1 }         // °C
+        { start: 587, name: "battery1Voltage", scale: 0.1 },            // V
+        { start: 588, name: "battery1SOC", scale: 1 },                   // %
+        { start: 589, name: "battery2SOC", scale: 1 },                   // %
+        { start: 590, name: "battery1Power", scale: 10, signed: true },  // W
+        { start: 591, name: "battery1Current", scale: 0.01, signed: true }, // A
+        { start: 592, name: "batteryCorrectedAh", scale: 1 },            // Ah
+        { start: 593, name: "battery2Voltage", scale: 0.1 },            // V
+        { start: 594, name: "battery2Current", scale: 0.01, signed: true }, // A
+        { start: 595, name: "battery2Power", scale: 10, signed: true },  // W
+        { start: 596, name: "battery2Temperature", scale: 0.1 }          // °C
     ];
 
     const startReg = registers[0].start;
@@ -179,14 +161,18 @@ async function readBatteryRegisters(host, port, slave_id, object_id, protocol) {
         });
 
         const data = await resp.json();
-        console.log("Raw battery data:", data);
 
         if (data.ok && data.data?.length === count) {
             registers.forEach((reg, idx) => {
                 let val = data.data[idx];
-                if (reg.signed && val > 0x7FFF) val -= 0x10000; // обработка signed S16
+                if (reg.signed && val > 0x7FFF) val -= 0x10000;
                 results[reg.name] = val * reg.scale;
             });
+
+            // 🔹 ОБЩАЯ МОЩНОСТЬ БАТАРЕЙ
+            const p1 = results.battery1Power ?? 0;
+            const p2 = results.battery2Power ?? 0;
+            results.batteryTotalPower = p1 + p2;
         }
 
     } catch (err) {
@@ -196,7 +182,6 @@ async function readBatteryRegisters(host, port, slave_id, object_id, protocol) {
     console.log("Battery parsed results:", results);
     return results;
 }
-
 
 
 async function readSunPanelRegisters(host, port, slave_id, object_id, protocol) {
@@ -219,18 +204,19 @@ async function readSunPanelRegisters(host, port, slave_id, object_id, protocol) 
     };
 
     const registers = [
-        { name: "PV1InputPower", start: 672, scale: 1 },
-        { name: "PV2InputPower", start: 673, scale: 1 },
-        { name: "PV3InputPower", start: 674, scale: 1 },
-        { name: "PV4InputPower", start: 675, scale: 1 },
-        { name: "DCVoltage1",    start: 676, scale: 0.1 },
-        { name: "DCCurrent1",    start: 677, scale: 0.1 },
-        { name: "DCVoltage2",    start: 678, scale: 0.1 },
-        { name: "DCCurrent2",    start: 679, scale: 0.1 },
-        { name: "DCVoltage3",    start: 680, scale: 0.1 },
-        { name: "DCCurrent3",    start: 681, scale: 0.1 },
-        { name: "DCVoltage4",    start: 682, scale: 0.1 },
-        { name: "DCCurrent4",    start: 683, scale: 0.1 },
+        { name: "PV1InputPower", start: 672, scale: 10 },
+        { name: "PV2InputPower", start: 673, scale: 10 },
+        { name: "PV3InputPower", start: 674, scale: 10 },
+        { name: "PV4InputPower", start: 675, scale: 10 },
+
+        { name: "DCVoltage1", start: 676, scale: 0.1 },
+        { name: "DCCurrent1", start: 677, scale: 0.1 },
+        { name: "DCVoltage2", start: 678, scale: 0.1 },
+        { name: "DCCurrent2", start: 679, scale: 0.1 },
+        { name: "DCVoltage3", start: 680, scale: 0.1 },
+        { name: "DCCurrent3", start: 681, scale: 0.1 },
+        { name: "DCVoltage4", start: 682, scale: 0.1 },
+        { name: "DCCurrent4", start: 683, scale: 0.1 },
     ];
 
     const startReg = registers[0].start;
@@ -238,13 +224,21 @@ async function readSunPanelRegisters(host, port, slave_id, object_id, protocol) 
 
     try {
         const data = await readBlock(startReg, count);
-        console.log("Сырые данные SUN Panel:", data);
 
         if (data.ok && data.data?.length === count) {
+
             registers.forEach((reg, idx) => {
                 results[reg.name] = data.data[idx] * reg.scale;
             });
+
+            /* ===== PV TOTAL POWER ===== */
+            results.PVTotalPower =
+                (results.PV1InputPower || 0) +
+                (results.PV2InputPower || 0) +
+                (results.PV3InputPower || 0) +
+                (results.PV4InputPower || 0);
         }
+
     } catch (err) {
         console.error("Ошибка чтения SunPanel регистров:", err);
     }
@@ -252,6 +246,76 @@ async function readSunPanelRegisters(host, port, slave_id, object_id, protocol) 
     console.log("Обработанные результаты SUN Panel:", results);
     return results;
 }
+
+
+
+
+
+async function readLoadRegisters(host, port, slave_id, object_id, protocol) {
+    const results = {};
+
+    const startReg = 644;
+    const count = 17; // 644–660
+
+    const url =
+        `/api/modbus_tcp/v1/read` +
+        `?protocol=${protocol}` +
+        `&host=${host}` +
+        `&port=${port}` +
+        `&slave_id=${slave_id}` +
+        `&object_id=${object_id}` +
+        `&start=${startReg}` +
+        `&count=${count}` +
+        `&func_code=3`;
+
+    try {
+        const resp = await fetch(url, { headers: { accept: "application/json" } });
+        const data = await resp.json();
+
+      //  console.log("Raw LOAD data:", data);
+
+        if (data.ok && data.data?.length === count) {
+
+            /* ---------- Voltages ---------- */
+            results.LoadPhaseVoltageA = data.data[0] * 0.1; // 644
+            results.LoadPhaseVoltageB = data.data[1] * 0.1; // 645
+            results.LoadPhaseVoltageC = data.data[2] * 0.1; // 646
+
+            /* ---------- Frequency ---------- */
+            results.LoadFrequency = data.data[11] * 0.01;  // 655
+
+            /* ---------- LOW words ---------- */
+            const pA_low = data.data[6];  // 650
+            const pB_low = data.data[7];  // 651
+            const pC_low = data.data[8];  // 652
+            const pT_low = data.data[9];  // 653
+
+            /* ---------- HIGH words ---------- */
+            const pA_high = data.data[12]; // 656
+            const pB_high = data.data[13]; // 657
+            const pC_high = data.data[14]; // 658
+            const pT_high = data.data[15]; // 659
+
+            /* ---------- S32 power calculation ---------- */
+            results.LoadPhasePowerA =
+                ((pA_high << 16) | pA_low) << 0;
+            results.LoadPhasePowerB =
+                ((pB_high << 16) | pB_low) << 0;
+            results.LoadPhasePowerC =
+                ((pC_high << 16) | pC_low) << 0;
+            results.LoadTotalPower =
+                ((pT_high << 16) | pT_low) << 0;
+        }
+
+    } catch (err) {
+        console.error("Ошибка чтения регистров нагрузки:", err);
+    }
+
+    console.log("Parsed LOAD results:", results);
+    return results;
+}
+
+
 
 
 
@@ -303,7 +367,7 @@ async function readInverterGridRegisters(host, port, slave_id, object_id, protoc
     try {
         const resp = await fetch(url, { headers: { accept: "application/json" } });
         const data = await resp.json();
-        console.log("Raw inverter grid data:", data);
+       // console.log("Raw inverter grid data:", data);
 
         if (data.ok && data.data?.length === count) {
             registers.forEach((reg, idx) => {
@@ -350,7 +414,7 @@ async function readOutGridRegisters(host, port, slave_id, object_id, protocol) {
     // --- Первый блок: 598–609 ---
     try {
         const data1 = await readBlock(598, 12);
-        console.log("Данные первого блока:", data1);
+       // console.log("Данные первого блока:", data1);
 
         if (data1.ok && data1.data?.length === 12) {
 
@@ -378,7 +442,7 @@ async function readOutGridRegisters(host, port, slave_id, object_id, protocol) {
     // --- Второй блок: 610–620 ---
     try {
         const data2 = await readBlock(610, 11);
-        console.log("Данные второго блока:", data2);
+       // console.log("Данные второго блока:", data2);
 
         if (data2.ok && data2.data?.length === 11) {
             results.currentA = data2.data[0] * 0.01;
@@ -465,7 +529,7 @@ async function readPower32_V104(host, port, slave_id, object_id, protocol) {
         const resp = await fetch(url, { headers: { accept: "application/json" } });
         const data = await resp.json();
 
-        console.log("Raw HIGH power data:", data);
+      //  console.log("Raw HIGH power data:", data);
 
         if (data.ok && data.data?.length === count) {
             registers.forEach((reg, idx) => {
@@ -484,67 +548,104 @@ async function readPower32_V104(host, port, slave_id, object_id, protocol) {
 }
 
 
+async function startMonitoringDeye(objectData) {
 
-async function readLoadRegisters(host, port, slave_id, object_id, protocol) {
-    const results = {};
-
-    const startReg = 644;
-    const count = 17; // 644–660
-
-    const url =
-        `/api/modbus_tcp/v1/read` +
-        `?protocol=${protocol}` +
-        `&host=${host}` +
-        `&port=${port}` +
-        `&slave_id=${slave_id}` +
-        `&object_id=${object_id}` +
-        `&start=${startReg}` +
-        `&count=${count}` +
-        `&func_code=3`;
-
-    try {
-        const resp = await fetch(url, { headers: { accept: "application/json" } });
-        const data = await resp.json();
-
-        console.log("Raw LOAD data:", data);
-
-        if (data.ok && data.data?.length === count) {
-
-            /* ---------- Voltages ---------- */
-            results.LoadPhaseVoltageA = data.data[0] * 0.1; // 644
-            results.LoadPhaseVoltageB = data.data[1] * 0.1; // 645
-            results.LoadPhaseVoltageC = data.data[2] * 0.1; // 646
-
-            /* ---------- Frequency ---------- */
-            results.LoadFrequency = data.data[11] * 0.01;  // 655
-
-            /* ---------- LOW words ---------- */
-            const pA_low = data.data[6];  // 650
-            const pB_low = data.data[7];  // 651
-            const pC_low = data.data[8];  // 652
-            const pT_low = data.data[9];  // 653
-
-            /* ---------- HIGH words ---------- */
-            const pA_high = data.data[12]; // 656
-            const pB_high = data.data[13]; // 657
-            const pC_high = data.data[14]; // 658
-            const pT_high = data.data[15]; // 659
-
-            /* ---------- S32 power calculation ---------- */
-            results.LoadPhasePowerA =
-                ((pA_high << 16) | pA_low) << 0;
-            results.LoadPhasePowerB =
-                ((pB_high << 16) | pB_low) << 0;
-            results.LoadPhasePowerC =
-                ((pC_high << 16) | pC_low) << 0;
-            results.LoadTotalPower =
-                ((pT_high << 16) | pT_low) << 0;
-        }
-
-    } catch (err) {
-        console.error("Ошибка чтения регистров нагрузки:", err);
+    if (deyeMonitorRunning) {
+        console.warn("Deye monitoring already running");
+        return;
     }
 
-    console.log("Parsed LOAD results:", results);
-    return results;
+    deyeMonitorRunning = true;
+
+    const INTERVAL = 2000;
+    const INVERTER_MAX_POWER = 80000;
+
+    const {
+        ip_address: host,
+        port,
+        slave_id,
+        id: object_id,
+        protocol
+    } = objectData;
+
+    const slave = slave_id || 1;
+
+    while (deyeMonitorRunning) {
+        try {
+
+            let gridData, solarData, genData, battData, loadData;
+
+            if (protocol === "modbus_over_tcp") {
+                gridData  = await readOutGridRegisters(host, port, slave, object_id, protocol);
+                solarData = await readSunPanelRegisters(host, port, slave, object_id, protocol);
+                genData   = await readGeneratorRegisters(host, port, slave, object_id, protocol);
+                battData  = await readBatteryRegisters(host, port, slave, object_id, protocol);
+                loadData  = await readLoadRegisters(host, port, slave, object_id, protocol);
+            } else {
+                console.warn("Unsupported Deye protocol:", protocol);
+                break;
+            }
+
+            /* ===== UI ===== */
+
+            if (solarData?.PV1InputPower !== undefined) {
+                updatePowerByName(
+                    "Solar",
+                    PowerToIndicator(solarData.PVTotalPower, INVERTER_MAX_POWER)
+                );
+            }
+
+            if (genData?.GenTotalPower !== undefined) {
+                updatePowerByName(
+                    "Generator",
+                    PowerToIndicator(genData.GenTotalPower, INVERTER_MAX_POWER)
+                );
+            }
+
+            if (loadData?.LoadTotalPower !== undefined) {
+                updatePowerByName(
+                    "Load",
+                    PowerToIndicator(loadData.LoadTotalPower, INVERTER_MAX_POWER)
+                );
+            }
+
+            if (battData?.batteryTotalPower !== undefined) {
+                updatePowerByName("Battery", PowerToIndicator(battData.batteryTotalPower, INVERTER_MAX_POWER));
+                updateBatteryFill(battData.battery1SOC);
+            }
+
+            if (gridData?.totalPower !== undefined) {
+                updatePowerByName(
+                    "Grid",
+                    PowerToIndicator(gridData.totalPower, INVERTER_MAX_POWER)
+                );
+            }
+
+
+            loadIndicatorLabel.textContent =
+                formatPowerLabel(loadData.LoadTotalPower, "load");
+
+            networkFlowLabel.textContent =
+                formatPowerLabel(gridData.totalPower, "grid");
+
+            batteryFlowLabel.textContent =
+                formatPowerLabel(battData.batteryTotalPower, "battery");
+
+            solarPowerLabel.textContent =
+                formatPowerLabel(solarData.PVTotalPower, "solar");
+
+            generatorFlowLabel.textContent =
+                formatPowerLabel(genData.GenTotalPower, "generator");
+
+
+        } catch (err) {
+            console.error("Ошибка мониторинга Deye:", err);
+        }
+
+        await new Promise(r => setTimeout(r, INTERVAL));
+    }
+
+    deyeMonitorRunning = false;
 }
+
+
