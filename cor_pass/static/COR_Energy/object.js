@@ -150,3 +150,33 @@ function formatPowerLabel(powerW, type) {
             return formatValue(absW);
     }
 }
+
+
+/**
+ * Показывает или скрывает элементы устройства по имени
+ * @param {string} name - имя сущности: "Grid", "Battery", "Generator", "Load", "Sun"
+ * @param {string} state - "visible" или "hidden"
+ */
+function setDeviceVisibility(name, state) {
+    if (!name || !state) return;
+
+    const show = state === "visible";
+
+    // Привязываем к реальным ID элементов
+    const idMap = {
+        Battery: ["batteryIcon", "batteryLine", "batteryFill"],
+        Generator: ["GeneratorIcon", "generatorLine"],
+        Load: ["loadIcon", "loadLine"],
+        Grid: ["power-grid-icon", "gridLine"],
+        Sun: ["SolarBatteryIcon", "solarLine"]
+        // при необходимости добавляй новые сущности сюда
+    };
+
+    const elements = idMap[name];
+    if (!elements) return;
+
+    elements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = show ? "block" : "none";
+    });
+}

@@ -318,7 +318,67 @@ async function readLoadRegisters(host, port, slave_id, object_id, protocol) {
 
 
 
+async function readServiceRegisters(host, port, slave_id, object_id, protocol) {
+    const results = {};
 
+    // Универсальная функция чтения блоков регистров
+    const readBlock = async (start, count) => {
+        const url =
+            `/api/modbus_tcp/v1/read` +
+            `?protocol=${protocol}` +
+            `&host=${host}` +
+            `&port=${port}` +
+            `&slave_id=${slave_id}` +
+            `&object_id=${object_id}` +
+            `&start=${start}` +
+            `&count=${count}` +
+            `&func_code=3`;
+
+        const resp = await fetch(url, { headers: { accept: "application/json" } });
+        return resp.json();
+    };
+
+    const startReg = 551;
+    const count = 8; // 551–558
+
+    try {
+        const data = await readBlock(startReg, count);
+
+        if (data.ok && data.data?.length === count) {
+            const regs = data.data;
+
+            // === Turn on/off status ===
+            results.powerOn = (regs[0] & 0x1) === 1; // 551, Bit0: 1 = on, 0 = off
+
+            // === AC relay status ===
+            results.invRelay = (regs[1] & 0x1) !== 0;      // 552, Bit0
+            results.loadRelay = (regs[1] & 0x2) !== 0;     // 552, Bit1
+            results.gridRelay = (regs[1] & 0x4) !== 0;     // 552, Bit2
+            results.genRelay = (regs[1] & 0x8) !== 0;      // 552, Bit3
+            results.gridGivePowerRelay = (regs[1] & 0x10) !== 0; // 552, Bit4
+            results.dryContact1 = (regs[1] & 0x80) !== 0;  // 552, Bit7
+            results.dryContact2 = (regs[1] & 0x100) !== 0; // 552, Bit8
+
+            // === Warning messages ===
+            results.fanWarning = (regs[2] & 0x2) !== 0;          // 553, Bit1
+            results.gridPhaseWrong = (regs[2] & 0x4) !== 0;      // 553, Bit2
+            results.batteryLostWarning = (regs[3] & 0x4000) !== 0; // 554, Bit14
+            results.parallelCommWarning = (regs[3] & 0x8000) !== 0; // 554, Bit15
+
+            // === Fault information ===
+            results.fault1 = regs[4]; // 555
+            results.fault2 = regs[5]; // 556
+            results.fault3 = regs[6]; // 557
+            results.fault4 = regs[7]; // 558
+        }
+
+    } catch (err) {
+        console.error("Ошибка чтения сервисных регистров:", err);
+    }
+
+    console.log("Обработанные сервисные результаты:", results);
+    return results;
+}
 
 
 
@@ -387,11 +447,9 @@ async function readInverterGridRegisters(host, port, slave_id, object_id, protoc
 
 
 
-
 async function readOutGridRegisters(host, port, slave_id, object_id, protocol) {
     const results = {};
 
-    // Универсальная функция чтения Modbus
     const readBlock = async (start, count) => {
         const url =
             `/api/modbus_tcp/v1/read` +
@@ -404,72 +462,59 @@ async function readOutGridRegisters(host, port, slave_id, object_id, protocol) {
             `&count=${count}` +
             `&func_code=3`;
 
-        const resp = await fetch(url, {
-            headers: { 'accept': 'application/json' }
-        });
-
+        const resp = await fetch(url, { headers: { accept: "application/json" } });
         return resp.json();
     };
 
-    // --- Первый блок: 598–609 ---
+    const startReg = 598;
+    const totalCount = 23; // с 598 по 620 включительно
+
     try {
-        const data1 = await readBlock(598, 12);
-       // console.log("Данные первого блока:", data1);
+        const data = await readBlock(startReg, totalCount);
 
-        if (data1.ok && data1.data?.length === 12) {
+        if (data.ok && data.data?.length === totalCount) {
 
-            results.phaseVoltageA = data1.data[0] * 0.1;
-            results.phaseVoltageB = data1.data[1] * 0.1;
-            results.phaseVoltageC = data1.data[2] * 0.1;
+            // === Первый блок ===
+            results.phaseVoltageA = data.data[0] * 0.1;
+            results.phaseVoltageB = data.data[1] * 0.1;
+            results.phaseVoltageC = data.data[2] * 0.1;
 
-            results.lineVoltageAB = data1.data[3] * 0.1;
-            results.lineVoltageBC = data1.data[4] * 0.1;
-            results.lineVoltageCA = data1.data[5] * 0.1;
+            results.lineVoltageAB = data.data[3] * 0.1;
+            results.lineVoltageBC = data.data[4] * 0.1;
+            results.lineVoltageCA = data.data[5] * 0.1;
 
-            results.powerA = data1.data[6];
-            results.powerB = data1.data[7];
-            results.powerC = data1.data[8];
+            results.powerA = data.data[6];
+            results.powerB = data.data[7];
+            results.powerC = data.data[8];
 
-            results.totalPower         = data1.data[9];
-            results.totalApparentPower = data1.data[10];
-            results.gridFrequency      = data1.data[11];
+            results.totalPower         = data.data[9];
+            results.totalApparentPower = data.data[10];
+            results.gridFrequency      = data.data[11] * 0.01;
+
+            // === Второй блок ===
+            results.currentA = data.data[12] * 0.01;
+            results.currentB = data.data[13] * 0.01;
+            results.currentC = data.data[14] * 0.01;
+
+            results.outCurrentA = data.data[15] * 0.01;
+            results.outCurrentB = data.data[16] * 0.01;
+            results.outCurrentC = data.data[17] * 0.01;
+
+            results.outPowerA = data.data[18];
+            results.outPowerB = data.data[19];
+            results.outPowerC = data.data[20];
+
+            results.outTotalPower         = data.data[21];
+            results.outTotalApparentPower = data.data[22];
         }
 
     } catch (err) {
-        console.error("Ошибка чтения первого блока регистров:", err);
+        console.error("Ошибка чтения блока регистров:", err);
     }
 
-    // --- Второй блок: 610–620 ---
-    try {
-        const data2 = await readBlock(610, 11);
-       // console.log("Данные второго блока:", data2);
-
-        if (data2.ok && data2.data?.length === 11) {
-            results.currentA = data2.data[0] * 0.01;
-            results.currentB = data2.data[1] * 0.01;
-            results.currentC = data2.data[2] * 0.01;
-
-            results.outCurrentA = data2.data[3] * 0.01;
-            results.outCurrentB = data2.data[4] * 0.01;
-            results.outCurrentC = data2.data[5] * 0.01;
-
-            results.outPowerA = data2.data[6];
-            results.outPowerB = data2.data[7];
-            results.outPowerC = data2.data[8];
-
-            results.outTotalPower         = data2.data[9];
-            results.outTotalApparentPower = data2.data[10];
-        }
-
-    } catch (err) {
-        console.error("Ошибка чтения второго блока регистров:", err);
-    }
-
-    console.log("Обработанные результаты:", results);
+    console.log("Обработанные GRID результаты:", results);
     return results;
 }
-
-
 
 
 
@@ -557,7 +602,7 @@ async function startMonitoringDeye(objectData) {
 
     deyeMonitorRunning = true;
 
-    const INTERVAL = 2000;
+    const INTERVAL = 1500;
     const INVERTER_MAX_POWER = 80000;
 
     const {
@@ -581,6 +626,7 @@ async function startMonitoringDeye(objectData) {
                 genData   = await readGeneratorRegisters(host, port, slave, object_id, protocol);
                 battData  = await readBatteryRegisters(host, port, slave, object_id, protocol);
                 loadData  = await readLoadRegisters(host, port, slave, object_id, protocol);
+                serviceData = await readServiceRegisters(host, port, slave, object_id, protocol);
             } else {
                 console.warn("Unsupported Deye protocol:", protocol);
                 break;
@@ -588,54 +634,44 @@ async function startMonitoringDeye(objectData) {
 
             /* ===== UI ===== */
 
-            if (solarData?.PV1InputPower !== undefined) {
-                updatePowerByName(
-                    "Solar",
-                    PowerToIndicator(solarData.PVTotalPower, INVERTER_MAX_POWER)
-                );
-            }
+                if (solarData?.PVTotalPower != null) {
+                    updatePowerByName( "Solar", PowerToIndicator(solarData.PVTotalPower, INVERTER_MAX_POWER) );
+                    solarPowerLabel.textContent = formatPowerLabel(solarData.PVTotalPower, "solar");
+                }
 
-            if (genData?.GenTotalPower !== undefined) {
-                updatePowerByName(
-                    "Generator",
-                    PowerToIndicator(genData.GenTotalPower, INVERTER_MAX_POWER)
-                );
-            }
+                if (genData?.GenTotalPower != null) {
+                    updatePowerByName("Generator", PowerToIndicator(genData.GenTotalPower, INVERTER_MAX_POWER));
+                    generatorFlowLabel.textContent = formatPowerLabel(genData.GenTotalPower, "generator");
+                   if (typeof serviceData?.genRelay === "boolean") {
+                    setDeviceVisibility( "Generator", serviceData.genRelay ? "visible" : "hidden");
+                    }
+                  
+                }
 
-            if (loadData?.LoadTotalPower !== undefined) {
-                updatePowerByName(
-                    "Load",
-                    PowerToIndicator(loadData.LoadTotalPower, INVERTER_MAX_POWER)
-                );
-            }
+                if (loadData?.LoadTotalPower != null) {
+                    updatePowerByName(
+                        "Load",
+                        PowerToIndicator(loadData.LoadTotalPower, INVERTER_MAX_POWER)
+                    );
+                    loadIndicatorLabel.textContent = formatPowerLabel(loadData.LoadTotalPower, "load");
+                }
 
-            if (battData?.batteryTotalPower !== undefined) {
-                updatePowerByName("Battery", PowerToIndicator(battData.batteryTotalPower, INVERTER_MAX_POWER));
-                updateBatteryFill(battData.battery1SOC);
-            }
+                if (battData?.batteryTotalPower != null) {
+                    updatePowerByName(
+                        "Battery",
+                        PowerToIndicator(battData.batteryTotalPower, INVERTER_MAX_POWER)
+                    );
+                    updateBatteryFill(battData.battery1SOC);
+                    batteryFlowLabel.textContent = formatPowerLabel(battData.batteryTotalPower, "battery");
+                }
 
-            if (gridData?.totalPower !== undefined) {
-                updatePowerByName(
-                    "Grid",
-                    PowerToIndicator(gridData.totalPower, INVERTER_MAX_POWER)
-                );
-            }
-
-
-            loadIndicatorLabel.textContent =
-                formatPowerLabel(loadData.LoadTotalPower, "load");
-
-            networkFlowLabel.textContent =
-                formatPowerLabel(gridData.totalPower, "grid");
-
-            batteryFlowLabel.textContent =
-                formatPowerLabel(battData.batteryTotalPower, "battery");
-
-            solarPowerLabel.textContent =
-                formatPowerLabel(solarData.PVTotalPower, "solar");
-
-            generatorFlowLabel.textContent =
-                formatPowerLabel(genData.GenTotalPower, "generator");
+                if (gridData?.totalPower != null) {
+                    updatePowerByName(
+                        "Grid",
+                        PowerToIndicator(gridData.totalPower, INVERTER_MAX_POWER)
+                    );
+                    networkFlowLabel.textContent = formatPowerLabel(gridData.totalPower, "grid");
+                }
 
 
         } catch (err) {
