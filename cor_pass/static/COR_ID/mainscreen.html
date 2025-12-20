@@ -48,8 +48,8 @@
             </defs>
             </svg> <br>   
     </div>   
-        <br> <h1 style=" margin-top:0; color:#291161;font-size: 18px; "  data-translate="welcome-message">Приветствуем в COR-ID</h1>
-        <h4 id="userCorId" class="clickable" style="margin-top:0;margin-bottom:0;">Загрузка...</h4>
+        <br> <h1 style=" margin-top:0; color:#291161;font-size: 18px; "  data-translate="welcome-message">Вітаємо в COR-ID</h1>
+        <h4 id="userCorId" class="clickable" data-translate="corid_loading" style="margin-top:0;margin-bottom:0;">Завантаження...</h4>
         <div id="qrCodeContainer" style="display: none;margin-top: 10px;"></div> 
         <button class="custom-button"id="passwordManagerButton">
             <!-- Первая SVG-иконка -->       
@@ -67,7 +67,7 @@
             </svg>
                 
             <!-- Текст кнопки -->
-            <span class="button-text">Пароли</span> 
+            <span class="button-text" data-translate="passwords">Пароли</span> 
             <!-- Вторая SVG-иконка -->
             <svg class="icon-right" width="24" height="24" viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="1.125" y="0.625" width="28.75" height="28.75" rx="14.375" stroke="#7527B2" stroke-width="1.25"/>
@@ -101,7 +101,7 @@
                 
                 
             <!-- Текст кнопки -->
-            <span class="button-text">Медицина</span> 
+            <span class="button-text" data-translate="medicine">Медицина</span> 
             <!-- Вторая SVG-иконка -->
             <svg class="icon-right" width="24" height="24" viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="1.125" y="0.625" width="28.75" height="28.75" rx="14.375" stroke="#7527B2" stroke-width="1.25"/>
@@ -133,7 +133,7 @@
                 
                 
             <!-- Текст кнопки -->
-            <span class="button-text">Финансы</span> 
+            <span class="button-text" data-translate="finance">Финансы</span> 
             <!-- Вторая SVG-иконка -->
             <svg class="icon-right" width="24" height="24" viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="1.125" y="0.625" width="28.75" height="28.75" rx="14.375" stroke="#7527B2" stroke-width="1.25"/>
@@ -266,11 +266,8 @@
             37.204 29.5668 36.4536 31.8825 34.8335C34.1982 33.2133 35.8673 30.8275 36.5953 
             28.0968C37.3233 25.3662 37.0635 22.4662 35.8617 19.9084Z" fill="white"/>
           </svg>
-
-
-                
-                
-                
+          
+          
             <!-- Текст кнопки -->
             <span class="button-text">Менеджер АЗК</span> 
             <!-- Вторая SVG-иконка -->
@@ -580,7 +577,7 @@
                 </svg>
                 
             <!-- Текст кнопки -->
-            <span class="button-text">Енергетика</span> 
+            <span class="button-text" data-translate="energy">Енергетика</span> 
             <!-- Вторая SVG-иконка -->
             <svg class="icon-right" width="24" height="24" viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="1.125" y="0.625" width="28.75" height="28.75" rx="14.375" stroke="#7527B2" stroke-width="1.25"/>
@@ -594,6 +591,86 @@
             </svg>
                 
         </button>
+
+
+
+
+
+
+
+    
+        <button class="custom-button"id="DeviceUser">
+            <!-- Первая SVG-иконка -->       
+           <svg width="24" height="24" viewBox="0 0 51 51" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="50" height="50" rx="25" fill="#AB77EB"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M24.9999 20C27.7613 20.0001 29.9999 22.2386 29.9999 
+            25C29.9999 27.7614 27.7613 29.9999 24.9999 30C22.2385 30 19.9999 27.7614 19.9999 25C19.9999 22.2386 
+            22.2385 20 24.9999 20ZM25.9365 21.918C25.7088 21.8567 25.4666 21.9568 25.3574 22.1533L25.3193 
+            22.2432L23.7197 27.4922C23.6402 27.7509 23.8027 28.0112 24.0634 28.082C24.3236 28.1521 24.6023 
+            28.0115 24.6806 27.7568L26.2802 22.5078C26.3594 22.2492 26.197 21.9888 25.9365 21.918ZM27.5507 
+            23.3496C27.356 23.1679 27.0421 23.1676 26.8476 23.3496C26.6505 23.5356 26.6519 23.8398 26.8495 
+            24.0254L27.8876 24.999L26.8476 25.9746C26.6496 26.1604 26.6497 26.4654 26.8476 26.6514C27.0423 
+            26.8335 27.3561 26.8335 27.5507 26.6514L28.9511 25.3389C29.1491 25.153 29.1491 24.848 28.9511 
+            24.6621L27.5507 23.3496ZM23.1523 23.3486C22.9577 23.1667 22.6438 23.1667 22.4492 23.3486L21.0488 
+            24.6611C20.8505 24.847 20.8507 25.1519 21.0488 25.3379L22.4492 26.6504C22.6439 26.8322 22.9578 
+            26.8327 23.1523 26.6504C23.3502 26.4646 23.3499 26.1596 23.1523 25.9736L22.1122 24.999L23.1523 
+            24.0254C23.3501 23.8395 23.3501 23.5345 23.1523 23.3486Z" fill="white"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M27.2617 14C27.3949 14.0026 27.5243 14.0491 
+            27.6269 14.1318C27.7294 14.2146 27.7997 14.3292 27.8271 14.4561L28.248 17.3623C28.931 17.6397 
+            29.5733 18.0054 30.1572 18.4482L32.9658 17.3477C33.0914 17.3011 33.2304 17.2997 33.3574 
+            17.3428C33.4841 17.3858 33.5913 17.4707 33.6601 17.583L35.9228 21.3867C35.9906 21.5001 
+            36.0147 21.6335 35.9911 21.7627C35.9675 21.8922 35.897 22.009 35.7929 22.0928L33.4023 
+            23.916C33.4532 24.2752 33.4796 24.6374 33.4824 25C33.4803 25.3575 33.4539 25.7144 33.4023 
+            26.0684L35.7929 27.8916C35.897 27.9753 35.9675 28.0923 35.9911 28.2217C36.0148 28.3511 
+            35.9908 28.4851 35.9228 28.5986L33.6601 32.4014C33.5914 32.5139 33.4843 32.5994 33.3574 
+            32.6426C33.2304 32.6857 33.0915 32.6842 32.9658 32.6377L30.1542 31.5371C29.5689 31.976 
+            28.9281 32.3403 28.248 32.6211L27.8271 35.5283C27.8036 35.6585 27.7348 35.7773 27.6318 
+            35.8633C27.5287 35.9492 27.3973 35.9973 27.2617 36H22.7382C22.6051 35.9975 22.4766 35.9508 
+            22.374 35.8682C22.2713 35.7854 22.2002 35.671 22.1728 35.5439L21.7519 32.6377C21.0698 
+            32.3602 20.4287 31.9943 19.8456 31.5518L17.0341 32.6523C16.9085 32.6989 16.7695 32.7002 
+            16.6425 32.6572C16.5158 32.6142 16.4085 32.5293 16.3398 32.417L14.0781 28.6143C14.01 
+            28.5007 13.9851 28.3668 14.0087 28.2373C14.0324 28.108 14.1029 27.9909 14.207 27.9072L16.5976 
+            26.084C16.5467 25.7248 16.5202 25.3626 16.5175 25C16.5196 24.6425 16.546 24.2856 16.5976 
+            23.9316L14.207 22.1084C14.1029 22.0247 14.0324 21.9077 14.0087 21.7783C13.9851 21.6488 
+            14.01 21.515 14.0781 21.4014L16.3398 17.5986C16.4085 17.4862 16.5156 17.4006 16.6425 
+            17.3574C16.7695 17.3144 16.9085 17.3158 17.0341 17.3623L19.8456 18.4629C20.431 18.024 
+            21.0718 17.6597 21.7519 17.3789L22.1728 14.4717C22.1963 14.3415 22.265 14.2227 22.3681 
+            14.1367C22.4712 14.0507 22.6025 14.0027 22.7382 14H27.2617ZM24.9999 19C21.6863 19 
+            18.9999 21.6863 18.9999 25C18.9999 28.3137 21.6863 31 24.9999 31C28.3136 30.9999 
+            30.9999 28.3137 30.9999 25C30.9999 21.6863 28.3136 19.0001 24.9999 19Z" fill="white"/>
+           </svg>
+
+                
+            <!-- Текст кнопки -->
+            <span class="button-text" data-translate="devices">Устройства</span> 
+            <!-- Вторая SVG-иконка -->
+            <svg class="icon-right" width="24" height="24" viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="1.125" y="0.625" width="28.75" height="28.75" rx="14.375" stroke="#7527B2" stroke-width="1.25"/>
+                <path d="M20.1161 14.3274L20.1132 14.3248L14.1478 8.73647L14.1432 8.73226L14.1418 8.7311C13.7749 8.40419 
+                13.2289 8.43324 12.8907 8.76051L12.8866 8.76302L12.8857 8.76387L12.8823 8.76723L12.883 8.76796C12.5174 
+                9.10176 12.5154 9.67494 12.8829 10.0382L12.885 10.0403L12.8862 10.0415L12.8884 10.0435L18.1453 
+                14.996L12.8804 19.956L12.8817 19.9574C12.7001 20.1105 12.6074 20.3496 12.6074 20.5897C12.6074 21.0796 
+                13.0121 21.4995 13.5307 21.4995C13.7755 21.4995 13.9909 21.4093 14.1458 21.2575L14.1494 21.254L20.1144 
+                15.637L20.1176 15.634L20.1415 15.6107L20.151 15.6008L20.1535 15.5982C20.4888 15.233 20.4849 14.6591 
+                20.1161 14.3274Z" fill="#7527B2"/>
+            </svg>
+                
+        </button>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         <button class="custom-button"id="Doctor">
@@ -619,7 +696,7 @@
 
                                 
             <!-- Текст кнопки -->
-            <span class="button-text">Мой кабинет</span> 
+            <span class="button-text" data-translate="my_cabinet">Мой кабинет</span> 
             <!-- Вторая SVG-иконка -->
             <svg class="icon-right" width="24" height="24" viewBox="0 0 31 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="1.125" y="0.625" width="28.75" height="28.75" rx="14.375" stroke="#7527B2" stroke-width="1.25"/>
@@ -640,7 +717,7 @@
         <div id="admin-button-container"></div> <!-- Контейнер для кнопки администратора -->
      <!-- Кнопка "Выйти" -->
         <button id="LogOut-btn" type="submit" class="button"> 
-        <span data-translate="LogOut-button">Выйти</span>    
+        <span data-translate="LogOut-button">Вихід</span>    
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <g id="icon / for sections / exit" clip-path="url(#clip0_3512_133)">
             <g id="Vector">
@@ -684,7 +761,7 @@
             </defs>
           </svg>        
         </button>
-        <button id="Sessions" class="link-button" type="button" 
+        <button id="Sessions" class="link-button" type="button" data-translate="sessions_button"
         style=" font-size: 12px;
                 height: 20px;
                 margin-top: -5px;
@@ -696,9 +773,19 @@
 <div id="sessionsModal"class="modal" style="display: none;">  
     <div class="modal-header"> 
         <div class="modal-buttons">
-          <button class="modal-button close" data-action="close" onclick="closeModal('sessionsModal')">✖</button>
+          <button style="
+            color: transparent;
+            background: transparent;
+            outline: none;
+            border: none;" 
+            class="modal-button close" data-action="close" onclick="closeModal('sessionsModal')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M18.6872 5.31275C19.1042 5.72975 19.1042 6.40584 18.6872 6.82284L6.82284 18.6873C6.40584 19.1042 5.72975 19.1042 5.31275 18.6873C4.89575 18.2702 4.89575 17.5942 5.31275 17.1772L17.1772 5.31275C17.5942 4.89575 18.2702 4.89575 18.6872 5.31275Z" fill="#B1A1DA"></path>
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M18.6873 18.6873C18.2702 19.1042 17.5942 19.1042 17.1772 18.6873L5.31275 6.82284C4.89575 6.40584 4.89575 5.72975 5.31275 5.31275C5.72975 4.89575 6.40584 4.89575 6.82284 5.31275L18.6873 17.1772C19.1042 17.5942 19.1042 18.2702 18.6873 18.6873Z" fill="#B1A1DA"></path>
+                </svg>
+          </button>
         </div>
-        <h3 style="margin-top: 25px; color:#291161;font-size: 17px;">Информация о сессиях</h3>
+        <h3 data-translate="sessions_info_title" style="color:#291161;font-size: 17px;">Інформація про сесії</h3>
     </div> 
   <div class="modal-content"> 
       <div class="cards-scroll-area">
@@ -713,11 +800,14 @@
 
 <script src="/static/COR_ID_Js/translation.js"></script>  
 <script src="/static/COR_ID_Js/general_fun.js"></script>   
+<script src="/static/COR_ID_Js/mainscreen.js"></script>
 <script src="/static/COR_ID_Js/QrCode.min.js"></script> 
 
     <script>
-         const accessToken =getToken();
+        const accessToken =getToken();
         console.log("accessToken:", accessToken);
+        const currentLang = getSavedLang();
+        const dict = translations[currentLang] || translations.uk;
         document.getElementById('passwordManagerButton').addEventListener('click', function() {
             if (checkToken()) {
             window.location.href = '/static/COR_ID/password_manager.html';   }
@@ -734,7 +824,7 @@
           // Обработчик для кнопки "Юристы"
     document.getElementById('Lawyer').addEventListener('click', function() {
         if (checkToken()) {          
-            window.location.href = '/static/COR_ID/lawyers_cabinet/lawyers_doctors-page.html';
+            window.location.href = '/static/COR_ID/lawyers_cabinet/lawyer_doctors-page.html';
         } 
     });
 
@@ -764,7 +854,16 @@
         if (checkToken()) {          
             window.location.href = '/static/COR_Energy/energy.html';
         } 
-    });
+       });
+
+
+         // Обработчик для кнопки "Устройства"
+        document.getElementById('DeviceUser').addEventListener('click', function() {
+        if (checkToken()) {          
+            window.location.href = '/static/COR_ID/devices.html';
+        } 
+       });
+
     // Обработчик для кнопки "Мой кабинет"
     document.getElementById('Doctor').addEventListener('click', function() {
                 if (checkToken()) {          
@@ -824,8 +923,8 @@
         async function fetchCorId() {
             const accessToken =getToken();
             if (!checkToken()) {
-                console.error("Токен доступа не найден.");
-                document.getElementById('userCorId').textContent = "Ошибка: токен не найден.";
+                console.error("Токен не найден!!!");
+                document.getElementById('userCorId').textContent = userCorIdElement.textContent = dict.corid_token_not_found || "Помилка: токен не знайдено.";
                 return;
             }
 
@@ -840,8 +939,8 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    console.error("Ошибка получения COR-ID:", errorData);
-                    document.getElementById('userCorId').textContent = "Ошибка получения COR-ID.";
+                    console.error("Помилка при отриманні COR-ID:", errorData);
+                    document.getElementById('userCorId').textContent = userCorIdElement.textContent = dict.corid_fetch_error || "Помилка при отриманні COR-ID.";
                     return;
                 }
 
@@ -860,7 +959,7 @@
                 });
             } catch (error) {
                 console.error("Ошибка при запросе COR-ID:", error);
-                document.getElementById('userCorId').textContent = "Ошибка при загрузке COR-ID.";
+                document.getElementById('userCorId').textContent = userCorIdElement.textContent = dict.corid_load_error || "Помилка при завантажені COR-ID.";
             }
         }
 
@@ -888,7 +987,7 @@
             
             
         } else {
-            console.warn("COR-ID не соответствует ожидаемому формату:", corId);
+            console.warn("Не верный формат COR-ID:", corId);
         }
         
     } catch (error) {
@@ -913,6 +1012,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const financierButton = document.getElementById('COR-Finance');
     const LawyerButton = document.getElementById('Lawyer');
     const ManagerButton = document.getElementById('Manager');
+    const DeviceUserButton = document.getElementById('DeviceUser');
 
     // Сначала скрываем все кнопки по умолчанию
     corErpButton.classList.add('hidden');
@@ -921,6 +1021,7 @@ document.addEventListener('DOMContentLoaded', function () {
     financierButton.classList.add('hidden');
     LawyerButton.classList.add('hidden'); 
     ManagerButton.classList.add('hidden');  
+  /*  DeviceUserButton.classList.add('hidden'); */
     adminButtonContainer.innerHTML = '';
 
     if (!accessToken) {
@@ -945,7 +1046,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 case 'admin':
                     // Добавляем кнопку Администрирование
                     const adminButton = document.createElement('button');
-                    adminButton.innerText = 'Администрирование';
+                    adminButton.innerText = dict.admin_button || 'Адміністрування';
+
                     adminButton.onclick = () => {
                         window.location.href = `/static/COR_ID/admin.html`;
                     };
@@ -977,16 +1079,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     ManagerButton.classList.remove('hidden');
 
                     break;   
-    
+                case 'device_user':
+                    DeviceUserButton.classList.remove('hidden');
+                    break;
 
                 default:
-                    console.log(`Неизвестная роль: ${role}. Применяется дефолт — только медицина.`);
+                    console.log(`Невідома роль: ${role}. Застосовується дефолт — лише медицина.`);
                     doctorButton.classList.remove('hidden');
                     break;
             }
         });
     } catch (error) {
-        console.error("Ошибка при расшифровке токена:", error);
+        console.error("Ошибка дешифрования токена:", error);
         // Если токен не расшифровался — дефолт
         doctorButton.classList.remove('hidden');
     }
@@ -1010,7 +1114,6 @@ document.addEventListener('DOMContentLoaded', function () {
 async function getSessions() {
 try {
     const accessToken =getToken();
-//    const token = getTokenFromURL();
     const response = await fetch("/api/user/sessions/all?skip=0&limit=150", {
         method: "GET",
         headers: {
@@ -1035,13 +1138,26 @@ try {
         card.innerHTML = `
         <div class="card-content">
           <div class="session-text">
-            <p><strong>Об устройстве:</strong> ${session.device_info}</p>
-            <p><strong>Устройство:</strong> ${session.device_type || "Неизвестно"}, ${session.device_os || "Неизвестно"}</p>
-            <p><strong>IP адрес:</strong> ${session.ip_address || "Неизвестно"}</p>
-             <p><strong>Место:</strong> ${session.city_name || "Неизвестно"}</p>
-            <p><strong>Даты:</strong> Создана: ${new Date(session.created_at).toLocaleString()}, Обновлена: ${new Date(session.updated_at).toLocaleString()}</p>
+            <p><strong>${dict.session_about_device || "Про устройство:"}</strong> ${session.device_info}</p>
+            <p><strong>${dict.session_device || "Устройство:"}</strong> ${session.device_type || "-"}, ${session.device_os || "-"}</p>
+            <p><strong>${dict.session_ip || "IP-адрес:"}</strong> ${session.ip_address || "-"}</p>
+            <p><strong>${dict.session_place || "Местоположение:"}</strong> ${session.city_name || "-"}</p>
+            <p><strong>${dict.session_dates || "Дата:"}</strong>
+                ${dict.session_created || "Создана:"} ${new Date(session.created_at).toLocaleString()},
+                ${dict.session_updated || "Обновлена:"} ${new Date(session.updated_at).toLocaleString()}
+            </p>
           </div>
-            <button class="modal-button session-delete-button" data-session-id="${session.id}">✖</button>
+            <button style="
+            color: transparent;
+            background: transparent;
+            outline: none;
+            border: none;" 
+            class="modal-button session-delete-button" data-session-id="${session.id}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M18.6872 5.31275C19.1042 5.72975 19.1042 6.40584 18.6872 6.82284L6.82284 18.6873C6.40584 19.1042 5.72975 19.1042 5.31275 18.6873C4.89575 18.2702 4.89575 17.5942 5.31275 17.1772L17.1772 5.31275C17.5942 4.89575 18.2702 4.89575 18.6872 5.31275Z" fill="#B1A1DA"></path>
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M18.6873 18.6873C18.2702 19.1042 17.5942 19.1042 17.1772 18.6873L5.31275 6.82284C4.89575 6.40584 4.89575 5.72975 5.31275 5.31275C5.72975 4.89575 6.40584 4.89575 6.82284 5.31275L18.6873 17.1772C19.1042 17.5942 19.1042 18.2702 18.6873 18.6873Z" fill="#B1A1DA"></path>
+                </svg>
+          </button>
         </div>
         `;
         cardsContainer.appendChild(card);
@@ -1062,7 +1178,7 @@ try {
     const modal = document.getElementById("sessionsModal");
 
 } catch (error) {
-    console.error("Ошибка при получении сессий:", error);
+    console.error("Ошибка получения сессий:", error);
 }
 }
 
@@ -1089,10 +1205,10 @@ try {
     await getSessions();
     
     // Можно добавить уведомление об успешном удалении
-    alert("Сессия успешно удалена");
+    alert("Сессия успешно удалена!!!");
     
 } catch (error) {
-    console.error("Ошибка при удалении сессии:", error);
+    console.error("Ошибка удаления сессии:", error);
     alert("Не удалось удалить сессию: " + error.message);
 }
 }

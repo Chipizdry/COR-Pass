@@ -175,6 +175,16 @@ class MedicineIntakeStatus(enum.Enum):
     DELAYED = "delayed"  # Отложен
 
 
+# First aid kit sharing
+class FirstAidKitShareStatus(enum.Enum):
+    """Статусы приглашения на импорт аптечки"""
+    PENDING = "pending"      # Ожидает принятия
+    ACCEPTED = "accepted"    # Пользователь принял и импортировал
+    REVOKED = "revoked"      # Отозвано отправителем
+    EXPIRED = "expired"      # Срок жизни токена истёк
+    FAILED = "failed"        # Ошибка при обработке/импорте
+
+
 # Device Enums
 class DeviceStatus(enum.Enum):
     """Status of manufactured devices"""

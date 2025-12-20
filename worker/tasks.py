@@ -376,7 +376,7 @@ async def energetic_schedule_task_worker(object_id: str, object_name: str):
 
                 operational_schedules = [s for s in object_schedules if not s.is_manual_mode]
                 
-                logger.debug(f"[{object_id}] 🔍 Проверка расписаний: найдено {len(object_schedules)} расписаний для объекта, {len(operational_schedules)} операционных, текущее время {now_time} ({energetic_object.timezone}), активное расписание ID: {current_active_schedule_id}")
+                # logger.debug(f"[{object_id}] 🔍 Проверка расписаний: найдено {len(object_schedules)} расписаний для объекта, {len(operational_schedules)} операционных, текущее время {now_time} ({energetic_object.timezone}), активное расписание ID: {current_active_schedule_id}")
 
                 active_schedule = None
                 for schedule in operational_schedules:
@@ -390,10 +390,10 @@ async def energetic_schedule_task_worker(object_id: str, object_name: str):
                             break
 
                 if active_schedule:
-                    logger.debug(f"[{object_id}] ✅ Найдено активное расписание ID={active_schedule.id}, период {active_schedule.start_time}-{active_schedule.end_time}")
+                    # logger.debug(f"[{object_id}] ✅ Найдено активное расписание ID={active_schedule.id}, период {active_schedule.start_time}-{active_schedule.end_time}")
                     
                     if active_schedule.id != current_active_schedule_id:
-                        logger.info(f"[{object_id}] 🔄 Переключение расписания: {current_active_schedule_id} → {active_schedule.id}")
+                        # logger.info(f"[{object_id}] 🔄 Переключение расписания: {current_active_schedule_id} → {active_schedule.id}")
                         
                         # Получаем параметры предыдущего расписания для уведомления
                         old_grid_feed_kw = None
@@ -447,7 +447,7 @@ async def energetic_schedule_task_worker(object_id: str, object_name: str):
                     logger.debug(f"[{object_id}] ⚠️ Активное расписание не найдено, сбрасываем на дефолт")
                     # сброс к дефолтным параметрам
                     if current_active_schedule_id:
-                        logger.info(f"[{object_id}] 🔄 Сброс расписания {current_active_schedule_id} на дефолтные параметры")
+                        # logger.info(f"[{object_id}] 🔄 Сброс расписания {current_active_schedule_id} на дефолтные параметры")
                         await update_schedule_is_active_status(db, current_active_schedule_id, False)
                         current_active_schedule_id = None
                         await set_inverter_parameters(object_id, DEFAULT_grid_feed_kw, DEFAULT_battery_level_percent, DEFAULT_charge_battery_value)

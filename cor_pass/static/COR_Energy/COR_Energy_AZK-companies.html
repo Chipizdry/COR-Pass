@@ -87,6 +87,10 @@
                         <th data-field="email" data-translate="email">Ел.адреса</th>
                         <th data-field="edrpou" data-translate="edrpou">ЄДРПОУ</th>
                         <th data-field="balance" data-translate="balance">Баланс</th>
+                        <th data-field="limit" data-translate="limit">Кредитний ліміт</th>
+                        <th data-field="created_at" data-translate="created_at">Створено</th>
+                        <th data-field="updated_at" data-translate="updated_at">Оновлено</th>
+                        <th data-field="last_balance_update" data-translate="last_balance_update">Останнє оновлення балансу</th>
                         <th data-field="company_status" data-translate="company_status">Статус підприємства</th>
                      </tr>
                   </thead>
@@ -98,6 +102,7 @@
                         <td>+380 (67) 754 12 90</td>
                         <td>info@energosfera.ua</td>
                         <td>12345678</td>
+                        <td>16000</td>
                         <td>16000</td>
                         <td><span class="status">
                               <span class="status-container">
@@ -128,6 +133,7 @@
                         <td>logistics.global@gmail.com</td>
                         <td>12345678</td>
                         <td>16000</td>
+                        <td>16000</td>
                         <td><span class="status">
                               <span class="status-container">
                                  <span class="status-dot" style="background: #FD7441;"></span>
@@ -156,6 +162,7 @@
                         <td>+380 (93) 381 76 02</td>
                         <td>biotech.center.ua@gmail.com</td>
                         <td>12345678</td>
+                        <td>16000</td>
                         <td>16000</td>
                         <td><span class="status">
                               <span class="status-container">
@@ -186,10 +193,11 @@
                         <td>office@zelenadolyna.com</td>
                         <td>12345678</td>
                         <td>16000</td>
+                        <td>16000</td>
                         <td><span class="status">
                               <span class="status-container">
-                                 <span class="status-dot" style="background: #DF1125;"></span>
-                                 <span class="status-label">Заблоковано</span>
+                                 <span class="status-dot" style="background: #B1A1DA;"></span>
+                                 <span class="status-label">Заявку відхилено</span>
                               </span>
                               <button class="status-menu-btn" type="button" aria-label="Дії з користувачем">
                                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -214,6 +222,7 @@
                         <td>+380 (66) 666 66 66</td>
                         <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
                         <td>12345678</td>
+                        <td>16000</td>
                         <td>16000</td>
                         <td><span class="status">
                               <span class="status-container">
@@ -244,34 +253,6 @@
                         <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
                         <td>12345678</td>
                         <td>16000</td>
-                        <td><span class="status">
-                              <span class="status-container">
-                                 <span class="status-dot" style="background: #DF1125;"></span>
-                                 <span class="status-label">Заблоковано</span>
-                              </span>
-                              <button class="status-menu-btn" type="button" aria-label="Дії з користувачем">
-                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                       d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
-                                       fill="#B1A1DA" />
-                                    <path
-                                       d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
-                                       fill="#B1A1DA" />
-                                    <path
-                                       d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
-                                       fill="#B1A1DA" />
-                                 </svg>
-                              </button>
-                           </span></td>
-                     </tr>
-                     <tr>
-                        <td>ТОВ</td>
-                        <td>Тут може бути дуже довга назва</td>
-                        <td>Тут може бути дуже довга адреса</td>
-                        <td>+380 (66) 666 66 66</td>
-                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
-                        <td>12345678</td>
                         <td>16000</td>
                         <td><span class="status">
                               <span class="status-container">
@@ -302,34 +283,6 @@
                         <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
                         <td>12345678</td>
                         <td>16000</td>
-                        <td><span class="status">
-                              <span class="status-container">
-                                 <span class="status-dot" style="background: #DF1125;"></span>
-                                 <span class="status-label">Заблоковано</span>
-                              </span>
-                              <button class="status-menu-btn" type="button" aria-label="Дії з користувачем">
-                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                       d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
-                                       fill="#B1A1DA" />
-                                    <path
-                                       d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
-                                       fill="#B1A1DA" />
-                                    <path
-                                       d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
-                                       fill="#B1A1DA" />
-                                 </svg>
-                              </button>
-                           </span></td>
-                     </tr>
-                     <tr>
-                        <td>ТОВ</td>
-                        <td>Тут може бути дуже довга назва</td>
-                        <td>Тут може бути дуже довга адреса</td>
-                        <td>+380 (66) 666 66 66</td>
-                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
-                        <td>12345678</td>
                         <td>16000</td>
                         <td><span class="status">
                               <span class="status-container">
@@ -360,34 +313,6 @@
                         <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
                         <td>12345678</td>
                         <td>16000</td>
-                        <td><span class="status">
-                              <span class="status-container">
-                                 <span class="status-dot" style="background: #DF1125;"></span>
-                                 <span class="status-label">Заблоковано</span>
-                              </span>
-                              <button class="status-menu-btn" type="button" aria-label="Дії з користувачем">
-                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                       d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
-                                       fill="#B1A1DA" />
-                                    <path
-                                       d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
-                                       fill="#B1A1DA" />
-                                    <path
-                                       d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
-                                       fill="#B1A1DA" />
-                                 </svg>
-                              </button>
-                           </span></td>
-                     </tr>
-                     <tr>
-                        <td>ТОВ</td>
-                        <td>Тут може бути дуже довга назва</td>
-                        <td>Тут може бути дуже довга адреса</td>
-                        <td>+380 (66) 666 66 66</td>
-                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
-                        <td>12345678</td>
                         <td>16000</td>
                         <td><span class="status">
                               <span class="status-container">
@@ -418,34 +343,6 @@
                         <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
                         <td>12345678</td>
                         <td>16000</td>
-                        <td><span class="status">
-                              <span class="status-container">
-                                 <span class="status-dot" style="background: #DF1125;"></span>
-                                 <span class="status-label">Заблоковано</span>
-                              </span>
-                              <button class="status-menu-btn" type="button" aria-label="Дії з користувачем">
-                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                       d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
-                                       fill="#B1A1DA" />
-                                    <path
-                                       d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
-                                       fill="#B1A1DA" />
-                                    <path
-                                       d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
-                                       fill="#B1A1DA" />
-                                 </svg>
-                              </button>
-                           </span></td>
-                     </tr>
-                     <tr>
-                        <td>ТОВ</td>
-                        <td>Тут може бути дуже довга назва</td>
-                        <td>Тут може бути дуже довга адреса</td>
-                        <td>+380 (66) 666 66 66</td>
-                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
-                        <td>12345678</td>
                         <td>16000</td>
                         <td><span class="status">
                               <span class="status-container">
@@ -476,34 +373,6 @@
                         <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
                         <td>12345678</td>
                         <td>16000</td>
-                        <td><span class="status">
-                              <span class="status-container">
-                                 <span class="status-dot" style="background: #DF1125;"></span>
-                                 <span class="status-label">Заблоковано</span>
-                              </span>
-                              <button class="status-menu-btn" type="button" aria-label="Дії з користувачем">
-                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                       d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
-                                       fill="#B1A1DA" />
-                                    <path
-                                       d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
-                                       fill="#B1A1DA" />
-                                    <path
-                                       d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
-                                       fill="#B1A1DA" />
-                                 </svg>
-                              </button>
-                           </span></td>
-                     </tr>
-                     <tr>
-                        <td>ТОВ</td>
-                        <td>Тут може бути дуже довга назва</td>
-                        <td>Тут може бути дуже довга адреса</td>
-                        <td>+380 (66) 666 66 66</td>
-                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
-                        <td>12345678</td>
                         <td>16000</td>
                         <td><span class="status">
                               <span class="status-container">
@@ -534,34 +403,6 @@
                         <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
                         <td>12345678</td>
                         <td>16000</td>
-                        <td><span class="status">
-                              <span class="status-container">
-                                 <span class="status-dot" style="background: #DF1125;"></span>
-                                 <span class="status-label">Заблоковано</span>
-                              </span>
-                              <button class="status-menu-btn" type="button" aria-label="Дії з користувачем">
-                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                    xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                       d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
-                                       fill="#B1A1DA" />
-                                    <path
-                                       d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
-                                       fill="#B1A1DA" />
-                                    <path
-                                       d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
-                                       fill="#B1A1DA" />
-                                 </svg>
-                              </button>
-                           </span></td>
-                     </tr>
-                     <tr>
-                        <td>ТОВ</td>
-                        <td>Тут може бути дуже довга назва</td>
-                        <td>Тут може бути дуже довга адреса</td>
-                        <td>+380 (66) 666 66 66</td>
-                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
-                        <td>12345678</td>
                         <td>16000</td>
                         <td><span class="status">
                               <span class="status-container">
@@ -591,6 +432,187 @@
                         <td>+380 (66) 666 66 66</td>
                         <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
                         <td>12345678</td>
+                        <td>16000</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <button class="status-menu-btn" type="button" aria-label="Дії з користувачем">
+                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                       d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                       fill="#B1A1DA" />
+                                    <path
+                                       d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                       fill="#B1A1DA" />
+                                    <path
+                                       d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                       fill="#B1A1DA" />
+                                 </svg>
+                              </button>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <button class="status-menu-btn" type="button" aria-label="Дії з користувачем">
+                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                       d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                       fill="#B1A1DA" />
+                                    <path
+                                       d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                       fill="#B1A1DA" />
+                                    <path
+                                       d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                       fill="#B1A1DA" />
+                                 </svg>
+                              </button>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <button class="status-menu-btn" type="button" aria-label="Дії з користувачем">
+                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                       d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                       fill="#B1A1DA" />
+                                    <path
+                                       d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                       fill="#B1A1DA" />
+                                    <path
+                                       d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                       fill="#B1A1DA" />
+                                 </svg>
+                              </button>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <button class="status-menu-btn" type="button" aria-label="Дії з користувачем">
+                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                       d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                       fill="#B1A1DA" />
+                                    <path
+                                       d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                       fill="#B1A1DA" />
+                                    <path
+                                       d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                       fill="#B1A1DA" />
+                                 </svg>
+                              </button>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <button class="status-menu-btn" type="button" aria-label="Дії з користувачем">
+                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                       d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                       fill="#B1A1DA" />
+                                    <path
+                                       d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                       fill="#B1A1DA" />
+                                    <path
+                                       d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                       fill="#B1A1DA" />
+                                 </svg>
+                              </button>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
+                        <td>16000</td>
+                        <td><span class="status">
+                              <span class="status-container">
+                                 <span class="status-dot" style="background: #DF1125;"></span>
+                                 <span class="status-label">Заблоковано</span>
+                              </span>
+                              <button class="status-menu-btn" type="button" aria-label="Дії з користувачем">
+                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                       d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                                       fill="#B1A1DA" />
+                                    <path
+                                       d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                                       fill="#B1A1DA" />
+                                    <path
+                                       d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                                       fill="#B1A1DA" />
+                                 </svg>
+                              </button>
+                           </span></td>
+                     </tr>
+                     <tr>
+                        <td>ТОВ</td>
+                        <td>Тут може бути дуже довга назва</td>
+                        <td>Тут може бути дуже довга адреса</td>
+                        <td>+380 (66) 666 66 66</td>
+                        <td>Тут може бути дуже довга ел.&nbsp;адреса</td>
+                        <td>12345678</td>
+                        <td>16000</td>
                         <td>16000</td>
                         <td><span class="status">
                               <span class="status-container">
@@ -643,6 +665,17 @@
                </button>
             </div>
             <div class="actions-button">
+               <button id="unblock_company">
+                  <svg width="14" height="18" viewBox="0 0 14 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                     <path
+                        d="M2.57142 6.77418C2.57142 7.07794 2.81766 7.32418 3.12142 7.32418C3.42517 7.32418 3.67142 7.07794 3.67142 6.77418H3.12142H2.57142ZM3.12142 4.1081H3.67142L3.67142 4.10758L3.12142 4.1081ZM9.33673 3.35179C9.40984 3.64661 9.70811 3.82635 10.0029 3.75324C10.2978 3.68013 10.4775 3.38185 10.4044 3.08703L9.87056 3.21941L9.33673 3.35179ZM0.549988 6.77418V6.22418C0.246231 6.22418 -1.2219e-05 6.47042 -1.2219e-05 6.77418H0.549988ZM12.55 6.77418H13.1C13.1 6.47042 12.8537 6.22418 12.55 6.22418V6.77418ZM0.549988 14.7724H-1.2219e-05H0.549988ZM3.12142 6.77418H3.67142V4.1081H3.12142H2.57142V6.77418H3.12142ZM3.12142 4.1081L3.67142 4.10758C3.67071 3.37009 3.9298 2.66062 4.3956 2.11191L3.97631 1.75597L3.55702 1.40003C2.91935 2.15119 2.57047 3.11446 2.57142 4.10862L3.12142 4.1081ZM3.97631 1.75597L4.3956 2.11191C4.86099 1.56369 5.49971 1.2143 6.18983 1.12343L6.11803 0.578139L6.04623 0.0328457C5.07948 0.160142 4.1951 0.648383 3.55702 1.40003L3.97631 1.75597ZM6.11803 0.578139L6.18983 1.12343C6.87972 1.03259 7.57972 1.20543 8.15915 1.61327L8.47572 1.16351L8.79229 0.713752C7.98989 0.148973 7.0132 -0.0944806 6.04623 0.0328457L6.11803 0.578139ZM8.47572 1.16351L8.15915 1.61327C8.73916 2.02152 9.15986 2.63855 9.33673 3.35179L9.87056 3.21941L10.4044 3.08703C10.1654 2.12316 9.59411 1.27812 8.79229 0.713752L8.47572 1.16351ZM0.549988 6.77418V7.32418H12.55V6.77418V6.22418H0.549988V6.77418ZM12.55 6.77418H12V14.7724H12.55H13.1V6.77418H12.55ZM12.55 14.7724H12C12 15.1042 11.8727 15.4186 11.652 15.6474L12.0479 16.0292L12.4438 16.411C12.8661 15.9732 13.1 15.3834 13.1 14.7724H12.55ZM12.0479 16.0292L11.652 15.6474C11.432 15.8755 11.1379 15.9998 10.8357 15.9998V16.5498V17.0998C11.4428 17.0998 12.0208 16.8496 12.4438 16.411L12.0479 16.0292ZM10.8357 16.5498V15.9998H2.26427V16.5498V17.0998H10.8357V16.5498ZM2.26427 16.5498V15.9998C1.96203 15.9998 1.66797 15.8755 1.44796 15.6474L1.05209 16.0292L0.656218 16.411C1.07919 16.8496 1.6572 17.0998 2.26427 17.0998V16.5498ZM1.05209 16.0292L1.44796 15.6474C1.22731 15.4186 1.09999 15.1042 1.09999 14.7724H0.549988H-1.2219e-05C-1.2219e-05 15.3834 0.233894 15.9732 0.656218 16.411L1.05209 16.0292ZM0.549988 14.7724H1.09999V6.77418H0.549988H-1.2219e-05V14.7724H0.549988Z"
+                        fill="#5B4296" />
+                  </svg>
+                  <span data-translate="actions_unblock_company">Розблокувати
+ підприємство</span>
+               </button>
+            </div>
+            <div class="actions-button">
                <button id="delete_company">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                      <path
@@ -655,6 +688,38 @@
          </div>
       </main>
    </div>
+
+   <!-- Розблокувати підприємство -->
+   <div class="modal" id="unblockModal">
+      <div class="exclamation-mark">
+         <svg width="35" height="32" viewBox="0 0 35 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+               d="M17.4629 0C19.0498 0 20.4814 0.845703 21.292 2.2627L34.3135 24.9443C34.7041 25.6143 34.9111 26.374 34.9111 27.1377C34.9111 29.7646 33.0752 31.6006 30.4482 31.6006H4.46094C1.83398 31.6006 0 29.7646 0 27.1377C0.00195312 26.3721 0.208008 25.6182 0.598633 24.958L13.6162 2.26367C14.4434 0.845703 15.8818 0 17.4629 0Z"
+               fill="#DF1125" />
+         </svg>
+         <svg class="excl" width="4" height="17" viewBox="0 0 4 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+               d="M1.62402 13.7275C2.53418 13.7275 3.24707 14.4111 3.24707 15.2842C3.24707 16.1416 2.51953 16.8408 1.62402 16.8408C0.743164 16.8408 0 16.1279 0 15.2842C0 14.4268 0.728516 13.7275 1.62402 13.7275ZM1.60645 0C2.00286 0 2.36036 0.140715 2.61133 0.397461C2.84277 0.633789 2.9668 0.953125 2.95996 1.29785L2.72266 10.1982C2.70898 10.9521 2.32812 11.3525 1.62305 11.3525C0.895689 11.3524 0.503904 10.9521 0.489258 10.1963L0.269531 1.28125C0.262698 0.927808 0.379975 0.617171 0.607422 0.384766C0.851505 0.136777 1.20617 6.43814e-05 1.60645 0Z"
+               fill="white" />
+         </svg>
+      </div>
+      <div class="text-modal-container">
+         <div class="header-modal" data-translate="unblock_title">
+            Розблокувати
+ підприємство?
+         </div>
+         <div class="text-modal" data-translate="unblock_text">
+            Користувач отримає доступ до системи
+         </div>
+      </div>
+      <div class="buttons-modal">
+         <button class="unblockBtn" data-translate="unblockBtn">Розблокувати
+</button>
+         <button class="cancelBtn" data-translate="cancelBtn">Відмінити</button>
+      </div>
+   </div>
+
+   <div class="modal-backdrop"><!-- затемнення --></div>
 
    <!-- Заблокувати підприємство -->
    <div class="modal" id="blockModal">
@@ -679,8 +744,8 @@
          </div>
       </div>
       <div class="buttons-modal">
-         <button class="blockBtn" data-translate="block_confirm">Заблокувати</button>
-         <button class="cancelBtn" data-translate="cancel">Відмінити</button>
+         <button class="blockBtn" data-translate="blockBtn">Заблокувати</button>
+         <button class="cancelBtn" data-translate="cancelBtn">Відмінити</button>
       </div>
    </div>
 
@@ -709,8 +774,8 @@
          </div>
       </div>
       <div class="buttons-modal">
-         <button class="deleteBtn" data-translate="delete_confirm">Видалити</button>
-         <button class="cancelBtn" data-translate="cancel">Відмінити</button>
+         <button class="deleteBtn" data-translate="deleteBtn">Видалити</button>
+         <button class="cancelBtn" data-translate="cancelBtn">Відмінити</button>
       </div>
    </div>
 
@@ -742,20 +807,48 @@
          <div class="header-modal" data-translate="limit" style="padding: 12px 14px 0;">Кредитний ліміт</div>
       </div>
       <div class="text-modal" data-translate="text-modal-limit">
-         Вкажіть сумму кредитного ліміту
+         Вкажіть суму кредитного ліміту
       </div>
       <div class="info-container limit-container">
          <div class="company_name_label" data-field="full_company_name" data-translate="full_company_name">Повна назва
             підприємства</div>
          <div class="company_name"></div>
       </div>
+<!--       <div class="form-limit-modal">
+         <label data-translate="term">Термін</label>
+         <div class="time-grid">
+            <label class="storage-option">
+               <input type="radio" name="time" value="day">
+               <span class="custom-radio"></span>
+               <span data-translate="day">День</span>
+            </label>
+
+            <label class="storage-option">
+               <input type="radio" name="time" value="week">
+               <span class="custom-radio"></span>
+               <span data-translate="week">Тиждень</span>
+            </label>
+
+            <label class="storage-option">
+               <input type="radio" name="time" value="month">
+               <span class="custom-radio"></span>
+               <span data-translate="month">Місяць</span>
+            </label>
+
+            <label class="storage-option">
+               <input type="radio" name="time" value="year">
+               <span class="custom-radio"></span>
+               <span data-translate="year">Рік</span>
+            </label>
+         </div>
+      </div> -->
       <div class="form-limit-modal">
          <label data-translate="sum">Сума</label>
          <input type="number" placeholder="0.00" min="0" step="0.01" data-number-to-fixed="2"
             data-number-stepfactor="100" class="currency">
       </div>
       <div class="buttons-modal">
-         <button class="resetLimitBtn" data-translate="resetLimitBtn">Скинути кредитний ліміт</button>
+         <button class="resetLimitBtn" data-translate="resetLimitBtn">Скинути ліміт</button>
          <button class="applyBtn" data-translate="applyBtn">Застосувати</button>
       </div>
    </div>
@@ -785,36 +878,36 @@
                </svg>
             </button>
          </div>
-         <div class="header-modal" data-translate="company-info" style="padding: 12px 14px 0;">Інформація про підприємство</div>
+         <div class="header-modal" data-translate="company_info" style="padding: 12px 14px 0;">Інформація про підприємство</div>
       </div>
       <div class="info-container">
          <div class="info-field">
             <div data-field="company_form" data-translate="company_form">Форма підприємства</div>
-            <div>ТОВ</div>
+            <div></div>
          </div>
          <div class="info-field">
             <div data-field="full_company_name" data-translate="full_company_name">Повна назва підприємства</div>
-            <div>Центр Інноваційних Технологій "ЕнергоСфера"</div>
+            <div></div>
          </div>
          <div class="info-field">
             <div data-field="company_address" data-translate="company_address">Адреса підприємства</div>
-            <div>м. Київ, вул. Васильківська, 55, оф. 214</div>
+            <div></div>
          </div>
          <div class="info-field">
             <div data-field="phone" data-translate="phone">Телефон</div>
-            <div>+380 (67) 754 12 90</div>
+            <div></div>
          </div>
          <div class="info-field">
             <div data-field="email" data-translate="email">Ел.адреса</div>
-            <div>info@energosfera.ua</div>
+            <div></div>
          </div>
          <div class="info-field">
             <div data-field="edrpou" data-translate="edrpou">ЄДРПОУ</div>
-            <div>12345678</div>
+            <div></div>
          </div>
       </div>
       <div class="buttons-modal">
-         <button class="rejectBtn" data-translate="cancelBtn">Відмінити</button>
+         <button class="rejectBtn" data-translate="rejectBtn">Відхилити</button>
          <button class="submitBtn" data-translate="submitBtn">Підтвердити</button>
       </div>
    </div>

@@ -268,6 +268,43 @@ async def send_invitation_email(
         raise 
 
 
+async def send_first_aid_kit_share_email(
+    email: EmailStr,
+    share_link: str,
+    invited_by_email: str,
+    expires_at: str,
+):
+    """
+    Отправляет письмо с приглашением на импорт аптечки.
+
+    Args:
+        email: Email получателя
+        share_link: Deeplink для открытия приложения с токеном
+        invited_by_email: Email отправителя
+        expires_at: ISO строка времени истечения
+    """
+    logger.debug(f"Sending first aid kit share email to {email}")
+    try:
+        message = MessageSchema(
+            subject="Приглашение: импорт аптечки в COR-ID",
+            recipients=[email],
+            template_body={
+                "share_link": share_link,
+                "invited_by": invited_by_email,
+                "expires_at": expires_at,
+                "email": email,
+            },
+            subtype=MessageType.html,
+        )
+
+        fm = FastMail(conf)
+        await fm.send_message(message, template_name="first_aid_kit_share.html")
+        logger.info(f"First aid kit share email sent to {email}")
+    except ConnectionErrors as err:
+        logger.error(f"Failed to send first aid kit share email to {email}: {err}")
+        raise
+
+
 async def send_employee_invitation_email(
     email: str,
     first_name: str,
@@ -341,4 +378,34 @@ async def send_employee_added_email(
     except ConnectionErrors as err:
         logger.error(f"Failed to send employee added email to {email}: {err}")
         # Не прерываем основной процесс
+        raise
+
+
+async def send_corporate_request_approved_email(
+    email: str,
+    company_name: str,
+):
+    """
+    Отправляет уведомление, что заявка на регистрацию корпоративного клиента одобрена.
+    """
+    logger.debug(f"Sending corporate request approved email to {email}")
+    try:
+        cabinet_url = "https://dev.web.fuel.cor-medical.ua/"
+        
+        message = MessageSchema(
+            subject="Вашу заявку на програму корпоративних клієнтів схвалено",
+            recipients=[email],
+            template_body={
+                "company_name": company_name,
+                "cabinet_url": cabinet_url,
+            },
+            subtype=MessageType.html,
+        )
+
+        fm = FastMail(conf)
+        await fm.send_message(message, template_name="corporate_request_approved.html")
+        logger.info(f"Corporate request approved email sent to {email} for company {company_name}")
+    except ConnectionErrors as err:
+        logger.error(f"Failed to send corporate request approved email to {email}: {err}")
+        # Не прерываем основной процесс одобрения
         raise

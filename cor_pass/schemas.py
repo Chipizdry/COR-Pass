@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 from pydantic import (
     BaseModel,
@@ -28,6 +30,7 @@ from cor_pass.database.models import (
     FixationType,
     StudyType,
     StainingType,
+    FirstAidKitShareStatus,
 )
 import re
 from datetime import date
@@ -86,6 +89,21 @@ class UserDb(BaseModel):
     class Config:
         from_attributes = True
 
+class UserDbResponse(BaseModel):
+    id: str
+    cor_id: Optional[str] 
+    email: Optional[str]
+    account_status: Optional[Status]
+    is_active: Optional[bool]
+    last_password_change: Optional[datetime]
+    user_sex: Optional[str] 
+    birth: Optional[int] 
+    user_index: Optional[int]
+    created_at: datetime
+    last_active: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
 
 class ResponseUser(BaseModel):
     user: UserDb
@@ -2556,11 +2574,11 @@ class DevicePollingTaskBase(BaseModel):
         None,
         description="Конфигурация команды в JSON (какие регистры читать, параметры)"
     )
-    interval_seconds: int = Field(
+    interval_seconds: float = Field(
         5,
-        ge=1,
+        gt=0,
         le=3600,
-        description="Интервал опроса в секундах (1-3600)"
+        description="Интервал опроса в секундах (0.01-3600, т.е. ниже 1 с)"
     )
     is_active: bool = Field(True, description="Активна ли задача")
 
@@ -2574,7 +2592,7 @@ class DevicePollingTaskUpdate(BaseModel):
     """Схема обновления задачи опроса"""
     task_type: Optional[PollingTaskTypeEnum] = None
     command_config: Optional[Dict[str, Any]] = None
-    interval_seconds: Optional[int] = Field(None, ge=1, le=3600)
+    interval_seconds: Optional[float] = Field(None, gt=0, le=3600)
     is_active: Optional[bool] = None
 
 
@@ -2604,7 +2622,7 @@ class WebSocketBroadcastTaskBase(BaseModel):
     session_id: str = Field(..., description="Session ID устройства")
     command_type: str = Field(..., description="Тип команды: pi30 или modbus_read")
     command_payload: Dict[str, Any] = Field(..., description="Данные команды")
-    interval_seconds: int = Field(5, ge=1, le=3600, description="Интервал отправки (1-3600 сек)")
+    interval_seconds: float = Field(5, gt=0, le=3600, description="Интервал отправки (0.01-3600 сек)")
     is_active: bool = Field(True, description="Активна ли задача")
 
 
@@ -2619,14 +2637,14 @@ class WebSocketBroadcastTaskCreate(BaseModel):
     # Для modbus команд  
     hex_data: Optional[str] = Field(None, description="Hex данные для modbus_read")
     
-    interval_seconds: int = Field(5, ge=1, le=3600, description="Интервал в секундах")
+    interval_seconds: float = Field(5, gt=0, le=3600, description="Интервал в секундах")
     is_active: bool = Field(True, description="Активна ли задача")
     created_by: Optional[str] = Field(None, description="ID пользователя")
 
 
 class WebSocketBroadcastTaskUpdate(BaseModel):
     task_name: Optional[str] = None
-    interval_seconds: Optional[int] = Field(None, ge=1, le=3600)
+    interval_seconds: Optional[float] = Field(None, gt=0, le=3600)
     is_active: Optional[bool] = None
     command_payload: Optional[Dict[str, Any]] = None
 
@@ -2787,6 +2805,54 @@ class EnergeticObjectResponse(EnergeticObjectBase):
 
     class Config:
         orm_mode = True
+
+
+class EnergeticDeviceBase(BaseModel):
+    name: Optional[str] = None
+    device_id: str
+    protocol: Optional[str] = None
+    description: Optional[str] = None
+
+
+class EnergeticDeviceCreate(EnergeticDeviceBase):
+    owner_cor_id: str
+    is_active: Optional[bool] = True
+
+
+class EnergeticDeviceUpdate(BaseModel):
+    name: Optional[str] = None
+    protocol: Optional[str] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class EnergeticDeviceResponse(EnergeticDeviceBase):
+    id: str
+    owner_cor_id: str
+    is_active: bool
+    last_seen: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EnergeticDeviceAccessBase(BaseModel):
+    device_id: str
+    accessing_user_cor_id: str
+    access_level: AccessLevel
+
+
+class EnergeticDeviceAccessCreate(EnergeticDeviceAccessBase):
+    granting_user_cor_id: Optional[str] = None
+
+
+class EnergeticDeviceAccessResponse(EnergeticDeviceAccessBase):
+    id: str
+    granting_user_cor_id: Optional[str] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PaginatedBloodPressureResponse(BaseModel):
@@ -3036,6 +3102,15 @@ class MedicineIntakeResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class MedicineIntakeWithKitsResponse(BaseModel):
+    """Расширенный ответ: прием + доступные аптечки"""
+    intake: MedicineIntakeResponse
+    available_kits: List[FirstAidKitRead]
+    default_first_aid_kit_id: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class PaginatedMedicineIntakeResponse(BaseModel):
     """Схема для пагинированного списка приемов лекарств"""
     items: List[MedicineIntakeResponse]
@@ -3043,6 +3118,23 @@ class PaginatedMedicineIntakeResponse(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MedicineIntakeListWithKitsResponse(BaseModel):
+    """Список приемов + доступные аптечки и дефолтная"""
+    items: List[MedicineIntakeResponse]
+    available_kits: List[FirstAidKitRead]
+    default_first_aid_kit_id: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PaginatedMedicineIntakeWithKitsResponse(PaginatedMedicineIntakeResponse):
+    """Пагинированный список приемов + аптечки"""
+    available_kits: List[FirstAidKitRead]
+    default_first_aid_kit_id: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -3073,6 +3165,14 @@ class GroupedMedicineIntakesResponse(BaseModel):
     total_days: int = Field(..., description="Количество дней")
     date_range: dict = Field(..., description="Диапазон дат (start, end)")
     
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GroupedMedicineIntakesWithKitsResponse(GroupedMedicineIntakesResponse):
+    """Группировка приемов + аптечки"""
+    available_kits: List[FirstAidKitRead]
+    default_first_aid_kit_id: Optional[str] = None
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -3266,6 +3366,47 @@ class FirstAidKitRead(FirstAidKitBase):
 
     class Config:
         orm_mode = True
+
+
+class FirstAidKitShareCreateRequest(BaseModel):
+    to_user_cor_id: Optional[str] = Field(None, description="COR-ID получателя, если известен")
+    to_email: Optional[EmailStr] = Field(None, description="Email получателя (для отправки ссылки)")
+    expires_hours: Optional[int] = Field(72, ge=1, le=240, description="Срок жизни ссылки в часах")
+    context: Optional[dict] = Field(None, description="Доп. данные (канал, локаль и т.д.)")
+
+
+class FirstAidKitShareResponse(BaseModel):
+    id: str
+    token: str
+    status: FirstAidKitShareStatus
+    expires_at: datetime
+    deep_link: str
+
+    class Config:
+        orm_mode = True
+
+
+class FirstAidKitShareAcceptRequest(BaseModel):
+    token: str
+
+
+class FirstAidKitShareAcceptResponse(BaseModel):
+    share_id: str
+    new_kit_id: str
+    status: FirstAidKitShareStatus
+    accepted_at: datetime
+
+
+class FirstAidKitShareSendToCorIdRequest(BaseModel):
+    recipient_cor_id: str = Field(..., description="COR-ID получателя")
+    expires_hours: Optional[int] = Field(72, ge=1, le=240)
+    context: Optional[dict] = None
+
+
+class FirstAidKitShareSendToEmailRequest(BaseModel):
+    email: EmailStr
+    expires_hours: Optional[int] = Field(72, ge=1, le=240)
+    context: Optional[dict] = None
 
 
 class FirstAidKitItemAddRead(BaseModel):
@@ -3689,7 +3830,7 @@ class CorporateClientResponse(BaseModel):
     phone_number: str
     email: str
     tax_id: str
-    status: str  # pending, active, blocked, rejected, limit_exceeded
+    status: str  # pending, active, blocked, rejected, limit_exceeded, deleted
     fuel_limit: float  # Кредитный лимит (на сколько компания может уйти в минус)
     finance_company_id: Optional[int]
     current_balance: Optional[float] = None  # Текущий баланс из финансового бэкенда
@@ -3697,6 +3838,7 @@ class CorporateClientResponse(BaseModel):
     reviewed_by: Optional[str]
     reviewed_at: Optional[datetime]
     rejection_reason: Optional[str]
+    deleted_at: Optional[datetime] = None  # Soft delete timestamp
     created_at: datetime
     updated_at: datetime
     
@@ -3717,7 +3859,7 @@ class CorporateClientApprove(BaseModel):
 
 class CorporateClientReject(BaseModel):
     """Отклонение заявки (перевод в статус rejected)"""
-    rejection_reason: str = Field(..., min_length=1, max_length=1000, description="Причина отклонения")
+    rejection_reason: Optional[str] = Field(None, min_length=1, max_length=1000, description="Причина отклонения")
 
 
 class CorporateClientBlock(BaseModel):
@@ -3819,6 +3961,13 @@ class CompanyMembersUnifiedResponse(BaseModel):
     """Объединённый список сотрудников и приглашений"""
     existing_members: list[FinanceAccountMemberResponse] = []
     pending_invitations: list[CorporateEmployeeInvitationResponse] = []
+
+
+class UpdateCompanyLimitsRequest(BaseModel):
+    """Запрос на обновление лимитов компании в финансовом бэкенде"""
+    credit_limit: Optional[float] = Field(None, ge=0, description="Кредитный лимит (положительная сумма)")
+    balance_level_alert_limit: Optional[float] = Field(None, description="Уровень баланса для отправки вебхука (если не указан, используется credit_limit)")
+    balance_level_hook_url: Optional[str] = Field(None, description="URL вебхука (если не указан, используется дефолтный по окружению: dev или prod)")
 
 
 class FinanceCreateCompanyRequest(BaseModel):

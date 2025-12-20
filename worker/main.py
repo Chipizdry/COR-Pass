@@ -6,16 +6,6 @@ from cor_pass.config.config import settings
 from worker.polling_manager import PollingManager
 
 
-# DEFAULT_grid_feed_kw = 70000
-# DEFAULT_battery_level_percent = 30
-# DEFAULT_charge_battery_value = 300
-
-# COLLECTION_INTERVAL_SECONDS = 2
-# SCHEDULE_CHECK_INTERVAL_SECONDS = 3
-
-# current_active_schedule_id: Optional[str] = None
-
-
 CHECK_INTERVAL = 5
 polling_manager = PollingManager()
 

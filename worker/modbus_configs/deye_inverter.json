@@ -406,6 +406,23 @@
                 }
             ]
         },
+        "gen_relay_status": {
+            "description": "Generator relay status (register 552)",
+            "start_address": 552,
+            "count": 1,
+            "func_code": 3,
+            "registers": [
+                {
+                    "name": "gen_relay",
+                    "offset": 0,
+                    "type": "uint16",
+                    "scale": 1,
+                    "unit": "bool",
+                    "bit": 3,
+                    "description": "Generator relay status - bit 3 (1=ON/running, 0=OFF)"
+                }
+            ]
+        },
         "generator": {
             "description": "Generator status (registers 661-667)",
             "start_address": 661,
@@ -623,6 +640,7 @@
                 "grid_current",
                 "battery",
                 "solar",
+                "gen_relay_status",
                 "generator",
                 "inverter"
             ],

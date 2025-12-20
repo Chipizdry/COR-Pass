@@ -7,9 +7,21 @@ const STATUS_COLORS = {
    pending: "#0B90C9",
    active: "#49AC26",
    blocked: "#DF1125",
-   rejected: "#000", // Заявку відхилено - поки без кольору
+   rejected: "#B1A1DA", // Заявку відхилено - змінити колір?
    limit_exceeded: "#FD7441"
 };
+
+function formatDateTime(str) {
+   if (!str) return "";
+   const d = new Date(str);
+   return d.toLocaleString("uk-UA", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+   });
+}
 
 // DOM-посилання
 const tbody = document.getElementById("tableBody");
@@ -21,7 +33,28 @@ const contextMenu = document.getElementById("actionsMenu");
 const infoModal = document.getElementById("infoModal");
 const limitModal = document.getElementById("limitModal");
 const blockModal = document.getElementById("blockModal");
+const unblockModal = document.getElementById("unblockModal");
 const deleteModal = document.getElementById("deleteModal");
+
+// Видимість кнопок при зміні статусу
+function updateInfoModalLayout(status) {
+    if (!infoModal) return;
+
+    const buttonsBox = infoModal.querySelector(".buttons-modal");
+
+    if (!buttonsBox) return;
+
+    // Статус "pending" → показуємо блок кнопок
+    if (status === "pending") {
+        buttonsBox.style.display = "";
+        infoModal.style.paddingBottom = "";
+    } 
+    // Інші статуси → ховаємо блок кнопок
+    else {
+        buttonsBox.style.display = "none";
+        infoModal.style.paddingBottom = "30px";
+    }
+}
 
 //Переклад
 let lang = "uk";
@@ -101,6 +134,9 @@ async function getCompanies() {
          email: item.email,
          edrpou: item.tax_id,
          balance: item.current_balance,
+         created_at: item.created_at,
+         updated_at: item.updated_at,
+         last_balance_update: item.last_balance_update,
          status: item.status,    // pending / active / blocked / rejected / limit_exceeded
          // додатково для модалок:
          owner_cor_id: item.owner_cor_id,
@@ -129,42 +165,45 @@ function renderTableData(list) {
       tr.dataset.status = statusKey || "";
 
       tr.innerHTML = `
-        <td>${company.company_form || ""}</td>
-        <td>${company.full_company_name || ""}</td>
-        <td>${company.company_address || ""}</td>
-        <td>${company.phone || ""}</td>
-        <td>${company.email || ""}</td>
-        <td>${company.edrpou || ""}</td>
-        <td>${company.balance != null ? company.balance : ""}</td>
-        <td>
-          <span class="status">
-            <span class="status-container">
-              <span class="status-dot" style="background:${color}"></span>
-              <span class="status-label"
-                     data-translate="status_${statusKey}">
-                     ${dict[`status_${statusKey}`] || statusKey}
+         <td>${company.company_form || ""}</td>
+         <td>${company.full_company_name || ""}</td>
+         <td>${company.company_address || ""}</td>
+         <td>${company.phone || ""}</td>
+         <td>${company.email || ""}</td>
+         <td>${company.edrpou || ""}</td>
+         <td>${company.balance != null ? company.balance.toLocaleString('uk-UA') : ""}</td>
+         <td>${company.fuel_limit != null ? company.fuel_limit.toLocaleString('uk-UA') : ""}</td>
+         <td>${formatDateTime(company.created_at)}</td>
+         <td>${formatDateTime(company.updated_at)}</td>
+         <td>${formatDateTime(company.last_balance_update)}</td>
+         <td>
+            <span class="status">
+               <span class="status-container">
+               <span class="status-dot" style="background:${color}"></span>
+               <span class="status-label"
+                        data-translate="status_${statusKey}">
+                        ${dict[`status_${statusKey}`] || statusKey}
+                  </span>
                </span>
-
-              <button class="status-menu-btn"
-                      type="button"
-                      aria-label="${dict.statusMenuLabel || 'Дії з користувачем'}">
-                <!-- контекстне меню на три крапки -->
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                     xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
-                    fill="#B1A1DA" />
-                  <path
-                    d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
-                    fill="#B1A1DA" />
-                  <path
-                    d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
-                    fill="#B1A1DA" />
-                </svg>
-              </button>
+               <button class="status-menu-btn"
+                        type="button"
+                        aria-label="${dict.statusMenuLabel || 'Дії з користувачем'}">
+                  <!-- контекстне меню на три крапки -->
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        xmlns="http://www.w3.org/2000/svg">
+                     <path
+                     d="M10 18.375C10 17.3395 10.8395 16.5 11.875 16.5C12.9105 16.5 13.75 17.3395 13.75 18.375C13.75 19.4105 12.9105 20.25 11.875 20.25C10.8395 20.25 10 19.4105 10 18.375Z"
+                     fill="#B1A1DA" />
+                     <path
+                     d="M10 12.125C10 11.0895 10.8395 10.25 11.875 10.25C12.9105 10.25 13.75 11.0895 13.75 12.125C13.75 13.1605 12.9105 14 11.875 14C10.8395 14 10 13.1605 10 12.125Z"
+                     fill="#B1A1DA" />
+                     <path
+                     d="M10 5.875C10 4.83947 10.8395 4 11.875 4C12.9105 4 13.75 4.83947 13.75 5.875C13.75 6.91053 12.9105 7.75 11.875 7.75C10.8395 7.75 10 6.91053 10 5.875Z"
+                     fill="#B1A1DA" />
+                  </svg>
+               </button>
             </span>
-          </span>
-        </td>
+         </td>
       `;
 
       // Інформація про клієнта
@@ -212,11 +251,30 @@ function openContextMenu(anchorEl, company) {
    if (!contextMenu) return;
 
    const rect = anchorEl.getBoundingClientRect();
-   contextMenu.style.top = `${rect.bottom + window.scrollY}px`;
-   contextMenu.style.left = `${rect.right + window.scrollX - contextMenu.offsetWidth}px`;
    contextMenu.classList.add("visible");
 
+   const menuRect = contextMenu.getBoundingClientRect();
+
+   const top = rect.top + window.scrollY - menuRect.height;   // menu.bottom = rect.top
+   const left = rect.left + window.scrollX - menuRect.width;   // menu.right  = rect.left
+
+   contextMenu.style.top = `${top}px`;
+   contextMenu.style.left = `${left}px`;
+
    contextMenu.dataset.id = company.id ?? "";
+
+   console.log(company, "contextMenu")
+   console.log(contextMenu, "contextMenu")
+   contextMenu.querySelectorAll('.actions-button').forEach(elem => elem.style.display = "block")
+
+   if (company.status !== "active") {
+      contextMenu.querySelector('#block_company').closest('.actions-button').style.display = "none"
+   }
+
+   if (company.status !== "blocked") {
+      contextMenu.querySelector('#unblock_company').closest('.actions-button').style.display = "none"
+   }
+
 
    // Клік поза меню - закриває його
    function outsideClickHandler(e) {
@@ -238,6 +296,7 @@ function initContextMenuActions() {
 
    const limitBtn = contextMenu.querySelector("#limit");
    const blockBtn = contextMenu.querySelector("#block_company");
+   const unblockBtn = contextMenu.querySelector("#unblock_company");
    const deleteBtn = contextMenu.querySelector("#delete_company");
 
    limitBtn?.addEventListener("click", () => {
@@ -256,6 +315,12 @@ function initContextMenuActions() {
       closeContextMenu();
       if (!activeCompany) return;
       openModal(deleteModal);
+   });
+
+   unblockBtn?.addEventListener("click", () => {
+      closeContextMenu();
+      if (!activeCompany) return;
+      openModal(unblockModal);
    });
 }
 
@@ -276,6 +341,7 @@ function fillInfoModalFields(company) {
 function openCompanyInfoModal(company) {
    activeCompany = company;
    fillInfoModalFields(company);
+   updateInfoModalLayout(company.status);
    openModal(infoModal);
 }
 
@@ -417,6 +483,9 @@ function initLimitModalActions() {
       }
 
       const amountInput = limitModal.querySelector('input[type="number"]');
+      /* const radios = limitModal.querySelectorAll('input[name="time"]');
+      const selected = Array.from(radios).find(r => r.checked);
+      const period = selected ? selected.value : null; */
       const amount = amountInput ? Number(amountInput.value.replace(",", ".")) : null;
 
       try {
@@ -429,13 +498,13 @@ function initLimitModalActions() {
             },
             body: JSON.stringify({
                credit_limit: amount,
-               balance_level_alert_limit: amount,
-               balance_level_hook_url: "https://dev-corid.cor-medical.ua/api/webhooks/balance-level-alert"
             })
          });
 
          if (!res.ok) {
             console.error("Помилка при оновленні ліміту", res.status);
+         } else {
+            getCompanies()
          }
       } catch (err) {
          console.error("Помилка мережі при оновленні ліміту", err);
@@ -456,12 +525,80 @@ function initBlockModalActions() {
    });
 
    blockBtn?.addEventListener("click", async () => {
-      if (!activeCompany) return;
+      if (!activeCompany || !checkToken()) {
+         closeModal(blockModal);
+         return;
+      }
 
-      // беку ще нема? тому поки локально
-      activeCompany.status = "blocked";
-      getCompanies()
-      closeModal(blockModal);
+      try {
+         const res = await fetch(`${API_BASE_URL}/api/admin/corporate-clients/${activeCompany.id}/block`, {
+            method: "POST",
+            headers: {
+               "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+               "Content-Type": "application/json",
+               "Accept": "application/json"
+            },
+            body: JSON.stringify({
+               client_id: activeCompany.id,
+            })
+         });
+
+         if (!res.ok) {
+            console.error("Помилка при оновленні ліміту", res.status);
+         }
+
+         // беку ще нема? тому поки локально
+         activeCompany.status = "blocked";
+         getCompanies()
+      } catch (err) {
+         console.error("Помилка мережі при оновленні ліміту", err);
+      } finally {
+         closeModal(blockModal);
+      }
+
+   });
+}
+
+/* Алерт "Розблокувати
+" */
+function initUnBlockModalActions() {
+   if (!unblockModal) return;
+   const unblockBtn = unblockModal.querySelector(".unblockBtn");
+   const cancelBtn = unblockModal.querySelector(".cancelBtn");
+
+   cancelBtn?.addEventListener("click", () => {
+      closeModal(unblockModal);
+   });
+
+   unblockBtn?.addEventListener("click", async () => {
+      if (!activeCompany || !checkToken()) {
+         closeModal(unblockModal);
+         return;
+      }
+
+      try {
+         const res = await fetch(`${API_BASE_URL}/api/admin/corporate-clients/${activeCompany.id}/unblock`, {
+            method: "POST",
+            headers: {
+               "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+               "Content-Type": "application/json",
+               "Accept": "application/json"
+            },
+            body: JSON.stringify({
+               client_id: activeCompany.id,
+            })
+         });
+
+         if (!res.ok) {
+            console.error("Помилка при разблакуванні компаніі", res.status);
+         }
+
+         getCompanies()
+      } catch (err) {
+         console.error("Помилка мережі при разблакуванні компаніі", err);
+      } finally {
+         closeModal(unblockModal);
+      }
    });
 }
 
@@ -506,6 +643,7 @@ document.addEventListener("DOMContentLoaded", () => {
    initInfoModalActions();
    initLimitModalActions();
    initBlockModalActions();
+   initUnBlockModalActions();
    initDeleteModalActions();
    getCompanies();
 });

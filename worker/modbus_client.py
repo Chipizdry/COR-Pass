@@ -1,4 +1,6 @@
 from typing import Optional, Dict, Union
+import asyncio
+import os
 from loguru import logger
 from pymodbus.client import AsyncModbusTcpClient
 from datetime import datetime
@@ -72,6 +74,13 @@ ESS_REGISTERS_ALARMS = {
     "voltage_sensor_alarm": 43,
     "grid_lost": 64,
 }
+
+# ===============================
+# Backoff настройки подключения
+# ===============================
+CONNECT_MAX_RETRIES = 3
+CONNECT_BASE_DELAY = 1.0
+CONNECT_MAX_DELAY = 8.0
 
 
 # ============================================================================
@@ -296,18 +305,40 @@ async def get_or_create_modbus_client(
                         logger.warning(f"[{object_id or client_key}] ⚠️ Ошибка при закрытии клиента: {e}")
                     del _modbus_tcp_clients[client_key]
             
-            # Создаём новый клиент
-            logger.info(f"[{object_id or client_key}] 🔄 Создание Modbus TCP клиента для {client_key}...")
-            new_client = AsyncModbusTcpClient(host=ip_address, port=port, timeout=5)
-            await new_client.connect()
-            
-            if not new_client.connected:
-                logger.error(f"[{object_id or client_key}] ❌ Не удалось подключиться к {client_key}")
-                return None
-            
-            logger.info(f"[{object_id or client_key}] ✅ Modbus TCP клиент {client_key} подключен")
-            _modbus_tcp_clients[client_key] = new_client
-            return new_client
+            # Создаём новый клиент с backoff-повторами
+            logger.info(f"[{object_id or client_key}] 🔄 Создание Modbus TCP клиента для {client_key} (retries={CONNECT_MAX_RETRIES})...")
+            attempt = 0
+            delay = CONNECT_BASE_DELAY
+            last_error = None
+            while attempt <= CONNECT_MAX_RETRIES:
+                new_client = AsyncModbusTcpClient(host=ip_address, port=port, timeout=5)
+                try:
+                    await new_client.connect()
+                    if new_client.connected:
+                        logger.info(f"[{object_id or client_key}] ✅ Modbus TCP клиент {client_key} подключен (attempt {attempt+1})")
+                        _modbus_tcp_clients[client_key] = new_client
+                        return new_client
+                    else:
+                        last_error = f"not connected after connect()"
+                        try:
+                            await new_client.close()
+                        except Exception:
+                            pass
+                except Exception as e:
+                    last_error = str(e)
+                    try:
+                        await new_client.close()
+                    except Exception:
+                        pass
+
+                attempt += 1
+                if attempt <= CONNECT_MAX_RETRIES:
+                    logger.warning(f"[{object_id or client_key}] ⚠️ Подключение к {client_key} не удалось (attempt {attempt}/{CONNECT_MAX_RETRIES}), retry in {delay:.1f}s: {last_error}")
+                    await asyncio.sleep(delay)
+                    delay = min(delay * 2, CONNECT_MAX_DELAY)
+
+            logger.error(f"[{object_id or client_key}] ❌ Не удалось подключиться к {client_key} после {CONNECT_MAX_RETRIES} попыток: {last_error}")
+            return None
             
         except Exception as e:
             logger.exception(f"[{object_id or client_key}] ❗ Ошибка при создании Modbus TCP клиента для {client_key}", exc_info=e)
@@ -324,18 +355,36 @@ async def get_or_create_modbus_client(
                 logger.debug(f"[{object_key}] 🔌 Переиспользование Modbus OVER TCP клиента для {object_key}")
                 return client
             
-            # Создаём новый клиент
-            logger.info(f"[{object_key}] 🔄 Создание Modbus OVER TCP клиента для {object_key}...")
-            new_client = ModbusTCP(host=ip_address, port=port, slave_id=slave_id, timeout=3)
-            
-            # Пытаемся подключиться
-            if not new_client.connect():
-                logger.error(f"[{object_key}] ❌ Не удалось подключиться к {ip_address}:{port}")
-                return None
-            
-            logger.info(f"[{object_key}] ✅ Modbus OVER TCP клиент {object_key} создан и подключен")
-            _modbus_over_tcp_clients[object_key] = new_client
-            return new_client
+            # Создаём новый клиент с backoff-повторами
+            logger.info(f"[{object_key}] 🔄 Создание Modbus OVER TCP клиента для {object_key} (retries={CONNECT_MAX_RETRIES})...")
+            attempt = 0
+            delay = CONNECT_BASE_DELAY
+            last_error = None
+            while attempt <= CONNECT_MAX_RETRIES:
+                new_client = ModbusTCP(host=ip_address, port=port, slave_id=slave_id, timeout=3)
+                try:
+                    if new_client.connect():
+                        logger.info(f"[{object_key}] ✅ Modbus OVER TCP клиент {object_key} создан и подключен (attempt {attempt+1})")
+                        _modbus_over_tcp_clients[object_key] = new_client
+                        return new_client
+                    else:
+                        last_error = "connect() returned False"
+                        new_client.close()
+                except Exception as e:
+                    last_error = str(e)
+                    try:
+                        new_client.close()
+                    except Exception:
+                        pass
+
+                attempt += 1
+                if attempt <= CONNECT_MAX_RETRIES:
+                    logger.warning(f"[{object_key}] ⚠️ Подключение к {ip_address}:{port} не удалось (attempt {attempt}/{CONNECT_MAX_RETRIES}), retry in {delay:.1f}s: {last_error}")
+                    await asyncio.sleep(delay)
+                    delay = min(delay * 2, CONNECT_MAX_DELAY)
+
+            logger.error(f"[{object_key}] ❌ Не удалось подключиться к {ip_address}:{port} после {CONNECT_MAX_RETRIES} попыток: {last_error}")
+            return None
             
         except Exception as e:
             logger.exception(f"[{object_key}] ❗ Ошибка при создании Modbus OVER TCP клиента для {object_key}", exc_info=e)

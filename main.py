@@ -298,7 +298,9 @@ async def track_active_users(request: Request, call_next):
                     algorithms=[auth_service.ALGORITHM],
                 )
                 oid = decoded_token.get("oid")
-                await redis_client.set(oid, time.time())
+                # Только сохраняем в Redis если oid не None
+                if oid:
+                    await redis_client.set(oid, time.time())
             except JWTError:
                 pass
     response = await call_next(request)

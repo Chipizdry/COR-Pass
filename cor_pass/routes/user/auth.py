@@ -149,6 +149,7 @@ from cor_pass.repository.user import user_session as repository_session
 from cor_pass.repository.user import cor_id as repository_cor_id
 from cor_pass.repository.user import invitation as repository_invitation
 from cor_pass.repository.fuel import corporate_employee_invitation as repo_employee_invitation
+from cor_pass.repository.energy import list_devices_for_user
 from cor_pass.services.user.auth import auth_service
 from cor_pass.services.shared import device_info as di
 from cor_pass.services.shared.qr_code import generate_qr_code
@@ -208,7 +209,7 @@ ALGORITHM = settings.algorithm
 # ВАЖНО: для тестовых пользователей сокращаем ТОЛЬКО срок жизни access токена.
 # Refresh токен оставляем стандартным, чтобы механизм обновления не ломался.
 TEST_EMAILS = [
-    "vadym.borshchevskyi.work@gmail.com",
+    # "vadym.borshchevskyi.work@gmail.com",
     "o.zhovtenko@cor-int.com"
 ]
 TEST_ACCESS_EXPIRES_DELTA = 1/60  # 1 минута (в часах)
@@ -224,6 +225,11 @@ async def get_current_user_profile(
     
     """
     user_roles = await repository_person.get_user_roles(email=current_user.email, db=db)
+    
+    # Проверяем наличие энергетических устройств (владение или доступ)
+    energetic_devices = await list_devices_for_user(db, current_user.cor_id)
+    if energetic_devices and "device_user" not in user_roles:
+        user_roles.append("device_user")
     
     # Получаем профиль, если он есть
     first_name = None
@@ -347,6 +353,9 @@ async def signup(
 
     # Проверка ролей
     user_roles = await repository_person.get_user_roles(email=body.email, db=db)
+    energetic_devices = await list_devices_for_user(db, new_user.cor_id)
+    if energetic_devices and "device_user" not in user_roles:
+        user_roles.append("device_user")
     
     # ====== АВТОМАТИЧЕСКОЕ ЗАВЕРШЕНИЕ ПРИГЛАШЕНИЙ НА ДОБАВЛЕНИЕ В КОМПАНИЮ ======
     # Проверяем, были ли приглашения на добавление в компанию для этого email
@@ -638,6 +647,9 @@ async def login(
 
     # ---- Роли ----
     user_roles = await repository_person.get_user_roles(email=user.email, db=db)
+    energetic_devices = await list_devices_for_user(db, user.cor_id)
+    if energetic_devices and "device_user" not in user_roles:
+        user_roles.append("device_user")
 
     # ---- Генерация токенов ----
     token_data = {"oid": str(user.id), "corid": user.cor_id, "roles": user_roles}

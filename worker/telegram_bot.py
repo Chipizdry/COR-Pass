@@ -239,6 +239,75 @@ class TelegramBatteryMonitor:
         
         return "\n".join(message_parts)
     
+    async def check_generator_status(
+        self,
+        object_id: str,
+        object_name: str,
+        gen_relay: int,
+        chat_ids: Optional[List[str]] = None
+    ):
+        """
+        Проверяет статус генератора и отправляет уведомление при запуске/остановке
+        
+        Args:
+            object_id: ID энергетического объекта
+            object_name: Название объекта
+            gen_relay: Значение реле генератора (1=включен, 0=выключен)
+            chat_ids: Список chat_id для отправки (из EnergeticObject.telegram_chat_ids)
+        """
+        # Ключ для хранения последнего состояния
+        state_key = f"gen_{object_id}"
+        is_on = gen_relay == 1
+        
+        # Проверяем изменение состояния
+        if not hasattr(self, '_generator_states'):
+            self._generator_states = {}
+        
+        last_state = self._generator_states.get(state_key)
+        
+        # Если состояние не изменилось, ничего не делаем
+        if last_state == is_on:
+            return
+        
+        # Обновляем состояние
+        self._generator_states[state_key] = is_on
+        
+        # Пропускаем первую инициализацию (когда last_state=None)
+        if last_state is None:
+            logger.info(f"Generator monitor initialized for {object_name}: relay={gen_relay}")
+            return
+        
+        # Формируем сообщение в зависимости от нового состояния
+        now_local = datetime.now(self.timezone)
+        timestamp = now_local.strftime("%Y-%m-%d %H:%M:%S")
+        
+        if is_on:
+            # Генератор запустился
+            message = (
+                "⚡ <b>ГЕНЕРАТОР ЗАПУЩЕН</b>\n\n"
+                f"📍 Объект: <b>{object_name}</b>\n"
+                f"🔌 Статус: <b>РАБОТАЕТ</b>\n"
+                f"🕐 Время: {timestamp}"
+            )
+            log_msg = f"⚡ Generator STARTED for {object_name}"
+        else:
+            # Генератор остановился
+            message = (
+                "🛑 <b>ГЕНЕРАТОР ОСТАНОВЛЕН</b>\n\n"
+                f"📍 Объект: <b>{object_name}</b>\n"
+                f"🔌 Статус: <b>ВЫКЛЮЧЕН</b>\n"
+                f"🕐 Время: {timestamp}"
+            )
+            log_msg = f"🛑 Generator STOPPED for {object_name}"
+        
+        # Отправляем уведомление
+        success = await self.send_message(message, chat_ids=chat_ids)
+        
+        if success:
+            logger.info(log_msg)
+        else:
+            logger.warning(f"Failed to send generator alert for {object_name}")
+    
     async def send_test_message(self):
         """Отправляет тестовое сообщение для проверки работы бота"""
         # Текущее время в настроенном часовом поясе
@@ -630,6 +699,9 @@ async def handle_telegram_command(command: str, chat_id: str, message_id: int):
             # Отладочная команда для проверки данных
             await send_debug_message(monitor, chat_id)
         
+        elif cmd == '/generator':
+            await send_generator_message(monitor, chat_id)
+        
         else:
             await monitor.send_message(
                 f"❓ Неизвестная команда: {cmd}\nИспользуйте /help для списка команд",
@@ -649,6 +721,7 @@ async def send_help_message(monitor: TelegramBatteryMonitor, chat_id: str):
 /status - Общий статус всех объектов
 /battery - Информация о батареях
 /power - Текущая мощность (ввод/вывод)
+/generator - Статус генератора
 /schedule [object_id] - Активное расписание
 /debug - Отладочная информация
 /help - Эта справка
@@ -825,6 +898,135 @@ async def send_debug_message(monitor: TelegramBatteryMonitor, chat_id: str):
         message_parts.append("\nCheck if CERBO_COLLECTION task is running")
     
     await monitor.send_message("\n".join(message_parts), chat_id)
+
+
+async def send_generator_message(monitor: TelegramBatteryMonitor, chat_id: str):
+    """
+    Отправляет текущий статус генератора для объектов с Deye инвертором.
+    Читает регистр 552 (gen_relay) напрямую из устройства.
+    """
+    from sqlalchemy import select
+    from cor_pass.database.db import async_session_maker
+    from cor_pass.database.models import EnergeticObject
+    from worker.modbus_broker import get_broker, RequestPriority
+    
+    try:
+        # Получаем все объекты, к которым привязан этот чат
+        async with async_session_maker() as session:
+            result = await session.execute(
+                select(EnergeticObject).where(
+                    EnergeticObject.is_active == True
+                )
+            )
+            all_objects = result.scalars().all()
+            
+            # Фильтруем по chat_id (telegram_chat_ids это строка через запятую)
+            energetic_objects = [
+                obj for obj in all_objects
+                if obj.telegram_chat_ids and chat_id in [
+                    cid.strip() for cid in str(obj.telegram_chat_ids).split(',')
+                ]
+            ]
+        
+        if not energetic_objects:
+            await monitor.send_message(
+                "❌ <b>Доступ запрещен</b>\n\n"
+                "Этот чат не привязан ни к одному энергообъекту.\n"
+                "Обратитесь к администратору.",
+                chat_id
+            )
+            return
+        
+        # Фильтруем объекты с генератором (Deye инвертор)
+        deye_objects = [
+            obj for obj in energetic_objects 
+            if obj.modbus_config_file == 'deye_inverter.json'
+        ]
+        
+        if not deye_objects:
+            await monitor.send_message(
+                "ℹ️ <b>Генератор не найден</b>\n\n"
+                "Ни один из доступных объектов не имеет подключенного генератора.",
+                chat_id
+            )
+            return
+        
+        # Получаем broker для чтения регистров
+        broker = get_broker()
+        
+        # Формируем сообщение
+        now_local = datetime.now(monitor.timezone)
+        timestamp = now_local.strftime("%Y-%m-%d %H:%M:%S")
+        
+        message_parts = [
+            "⚡ <b>СТАТУС ГЕНЕРАТОРА</b>\n",
+            f"🕐 Время запроса: {timestamp}\n"
+        ]
+        
+        # Опрашиваем каждый объект с генератором
+        for obj in deye_objects:
+            try:
+                # Определяем slave_id (может быть в объекте или в конфигурации)
+                slave_id = obj.slave_id if hasattr(obj, 'slave_id') and obj.slave_id else 1
+                
+                # Читаем регистр 552 (gen_relay)
+                result = await broker.submit_request(
+                    protocol=obj.protocol,
+                    host=obj.ip_address,
+                    port=obj.port,
+                    operation="read",
+                    params={"start": 552, "count": 1, "func_code": 3},
+                    slave_id=slave_id,
+                    object_id=str(obj.id),
+                    priority=RequestPriority.USER_READ,
+                    timeout=5.0,
+                    request_id=f"telegram_gen_check_{obj.id}",
+                )
+                
+                raw_data = result.get("data", [])
+                if not raw_data:
+                    message_parts.append(
+                        f"\n📍 <b>{obj.name}</b>\n"
+                        f"   ❌ Нет данных от устройства"
+                    )
+                    continue
+                
+                # Получаем полное значение регистра и извлекаем третий бит (индекс 3)
+                register_value = raw_data[0]
+                logger.debug(f"/generator: raw 552={register_value}, bit3={(register_value >> 3) & 1}")
+                gen_relay = (register_value >> 3) & 1
+                is_on = gen_relay == 1
+                
+                if is_on:
+                    status_icon = "⚡"
+                    status_text = "<b>РАБОТАЕТ</b>"
+                else:
+                    status_icon = "🛑"
+                    status_text = "<b>ВЫКЛЮЧЕН</b>"
+                
+                logger.debug(f"/generator: object={obj.name}, is_on={is_on}, gen_relay_bit={gen_relay}")
+                message_parts.append(
+                    f"\n📍 <b>{obj.name}</b>\n"
+                    f"   {status_icon} Статус: {status_text}\n"
+                )
+                
+            except Exception as e:
+                logger.error(f"Error reading generator status for object {obj.id}: {e}", exc_info=True)
+                message_parts.append(
+                    f"\n📍 <b>{obj.name}</b>\n"
+                    f"   ⚠️ Ошибка связи: {str(e)[:50]}"
+                )
+        
+        await monitor.send_message("\n".join(message_parts), chat_id)
+        
+    except Exception as e:
+        logger.error(f"Error in send_generator_message: {e}", exc_info=True)
+        await monitor.send_message(
+            "❌ <b>Ошибка выполнения команды</b>\n\n"
+            f"Произошла внутренняя ошибка при проверке статуса генератора.\n"
+            f"Попробуйте позже или обратитесь к администратору.",
+            chat_id
+        )
 
 
 # Polling loop для обработки команд

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вашу заявку одобрено</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .container {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border-left: 6px solid #22c55e;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 24px;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #1a1a1a;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .header .checkmark {
+            font-size: 48px;
+            color: #22c55e;
+            margin-bottom: 12px;
+        }
+
+        .content {
+            color: #3a3a3a;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .company-name {
+            color: #22c55e;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .message {
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            padding: 18px;
+            margin: 24px 0;
+            border-radius: 4px;
+            color: #1a5e2c;
+        }
+
+        .cta-section {
+            margin: 32px 0;
+            text-align: center;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #ffffff;
+            padding: 14px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: none;
+            cursor: pointer;
+        }
+
+        .cta-button:hover {
+            background: linear-gradient(135deg, #2d2d2d 0%, #3a3a3a 100%);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .features {
+            margin: 28px 0;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .features h3 {
+            margin: 0 0 16px 0;
+            color: #1a1a1a;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .features ul {
+            margin: 0;
+            padding-left: 20px;
+            list-style: none;
+        }
+
+        .features li {
+            margin: 8px 0;
+            padding-left: 24px;
+            position: relative;
+            color: #3a3a3a;
+        }
+
+        .features li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #22c55e;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .footer {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e5e5;
+            text-align: center;
+            color: #7a7a7a;
+            font-size: 13px;
+        }
+
+        .footer p {
+            margin: 6px 0;
+        }
+
+        .accent-green {
+            color: #22c55e;
+        }
+
+        .accent-dark {
+            color: #1a1a1a;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="checkmark">✓</div>
+            <h1>Заявку одобрено!</h1>
+        </div>
+
+        <div class="content">
+            <p>
+                Ласкаво просимо до програми корпоративних клієнтів <span class="accent-dark">COR-ENERGY</span>!
+            </p>
+
+            <div class="message">
+                <p style="margin: 0; font-size: 16px;">
+                    Ваша заявка на додавання компанії <span class="company-name">{{ company_name }}</span> була успішно
+                    схвалена.
+                </p>
+            </div>
+
+            <p>
+                Тепер ви можете зайти в свій особистий кабінет, де зможете:
+            </p>
+
+            <div class="features">
+                <h3>Можливості в особистому кабінеті:</h3>
+                <ul>
+                    <li>Додавати нових співробітників до програми</li>
+                    <li>Керувати лімітами витрат кожного співробітника</li>
+                    <li>Переглядати транзакції співробітників</li>
+                </ul>
+            </div>
+
+            <div class="cta-section">
+                <a href="{{ cabinet_url }}" class="cta-button">Перейти в особистий кабінет</a>
+            </div>
+
+            <p style="color: #7a7a7a; font-size: 14px;">
+                Якщо у вас виникли питання або вам потрібна додаткова допомога, не соромтесь звернутись до нашої служби
+                підтримки.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>© 2025 COR-ENERGY. Всі права захищені.</p>
+        </div>
+    </div>
+</body>
+
+</html>

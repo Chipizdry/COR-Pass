@@ -24,6 +24,7 @@ from cor_pass.schemas import (
     UserDoctorsDataResponseForAdmin,
     UserProfileResponseForAdmin,
     UserRolesResponseForAdmin,
+    UserDbResponse
 )
 from cor_pass.repository.user import person
 from pydantic import EmailStr
@@ -40,7 +41,7 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
 @router.get(
-    "/get_all", response_model=List[UserDb], dependencies=[Depends(admin_access)]
+    "/get_all", response_model=List[UserDbResponse], dependencies=[Depends(admin_access)]
 )
 async def get_all_users(
     skip: int = 0,
@@ -69,7 +70,7 @@ async def get_all_users(
         last_active = None
         if await redis_client.exists(oid):
             users_last_activity = await redis_client.get(oid)
-            user_response = UserDb(
+            user_response = UserDbResponse(
                 id=user.id,
                 cor_id=user.cor_id,
                 email=user.email,
@@ -83,7 +84,7 @@ async def get_all_users(
                 last_active=users_last_activity,
             )
         else:
-            user_response = UserDb(
+            user_response = UserDbResponse(
                 id=user.id,
                 cor_id=user.cor_id,
                 email=user.email,

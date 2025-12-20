@@ -18,6 +18,7 @@ from cor_pass.database.models import (
     CorporateClient,
     Profile,
 )
+from cor_pass.services.shared.email import send_corporate_request_approved_email
 from cor_pass.schemas import (
     FuelQRGenerateRequest,
     FuelQRGenerateResponse,
@@ -38,6 +39,7 @@ from cor_pass.schemas import (
     FuelOfflineQRVerifyRequest,
     FuelOfflineQRVerifyResponse,
     FuelOfflineTOTPSecretResponse,
+    CorporateClientReject,
 )
 from cor_pass.services.shared.totp_service import TOTPService
 from cor_pass.services.fuel.fuel_qr_service import FuelQRService
@@ -577,33 +579,46 @@ async def get_corporate_client_requests(
     status_filter: Optional[str] = None,
     skip: int = 0,
     limit: int = 100,
+    include_deleted: bool = False,
 ) -> list[CorporateClientWithOwner]:
     """
     Получение списка корпоративных клиентов (для админа)
     Если status_filter не указан, показывает всех клиентов
     
+    Для компаний с finance_company_id получает актуальный баланс из финбэка
+    и сохраняет его в БД.
+    
     Args:
         db: Сессия базы данных
-        status_filter: Фильтр по статусу (pending, active, blocked, rejected, limit_exceeded)
+        status_filter: Фильтр по статусу (pending, active, blocked, rejected, limit_exceeded, deleted)
         skip: Пропустить записей
         limit: Максимум записей
         
     Returns:
-        Список клиентов с информацией о владельцах
+        Список клиентов с информацией о владельцах и актуальным балансом
     """
     try:
         query = select(CorporateClient).join(
             User, CorporateClient.owner_cor_id == User.cor_id
-        ).where(CorporateClient.deleted_at.is_(None))
-        
-        if status_filter:
-            query = query.where(CorporateClient.status == status_filter)
+        )
+        # Deleted handling: if explicitly filtering by 'deleted', show soft-deleted records
+        if status_filter == "deleted":
+            query = query.where(CorporateClient.deleted_at.is_not(None))
+            query = query.where(CorporateClient.status == "deleted")
+        else:
+            if not include_deleted:
+                query = query.where(CorporateClient.deleted_at.is_(None))
+            if status_filter:
+                query = query.where(CorporateClient.status == status_filter)
         
         query = query.order_by(CorporateClient.created_at.desc())
         query = query.offset(skip).limit(limit)
         
         result = await db.execute(query)
         clients = result.scalars().all()
+        
+        # Инициализируем сервис финансового бэкенда
+        finance_service = FinanceBackendService()
         
         # Формируем ответ с информацией о владельцах
         response = []
@@ -613,12 +628,37 @@ async def get_corporate_client_requests(
             user_result = await db.execute(user_query)
             user = user_result.scalar_one_or_none()
             
+            # Если у компании есть finance_company_id, получаем актуальный баланс из финбэка
+            if client.finance_company_id:
+                try:
+                    summary = await finance_service.get_partner_company_summary(
+                        company_id=client.finance_company_id,
+                        db=db
+                    )
+                    
+                    if summary and not isinstance(summary, dict) or "error" not in summary:
+                        # summary возвращает массив с одним объектом
+                        if isinstance(summary, list) and len(summary) > 0:
+                            company_data = summary[0]
+                            balance = company_data.get("balance")
+                            
+                            if balance is not None:
+                                # Обновляем баланс в БД
+                                client.current_balance = float(balance)
+                                client.last_balance_update = datetime.utcnow()
+                                logger.info(f"Updated balance for company {client.id}: {balance}")
+                except Exception as finance_err:
+                    logger.warning(f"Failed to get balance for company {client.id} from finance backend: {finance_err}")
+            
             client_dict = CorporateClientResponse.model_validate(client).model_dump()
             client_dict["owner_first_name"] = None  # user.first_name if user else None
             client_dict["owner_last_name"] = None  # user.last_name if user else None
             client_dict["owner_email"] = user.email if user else None
             
             response.append(CorporateClientWithOwner(**client_dict))
+        
+        # Сохраняем обновлённые балансы
+        await db.commit()
         
         return response
         
@@ -792,6 +832,17 @@ async def approve_corporate_client_request(
         
         logger.info(f"Corporate client approved: {client.id}, finance_company_id: {finance_company_id}")
         
+        # Отправляем уведомление об одобрении заявки владельцу компании
+        try:
+            await send_corporate_request_approved_email(
+                email=owner_user.email,
+                company_name=client.company_name
+            )
+            logger.info(f"Approval email sent to {owner_user.email} for company {client.company_name}")
+        except Exception as email_err:
+            logger.warning(f"Failed to send approval email to {owner_user.email}: {email_err}")
+            # Не прерываем процесс одобрения если письмо не отправилось
+        
         return CorporateClientResponse.model_validate(client)
         
     except HTTPException:
@@ -877,6 +928,9 @@ async def block_corporate_client(
     """
     Блокировка компании — перевод статуса active → blocked
     
+    Интегрируется с финансовым бэкендом:
+    - Вызывает PUT /v1/partner_companies/{id}/disable на финбэке
+    
     Args:
         client_id: ID клиента
         body: Причина блокировки (опционально)
@@ -885,6 +939,9 @@ async def block_corporate_client(
         
     Returns:
         CorporateClientResponse с обновлённой записью
+        
+    Raises:
+        HTTPException: Если клиент не найден, не активен или ошибка на финбэке
     """
     try:
         query = select(CorporateClient).where(
@@ -906,6 +963,40 @@ async def block_corporate_client(
                 detail=f"Можно блокировать только активные компании (текущий статус: {client.status})"
             )
         
+        # Блокируем на финансовом бэкенде если есть finance_company_id
+        if client.finance_company_id:
+            try:
+                finance_service = FinanceBackendService()
+                disable_result = await finance_service.disable_partner_company(
+                    company_id=client.finance_company_id,
+                    db=db
+                )
+                
+                if not disable_result:
+                    logger.warning(f"Failed to disable partner company {client.finance_company_id} in finance backend")
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail="Failed to disable company in finance backend"
+                    )
+                
+                if "error" in disable_result:
+                    logger.warning(f"Finance backend error disabling company {client.finance_company_id}: {disable_result['error']}")
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Finance backend error: {disable_result['error']}"
+                    )
+                
+                logger.info(f"Partner company disabled in finance backend: {client.finance_company_id}")
+            except HTTPException:
+                raise
+            except Exception as finance_err:
+                logger.error(f"Error disabling partner company {client.finance_company_id}: {finance_err}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Failed to disable company in finance backend: {str(finance_err)}"
+                )
+        
+        # Обновляем статус локально
         client.status = "blocked"
         client.reviewed_by = admin_user.cor_id
         client.reviewed_at = datetime.utcnow()
@@ -915,7 +1006,7 @@ async def block_corporate_client(
         await db.commit()
         await db.refresh(client)
         
-        logger.info(f"Corporate client blocked: {client_id}")
+        logger.info(f"Corporate client blocked: {client_id} (company: {client.company_name})")
         
         return CorporateClientResponse.model_validate(client)
         
@@ -930,11 +1021,232 @@ async def block_corporate_client(
         )
 
 
+async def unblock_corporate_client(
+    client_id: str,
+    admin_user: User,
+    db: AsyncSession,
+) -> CorporateClientResponse:
+    """
+    Разблокировка компании — перевод статуса blocked → active
+    
+    Интегрируется с финансовым бэкендом:
+    - Вызывает PUT /v1/partner_companies/{id}/enable на финбэке
+    
+    Args:
+        client_id: ID клиента
+        admin_user: Администратор
+        db: Сессия базы данных
+        
+    Returns:
+        CorporateClientResponse с обновлённой записью
+        
+    Raises:
+        HTTPException: Если клиент не найден, не заблокирован или ошибка на финбэке
+    """
+    try:
+        query = select(CorporateClient).where(
+            CorporateClient.id == client_id,
+            CorporateClient.deleted_at.is_(None)
+        )
+        result = await db.execute(query)
+        client = result.scalar_one_or_none()
+        
+        if not client:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Корпоративный клиент не найден"
+            )
+        
+        if client.status != "blocked":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Можно разблокировать только заблокированные компании (текущий статус: {client.status})"
+            )
+        
+        # Разблокируем на финансовом бэкенде если есть finance_company_id
+        if client.finance_company_id:
+            try:
+                finance_service = FinanceBackendService()
+                enable_result = await finance_service.enable_partner_company(
+                    company_id=client.finance_company_id,
+                    db=db
+                )
+                
+                if not enable_result:
+                    logger.warning(f"Failed to enable partner company {client.finance_company_id} in finance backend")
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail="Failed to enable company in finance backend"
+                    )
+                
+                if "error" in enable_result:
+                    logger.warning(f"Finance backend error enabling company {client.finance_company_id}: {enable_result['error']}")
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Finance backend error: {enable_result['error']}"
+                    )
+                
+                logger.info(f"Partner company enabled in finance backend: {client.finance_company_id}")
+            except HTTPException:
+                raise
+            except Exception as finance_err:
+                logger.error(f"Error enabling partner company {client.finance_company_id}: {finance_err}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Failed to enable company in finance backend: {str(finance_err)}"
+                )
+        
+        # Обновляем статус локально
+        client.status = "active"
+        client.reviewed_by = admin_user.cor_id
+        client.reviewed_at = datetime.utcnow()
+        # Очищаем причину блокировки
+        client.rejection_reason = None
+        
+        await db.commit()
+        await db.refresh(client)
+        
+        logger.info(f"Corporate client unblocked: {client_id} (company: {client.company_name})")
+        
+        return CorporateClientResponse.model_validate(client)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error blocking corporate client: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to block corporate client: {str(e)}"
+        )
+
+
+async def restore_corporate_client(
+    client_id: str,
+    admin_user: User,
+    db: AsyncSession,
+) -> CorporateClientResponse:
+    """
+    Восстановление удалённой компании:
+    - Снимает soft-delete (deleted_at -> None)
+    - Повторно создаёт владельца и компанию на финбэке (как в approve)
+    - Переводит статус в active и выставляет лимит, если задан
+    """
+    try:
+        # Ищем компанию (включая удалённые)
+        query = select(CorporateClient).where(CorporateClient.id == client_id)
+        result = await db.execute(query)
+        client = result.scalar_one_or_none()
+
+        if not client:
+            raise HTTPException(status_code=404, detail="Корпоративный клиент не найден")
+
+        if client.deleted_at is None:
+            raise HTTPException(status_code=400, detail="Компания не помечена как удалённая")
+
+        # Получаем владельца
+        user_query = select(User).where(User.cor_id == client.owner_cor_id)
+        user_result = await db.execute(user_query)
+        owner_user = user_result.scalar_one_or_none()
+        if not owner_user:
+            raise HTTPException(status_code=404, detail=f"Владелец с cor_id {client.owner_cor_id} не найден")
+
+        # Профиль владельца (для имён)
+        profile_query = select(Profile).where(Profile.user_id == owner_user.id)
+        profile_result = await db.execute(profile_query)
+        profile = profile_result.scalar_one_or_none()
+
+        first_name = owner_user.email.split('@')[0]
+        last_name = ""
+        if profile:
+            try:
+                aes_key = _normalize_aes_key(settings.aes_key.encode())
+                if profile.encrypted_first_name:
+                    decrypted_first_name = await decrypt_data(profile.encrypted_first_name, aes_key)
+                    if decrypted_first_name:
+                        first_name = decrypted_first_name
+                if profile.encrypted_surname:
+                    decrypted_surname = await decrypt_data(profile.encrypted_surname, aes_key)
+                    if decrypted_surname:
+                        last_name = decrypted_surname
+            except Exception as e:
+                logger.warning(f"Failed to decrypt Profile data for {client.owner_cor_id}: {e}")
+
+        finance_service = FinanceBackendService()
+
+        # 1) Создаём владельца в финбэке (идемпотентно по логике финбэка)
+        owner_response = await finance_service.create_partner_company_owner(
+            owner_cor_id=client.owner_cor_id,
+            first_name=first_name,
+            last_name=last_name,
+            email=owner_user.email,
+            db=db,
+        )
+        if not owner_response:
+            raise HTTPException(status_code=503, detail="Не удалось создать владельца компании в финансовом бэкенде")
+        if isinstance(owner_response, dict) and owner_response.get("error"):
+            raise HTTPException(status_code=400, detail=f"Ошибка при создании владельца: {owner_response['error']}")
+
+        # 2) Создаём саму компанию (финбэк должен восстановить/реюзнуть при совпадении данных)
+        start_balance = float(client.current_balance) if client.current_balance else 0.0
+        company_response = await finance_service.create_partner_company(
+            name=client.company_name,
+            company_format=client.company_format,
+            phone_number=client.phone_number,
+            tax_id=client.tax_id,
+            address=client.address,
+            owner_id_or_cor_id=client.owner_cor_id,
+            email=client.email,
+            start_balance=start_balance,
+            db=db,
+        )
+        if not company_response:
+            raise HTTPException(status_code=503, detail="Не удалось создать компанию в финансовом бэкенде")
+        if isinstance(company_response, dict) and company_response.get("error"):
+            raise HTTPException(status_code=400, detail=f"Ошибка при создании компании: {company_response['error']}")
+
+        finance_company_id = company_response.get("id")
+
+        # 3) Снимаем soft-delete и переводим в active
+        client.deleted_at = None
+        client.status = "active"
+        client.finance_company_id = finance_company_id
+        client.reviewed_by = admin_user.cor_id
+        client.reviewed_at = datetime.utcnow()
+        client.rejection_reason = None
+
+        # Выставляем кредитный лимит в финбэке, если задан
+        if client.fuel_limit and float(client.fuel_limit) > 0:
+            try:
+                await finance_service.update_partner_company_limits(
+                    company_id=finance_company_id,
+                    payload={"credit_limit": float(client.fuel_limit)},
+                    db=db,
+                )
+                logger.info(f"Credit limit set for restored company {finance_company_id}: {client.fuel_limit}")
+            except Exception as limit_err:
+                logger.warning(f"Failed to set credit limit for restored company {finance_company_id}: {limit_err}")
+
+        await db.commit()
+        await db.refresh(client)
+
+        logger.info(f"Corporate client restored: {client.id}, finance_company_id: {finance_company_id}")
+        return CorporateClientResponse.model_validate(client)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Error restoring corporate client {client_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to restore corporate client: {str(e)}")
+
+
 async def get_corporate_clients(
     db: AsyncSession,
     status_filter: Optional[str] = None,
     skip: int = 0,
     limit: int = 100,
+    include_deleted: bool = True,
 ) -> list[CorporateClientWithOwner]:
     """
     Получение списка корпоративных клиентов (для админа)
@@ -950,7 +1262,7 @@ async def get_corporate_clients(
         Список компаний с информацией о владельцах
     """
     # Просто используем ту же функцию get_corporate_client_requests
-    return await get_corporate_client_requests(db, status_filter, skip, limit)
+    return await get_corporate_client_requests(db, status_filter, skip, limit, include_deleted)
 
 
 async def update_corporate_client(
@@ -1027,14 +1339,14 @@ async def update_company_limits_in_finance(
     
     Обновляет:
     - credit_limit - кредитный лимит (на сколько можно лазить в минус) - сохраняется в fuel_limit локально
-    - balance_level_alert_limit - уровень баланса, при котором послать вебхук
+    - balance_level_alert_limit - уровень баланса, при котором послать вебхук (по умолчанию = credit_limit)
     - balance_level_hook_url - URL вебхука для уведомления о превышении лимита
     
     Args:
         finance_company_id: ID компании в финбэке
         credit_limit: Кредитный лимит (будет сохранён в fuel_limit локально)
-        balance_level_alert_limit: Оборот для отправки вебхука
-        balance_level_hook_url: URL вебхука
+        balance_level_alert_limit: Оборот для отправки вебхука (если не указан, используется credit_limit)
+        balance_level_hook_url: URL вебхука (если не указан, используется дефолтный в зависимости от окружения)
         db: Сессия базы данных
         update_local_fuel_limit: Обновлять ли локальное поле fuel_limit при изменении credit_limit
         
@@ -1042,14 +1354,29 @@ async def update_company_limits_in_finance(
         dict с данными от финбэке
     """
     try:
+        from cor_pass.config.config import settings
+        
         finance_service = FinanceBackendService()
         
         # Формируем тело реквеста
         update_payload = {}
         if credit_limit is not None:
             update_payload["credit_limit"] = credit_limit
+            
+            # Если balance_level_alert_limit не указан, по умолчанию берём credit_limit
+            if balance_level_alert_limit is None:
+                balance_level_alert_limit = credit_limit
+        
         if balance_level_alert_limit is not None:
             update_payload["balance_level_alert_limit"] = balance_level_alert_limit
+        
+        # Если balance_level_hook_url не указан, берём дефолтный в зависимости от окружения
+        if balance_level_hook_url is None:
+            if settings.app_env == "production":
+                balance_level_hook_url = "https://prod01.cor-id.cor-medical.ua/api/webhooks/balance-level-alert"
+            else:
+                balance_level_hook_url = "https://dev-corid.cor-medical.ua/api/webhooks/balance-level-alert"
+        
         if balance_level_hook_url is not None:
             update_payload["balance_level_hook_url"] = balance_level_hook_url
         
@@ -1086,6 +1413,16 @@ async def update_company_limits_in_finance(
                 
                 if local_client:
                     local_client.fuel_limit = credit_limit
+                    
+                    # Если компания была в статусе 'limit_exceeded', проверяем, нужно ли вернуть её в 'active'
+                    # Превышение лимита считается, если абс(баланс) > лимит
+                    if local_client.status == "limit_exceeded" and local_client.current_balance is not None:
+                        current_balance_abs = abs(float(local_client.current_balance))
+                        # Если новый лимит достаточен для текущего дефицита, возвращаем в active
+                        if current_balance_abs <= credit_limit:
+                            local_client.status = "active"
+                            logger.info(f"Company {local_client.id} status reverted to 'active' (limit_exceeded resolved): new_limit={credit_limit}, current_balance={local_client.current_balance}")
+                    
                     await db.commit()
                     logger.info(f"Local fuel_limit updated for company {local_client.id}: {credit_limit}")
             except Exception as local_err:
@@ -1205,6 +1542,11 @@ async def delete_corporate_client(
     """
     Удаление корпоративного клиента (админ)
     
+    Логика удаления в зависимости от статуса:
+    - active, blocked: удаляет компанию на финбэке
+    - pending, rejected: удаляет только у нас
+    - limit_exceeded: не удаляется (ни у нас, ни на финбэке)
+    
     Args:
         client_id: ID клиента для удаления
         db: Сессия базы данных
@@ -1213,7 +1555,7 @@ async def delete_corporate_client(
         dict с сообщением об успешном удалении
         
     Raises:
-        HTTPException: Если клиент не найден или ошибка БД
+        HTTPException: Если клиент не найден, уже удалён или в статусе limit_exceeded
     """
     try:
         # Получаем клиента
@@ -1233,12 +1575,51 @@ async def delete_corporate_client(
                 detail="Корпоративный клиент уже удалён"
             )
         
-        # Soft delete - устанавливаем timestamp удаления
+        if client.status == "limit_exceeded":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Невозможно удалить компанию в статусе 'limit_exceeded'. Решите проблему с балансом и попробуйте снова."
+            )
+        
+        if client.status in ["active", "blocked"] and client.finance_company_id:
+            try:
+                finance_service = FinanceBackendService()
+                delete_result = await finance_service.delete_partner_company(
+                    company_id=client.finance_company_id,
+                    db=db
+                )
+                
+                if not delete_result:
+                    logger.warning(f"Failed to delete partner company {client.finance_company_id} in finance backend")
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail="Failed to delete company in finance backend"
+                    )
+                
+                if "error" in delete_result:
+                    logger.warning(f"Finance backend error deleting company {client.finance_company_id}: {delete_result['error']}")
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Finance backend error: {delete_result['error']}"
+                    )
+                
+                logger.info(f"Partner company deleted in finance backend: {client.finance_company_id}")
+            except HTTPException:
+                raise
+            except Exception as finance_err:
+                logger.error(f"Error deleting partner company {client.finance_company_id}: {finance_err}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Failed to delete company in finance backend: {str(finance_err)}"
+                )
+        
+        # Soft delete - устанавливаем timestamp удаления и статус
         from sqlalchemy.sql import func
+        client.status = "deleted"
         client.deleted_at = func.now()
         await db.commit()
         
-        logger.info(f"Corporate client deleted: {client_id} (company: {client.company_name})")
+        logger.info(f"Corporate client deleted: {client_id} (company: {client.company_name}, status: {client.status})")
         
         return {
             "message": "Корпоративный клиент успешно удалён",

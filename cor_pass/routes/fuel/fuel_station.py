@@ -36,6 +36,7 @@ from cor_pass.schemas import (
     CorporateEmployeeInvitationResponse,
     CompanyMembersUnifiedResponse,
     FinanceAccountMemberResponse,
+    UpdateCompanyLimitsRequest,
 )
 from cor_pass.repository.fuel import fuel_station
 
@@ -309,6 +310,7 @@ async def reject_corporate_request(
     summary="Блокировка корпоративного клиента (админ/юрист)",
     description="""
     Блокирует компанию — переводит статус active → blocked.
+    Интегрируется с финансовым бэкендом (вызывает PUT /v1/partner_companies/{id}/disable).
     
     Только для администраторов/юристов.
     """
@@ -330,6 +332,32 @@ async def block_corporate_client(
     )
 
 
+@router.post(
+    "/admin/corporate-clients/{client_id}/unblock",
+    response_model=CorporateClientResponse,
+    summary="Разблокировка корпоративного клиента (админ/юрист)",
+    description="""
+    Разблокирует компанию — переводит статус blocked → active.
+    Интегрируется с финансовым бэкендом (вызывает PUT /v1/partner_companies/{id}/enable).
+    
+    Только для администраторов/юристов.
+    """
+)
+async def unblock_corporate_client(
+    client_id: str,
+    user: User = Depends(lawyer_access),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Разблокировка компании — перевод в статус active
+    """
+    return await fuel_station.unblock_corporate_client(
+        client_id=client_id,
+        admin_user=user,
+        db=db
+    )
+
+
 @router.get(
     "/admin/corporate-clients",
     response_model=list[CorporateClientWithOwner],
@@ -338,16 +366,22 @@ async def block_corporate_client(
     Возвращает список корпоративных клиентов и заявок.
     Можно фильтровать по статусу.
     
+    Для компаний, зарегистрированных в финансовом бэкенде (с finance_company_id),
+    автоматически запрашивает актуальный баланс через GET /v1/partner_companies/{id}/summary
+    и сохраняет его в БД (поля current_balance и last_balance_update).
+    
     Параметры:
-    - **status**: Фильтр по статусу (pending, active, blocked, rejected, limit_exceeded). Если не указан - показывает всех клиентов
+     - **status**: Фильтр по статусу (pending, active, blocked, rejected, limit_exceeded, deleted). Если не указан - показывает всех клиентов
     - **skip**: Пропустить записей (пагинация)
     - **limit**: Максимум записей (пагинация, максимум 100)
+    - **include_deleted**: Включать удалённых клиентов (soft-delete)
     
     Только для администраторов/юристов.
     """
 )
 async def get_corporate_clients(
     status: Optional[str] = None,
+    include_deleted: Optional[bool] = False,
     skip: int = 0,
     limit: int = 100,
     user: User = Depends(lawyer_access),
@@ -360,7 +394,31 @@ async def get_corporate_clients(
         db=db,
         status_filter=status,
         skip=skip,
-        limit=limit
+        limit=limit,
+        include_deleted=include_deleted,
+    )
+
+
+@router.post(
+    "/admin/corporate-clients/{client_id}/restore",
+    response_model=CorporateClientResponse,
+    summary="Восстановление удалённой компании (админ/юрист)",
+    description="""
+    Снимает soft-delete у компании и повторно создаёт её на финансовом бэкенде
+    по той же схеме, что и approve (создание владельца и компании).
+    После успешного восстановления статус становится active.
+    """,
+)
+async def restore_corporate_client(
+    client_id: str,
+    user: User = Depends(lawyer_access),
+    db: AsyncSession = Depends(get_db),
+):
+    """Восстановление удалённой компании и синхронизация с финбэком"""
+    return await fuel_station.restore_corporate_client(
+        client_id=client_id,
+        admin_user=user,
+        db=db,
     )
 
 
@@ -722,7 +780,7 @@ async def verify_offline_qr(
     description="""
     Обновляет кредитный лимит, уровень баланса и URL вебхука в финансовом бэкенде.
     
-    **Параметры:**
+    **Параметры в теле запроса:**
     - **credit_limit** - положительная сумма, на которую компания может залазить в минус
     - **balance_level_alert_limit** - уровень баланса, при котором послать пинг (может быть отрицательным)
     - **balance_level_hook_url** - URL вебхука для уведомления о превышении лимита ("https://dev-corid.cor-medical.ua/api/webhooks/balance-level-alert")
@@ -732,9 +790,7 @@ async def verify_offline_qr(
 )
 async def update_company_limits(
     id: str,
-    credit_limit: Optional[float] = None,
-    balance_level_alert_limit: Optional[float] = None,
-    balance_level_hook_url: Optional[str] = None,
+    body: UpdateCompanyLimitsRequest,
     user: User = Depends(lawyer_access),
     db: AsyncSession = Depends(get_db),
 ):
@@ -757,9 +813,9 @@ async def update_company_limits(
     
     return await fuel_station.update_company_limits_in_finance(
         finance_company_id=client.finance_company_id,
-        credit_limit=credit_limit,
-        balance_level_alert_limit=balance_level_alert_limit,
-        balance_level_hook_url=balance_level_hook_url,
+        credit_limit=body.credit_limit,
+        balance_level_alert_limit=body.balance_level_alert_limit,
+        balance_level_hook_url=body.balance_level_hook_url,
         db=db
     )
 

@@ -757,7 +757,7 @@ class FinanceBackendService:
                 data = response.json()
                 logger.info(f"Company limits updated successfully in finance backend: {company_id}")
                 return data
-                
+            
         except httpx.TimeoutException:
             logger.error(f"Finance backend timeout when updating company {company_id}")
             return {"error": "Timeout connecting to finance backend"}
@@ -767,6 +767,255 @@ class FinanceBackendService:
         except Exception as e:
             logger.error(f"Unexpected error updating company limits: {e}", exc_info=True)
             return {"error": f"Error: {str(e)}"}
+    
+    async def delete_partner_company(
+        self,
+        company_id: int,
+        db: AsyncSession,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Удаляет партнёрскую компанию в финансовом бэкенде (soft delete).
+        
+        Args:
+            company_id: ID компании в финбэке
+            db: Сессия БД
+            
+        Returns:
+            Dict с результатом или None в случае ошибки
+        """
+        try:
+            # Получаем конфигурацию из БД
+            auth_config = await self._get_auth_config(db)
+            if not auth_config:
+                logger.error("Finance backend auth config not found in database")
+                return None
+            
+            # Формируем URL для DELETE запроса
+            url = f"{auth_config.api_endpoint}/v1/partner_companies/{company_id}"
+            
+            # Генерируем TOTP токен для авторизации
+            headers = {}
+            # try:
+            #     auth_data = await self._generate_auth_totp(db)
+            #     if auth_data:
+            #         headers["token"] = auth_data["totp_code"]
+            # except Exception as totp_error:
+            #     logger.warning(f"Failed to generate TOTP token: {totp_error}")
+            
+            logger.info(f"Deleting partner company in finance backend: company_id={company_id}")
+            
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.delete(url, headers=headers)
+                
+                # Проверяем успешность
+                if response.status_code >= 400:
+                    error_text = response.text
+                    logger.error(f"Failed to delete partner company: {response.status_code} - {error_text}")
+                    return {"error": f"Status {response.status_code}: {error_text}"}
+                
+                # Возвращаем результат
+                if response.status_code == 204:
+                    # No Content - успешное удаление
+                    logger.info(f"Partner company deleted successfully in finance backend: {company_id}")
+                    return {"status": "success", "message": "Partner company deleted"}
+                
+                data = response.json()
+                logger.info(f"Partner company deleted successfully in finance backend: {company_id}")
+                return data
+                
+        except httpx.TimeoutException:
+            logger.error(f"Delete partner company request timeout: company_id={company_id}")
+            return None
+        except httpx.RequestError as e:
+            logger.error(f"Delete partner company request error: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to delete partner company: {e}")
+            return None
+
+    async def disable_partner_company(
+        self,
+        company_id: int,
+        db: AsyncSession,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Блокирует партнёрскую компанию в финансовом бэкенде (sets disabled_at).
+        
+        Args:
+            company_id: ID компании в финбэке
+            db: Сессия БД
+            
+        Returns:
+            Dict с результатом или None в случае ошибки
+        """
+        try:
+            # Получаем конфигурацию из БД
+            auth_config = await self._get_auth_config(db)
+            if not auth_config:
+                logger.error("Finance backend auth config not found in database")
+                return None
+            
+            # Формируем URL для PUT запроса
+            url = f"{auth_config.api_endpoint}/v1/partner_companies/{company_id}/disable"
+            
+            # Генерируем TOTP токен для авторизации
+            headers = {}
+            # try:
+            #     auth_data = await self._generate_auth_totp(db)
+            #     if auth_data:
+            #         headers["token"] = auth_data["totp_code"]
+            # except Exception as totp_error:
+            #     logger.warning(f"Failed to generate TOTP token: {totp_error}")
+            
+            logger.info(f"Disabling partner company in finance backend: company_id={company_id}")
+            
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.put(url, headers=headers)
+                
+                # Проверяем успешность
+                if response.status_code >= 400:
+                    error_text = response.text
+                    logger.error(f"Failed to disable partner company: {response.status_code} - {error_text}")
+                    return {"error": f"Status {response.status_code}: {error_text}"}
+                
+                # Возвращаем результат
+                data = response.json()
+                logger.info(f"Partner company disabled successfully in finance backend: {company_id}")
+                return data
+                
+        except httpx.TimeoutException:
+            logger.error(f"Disable partner company request timeout: company_id={company_id}")
+            return None
+        except httpx.RequestError as e:
+            logger.error(f"Disable partner company request error: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to disable partner company: {e}")
+            return None
+
+    async def enable_partner_company(
+        self,
+        company_id: int,
+        db: AsyncSession,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Разблокирует партнёрскую компанию в финансовом бэкенде (sets disabled_at to NULL).
+        
+        Args:
+            company_id: ID компании в финбэке
+            db: Сессия БД
+            
+        Returns:
+            Dict с результатом или None в случае ошибки
+        """
+        try:
+            # Получаем конфигурацию из БД
+            auth_config = await self._get_auth_config(db)
+            if not auth_config:
+                logger.error("Finance backend auth config not found in database")
+                return None
+            
+            # Формируем URL для PUT запроса
+            url = f"{auth_config.api_endpoint}/v1/partner_companies/{company_id}/enable"
+            
+            # Генерируем TOTP токен для авторизации
+            headers = {}
+            # try:
+            #     auth_data = await self._generate_auth_totp(db)
+            #     if auth_data:
+            #         headers["token"] = auth_data["totp_code"]
+            # except Exception as totp_error:
+            #     logger.warning(f"Failed to generate TOTP token: {totp_error}")
+            
+            logger.info(f"Enabling partner company in finance backend: company_id={company_id}")
+            
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.put(url, headers=headers)
+                
+                # Проверяем успешность
+                if response.status_code >= 400:
+                    error_text = response.text
+                    logger.error(f"Failed to enable partner company: {response.status_code} - {error_text}")
+                    return {"error": f"Status {response.status_code}: {error_text}"}
+                
+                # Возвращаем результат
+                data = response.json()
+                logger.info(f"Partner company enabled successfully in finance backend: {company_id}")
+                return data
+                
+        except httpx.TimeoutException:
+            logger.error(f"Enable partner company request timeout: company_id={company_id}")
+            return None
+        except httpx.RequestError as e:
+            logger.error(f"Enable partner company request error: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to enable partner company: {e}")
+            return None
+
+    async def get_partner_company_summary(
+        self,
+        company_id: int,
+        db: AsyncSession,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Получает сводку по партнёрской компании из финансового бэкенда.
+        
+        Возвращает информацию о компании, балансе и последних транзакциях.
+        
+        Args:
+            company_id: ID компании в финбэке
+            db: Сессия БД
+            
+        Returns:
+            Dict с данными компании (company_type, company_name, balance, transactions) или None
+        """
+        try:
+            # Получаем конфигурацию из БД
+            auth_config = await self._get_auth_config(db)
+            if not auth_config:
+                logger.error("Finance backend auth config not found in database")
+                return None
+            
+            # Формируем URL для GET запроса
+            url = f"{auth_config.api_endpoint}/v1/partner_companies/{company_id}/summary"
+            
+            # Генерируем TOTP токен для авторизации
+            headers = {}
+            # try:
+            #     auth_data = await self._generate_auth_totp(db)
+            #     if auth_data:
+            #         headers["token"] = auth_data["totp_code"]
+            # except Exception as totp_error:
+            #     logger.warning(f"Failed to generate TOTP token: {totp_error}")
+            
+            logger.info(f"Getting partner company summary from finance backend: company_id={company_id}")
+            
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.get(url, headers=headers)
+                
+                # Проверяем успешность
+                if response.status_code >= 400:
+                    error_text = response.text
+                    logger.error(f"Failed to get partner company summary: {response.status_code} - {error_text}")
+                    return {"error": f"Status {response.status_code}: {error_text}"}
+                
+                # Возвращаем результат
+                data = response.json()
+                logger.info(f"Partner company summary retrieved successfully from finance backend: {company_id}")
+                return data
+                
+        except httpx.TimeoutException:
+            logger.error(f"Get partner company summary request timeout: company_id={company_id}")
+            return None
+        except httpx.RequestError as e:
+            logger.error(f"Get partner company summary request error: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get partner company summary: {e}")
+            return None
+                
+
 
 
 

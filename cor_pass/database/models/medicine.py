@@ -11,7 +11,7 @@ from typing import Optional
 import uuid
 
 from .base import Base
-from .enums import MedicineIntakeStatus
+from .enums import MedicineIntakeStatus, FirstAidKitShareStatus
 
 
 class FirstAidKit(Base):
@@ -32,6 +32,7 @@ class FirstAidKit(Base):
     # Relationships
     medicines = relationship("FirstAidKitItem", back_populates="first_aid_kit", cascade="all, delete-orphan")
     user = relationship("User", back_populates="first_aid_kits")
+    shares = relationship("FirstAidKitShare", back_populates="kit", cascade="all, delete-orphan")
 
     __table_args__ = (Index("idx_first_aid_kits_user_cor_id", "user_cor_id"),)
 
@@ -84,6 +85,40 @@ class FirstAidKitItem(Base):
     __table_args__ = (
         Index("idx_first_aid_kit_items_kit_id", "first_aid_kit_id"),
         Index("idx_first_aid_kit_items_medicine_id", "medicine_id"),
+    )
+
+
+class FirstAidKitShare(Base):
+    """
+    Приглашение на импорт аптечки (one-shot ссылка/письмо/QR)
+    """
+    __tablename__ = "first_aid_kit_shares"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    kit_id = Column(String(36), ForeignKey("first_aid_kits.id", ondelete="CASCADE"), nullable=False)
+    from_user_cor_id = Column(String(36), ForeignKey("users.cor_id", ondelete="CASCADE"), nullable=False)
+    to_user_cor_id = Column(String(36), ForeignKey("users.cor_id", ondelete="SET NULL"), nullable=True)
+    to_email = Column(String(255), nullable=True)
+
+    token = Column(String(255), nullable=False, unique=True)
+    status = Column(Enum(FirstAidKitShareStatus), nullable=False, default=FirstAidKitShareStatus.PENDING)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    accepted_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Дополнительный контекст (способ отправки, локаль письма и т.п.)
+    context = Column(JSONB, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
+
+    kit = relationship("FirstAidKit", back_populates="shares")
+    from_user = relationship("User", foreign_keys=[from_user_cor_id])
+    to_user = relationship("User", foreign_keys=[to_user_cor_id])
+
+    __table_args__ = (
+        Index("idx_first_aid_kit_shares_from_user", "from_user_cor_id"),
+        Index("idx_first_aid_kit_shares_to_user", "to_user_cor_id"),
+        Index("idx_first_aid_kit_shares_kit_id", "kit_id"),
     )
 
 

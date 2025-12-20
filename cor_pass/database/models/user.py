@@ -81,6 +81,19 @@ class User(Base):
         foreign_keys="[DeviceAccess.accessing_user_id]",
         back_populates="accessing_user",
     )
+
+        # Energetic devices (WebSocket energy devices)
+    energetic_devices = relationship("EnergeticDevice", back_populates="owner")
+    energetic_granted_accesses = relationship(
+        "EnergeticDeviceAccess",
+        foreign_keys="[EnergeticDeviceAccess.granting_user_cor_id]",
+        back_populates="granting_user",
+    )
+    energetic_received_accesses = relationship(
+        "EnergeticDeviceAccess",
+        foreign_keys="[EnergeticDeviceAccess.accessing_user_cor_id]",
+        back_populates="accessing_user",
+    )
     profile = relationship(
         "Profile", back_populates="user", uselist=False, cascade="all, delete-orphan"
     )
@@ -115,6 +128,18 @@ class User(Base):
     )
     medicine_intakes = relationship(
         "MedicineIntake", back_populates="user", cascade="all, delete-orphan"
+    )
+
+    first_aid_kit_shares_sent = relationship(
+        "FirstAidKitShare",
+        foreign_keys="[FirstAidKitShare.from_user_cor_id]",
+        back_populates="from_user",
+        cascade="all, delete-orphan",
+    )
+    first_aid_kit_shares_received = relationship(
+        "FirstAidKitShare",
+        foreign_keys="[FirstAidKitShare.to_user_cor_id]",
+        back_populates="to_user",
     )
     
     # SIBIONICS CGM - ручные устройства для ввода глюкозы

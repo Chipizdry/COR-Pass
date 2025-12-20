@@ -2,13 +2,14 @@
 Energy domain models - energetic objects monitoring, Cerbo measurements, schedules
 """
 
-from sqlalchemy import Column, String, ForeignKey, DateTime, Integer, Float, Boolean, Time, Interval, Index
+from sqlalchemy import Column, String, ForeignKey, DateTime, Integer, Float, Boolean, Time, Interval, Index, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import JSONB
 import uuid
 
 from .base import Base
+from .enums import AccessLevel
 
 
 class EnergeticObject(Base):
@@ -48,6 +49,55 @@ class EnergeticObject(Base):
     measurements = relationship("CerboMeasurement", back_populates="energetic_object", cascade="all, delete-orphan")
     schedules = relationship("EnergeticSchedule", back_populates="energetic_object", cascade="all, delete-orphan")
     polling_tasks = relationship("DevicePollingTask", back_populates="energetic_object", cascade="all, delete-orphan")
+
+
+class EnergeticDevice(Base):
+    """
+    Энергетическое устройство, подключаемое по WebSocket (modbus/Cerbo и т.д.)
+    device_id соответствует session_id при подключении.
+    """
+
+    __tablename__ = "energetic_devices"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String, nullable=True)
+    device_id = Column(String(255), unique=True, index=True, nullable=False)
+    owner_cor_id = Column(String(250), ForeignKey("users.cor_id"), nullable=False, index=True)
+    protocol = Column(String, nullable=True)
+    description = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
+    last_seen = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+
+    owner = relationship("User", back_populates="energetic_devices", foreign_keys=[owner_cor_id])
+    accesses = relationship("EnergeticDeviceAccess", back_populates="device", cascade="all, delete-orphan")
+
+
+class EnergeticDeviceAccess(Base):
+    """
+    Доступ к энергетическому устройству (шаринг между пользователями)
+    """
+
+    __tablename__ = "energetic_device_access"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    device_id = Column(String(36), ForeignKey("energetic_devices.id"), nullable=False)
+    granting_user_cor_id = Column(String(36), ForeignKey("users.cor_id"), nullable=True)
+    accessing_user_cor_id = Column(String(36), ForeignKey("users.cor_id"), nullable=False)
+    access_level = Column(
+        Enum(
+            AccessLevel,
+            values_callable=lambda x: [e.value for e in x],
+            name="accesslevel",
+        ),
+        nullable=True,
+    )
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
+    device = relationship("EnergeticDevice", back_populates="accesses")
+    granting_user = relationship("User", foreign_keys=[granting_user_cor_id], back_populates="energetic_granted_accesses")
+    accessing_user = relationship("User", foreign_keys=[accessing_user_cor_id], back_populates="energetic_received_accesses")
 
 
 class CerboMeasurement(Base):
@@ -146,7 +196,7 @@ class DevicePollingTask(Base):
     )
     
     interval_seconds = Column(
-        Integer,
+        Float,
         nullable=False,
         default=5,
         comment="Интервал опроса в секундах"
@@ -195,7 +245,7 @@ class WebSocketBroadcastTask(Base):
     )
     
     interval_seconds = Column(
-        Integer,
+        Float,
         nullable=False,
         default=5,
         comment="Интервал отправки команды в секундах"

@@ -4,14 +4,32 @@ API для взаимодействия с энергетическими уст
 Только для энергетических устройств (Cerbo/Modbus).
 """
 import httpx
-from typing import Dict
+from typing import Dict, List
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel, Field
 from loguru import logger
 
-from cor_pass.services.shared.access import user_access
+from cor_pass.database.db import get_db
+from cor_pass.database.models import User
+from cor_pass.repository.energy import (
+    get_device_access,
+    get_device_by_id,
+    list_device_accesses,
+    list_devices_for_user,
+    list_all_devices,
+    upsert_device_access,
+    update_device,
+)
+from cor_pass.schemas import (
+    EnergeticDeviceAccessCreate,
+    EnergeticDeviceAccessResponse,
+    EnergeticDeviceResponse,
+    EnergeticDeviceUpdate,
+)
+from cor_pass.services.shared.access import user_access, admin_access
 from cor_pass.services.shared.pi30_commands import PI30Command
-from pydantic import Field
+from cor_pass.services.user.auth import auth_service
 
 
 class Pi30ProxyRequest(BaseModel):
@@ -25,6 +43,121 @@ router = APIRouter(prefix="/energetic_device_proxy", tags=["Energetic Device Pro
 
 ENERGETIC_WS_SERVER_URL = "http://modbus_worker:45762"
 logger.info(f"Energetic device proxy base URL set to {ENERGETIC_WS_SERVER_URL}")
+
+
+# ============== Energetic device registry (DB) ==============
+
+
+@router.get(
+    "/devices",
+    response_model=List[EnergeticDeviceResponse],
+    dependencies=[Depends(user_access)],
+)
+async def list_energetic_devices(
+    db: AsyncSession = Depends(get_db), current_user: User = Depends(auth_service.get_current_user)
+):
+    """Возвращает устройства, которыми владеет пользователь или к которым есть доступ."""
+    return await list_devices_for_user(db, current_user.cor_id)
+
+
+@router.get(
+    "/devices/{device_id}",
+    response_model=EnergeticDeviceResponse,
+    dependencies=[Depends(user_access)],
+)
+async def get_energetic_device(
+    device_id: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(auth_service.get_current_user)
+):
+    device = await get_device_by_id(db, device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Энергетическое устройство не найдено")
+    if device.owner_cor_id != current_user.cor_id:
+        access = await get_device_access(
+            db, device_id=device_id, accessing_user_cor_id=current_user.cor_id
+        )
+        if not access:
+            raise HTTPException(status_code=403, detail="Нет доступа к устройству")
+    return device
+
+
+@router.patch(
+    "/devices/{device_id}",
+    response_model=EnergeticDeviceResponse,
+    dependencies=[Depends(user_access)],
+)
+async def update_energetic_device(
+    device_id: str,
+    payload: EnergeticDeviceUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user),
+):
+    """Обновить данные устройства (имя, описание, протокол, активность). Только владелец."""
+    device = await update_device(
+        db,
+        device_id=device_id,
+        owner_cor_id=current_user.cor_id,
+        name=payload.name,
+        protocol=payload.protocol,
+        description=payload.description,
+        is_active=payload.is_active,
+    )
+    return device
+
+
+@router.post(
+    "/devices/{device_id}/share",
+    response_model=EnergeticDeviceAccessResponse,
+    dependencies=[Depends(user_access)],
+)
+async def share_energetic_device(
+    device_id: str,
+    payload: EnergeticDeviceAccessCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(auth_service.get_current_user),
+):
+    device = await get_device_by_id(db, device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Энергетическое устройство не найдено")
+    if device.owner_cor_id != current_user.cor_id:
+        raise HTTPException(status_code=403, detail="Доступ для шаринга есть только у владельца")
+    if payload.device_id != device_id:
+        raise HTTPException(status_code=400, detail="device_id в теле должен совпадать с путем")
+
+    access = await upsert_device_access(
+        db,
+        device_id=device_id,
+        accessing_user_cor_id=payload.accessing_user_cor_id,
+        access_level=payload.access_level,
+        granting_user_cor_id=current_user.cor_id,
+    )
+    return access
+
+
+@router.get(
+    "/devices/{device_id}/access",
+    response_model=List[EnergeticDeviceAccessResponse],
+    dependencies=[Depends(user_access)],
+)
+async def list_energetic_device_accesses(
+    device_id: str, db: AsyncSession = Depends(get_db), current_user: User = Depends(auth_service.get_current_user)
+):
+    device = await get_device_by_id(db, device_id)
+    if not device:
+        raise HTTPException(status_code=404, detail="Энергетическое устройство не найдено")
+    if device.owner_cor_id != current_user.cor_id:
+        raise HTTPException(status_code=403, detail="Доступ к списку доступов есть только у владельца")
+
+    return await list_device_accesses(db, device_id)
+
+
+@router.get(
+    "/admin/devices",
+    response_model=List[EnergeticDeviceResponse],
+    dependencies=[Depends(admin_access)],
+)
+async def admin_list_all_energetic_devices(db: AsyncSession = Depends(get_db)):
+    """Админский эндпоинт: возвращает все энергетические устройства со всей информацией о владельцах."""
+    return await list_all_devices(db)
 
 
 @router.get("/devices/connected", dependencies=[Depends(user_access)])
@@ -191,7 +324,7 @@ class BroadcastTaskCreateProxy(BaseModel):
     command_type: str = Field(..., description="Тип команды: 'pi30' или 'modbus_read'")
     pi30_command: Optional[str] = Field(None, description="PI30 команда (например 'QPIGS') - только для command_type='pi30'")
     hex_data: Optional[str] = Field(None, description="Hex данные (например '09 03 00 00 00 10 45 4E') - только для command_type='modbus_read'")
-    interval_seconds: int = Field(..., ge=1, le=3600, description="Интервал отправки команд в секундах")
+    interval_seconds: float = Field(..., le=3600, description="Интервал отправки команд в секундах (поддерживает значения < 1)")
     is_active: bool = Field(True, description="Запускать задачу сразу после создания")
     created_by: Optional[str] = Field(None, description="ID пользователя, создавшего задачу")
 

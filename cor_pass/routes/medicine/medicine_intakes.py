@@ -11,13 +11,17 @@ from cor_pass.schemas import (
     MedicineIntakeCreate,
     MedicineIntakeUpdate,
     MedicineIntakeResponse,
+    MedicineIntakeWithKitsResponse,
+    MedicineIntakeListWithKitsResponse,
+    PaginatedMedicineIntakeWithKitsResponse,
+    GroupedMedicineIntakesWithKitsResponse,
     PaginatedMedicineIntakeResponse,
     GroupedMedicineIntakesResponse,
     FirstAidKitRead,
 )
 from cor_pass.services.shared.access import user_access
 from cor_pass.repository.medicine.medicine import get_user_schedule_by_id
-from cor_pass.repository.medicine.first_aid_kit import get_user_first_aid_kits
+from cor_pass.repository.medicine.first_aid_kit import get_user_first_aid_kits, get_primary_first_aid_kit
 
 router = APIRouter(prefix="/medicine-intakes", tags=["Medicine Intakes"])
 
@@ -74,7 +78,7 @@ async def create_symptomatic_intake(
         raise HTTPException(status_code=404, detail="Расписание не найдено")
 
     try:
-        return await repository.record_symptomatic_intake(
+        intake = await repository.record_symptomatic_intake(
             db=db,
             schedule=schedule,
             actual_datetime=datetime.now(),
@@ -83,6 +87,7 @@ async def create_symptomatic_intake(
             taken_quantity=taken_quantity,
             user=current_user
         )
+        return intake
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -107,7 +112,15 @@ async def update_intake(
     if intake.user_cor_id != current_user.cor_id:
         raise HTTPException(status_code=403, detail="Нет доступа к обновлению этой записи")
 
-    return await repository.update_medicine_intake(db=db, intake_id=intake_id, intake_data=intake_data)
+    # Если аптечка не указана и у записи её нет — подставляем основную
+    if not intake_data.first_aid_kit_id and not intake.first_aid_kit_id:
+        primary_kit = await get_primary_first_aid_kit(db=db, user=current_user)
+        if primary_kit:
+            intake_data.first_aid_kit_id = primary_kit.id
+
+    intake = await repository.update_medicine_intake(db=db, intake_id=intake_id, intake_data=intake_data)
+
+    return intake
 
 
 @router.get(
@@ -131,7 +144,7 @@ async def get_available_first_aid_kits(
 
 @router.get(
     "/schedule/{schedule_id}", 
-    response_model=List[MedicineIntakeResponse],
+    response_model=MedicineIntakeListWithKitsResponse,
     dependencies=[Depends(user_access)],
     summary="Получить историю приемов по расписанию"
 )
@@ -147,17 +160,26 @@ async def get_schedule_intakes(
     if not schedule or schedule.user_cor_id != current_user.cor_id:
         raise HTTPException(status_code=404, detail="Расписание не найдено")
 
-    return await repository.get_schedule_intakes(
+    items = await repository.get_schedule_intakes(
         db=db,
         schedule_id=schedule_id,
         start_date=start_date,
         end_date=end_date
     )
+    available_kits_raw = await get_user_first_aid_kits(db=db, user=current_user)
+    available_kits = [FirstAidKitRead.model_validate(k, from_attributes=True) for k in available_kits_raw]
+    default_kit_id = next((kit.id for kit in available_kits if getattr(kit, "is_primary", False)), None)
+
+    return MedicineIntakeListWithKitsResponse(
+        items=items,
+        available_kits=available_kits,
+        default_first_aid_kit_id=default_kit_id,
+    )
 
 
 @router.get(
     "/calendar/{date}",
-    response_model=List[MedicineIntakeResponse],
+    response_model=MedicineIntakeListWithKitsResponse,
     dependencies=[Depends(user_access)],
     summary="Получить все приемы на конкретную дату"
 )
@@ -169,10 +191,19 @@ async def get_calendar_intakes(
     """
     Получение всех приемов лекарств на конкретную дату.
     """
-    return await repository.get_user_intakes_by_date(
+    items = await repository.get_user_intakes_by_date(
         db=db,
         user_cor_id=current_user.cor_id,
         target_date=date
+    )
+    available_kits_raw = await get_user_first_aid_kits(db=db, user=current_user)
+    available_kits = [FirstAidKitRead.model_validate(k, from_attributes=True) for k in available_kits_raw]
+    default_kit_id = next((kit.id for kit in available_kits if getattr(kit, "is_primary", False)), None)
+
+    return MedicineIntakeListWithKitsResponse(
+        items=items,
+        available_kits=available_kits,
+        default_first_aid_kit_id=default_kit_id,
     )
 
 
@@ -219,7 +250,7 @@ async def get_calendar_month_dates(
 
 @router.get(
     "/history",
-    response_model=PaginatedMedicineIntakeResponse,
+    response_model=PaginatedMedicineIntakeWithKitsResponse,
     dependencies=[Depends(user_access)],
     summary="Получить историю всех приемов с пагинацией"
 )
@@ -255,7 +286,7 @@ async def get_user_intake_history(
             detail="Начальная дата не может быть позже конечной даты"
         )
     
-    return await repository.get_paginated_user_intakes(
+    base = await repository.get_paginated_user_intakes(
         db=db,
         user_cor_id=current_user.cor_id,
         page=page,
@@ -264,10 +295,20 @@ async def get_user_intake_history(
         end_date=end_date
     )
 
+    available_kits_raw = await get_user_first_aid_kits(db=db, user=current_user)
+    available_kits = [FirstAidKitRead.model_validate(k, from_attributes=True) for k in available_kits_raw]
+    default_kit_id = next((kit.id for kit in available_kits if getattr(kit, "is_primary", False)), None)
+
+    return PaginatedMedicineIntakeWithKitsResponse(
+        **base,
+        available_kits=available_kits,
+        default_first_aid_kit_id=default_kit_id,
+    )
+
 
 @router.get(
     "/grouped",
-    response_model=GroupedMedicineIntakesResponse,
+    response_model=GroupedMedicineIntakesWithKitsResponse,
     dependencies=[Depends(user_access)],
     summary="Получить приемы сгруппированные по дням и времени"
 )
@@ -311,9 +352,19 @@ async def get_grouped_intakes(
             detail="Начальная дата не может быть позже конечной даты"
         )
     
-    return await repository.get_grouped_intakes_by_date_range(
+    base = await repository.get_grouped_intakes_by_date_range(
         db=db,
         user_cor_id=current_user.cor_id,
         start_date=start_date,
         end_date=end_date
+    )
+
+    available_kits_raw = await get_user_first_aid_kits(db=db, user=current_user)
+    available_kits = [FirstAidKitRead.model_validate(k, from_attributes=True) for k in available_kits_raw]
+    default_kit_id = next((kit.id for kit in available_kits if getattr(kit, "is_primary", False)), None)
+
+    return GroupedMedicineIntakesWithKitsResponse(
+        **(base.model_dump(by_alias=True) if hasattr(base, "model_dump") else base),
+        available_kits=available_kits,
+        default_first_aid_kit_id=default_kit_id,
     )

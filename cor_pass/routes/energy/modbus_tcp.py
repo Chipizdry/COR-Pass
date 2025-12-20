@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from cor_pass.database.db import get_db
 from cor_pass.repository.energy.cerbo_service import get_energetic_object
 
-router = APIRouter(prefix="/modbus_tcp", tags=["Modbus TCP"])
+router = APIRouter(prefix="/modbus_tcp", tags=["Modbus TCP"]) 
 
 # # URL воркера для прокси (должен быть настроен в окружении)
 WORKER_BASE_URL = "http://modbus_worker:45762" 
@@ -190,6 +190,9 @@ async def _proxy_to_worker(method: str, endpoint: str, params: dict = None, json
     Returns:
         Результат от воркера
     """
+    # Короткие метки для логов/диагностики
+    op = endpoint.strip("/").split("/")[-1] if endpoint else "unknown"
+    proto = (params or {}).get("protocol") if params else None
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             url = f"{WORKER_BASE_URL}{endpoint}"
@@ -204,25 +207,90 @@ async def _proxy_to_worker(method: str, endpoint: str, params: dict = None, json
                 raise ValueError(f"Неизвестный метод: {method}")
             
             if response.status_code != 200:
-                logger.error(f"Воркер вернул ошибку {response.status_code}: {response.text}")
-                raise HTTPException(
-                    status_code=response.status_code,
-                    detail=response.json().get("detail", response.text)
-                )
+                # Пытаемся разобрать JSON, но не падаем если это не JSON
+                try:
+                    payload = response.json()
+                except Exception:
+                    payload = None
+
+                detail = None
+                if isinstance(payload, dict) and "detail" in payload:
+                    detail = payload.get("detail")
+                else:
+                    detail = response.text
+
+                # Пробрасываем таймауты как 504 Gateway Timeout без трейсбека
+                if response.status_code in (status.HTTP_504_GATEWAY_TIMEOUT, status.HTTP_408_REQUEST_TIMEOUT) or (
+                    isinstance(detail, str) and ("таймаут" in detail.lower() or "timeout" in detail.lower())
+                ):
+                    logger.warning(f"Modbus timeout (op={op}, protocol={proto}): {detail}")
+                    raise HTTPException(
+                        status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                        detail={
+                            "ok": False,
+                            "code": "modbus_timeout",
+                            "message": "Таймаут — устройство не ответило",
+                            "operation": op,
+                            "protocol": proto,
+                            "params": {**(params or {}), **({"body": json_data} if json_data else {})},
+                        },
+                    )
+
+                # Иные ошибки воркера пробрасываем как есть (без трейсбека)
+                logger.error(f"Worker error {response.status_code} (op={op}, protocol={proto}): {detail}")
+                raise HTTPException(status_code=response.status_code, detail=detail)
             
             return response.json()
             
-    except httpx.RequestError as e:
-        logger.error(f"Ошибка при обращении к воркеру: {e}")
+    except httpx.TimeoutException as e:
+        # Явный таймаут до воркера — 504, без трейсбека
+        logger.warning(f"Timeout contacting worker (op={op}, protocol={proto}): {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail={
+                "ok": False,
+                "code": "worker_timeout",
+                "message": "Таймаут при обращении к сервису воркера",
+                "operation": op,
+                "protocol": proto,
+                "params": {**(params or {}), **({"body": json_data} if json_data else {})},
+            },
+        )
+    except httpx.ConnectError as e:
+        # Воркер недоступен (DNS/соединение) — 503, без трейсбека
+        logger.error(f"Worker unavailable (op={op}, protocol={proto}): {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Воркер недоступен"
+            detail={
+                "ok": False,
+                "code": "worker_unavailable",
+                "message": "Воркер недоступен",
+                "operation": op,
+            },
+        )
+    except httpx.RequestError as e:
+        # Прочие сетевые ошибки до воркера — 503, без трейсбека
+        logger.error(f"Ошибка при обращении к воркеру (op={op}, protocol={proto}): {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "ok": False,
+                "code": "worker_request_error",
+                "message": "Ошибка при обращении к воркеру",
+                "operation": op,
+            },
         )
     except Exception as e:
-        logger.exception(f"Ошибка при проксировании запроса: {e}")
+        # Непредвиденные ошибки — 500, но без трейсбека
+        logger.error(f"Ошибка при проксировании запроса (op={op}, protocol={proto}): {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ошибка при обращении к воркеру: {str(e)}"
+            detail={
+                "ok": False,
+                "code": "proxy_internal_error",
+                "message": f"Ошибка при обращении к воркеру: {str(e)}",
+                "operation": op,
+            },
         )
 
 

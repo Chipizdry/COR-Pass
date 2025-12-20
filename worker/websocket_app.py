@@ -3,6 +3,7 @@ FastAPI приложение для WebSocket соединений с энерг
 Работает только с Cerbo/Modbus устройствами через email/password аутентификацию.
 """
 import asyncio
+from datetime import datetime
 from contextlib import asynccontextmanager
 from typing import Dict, List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, status
@@ -16,6 +17,7 @@ from cor_pass.database.db import get_db, async_session_maker
 from cor_pass.database.models import User
 from cor_pass.database.models.energy import WebSocketBroadcastTask
 from cor_pass.config.config import settings
+from cor_pass.repository.energy import upsert_energetic_device
 from cor_pass.services.shared.websocket_events_manager import websocket_events_manager
 from cor_pass.database.redis_db import redis_client
 from passlib.context import CryptContext
@@ -588,11 +590,21 @@ async def websocket_energetic_device_endpoint(
     connection_id = await websocket_events_manager.connect(websocket, session_id=session_id, accept_connection=False)
     logger.info(f"Energetic device connection registered, session_id: {session_id}")
     
+    user = None
+    device_name = None
+    device_protocol = None
+    device_description = None
+    device_hardware_id = None
+
     try:
         # Первое сообщение с credentials
         auth_data = await websocket.receive_json()
         user_email = auth_data.get("email")
         password = auth_data.get("password")
+        device_name = auth_data.get("device_name") or auth_data.get("name")
+        device_protocol = auth_data.get("protocol")
+        device_description = auth_data.get("description")
+        device_hardware_id = auth_data.get("device_id") or session_id
         
         if not user_email or not password:
             await websocket.send_json({"cloud_status": "Auth error: Missing credentials"})
@@ -616,6 +628,25 @@ async def websocket_energetic_device_endpoint(
         
         logger.info(f"Energetic device authenticated: session_id={session_id}, user={user_email}")
         await websocket.send_json({"cloud_status": "authenticated"})
+
+        # Регистрируем/обновляем устройство в БД
+        energetic_device = await upsert_energetic_device(
+            db,
+            device_id=device_hardware_id,
+            owner_cor_id=user.cor_id,
+            name=device_name,
+            protocol=device_protocol,
+            description=device_description,
+            is_active=True,
+            last_seen=datetime.utcnow(),
+        )
+        logger.info(
+            "Energetic device saved",
+            session_id=session_id,
+            device_id=device_hardware_id,
+            db_id=energetic_device.id,
+            owner=user.cor_id,
+        )
         
         # Основной цикл приема данных
         while True:
@@ -635,6 +666,20 @@ async def websocket_energetic_device_endpoint(
     except Exception as e:
         logger.error(f"Error in energetic device connection {session_id}: {e}", exc_info=True)
     finally:
+        if user:
+            try:
+                await upsert_energetic_device(
+                    db,
+                    device_id=device_hardware_id or session_id,
+                    owner_cor_id=user.cor_id,
+                    name=device_name or session_id,
+                    protocol=device_protocol,
+                    description=device_description,
+                    is_active=False,
+                    last_seen=datetime.utcnow(),
+                )
+            except Exception as e:
+                logger.warning(f"Failed to mark energetic device {session_id} offline: {e}")
         await websocket_events_manager.disconnect(connection_id)
         logger.info(f"Energetic device {session_id} disconnected")
 

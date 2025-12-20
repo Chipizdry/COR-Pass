@@ -190,13 +190,13 @@ class PollingManager:
         """Задача сбора данных с Cerbo GX (совместимость с существующим кодом)"""
         from worker.tasks import cerbo_collection_task_worker
         
-        logger.info(f"[{task_id}] Starting CERBO_COLLECTION task for {object_name}")
+        logger.debug(f"[{task_id}] Starting CERBO_COLLECTION task for {object_name}")
         
         try:
             # Используем существующую функцию
             await cerbo_collection_task_worker(object_id=object_id, object_name=object_name)
         except asyncio.CancelledError:
-            logger.info(f"[{task_id}] CERBO_COLLECTION task cancelled")
+            logger.debug(f"[{task_id}] CERBO_COLLECTION task cancelled")
             raise
         except Exception as e:
             logger.error(f"[{task_id}] Error in CERBO_COLLECTION task: {e}", exc_info=True)
@@ -213,13 +213,13 @@ class PollingManager:
         """Задача проверки расписания (совместимость с существующим кодом)"""
         from worker.tasks import energetic_schedule_task_worker
         
-        logger.info(f"[{task_id}] Starting SCHEDULE_CHECK task for {object_name}")
+        logger.debug(f"[{task_id}] Starting SCHEDULE_CHECK task for {object_name}")
         
         try:
             # Используем существующую функцию
             await energetic_schedule_task_worker(object_id=object_id, object_name=object_name)
         except asyncio.CancelledError:
-            logger.info(f"[{task_id}] SCHEDULE_CHECK task cancelled")
+            logger.debug(f"[{task_id}] SCHEDULE_CHECK task cancelled")
             raise
         except Exception as e:
             logger.error(f"[{task_id}] Error in SCHEDULE_CHECK task: {e}", exc_info=True)
@@ -252,7 +252,7 @@ class PollingManager:
             logger.error(f"[{task_id}] Failed to load Modbus config: {modbus_config_file}")
             return
         
-        logger.info(
+        logger.debug(
             f"[{task_id}] Starting MODBUS_REGISTERS task for {object_name} "
             f"with config {modbus_config_file}"
         )
@@ -269,21 +269,26 @@ class PollingManager:
                 # Можно переопределить интервал из пресета
                 if "interval_seconds" in preset and interval == 5:  # если дефолтный
                     interval = preset["interval_seconds"]
-                logger.info(f"[{task_id}] Using preset '{preset_name}': {register_groups}")
+                logger.debug(f"[{task_id}] Using preset '{preset_name}': {register_groups}")
             else:
                 logger.warning(f"[{task_id}] Preset '{preset_name}' not found in config")
         
         if "register_groups" in command_config:
             # Переопределяем/дополняем группы из command_config
             register_groups = command_config["register_groups"]
-            logger.info(f"[{task_id}] Using register_groups from config: {register_groups}")
+            logger.debug(f"[{task_id}] Using register_groups from config: {register_groups}")
+        
+        if modbus_config_file == "deye_inverter.json" and "gen_relay_status" not in register_groups:
+            register_groups.append("gen_relay_status")
+            logger.debug(f"[{task_id}] Added gen_relay_status to register_groups for generator monitoring")
         
         if not register_groups:
             logger.error(f"[{task_id}] No register groups specified")
             return
         
         # Основной цикл опроса
-        from worker.modbus_client import get_or_create_modbus_client, ModbusTCP
+        from worker.modbus_client import get_or_create_modbus_client, ModbusTCP, DEFAULT_MODBUS_PORT
+        from worker.modbus_broker import get_broker, RequestPriority
         
         # Получаем IP-адрес объекта из БД
         async with async_session_maker() as db:
@@ -299,32 +304,13 @@ class PollingManager:
             port = obj.port
             protocol = obj.protocol or modbus_config.get("protocol", "modbus_tcp")
             slave_id = obj.slave_id if hasattr(obj, 'slave_id') and obj.slave_id else modbus_config.get("slave_id", 1)
+        logger.debug(f"[{task_id}] Protocol: {protocol}, IP: {ip_address}, Port: {port}, Slave: {slave_id}")
         
-        logger.info(f"[{task_id}] Protocol: {protocol}, IP: {ip_address}, Port: {port}, Slave: {slave_id}")
+        # Используем брокер
+        broker = get_broker()
         
         while True:
             try:
-                # Получаем или создаём Modbus клиент
-                modbus_client = await get_or_create_modbus_client(
-                    protocol=protocol,
-                    ip_address=ip_address,
-                    port=port,
-                    object_id=object_id,
-                    slave_id=slave_id
-                )
-                
-                # Для modbus_tcp проверяем connected, для modbus_over_tcp проверяем наличие клиента
-                if protocol == "modbus_tcp":
-                    if not modbus_client or not modbus_client.connected:
-                        logger.warning(f"[{task_id}] Modbus TCP client not connected, skipping cycle")
-                        await asyncio.sleep(interval)
-                        continue
-                elif protocol == "modbus_over_tcp":
-                    if not modbus_client or not isinstance(modbus_client, ModbusTCP):
-                        logger.warning(f"[{task_id}] Modbus over TCP client not available, skipping cycle")
-                        await asyncio.sleep(interval)
-                        continue
-                
                 collected_data = {}
                 
                 # Читаем каждую группу регистров
@@ -335,7 +321,7 @@ class PollingManager:
                         logger.warning(f"[{task_id}] Register group '{group_name}' not found")
                         continue
                     
-                    logger.debug(f"[{task_id}] Reading group '{group_name}'")
+                    # logger.debug(f"[{task_id}] Reading group '{group_name}'")
                     
                     # Для modbus_over_tcp (Deye) читаем всю группу за раз
                     if protocol == "modbus_over_tcp":
@@ -348,23 +334,29 @@ class PollingManager:
                                 logger.error(f"[{task_id}] Group '{group_name}' missing start_address or count")
                                 continue
                             
-                            logger.debug(
-                                f"[{task_id}] Reading {count} registers from address {start_address} "
-                                f"(func={func_code})"
+                            # logger.debug(
+                            #     f"[{task_id}] Reading {count} registers from address {start_address} "
+                            #     f"(func={func_code})"
+                            # )
+                            
+                            # Используем брокер с приоритетом POLLING
+                            result = await broker.submit_request(
+                                protocol=protocol,
+                                host=ip_address,
+                                port=port,
+                                operation="read",
+                                params={"start": start_address, "count": count, "func_code": func_code},
+                                slave_id=slave_id,
+                                object_id=object_id,
+                                priority=RequestPriority.POLLING,
+                                timeout=8.0,
+                                request_id=f"polling_{task_id}_{group_name}",
                             )
                             
-                            # Читаем всю группу за один запрос
-                            result = modbus_client.read(start=start_address, count=count, func=func_code)
-                            
-                            if not result.get("ok"):
-                                logger.error(
-                                    f"[{task_id}] Modbus over TCP error reading group '{group_name}': {result.get('error')}"
-                                )
-                                register_modbus_error(object_id)
-                                continue
-                            
                             raw_registers = result.get("data", [])
-                            logger.debug(f"[{task_id}] Got {len(raw_registers)} registers: {raw_registers[:5]}...")
+                            # logger.debug(f"[{task_id}] Got {len(raw_registers)} registers: {raw_registers[:5]}...")
+                            
+                            register_modbus_success(object_id)
                             
                             # Обрабатываем каждый регистр в группе
                             for register in group.get("registers", []):
@@ -373,6 +365,7 @@ class PollingManager:
                                     reg_type = register.get("type", "uint16")
                                     scale = register.get("scale", 1.0)
                                     name = register["name"]
+                                    bit_index = register.get("bit", None)  # Индекс бита для извлечения
                                     
                                     if offset >= len(raw_registers):
                                         logger.warning(f"[{task_id}] Offset {offset} out of range for {name}")
@@ -392,19 +385,27 @@ class PollingManager:
                                     else:
                                         value = raw_value
                                     
+                                    # Если нужно извлечь конкретный бит
+                                    if bit_index is not None:
+                                        logger.debug(f"[{task_id}] Bit extraction for {name}: raw={value}, bit_index={bit_index}, extracted={(int(value) >> bit_index) & 1}")
+                                        value = (int(value) >> bit_index) & 1
+                                    
                                     # Применяем масштабирование
                                     scaled_value = value * scale
                                     collected_data[name] = scaled_value
                                     
-                                    logger.debug(
-                                        f"[{task_id}] {name}={scaled_value} (raw={raw_value}, scale={scale})"
-                                    )
+                                    # logger.debug(
+                                    #     f"[{task_id}] {name}={scaled_value} (raw={raw_value}, scale={scale}, bit={bit_index})"
+                                    # )
                                     
                                 except Exception as e:
                                     logger.error(
                                         f"[{task_id}] Error processing register {register.get('name')}: {e}"
                                     )
                             
+                        except TimeoutError:
+                            logger.warning(f"[{task_id}] Timeout reading group '{group_name}'")
+                            register_modbus_error(object_id)
                         except Exception as e:
                             logger.error(
                                 f"[{task_id}] Error reading group '{group_name}': {e}"
@@ -421,55 +422,64 @@ class PollingManager:
                                 reg_type = register.get("type", "uint16")
                                 scale = register.get("scale", 1.0)
                                 name = register["name"]
-                                unit_id = modbus_config.get("unit_id", 100)
+                                bit_index = register.get("bit", None)  # Индекс бита для извлечения
                                 
-                                # Определяем тип регистра (holding/input)
-                                # По умолчанию используем input registers для чтения
-                                register_function = modbus_client.read_input_registers
-                                
-                                # Если в конфиге указан тип функции
+                                # Определяем func_code из типа функции
+                                func_code = 4  # input registers по умолчанию
                                 if "function" in register:
                                     if register["function"] == "holding":
-                                        register_function = modbus_client.read_holding_registers
+                                        func_code = 3
                                 
-                                # Читаем регистр
-                                result = await register_function(
-                                    address=address,
-                                    count=count,
-                                    slave=unit_id
+                                # Используем брокер с приоритетом POLLING
+                                result = await broker.submit_request(
+                                    protocol=protocol,
+                                    host=ip_address,
+                                    port=port,
+                                    operation="read",
+                                    params={"start": address, "count": count, "func_code": func_code},
+                                    slave_id=slave_id,
+                                    object_id=object_id,
+                                    priority=RequestPriority.POLLING,
+                                    timeout=8.0,
+                                    request_id=f"polling_{task_id}_{name}",
                                 )
                                 
-                                if result.isError():
-                                    logger.error(
-                                        f"[{task_id}] Modbus error reading {name} at {address}"
-                                    )
-                                    register_modbus_error(object_id)
-                                    continue
+                                registers_data = result.get("data", [])
+                                
+                                register_modbus_success(object_id)
                                 
                                 # Декодируем значение в зависимости от типа
-                                raw_value = result.registers[0] if len(result.registers) > 0 else 0
+                                raw_value = registers_data[0] if len(registers_data) > 0 else 0
                                 
                                 if reg_type == "int16":
                                     value = decode_signed_16(raw_value)
                                 elif reg_type == "uint16":
                                     value = raw_value
-                                elif reg_type == "int32" and len(result.registers) >= 2:
-                                    value = decode_signed_32(result.registers[0], result.registers[1])
-                                elif reg_type == "uint32" and len(result.registers) >= 2:
-                                    value = (result.registers[0] << 16) | result.registers[1]
+                                elif reg_type == "int32" and len(registers_data) >= 2:
+                                    value = decode_signed_32(registers_data[0], registers_data[1])
+                                elif reg_type == "uint32" and len(registers_data) >= 2:
+                                    value = (registers_data[0] << 16) | registers_data[1]
                                 else:
                                     value = raw_value
+                                
+                                # Если нужно извлечь конкретный бит
+                                if bit_index is not None:
+                                    logger.debug(f"[{task_id}] Bit extraction for {name}: raw={value}, bit_index={bit_index}, extracted={(int(value) >> bit_index) & 1}")
+                                    value = (int(value) >> bit_index) & 1
                                 
                                 # Применяем масштабирование
                                 scaled_value = value * scale
                                 
                                 collected_data[name] = scaled_value
                                 
-                                logger.debug(
-                                    f"[{task_id}] Read {name}={scaled_value} "
-                                    f"(raw={raw_value}, scale={scale})"
-                                )
+                                # logger.debug(
+                                #     f"[{task_id}] Read {name}={scaled_value} "
+                                #     f"(raw={raw_value}, scale={scale}, bit={bit_index})"
+                                # )
                                 
+                            except TimeoutError:
+                                logger.warning(f"[{task_id}] Timeout reading register {register.get('name')}")
+                                register_modbus_error(object_id)
                             except Exception as e:
                                 logger.error(
                                     f"[{task_id}] Error reading register {register.get('name')}: {e}"
@@ -485,12 +495,43 @@ class PollingManager:
                     collected_data["object_name"] = object_name
                     collected_data["energetic_object_id"] = object_id
                     
-                    logger.info(
-                        f"[{task_id}] Collected {len(collected_data)} values from {object_name}"
-                    )
+                    # logger.info(
+                    #     f"[{task_id}] Collected {len(collected_data)} values from {object_name}"
+                    # )
                 
                     # Пока просто логируем
                     logger.debug(f"[{task_id}] Data: {collected_data}")
+                    
+                    # Проверяем gen_relay для уведомлений в Telegram
+                    if "gen_relay" in collected_data:
+                        try:
+                            from worker.telegram_bot import get_telegram_monitor
+                            
+                            telegram_monitor = get_telegram_monitor()
+                            if telegram_monitor:
+                                # Получаем telegram_chat_ids из БД
+                                async with async_session_maker() as db:
+                                    obj_data = await db.execute(
+                                        select(EnergeticObject).where(EnergeticObject.id == object_id)
+                                    )
+                                    obj = obj_data.scalar_one_or_none()
+                                    # telegram_chat_ids это строка через запятую - парсим в список
+                                    if obj and hasattr(obj, 'telegram_chat_ids') and obj.telegram_chat_ids:
+                                        chat_ids = [cid.strip() for cid in str(obj.telegram_chat_ids).split(',') if cid.strip()]
+                                    else:
+                                        chat_ids = []
+                                
+                                gen_relay_value = int(collected_data["gen_relay"])
+                                await telegram_monitor.check_generator_status(
+                                    object_id=object_id,
+                                    object_name=object_name,
+                                    gen_relay=gen_relay_value,
+                                    chat_ids=chat_ids
+                                )
+                            else:
+                                logger.debug(f"[{task_id}] Telegram monitor not available for gen_relay check")
+                        except Exception as e:
+                            logger.error(f"[{task_id}] Error checking gen_relay for Telegram: {e}")
                 else:
                     logger.warning(f"[{task_id}] No data collected from {object_name}")
                 

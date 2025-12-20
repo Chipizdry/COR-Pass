@@ -162,11 +162,6 @@ tbody td {
    border-radius: 24px 24px 0 0;
 }
 
-table th,
-table td {
-   width: fit-content;
-}
-
 .close:hover svg {
    background: #EAE9ED;
    border: none;
@@ -178,13 +173,14 @@ table td {
 }
 
 .status {
-   width: 100%;
+   width: 250px;
    display: inline-flex;
    align-items: center;
    justify-content: space-between;
 }
 
 .status-container {
+   width: fit-content;
    padding: 6px 12px 6px 10px;
    background: rgba(255, 255, 255, 0.6);
    border: 1px solid #fff;
@@ -206,7 +202,8 @@ table td {
    border: none;
    background: transparent;
    padding: 0;
-   margin-left: 8px;   /* як у макеті */
+   margin-left: 8px;
+   /* як у макеті */
    cursor: pointer;
    display: inline-flex;
    align-items: center;
@@ -227,6 +224,55 @@ td{
    border-right: 1px solid;
 } */
 
+table th, table td {
+   min-width: fit-content;
+}
+
+table th:nth-child(1),
+table td:nth-child(1) {
+   width: 140px;
+}
+
+table th:nth-child(2),
+table td:nth-child(2),
+table th:nth-child(3),
+table td:nth-child(3) {
+   width: 350px;
+}
+
+table th:nth-child(4),
+table td:nth-child(4) {
+   width: 200px;
+}
+
+table th:nth-child(5),
+table td:nth-child(5) {
+   width: 250px;
+}
+
+table th:nth-child(7),
+table td:nth-child(7),
+table th:nth-child(8),
+table td:nth-child(8) {
+   width: 100px;
+}
+
+table th:nth-child(9),
+table td:nth-child(9),
+table th:nth-child(10),
+table td:nth-child(10) {
+   min-width: 125px;
+}
+
+table th:nth-child(11),
+table td:nth-child(11) {
+   min-width: 185px;
+}
+
+table th:nth-child(13),
+table td:nth-child(13) {
+   width: 280px;
+}
 
 #sortIcon {
    font-size: 18px;
@@ -239,14 +285,13 @@ td{
 
 .actions-menu {
    display: none;
-   width: fit-content;
+   max-width: fit-content;
+   width: 157px;
    padding: 8px;
    border-radius: 8px;
    background: #FEFCFB;
    box-shadow: 0 4px 12px rgba(0, 0, 0, .06);
    position: absolute;
-   top: 300px;
-   right: 64px;
    z-index: 9001;
 }
 
@@ -276,6 +321,11 @@ td{
    font-weight: 400;
 }
 
+.actions-button svg {
+   height: 18px !important;
+   flex-shrink: 0 !important;
+}
+
 #delete_company {
    color: #DF1125;
 }
@@ -286,6 +336,7 @@ td{
 }
 
 #blockModal,
+#unblockModal,
 #deleteModal {
    width: 660px;
    height: 378px;
@@ -354,9 +405,10 @@ td{
    cursor: pointer;
 }
 
-.blockBtn.enable,
-.deleteBtn.enable,
-.submitBtn.enable,
+.unblockBtn,
+.blockBtn,
+.deleteBtn,
+.submitBtn,
 .applyBtn.enable {
    color: #fff;
    background: #7527B2;
@@ -365,6 +417,7 @@ td{
 }
 
 .cancelBtn,
+.rejectBtn,
 .resetLimitBtn.enable {
    color: #7527B2;
    background: #fff;
@@ -451,7 +504,8 @@ input.currency {
    color: #B1A1DA;
 }
 
-.applyBtn, .resetLimitBtn {
+.applyBtn,
+.resetLimitBtn {
    border-color: #D2CAE8 !important;
    pointer-events: none;
 }
@@ -542,6 +596,7 @@ input.currency {
    pointer-events: auto;
 }
 
+#unblockModal.active,
 #blockModal.active,
 #deleteModal.active,
 #limitModal.active,

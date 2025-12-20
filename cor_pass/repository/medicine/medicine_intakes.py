@@ -445,6 +445,7 @@ async def get_grouped_intakes_by_date_range(
                     'notes': intake.notes,
                     'created_at': intake.created_at,
                     'updated_at': intake.updated_at,
+                    # используем алиасы полей схемы MedicineIntakeResponse
                     'medicine_name': intake.medicine_name,
                     'medicine_dosage': intake.medicine_dosage,
                     'medicine_unit': intake.medicine_unit,

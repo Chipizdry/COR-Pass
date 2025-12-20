@@ -20,18 +20,29 @@ async def run_worker():
 async def run_websocket_server():
     """Запускает WebSocket сервер для устройств"""
     from worker.websocket_app import app
-    
     logger.info("Starting WebSocket server for devices...")
-    
     config = uvicorn.Config(
         app=app,
         host="0.0.0.0",
         port=45762,  # Отдельный порт для WebSocket сервера
         log_level="info",
-        loop="asyncio"
+        loop="asyncio",
     )
     server = uvicorn.Server(config)
     await server.serve()
+
+
+async def _supervise(coro_fn, name: str, restart_delay: float = 5.0):
+    """Надзор за задачей: при падении перезапускает, чтобы контейнер не умирал."""
+    while True:
+        try:
+            await coro_fn()
+        except asyncio.CancelledError:
+            logger.info(f"{name} cancelled, stopping supervisor loop")
+            raise
+        except Exception as e:
+            logger.error(f"{name} crashed: {e}. Restarting in {restart_delay}s", exc_info=True)
+            await asyncio.sleep(restart_delay)
 
 
 async def main():
@@ -57,23 +68,20 @@ async def main():
     else:
         logger.info("ℹ️ Telegram battery monitor disabled (production mode)")
     
-    # Создаем задачи для обоих сервисов
-    worker_task = asyncio.create_task(run_worker())
-    websocket_task = asyncio.create_task(run_websocket_server())
-    
+    # Создаем задачи с надзором для обоих сервисов
+    worker_task = asyncio.create_task(_supervise(run_worker, "Modbus worker"))
+    websocket_task = asyncio.create_task(_supervise(run_websocket_server, "WebSocket server"))
+
     try:
-        # Ждем завершения обеих задач
         await asyncio.gather(worker_task, websocket_task)
     except KeyboardInterrupt:
         logger.info("Shutting down services...")
         worker_task.cancel()
         websocket_task.cancel()
-        
         try:
             await asyncio.gather(worker_task, websocket_task, return_exceptions=True)
         except asyncio.CancelledError:
             pass
-        
         logger.info("Services stopped")
 
 

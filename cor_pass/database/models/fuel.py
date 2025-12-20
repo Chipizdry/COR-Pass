@@ -94,7 +94,7 @@ class CorporateClient(Base):
         String(20),
         default="pending",
         nullable=False,
-        comment="Статус: pending (на рассмотрении), active (активна), blocked (заблокирована), rejected (отклонена), limit_exceeded (превышен лимит)"
+        comment="Статус: pending (на рассмотрении), active (активна), blocked (заблокирована), rejected (отклонена), limit_exceeded (превышен лимит), deleted (удалена)"
     )
     
     # Лимит компании (кредитный лимит)
@@ -143,5 +143,5 @@ class CorporateClient(Base):
         # Partial unique indexes для soft delete (unique только для не удалённых записей)
         Index("uq_corp_client_company_name", "company_name", unique=True, postgresql_where=Column("deleted_at").is_(None)),
         Index("uq_corp_client_tax_id", "tax_id", unique=True, postgresql_where=Column("deleted_at").is_(None)),
-        CheckConstraint("status IN ('pending', 'active', 'blocked', 'rejected', 'limit_exceeded')", name="ck_corporate_clients_status"),
+        CheckConstraint("status IN ('pending', 'active', 'blocked', 'rejected', 'limit_exceeded', 'deleted')", name="ck_corporate_clients_status"),
     )
