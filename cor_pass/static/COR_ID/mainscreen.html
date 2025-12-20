@@ -10,7 +10,6 @@
     <title>User Records</title>
     <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/styles.css">
     <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/modal.css">
-  <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script> --> 
   
 </head>
 <body>
@@ -119,7 +118,7 @@
 
 
 
-        <button class="custom-button"id="COR-Finance">
+        <button class="custom-button hidden"id="COR-Finance">
             <!-- Первая SVG-иконка -->       
             
             <svg width="24" height="24" viewBox="0 0 50 51" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -129,9 +128,7 @@
                 23.2632H36V29.0526L33.9274 26.98L25.5789 35.2589L21.5611 31.7621L17.1842 36H14L21.4916 
                 28.6589L25.5789 32.1095" fill="white"/>
             </svg>
-                
-                
-                
+                           
             <!-- Текст кнопки -->
             <span class="button-text" data-translate="finance">Финансы</span> 
             <!-- Вторая SVG-иконка -->
@@ -147,7 +144,7 @@
             </svg>
         </button>
 
-        <button class="custom-button"id="Lawyer">
+        <button class="custom-button hidden"id="Lawyer">
             <!-- Первая SVG-иконка -->       
             
            <svg width="24" height="24" viewBox="0 0 50 52" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -243,7 +240,7 @@
             </svg>
         </button>
 
-        <button class="custom-button"id="Manager">
+        <button class="custom-button hidden"id="Manager">
             <!-- Первая SVG-иконка -->       
             
           <svg width="24" height="24" viewBox="0 0 50 52" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -284,7 +281,7 @@
         </button>
 
 
-        <button class="custom-button"id="COR-ERP">
+        <button class="custom-button hidden"id="COR-ERP">
             <!-- Первая SVG-иконка -->       
             <svg width="24" height="24" viewBox="0 0 51 50" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="0.5" width="50" height="50" rx="25" fill="#453CFB"/>
@@ -560,7 +557,7 @@
             </svg>
         </button>
 
-        <button class="custom-button"id="EnergyManagerButton">
+        <button class="custom-button hidden"id="EnergyManagerButton">
             <!-- Первая SVG-иконка -->       
             <svg width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M23.3617 6.90842C23.0715 6.29533 22.7301 5.70782 22.3413 5.15202L18.251 7.07318H18.2558L14.8987 8.6542C14.157 8.12372 13.2601 
@@ -592,14 +589,8 @@
                 
         </button>
 
-
-
-
-
-
-
-    
-        <button class="custom-button"id="DeviceUser">
+  
+        <button class="custom-button hidden"id="DeviceUser">
             <!-- Первая SVG-иконка -->       
            <svg width="24" height="24" viewBox="0 0 51 51" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect width="50" height="50" rx="25" fill="#AB77EB"/>
@@ -659,21 +650,7 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        <button class="custom-button"id="Doctor">
+        <button class="custom-button hidden"id="Doctor">
             <!-- Первая SVG-иконка -->       
             <svg width="24" height="24" viewBox="0 0 51 50" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="0.5" width="50" height="50" rx="25" fill="#F8A441"/>
@@ -807,55 +784,46 @@
         const accessToken =getToken();
         console.log("accessToken:", accessToken);
         const currentLang = getSavedLang();
-        const dict = translations[currentLang] || translations.uk;
+        const dict = translations[currentLang] || translations.ru;
         document.getElementById('passwordManagerButton').addEventListener('click', function() {
             if (checkToken()) {
             window.location.href = '/static/COR_ID/password_manager.html';   }
         });
 
         // Обработчик для кнопки "COR-Platform"
-    document.getElementById('COR-MED').addEventListener('click', function() {
-        if (checkToken()) {          
-            window.location.href = '/static/medical.html';
-        } 
-    });
-
+        document.getElementById('COR-MED').addEventListener('click', function() {
+            if (checkToken()) {          
+                window.location.href = '/static/medical.html';
+            } 
+        });
 
           // Обработчик для кнопки "Юристы"
-    document.getElementById('Lawyer').addEventListener('click', function() {
-        if (checkToken()) {          
-            window.location.href = '/static/COR_ID/lawyers_cabinet/lawyer_doctors-page.html';
-        } 
-    });
-
-
+        document.getElementById('Lawyer').addEventListener('click', function() {
+            if (checkToken()) {          
+                window.location.href = '/static/COR_ID/lawyers_cabinet/lawyer_doctors-page.html';
+            } 
+        });
 
           // Обработчик для кнопки "Менеджер АЗК"
-    document.getElementById('Manager').addEventListener('click', function() {
-        if (checkToken()) {          
-            window.location.href = '/static/COR_Energy/COR_Energy_AZK-companies.html';
-        } 
-    });
-
-
-
+        document.getElementById('Manager').addEventListener('click', function() {
+            if (checkToken()) {          
+                window.location.href = '/static/COR_Energy/COR_Energy_AZK-companies.html';
+            } 
+        });
 
        // Обработчик для кнопки "Финансы"
-       document.getElementById('COR-Finance').addEventListener('click', function() {
+        document.getElementById('COR-Finance').addEventListener('click', function() {
         if (checkToken()) {          
             window.location.href = 'https://frontend.dev.cor-finance.cor-medical.ua' + '?access_token=' + accessToken;
         } 
-    });
+        });
 
-
-    
         // Обработчик для кнопки "Energy"
         document.getElementById('EnergyManagerButton').addEventListener('click', function() {
         if (checkToken()) {          
             window.location.href = '/static/COR_Energy/energy.html';
         } 
        });
-
 
          // Обработчик для кнопки "Устройства"
         document.getElementById('DeviceUser').addEventListener('click', function() {
@@ -864,20 +832,20 @@
         } 
        });
 
-    // Обработчик для кнопки "Мой кабинет"
-    document.getElementById('Doctor').addEventListener('click', function() {
-                if (checkToken()) {          
-                    window.location.href = '/static/COR_LAB/doctor_patients_page.html' + '?access_token=' + accessToken;
-                   
-                } 
-            });
-
-   // Обработчик для кнопки "COR-ERP"
-   document.getElementById('COR-ERP').addEventListener('click', function() {
+        // Обработчик для кнопки "Мой кабинет"
+        document.getElementById('Doctor').addEventListener('click', function() {
         if (checkToken()) {          
-            window.location.href = 'https://dev.erp.cor-medical.ua/front' + '?access_token=' + accessToken;
-        } 
-      });
+            window.location.href = '/static/COR_LAB/doctor_patients_page.html' + '?access_token=' + accessToken;
+            
+            } 
+        });
+
+        // Обработчик для кнопки "COR-ERP"
+        document.getElementById('COR-ERP').addEventListener('click', function() {
+        if (checkToken()) {          
+                window.location.href = 'https://dev.erp.cor-medical.ua/front' + '?access_token=' + accessToken;
+            } 
+        });
 
     document.getElementById('LogOut-btn').addEventListener('click', function () {
           
@@ -898,102 +866,7 @@
             });
 
 
-        function toggleQrCode(corId) {
-            const qrCodeContainer = document.getElementById('qrCodeContainer');
-            if( checkToken()){
-            if (qrCodeContainer.style.display === 'block') {
-                // Скрываем QR-код, если он уже отображается
-                qrCodeContainer.style.display = 'none';
-                qrCodeContainer.innerHTML = ''; // Очищаем контейнер
-            } else {
-                // Показываем QR-код
-                qrCodeContainer.style.display = 'block';
 
-                // Очищаем предыдущий QR-код (если есть)
-                qrCodeContainer.innerHTML = '';
-
-                // Генерация нового QR-кода
-                new QRCode(qrCodeContainer, {
-                    text: corId,
-                    width: 160,
-                    height: 160
-                });
-            }}
-        }
-        async function fetchCorId() {
-            const accessToken =getToken();
-            if (!checkToken()) {
-                console.error("Токен не найден!!!");
-                document.getElementById('userCorId').textContent = userCorIdElement.textContent = dict.corid_token_not_found || "Помилка: токен не знайдено.";
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/user/my_core_id', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${accessToken}`
-                    }
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error("Помилка при отриманні COR-ID:", errorData);
-                    document.getElementById('userCorId').textContent = userCorIdElement.textContent = dict.corid_fetch_error || "Помилка при отриманні COR-ID.";
-                    return;
-                }
-
-                const corId = await response.json();
-                const userCorIdElement = document.getElementById('userCorId');
-                userCorIdElement.textContent = `${corId}`;
-                extractAndSaveGenderAndBirthYear(corId);
-
-                 // Jбработчик клика для отображения QR-кода
-                 userCorIdElement.addEventListener('click', () => toggleQrCode(corId));
-                 // Jбработчик клика на сам QR-код для его скрытия
-                const qrCodeContainer = document.getElementById('qrCodeContainer');
-                qrCodeContainer.addEventListener('click', () => {
-                    qrCodeContainer.style.display = 'none'; 
-                    qrCodeContainer.innerHTML = ''; 
-                });
-            } catch (error) {
-                console.error("Ошибка при запросе COR-ID:", error);
-                document.getElementById('userCorId').textContent = userCorIdElement.textContent = dict.corid_load_error || "Помилка при завантажені COR-ID.";
-            }
-        }
-
-
-        function extractAndSaveGenderAndBirthYear(corId) {
-    try {
-        console.log("Обрабатываем COR-ID:", corId);
-        
-        const match = corId.match(/^(.{9})-(\d{4})([MF])$/);
-        
-        if (match) {
-            const coreId = match[1];        // 1TJF3GDHL
-            const birthYear = match[2];     // 2008
-            const gender = match[3];        // M или F
-            
-            console.log("Извлеченные данные:", { coreId, birthYear, gender });
-            
-            // Сохраняем в localStorage
-            localStorage.setItem('userGender', gender);
-            localStorage.setItem('userBirthYear', birthYear);
-                   
-            console.log("Данные сохранены в localStorage:");
-            console.log("Пол:", localStorage.getItem('userGender'));
-            console.log("Год рождения:", localStorage.getItem('userBirthYear'));
-            
-            
-        } else {
-            console.warn("Не верный формат COR-ID:", corId);
-        }
-        
-    } catch (error) {
-        console.error("Ошибка при обработке COR-ID:", error);
-    }
-}
 
 document.addEventListener('DOMContentLoaded', function () {
     const accessToken = getToken();
@@ -1004,7 +877,10 @@ document.addEventListener('DOMContentLoaded', function () {
     makeModalDraggable('sessionsModal');
     enableFetchInterceptor();
     setupTokenCheckOnActions();
-
+ 
+    const sessionsButton = document.getElementById("Sessions"); 
+    const modal = document.getElementById("sessionsModal"); 
+    
     const adminButtonContainer = document.getElementById('admin-button-container');
     const corErpButton = document.getElementById('COR-ERP');
     const energyManagerButton = document.getElementById('EnergyManagerButton');
@@ -1014,31 +890,31 @@ document.addEventListener('DOMContentLoaded', function () {
     const ManagerButton = document.getElementById('Manager');
     const DeviceUserButton = document.getElementById('DeviceUser');
 
-    // Сначала скрываем все кнопки по умолчанию
-    corErpButton.classList.add('hidden');
-    energyManagerButton.classList.add('hidden');
-    doctorButton.classList.add('hidden');
-    financierButton.classList.add('hidden');
-    LawyerButton.classList.add('hidden'); 
-    ManagerButton.classList.add('hidden');  
-  /*  DeviceUserButton.classList.add('hidden'); */
+
+     const buttons = {
+        corErp: document.getElementById('COR-ERP'),
+        energyManager: document.getElementById('EnergyManagerButton'),
+        doctor: document.getElementById('Doctor'),
+        financier: document.getElementById('COR-Finance'),
+        lawyer: document.getElementById('Lawyer'),
+        manager: document.getElementById('Manager'),
+        deviceUser: document.getElementById('DeviceUser'),
+    };
+
     adminButtonContainer.innerHTML = '';
 
-    if (!accessToken) {
-        console.warn("Токен не найден. По умолчанию — только медицинский раздел.");
-        doctorButton.classList.remove('hidden'); // дефолт — только медицина
-        return;
-    }
+    // Открываем модальное окно и загружаем данные при клике на кнопку "Сессии"
+    sessionsButton.addEventListener("click", async function () {
+        modal.style.display = "block"; // Открываем модальное окно
+        await getSessions(); // Загружаем данные о сессиях
+    });
 
+       applyRolesToUI({ accessToken, dict, buttons, adminButtonContainer });
+
+/*
     try {
         const decodedToken = decodeToken(accessToken);
         console.log("Decoded token:", decodedToken);
-
-        // Если roles нет или пусто — дефолт (только медицина)
-        if (!decodedToken.roles || decodedToken.roles.length === 0) {
-            doctorButton.classList.remove('hidden');
-            return;
-        }
 
         // Обрабатываем каждую роль
         decodedToken.roles.forEach(role => {
@@ -1084,134 +960,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     break;
 
                 default:
-                    console.log(`Невідома роль: ${role}. Застосовується дефолт — лише медицина.`);
-                    doctorButton.classList.remove('hidden');
+                    console.log(`Неизвестная роль: ${role}. Применяется дефолт — только пароли и медицина.`);
                     break;
             }
         });
     } catch (error) {
         console.error("Ошибка дешифрования токена:", error);
-        // Если токен не расшифровался — дефолт
-        doctorButton.classList.remove('hidden');
-    }
+        
+    }  */
 });
 
-
-
-
-        const sessionsButton = document.getElementById("Sessions"); // Кнопка "Сессии"
-        const modal = document.getElementById("sessionsModal"); // Модальное окно
-
-        // Открываем модальное окно и загружаем данные при клике на кнопку "Сессии"
-        sessionsButton.addEventListener("click", async function () {
-            modal.style.display = "block"; // Открываем модальное окно
-            await getSessions(); // Загружаем данные о сессиях
-        });
-
-        makeModalDraggable('sessionsModal');
-
-// Функция для получения данных о сессиях
-async function getSessions() {
-try {
-    const accessToken =getToken();
-    const response = await fetch("/api/user/sessions/all?skip=0&limit=150", {
-        method: "GET",
-        headers: {
-            "Authorization": `Bearer ${accessToken}`,
-            "Content-Type": "application/json;charset=utf-8"
-        }
-    });
-
-    if (!response.ok) {
-        throw new Error(`Ошибка: ${response.status}`);
-    }
-
-    const sessions = await response.json();
-    console.log("Список сессий:", sessions);
-
-    const cardsContainer = document.getElementById("sessionCardsContainer");
-    cardsContainer.innerHTML = "";
-
-    sessions.forEach(session => {
-        const card = document.createElement("div");
-        card.className = "session-card";
-        card.innerHTML = `
-        <div class="card-content">
-          <div class="session-text">
-            <p><strong>${dict.session_about_device || "Про устройство:"}</strong> ${session.device_info}</p>
-            <p><strong>${dict.session_device || "Устройство:"}</strong> ${session.device_type || "-"}, ${session.device_os || "-"}</p>
-            <p><strong>${dict.session_ip || "IP-адрес:"}</strong> ${session.ip_address || "-"}</p>
-            <p><strong>${dict.session_place || "Местоположение:"}</strong> ${session.city_name || "-"}</p>
-            <p><strong>${dict.session_dates || "Дата:"}</strong>
-                ${dict.session_created || "Создана:"} ${new Date(session.created_at).toLocaleString()},
-                ${dict.session_updated || "Обновлена:"} ${new Date(session.updated_at).toLocaleString()}
-            </p>
-          </div>
-            <button style="
-            color: transparent;
-            background: transparent;
-            outline: none;
-            border: none;" 
-            class="modal-button session-delete-button" data-session-id="${session.id}">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M18.6872 5.31275C19.1042 5.72975 19.1042 6.40584 18.6872 6.82284L6.82284 18.6873C6.40584 19.1042 5.72975 19.1042 5.31275 18.6873C4.89575 18.2702 4.89575 17.5942 5.31275 17.1772L17.1772 5.31275C17.5942 4.89575 18.2702 4.89575 18.6872 5.31275Z" fill="#B1A1DA"></path>
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M18.6873 18.6873C18.2702 19.1042 17.5942 19.1042 17.1772 18.6873L5.31275 6.82284C4.89575 6.40584 4.89575 5.72975 5.31275 5.31275C5.72975 4.89575 6.40584 4.89575 6.82284 5.31275L18.6873 17.1772C19.1042 17.5942 19.1042 18.2702 18.6873 18.6873Z" fill="#B1A1DA"></path>
-                </svg>
-          </button>
-        </div>
-        `;
-        cardsContainer.appendChild(card);
-    });
-
-    // Добавляем обработчики событий для кнопок удаления
-    document.querySelectorAll('.modal-button.session-delete-button').forEach(button => {
-        button.addEventListener('click', async function() {
-            const sessionId = this.getAttribute('data-session-id');
-            await deleteSession(sessionId);
-        });
-    });
-
-// Рассчитываем высоту всех карточек
-    const cardsHeight = Array.from(cardsContainer.children).reduce((totalHeight, card) => {
-    return totalHeight + card.offsetHeight;}, 0);
-    const padding = 40; // Отступы внутри модального окна
-    const modal = document.getElementById("sessionsModal");
-
-} catch (error) {
-    console.error("Ошибка получения сессий:", error);
-}
-}
-
-async function deleteSession(sessionId) {
-try {
-    const accessToken =getToken();
-  //  const token = getTokenFromURL();
-    const response = await fetch(`/api/user/sessions/${sessionId}`, {
-        method: "DELETE",
-        headers: {
-            "Authorization": `Bearer ${accessToken}`,
-            "Content-Type": "application/json;charset=utf-8"
-        }
-    });
-
-    if (!response.ok) {
-        throw new Error(`Ошибка: ${response.status}`);
-    }
-
-    const result = await response.json();
-    console.log("Сессия удалена:", result);
-    
-    // Обновляем список сессий после удаления
-    await getSessions();
-    
-    // Можно добавить уведомление об успешном удалении
-    alert("Сессия успешно удалена!!!");
-    
-} catch (error) {
-    console.error("Ошибка удаления сессии:", error);
-    alert("Не удалось удалить сессию: " + error.message);
-}
-}
 
 
     </script>
