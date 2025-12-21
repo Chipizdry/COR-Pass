@@ -1,0 +1,324 @@
+
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+      <!-- Fallback для старых браузеров -->
+    <link rel="alternate icon" href="/static/favicon.png" type="image/png">
+      
+      <!-- Для Safari -->
+    <link rel="mask-icon"  href="/static/favicon.svg" color="#291161"> 
+    <link rel="stylesheet" href="/static/COR_Energy/monitoring.css">
+    <link rel="stylesheet" href="/static/COR_ID_css/styles.css">
+    <link rel="stylesheet" href="/static/COR_ID_css/modal.css">
+
+    
+    <title><COR-Devices></COR-Devices></title>
+    <script src="/static/COR_ID_Js/config.js"></script>
+    <script src="/static/COR_ID_Js/general_fun.js"></script>
+    <script src="/static/COR_ID_Js/devices.js"></script>
+   
+   
+
+</head>
+<body>
+    <div class="energy-container">
+        <div class="navigation-container">
+            <button class="link-button" onclick="goBack('/static/COR_ID/mainscreen.html')" data-translate="back-link-text">&lt;&lt;&lt;назад&lt;&lt;&lt;</button>         
+        </div>
+        <div id="loading" class="loading">Загрузка данных...</div>
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div class="header-row">
+            <h1>Устройства</h1>
+
+            <div class="button-controls">
+                <button onclick="addDevice()" class="btn">+ Добавить устройство</button>
+            </div>
+        </div>
+        <div id="table-container" style="display: none;" class="objects-table-container">
+            <table id="devices-table" class="objects-table">
+                <thead>
+                    <tr>
+                        <th>Имя</th>
+                       <th>Device ID</th>
+                        <th>Владелец</th>
+                        <th>Активно</th>
+                        <th>Последний онлайн</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления объекта -->
+        <div id="addObjectModal" class="modal" style="display: none;">
+            <div class="modal-header">
+                <div class="modal-buttons">
+                    <button class="modal-button close" id="closeAddObject">✖</button>
+                </div>
+                <h3 style="margin-top:30; color:#291161;font-size: 17px;">Добавить объект</h3>
+            </div>
+
+            <div class="modal-content">
+
+                <div class="form">
+                    <label>Название:</label>
+                    <input type="text" id="objectName" required>
+                </div>
+
+                <div class="form">
+                    <label>Описание:</label>
+                    <textarea id="objectDescription" required></textarea>
+                </div>
+
+                <div class="form">
+                    <label for="equipment">Вендор:</label>
+                    <select id="objectVendor" required>
+                        <option value="" disabled selected>Выберите вендора</option>
+                        <option value="COR-ID">COR-ID</option>
+                        <option value="POW Mr">POW Mr</option>
+                        <option value="Victrone">Victrone</option>
+                        <option value="Deye">Deye</option>
+                        <option value="Axioma">Axioma</option>
+                    </select>
+                </div>
+
+                <div class="form">
+                    <label for="objectProtocol">Протокол:</label>
+                    <select id="objectProtocol" required>
+                        <option value="" disabled selected>Выберите протокол</option>
+                        <option value="Modbus TCP">Modbus TCP</option>
+                        <option value="Modbus RTU">Modbus RTU</option>
+                        <option value="modbus over TCP">modbus over TCP</option>
+                        <option value="COR-Bridge">COR-Bridge</option>
+                    </select>
+                </div>
+
+                <div class="form">
+                    <label>IP адрес:</label>
+                    <input type="text" id="objectIp" placeholder="192.168.1.100" required>
+                </div>
+
+                <div class="form">
+                    <label>Порт:</label>
+                    <input type="number" id="objectPort" placeholder="502" required>
+                </div>
+
+                <div class="form">
+                    <label>Логин инвертора:</label>
+                    <input type="text" id="objectLogin">
+                </div>
+
+                <div class="form">
+                    <label>Пароль инвертора:</label>
+                    <input type="text" id="objectPassword">
+                </div>
+
+                <button onclick="submitAddObjectForm()">Создать объект</button>
+            </div>
+        </div>
+
+
+
+        <!-- Модальное окно для редактирования объекта -->
+<div id="editObjectModal" class="modal" style="display: none;">
+    <div class="modal-header">
+        <div class="modal-buttons">
+            <button class="modal-button close" id="closeEditObject">✖</button>
+        </div>
+        <h3 style="margin-top:30; color:#291161;font-size: 17px;">Редактировать объект</h3>
+    </div>
+
+    <div class="modal-content">
+
+        <div class="form">
+            <label>Название:</label>
+            <input type="text" id="editObjectName" required>
+        </div>
+
+        <div class="form">
+            <label>Описание:</label>
+            <textarea id="editObjectDescription" required></textarea>
+        </div>
+
+        <div class="form">
+            <label for="equipment">Вендор:</label>
+            <select id="editObjectVendor" required>
+                <option value="" disabled selected>Выберите вендора</option>
+                <option value="COR-ID">COR-ID</option>
+                <option value="POW Mr">POW Mr</option>
+                <option value="Victrone">Victrone</option>
+                <option value="Deye">Deye</option>
+                <option value="Axioma">Axioma</option>
+                <option value="Pylontech">Pylontech</option>
+            </select>
+        </div>
+
+        <div class="form">
+            <label for="objectProtocol">Протокол:</label>
+            <select id="editObjectProtocol" required>
+                <option value="" disabled selected>Выберите протокол</option>
+                <option value="modbus_tcp">Modbus TCP</option>
+                <option value="modbus_rtu">Modbus RTU</option>
+                <option value="modbus_over_tcp">Modbus over TCP</option>
+                <option value="COR-Bridge">COR-Bridge</option>
+            </select>
+        </div>
+
+        <div class="form">
+            <label>IP адрес:</label>
+            <input type="text" id="editObjectIp" required>
+        </div>
+
+        <div class="form">
+            <label>Порт:</label>
+            <input type="number" id="editObjectPort" required>
+        </div>
+
+        <div class="form">
+            <label>Логин инвертора:</label>
+            <input type="text" id="editObjectLogin">
+        </div>
+
+        <div class="form">
+            <label>Пароль инвертора:</label>
+            <input type="text" id="editObjectPassword">
+        </div>
+
+        <button onclick="submitEditObjectForm()">Сохранить изменения</button>
+    </div>
+</div>
+
+    <script>
+
+     // Загружаем данные при загрузке страницы
+        document.addEventListener('DOMContentLoaded', async () => {
+            const devices = await fetchDevices();
+            renderTable(devices);
+            // Инициализация модального окна для добавления объекта
+            initModalControls('addObjectModal');
+            makeModalDraggable('addObjectModal');
+
+        });
+           
+          
+     
+        
+        
+
+        
+        function editDevice(id) {
+            alert(`Редактирование устройства с ID: ${id}`);
+            // Здесь можно реализовать переход на страницу редактирования
+        }
+        
+        function addDevice() {
+            const modal = document.getElementById('addObjectModal');
+            modal.style.display = 'block';
+        }
+
+        document.getElementById('closeAddObject').onclick = () => {
+            document.getElementById('addObjectModal').style.display = 'none';
+        };
+
+        function handleEdit(device) {
+          console.log("Редактировать:", device);
+
+            // Заполняем поля модалки
+            document.getElementById("editObjectName").value = device.name || "";
+            document.getElementById("editObjectDescription").value = device.description || "";
+            document.getElementById("editObjectVendor").value = device.vendor || "";
+            document.getElementById("editObjectProtocol").value = device.protocol || "";
+            document.getElementById("editObjectIp").value = device.ip_address || "";
+            document.getElementById("editObjectPort").value = device.port || "";
+            document.getElementById("editObjectLogin").value = device.inverter_login || "";
+            document.getElementById("editObjectPassword").value = device.inverter_password || "";
+
+            // Запоминаем ID текущего объекта
+            window.currentEditObjectId = device.id;
+
+            // Показываем модалку
+            document.getElementById("editObjectModal").style.display = "block";
+
+          
+        }
+
+
+          document.getElementById("closeEditObject").onclick = () => {
+           document.getElementById("editObjectModal").style.display = "none";
+           };
+
+
+        function handleDelete(device) {
+            console.log("Удалить:", device.id);     
+            deleteObject(device.id);
+        }
+
+        function handleStop(device) {
+            console.log("Остановить:", device.id);
+            // TODO запрос остановки объекта
+        }
+
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'none';
+        }
+
+
+        function closeAllMenus() {
+        document.querySelectorAll('.actions-menu.visible')
+            .forEach(menu => menu.classList.remove('visible'));
+        }
+
+        document.addEventListener('click', () => closeAllMenus());
+        async function submitAddObjectForm() {
+            const form = document.getElementById('addObjectForm');
+            const formData = new FormData(form);
+
+            const objectData = {
+                id: formData.get('objectId'),
+                name: formData.get('objectName'),
+                description: formData.get('objectDescription'),
+                protocol: formData.get('objectProtocol'),
+                status: formData.get('objectStatus')
+            };
+
+            try {
+                const response = await fetch('/api/modbus/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(objectData)
+                });
+
+                if (response.ok) {
+                    alert('Объект успешно добавлен!');
+                    closeModal('addObjectModal');
+                    loadObjects(); // Обновляем таблицу объектов
+                } else {
+                    alert('Ошибка при добавлении объекта.');
+                }
+            } catch (error) {
+                console.error('Ошибка при добавлении объекта:', error);
+                alert('Произошла ошибка при добавлении объекта.');
+            }
+        }
+        
+        // Функция для обновления данных (можно вызвать из консоли или по кнопке)
+        function refreshData() {
+            fetchDevices();
+        }
+        
+      
+     
+ 
+
+    </script>
+</body>
+</html>
