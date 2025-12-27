@@ -1,5 +1,11 @@
 
+import { MODAL_SCHEMAS } from "./modalSchemas.js";
 
+export function resolveModalSchema(vendor, model) {
+    const vendorSchemas = MODAL_SCHEMAS[vendor];
+    if (!vendorSchemas) return null;
+    return vendorSchemas[model] || vendorSchemas.default || null;
+}
 
 function getGradientColor(value) {
 const x = Math.max(0, Math.min(100, value));
@@ -169,7 +175,7 @@ function setDeviceVisibility(name, state) {
         Load: ["loadIcon", "loadLine"],
         Grid: ["power-grid-icon", "gridLine"],
         Sun: ["SolarBatteryIcon", "solarLine"]
-        // при необходимости добавляй новые сущности сюда
+        // при необходимости новые сущности сюда
     };
 
     const elements = idMap[name];
@@ -180,3 +186,7 @@ function setDeviceVisibility(name, state) {
         if (el) el.style.display = show ? "block" : "none";
     });
 }
+
+
+window.resolveModalSchema = resolveModalSchema;
+

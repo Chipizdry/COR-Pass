@@ -487,8 +487,8 @@
                     18.0181C9.83174 18.5719 10.0242 19.2767 10.6019 19.6231Z" fill="#5B4296"/>
                     <path d="M69.3562 47.8927L66.2093 46.2487C65.6563 45.9164 64.9508 46.1088 64.6047 46.6859C64.4378 
                     46.9638 64.3966 47.2858 64.4889 47.5929C64.5752 47.8809 64.7716 48.129 65.0639 48.3037L68.2274 
-                    49.9562C68.4108 50.0662 68.6108 50.1189 68.8086 50.1189C69.2086 50.1189 69.6004 49.9047 69.832 4
-                    9.5189C70.0076 49.2263 70.0446 48.8688 69.9333 48.538C69.8335 48.2418 69.6242 48.0081 69.3562 
+                    49.9562C68.4108 50.0662 68.6108 50.1189 68.8086 50.1189C69.2086 50.1189 69.6004 49.9047 69.832 
+                    49.5189C70.0076 49.2263 70.0446 48.8688 69.9333 48.538C69.8335 48.2418 69.6242 48.0081 69.3562 
                     47.8927Z" fill="#5B4296"/>
                     <path d="M54.5805 10.1146C54.5922 10.1237 54.6045 10.1319 54.6172 10.1395C54.8054 10.2524 55.0135 
                     10.3066 55.2201 10.3066C55.59 10.3066 55.9559 10.1331 56.1974 9.81122C56.2052 9.801 56.2124 9.79047 
@@ -1015,8 +1015,9 @@
                 </div>
             </div>
 
-    <script src="/static/COR_Energy/scripts.js"></script>
-    <script src="/static/COR_Energy/object.js"></script>
+   <!-- <script src="/static/COR_Energy/scripts.js"></script>-->
+   <!-- <script src="/static/COR_Energy/object.js"></script> -->
+    <script type="module" src="/static/COR_Energy/object.js"></script>
     <script src="/static/COR_Energy/protocols/deye.js"></script>
 
    <!-- <script src="/static/COR_Energy/power-settings.js"></script>
@@ -1148,7 +1149,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadObjectSettings(objectId);
 });
 
-        updateBatteryFill(batteryData.soc);
+   
             // Закрытие модального окна (если нужно)
             document.getElementById("closeBattery").onclick = function() {
             document.getElementById("batteryModal").style.display = "none";
@@ -1158,87 +1159,9 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById('feedInSliderValue').textContent = this.value;
             });
                     
-// Обработчик изменения ползунка батареи
-document.getElementById('State_Of_Сharge').addEventListener('input', function() {
-    const newValue = this.value;
-    const saveButton = document.getElementById('saveBatteryButton');
-    document.getElementById('socSliderValue').textContent = newValue;
-    
-    isSliderChanged = true;
-    
-    // Сбрасываем предыдущий таймер, если он есть
-    if (socChangeTimeout) {
-        clearTimeout(socChangeTimeout);
-    }
-    saveButton.disabled = false; 
-    // Устанавливаем новый таймер на 3 секунды
-    socChangeTimeout = setTimeout(() => {
-        resetSocSlider();
-        showConfirmationMessage("Изменения не сохранены!!!", false);
-    }, 4000);
-});
 
-      
+ 
 
-// Обработчик изменения ползунка отдачи в сеть
-document.getElementById('feedInPowerSlider').addEventListener('input', function() {
-    const newValue = this.value;
-    const saveButton = document.getElementById('saveFeedInButton');
-    document.getElementById('feedInSliderValue').textContent = newValue;
-    
-    isFeedInSliderChanged = true;
-    saveButton.disabled = false;
-    
-    // Сбрасываем предыдущий таймер, если он есть
-    if (feedInChangeTimeout) {
-        clearTimeout(feedInChangeTimeout);
-    }
-    
-    // Устанавливаем новый таймер на 4 секунды
-    feedInChangeTimeout = setTimeout(() => {
-        resetFeedInSlider();
-        showFeedInConfirmationMessage("Изменения не сохранены!!!", false);
-    }, 4000);
-});
-
-
-
-document.getElementById('InverterPowerSlider').addEventListener('input', function () {
-    const newValue = this.value;
-    const saveButton = document.getElementById('saveInverterPower');
-    document.getElementById('InverterSliderValue').textContent = newValue;
-
-    inverterPowerChanged = true;
-    saveButton.disabled = false;
-
-    if (inverterChangeTimeout) {
-        clearTimeout(inverterChangeTimeout);
-    }
-
-    inverterChangeTimeout = setTimeout(() => {
-        resetInverterSlider();
-        showInverterConfirmationMessage("Изменения не сохранены!!!", false);
-    }, 4000);
-});
-
-
-document.getElementById('ChargingCurrentSlider').addEventListener('input', function () {
-    const newValue = this.value;
-    const saveButton = document.getElementById('saveInverterPower');
-    document.getElementById('ChargingSliderValue').textContent = newValue;
-
-    chargingCurrentChanged = true;
-    saveButton.disabled = false;
-
-    if (chargingChangeTimeout) {
-        clearTimeout(chargingChangeTimeout);
-    }
-
-    chargingChangeTimeout = setTimeout(() => {
-        resetChargingSlider();
-        showInverterConfirmationMessage("Изменения тока заряда не сохранены!!!", false);
-    }, 4000);
-});
 
 
         </script>
@@ -1325,6 +1248,13 @@ async function loadObjectSettings(objectId) {
         console.log("Объект:", data);
         // Установка заголовка
         document.getElementById("objectTitle").textContent = data.name || "    ";
+
+
+           // 🔽 ВАЖНО: получаем схему
+        const modalSchema = resolveModalSchema(data.vendor, data.model);
+
+        console.log("Schema:", modalSchema);
+
         // Запускаем обработчик в зависимости от протокола
         handleObjectByProtocol(data);
 
