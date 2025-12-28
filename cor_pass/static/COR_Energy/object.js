@@ -78,40 +78,6 @@ function handleObjectByProtocol(objectData) {
     }
 }
 
-/*
-function openEntityModal(entity, modalSchema) {
-    if (!modalSchema) {
-        console.warn("Нет схемы модалок");
-        return;
-    }
-
-    const entitySchema = modalSchema[entity];
-
-    if (!entitySchema || !entitySchema.modalId) {
-        console.warn(`Модалка для ${entity} не поддерживается`);
-        return;
-    }
-
-    const modal = document.getElementById(entitySchema.modalId);
-    if (!modal) {
-        console.error(`Модалка ${entitySchema.modalId} не найдена в DOM`);
-        return;
-    }
-
-    modal.style.display = "block";
-}
-
-
-
-function initIconModalHandlers(modalSchema) {
-    document.querySelectorAll(".icon[data-entity]").forEach(icon => {
-        icon.addEventListener("click", () => {
-            const entity = icon.dataset.entity;
-            openEntityModal(entity, modalSchema);
-        });
-    });
-}
-*/
 
 function openEntityModal(entity, modalSchema) {
     console.group(`🪟 openEntityModal: ${entity}`);
