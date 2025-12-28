@@ -7,6 +7,179 @@ export function resolveModalSchema(vendor, model) {
     return vendorSchemas[model] || vendorSchemas.default || null;
 }
 
+
+
+  
+
+async function loadObjectSettings(objectId) {
+    try {
+        const response = await fetch(`/api/modbus/${objectId}`, {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error("Ошибка загрузки объекта");
+        }
+
+        const data = await response.json();
+
+        console.log("Объект:", data);
+        // Установка заголовка
+        document.getElementById("objectTitle").textContent = data.name || "    ";
+
+
+           // 🔽 ВАЖНО: получаем схему
+        const modalSchema = resolveModalSchema(data.vendor, data.model);
+
+        console.log("Schema:", modalSchema);
+        initIconModalHandlers(modalSchema);
+        // Запускаем обработчик в зависимости от протокола
+        handleObjectByProtocol(data);
+
+    } catch (err) {
+        console.error("Ошибка:", err);
+    }
+}
+
+function handleObjectByProtocol(objectData) {
+
+    switch (objectData.vendor) {
+
+        case "Deye":
+            startMonitoringDeye(objectData);
+            break;
+
+        case "Victron":
+            startMonitoringVictron(objectData);
+            break;
+
+        case "Axioma":
+            startMonitoringAxioma(objectData);
+            break;
+
+        case "Pow Mr":
+            startMonitoringPowMr(objectData);
+            break;
+
+        case "Pylontech":
+            startMonitoringPylontech(objectData);
+            break;
+
+        case "COR-ID":
+            startMonitoringCorID(objectData);
+            break;
+
+        default:
+            console.warn("Неизвестный производитель:", objectData.vendor);
+            break;
+    }
+}
+
+/*
+function openEntityModal(entity, modalSchema) {
+    if (!modalSchema) {
+        console.warn("Нет схемы модалок");
+        return;
+    }
+
+    const entitySchema = modalSchema[entity];
+
+    if (!entitySchema || !entitySchema.modalId) {
+        console.warn(`Модалка для ${entity} не поддерживается`);
+        return;
+    }
+
+    const modal = document.getElementById(entitySchema.modalId);
+    if (!modal) {
+        console.error(`Модалка ${entitySchema.modalId} не найдена в DOM`);
+        return;
+    }
+
+    modal.style.display = "block";
+}
+
+
+
+function initIconModalHandlers(modalSchema) {
+    document.querySelectorAll(".icon[data-entity]").forEach(icon => {
+        icon.addEventListener("click", () => {
+            const entity = icon.dataset.entity;
+            openEntityModal(entity, modalSchema);
+        });
+    });
+}
+*/
+
+function openEntityModal(entity, modalSchema) {
+    console.group(`🪟 openEntityModal: ${entity}`);
+
+    if (!modalSchema) {
+        console.warn("❌ Нет схемы модалок");
+        console.groupEnd();
+        return;
+    }
+
+    console.log("modalSchema:", modalSchema);
+
+    const entitySchema = modalSchema[entity];
+    console.log("entitySchema:", entitySchema);
+
+    if (!entitySchema) {
+        console.warn(`❌ Сущность '${entity}' отсутствует в schema`);
+        console.groupEnd();
+        return;
+    }
+
+    if (!entitySchema.modalId) {
+        console.warn(`❌ modalId не задан для '${entity}'`);
+        console.groupEnd();
+        return;
+    }
+
+    const modal = document.getElementById(entitySchema.modalId);
+    console.log("Ищем modalId:", entitySchema.modalId, "→", modal);
+
+    if (!modal) {
+        console.error(`❌ Модалка '${entitySchema.modalId}' не найдена в DOM`);
+        console.groupEnd();
+        return;
+    }
+
+    modal.style.display = "block";
+    console.log("✅ Модалка открыта");
+
+    console.groupEnd();
+}
+
+
+function initIconModalHandlers(modalSchema) {
+    console.group("🧷 initIconModalHandlers");
+
+    if (!modalSchema) {
+        console.error("❌ modalSchema отсутствует");
+        console.groupEnd();
+        return;
+    }
+
+    const icons = document.querySelectorAll(".icon[data-entity]");
+    console.log("Найдено иконок:", icons.length);
+
+    icons.forEach(icon => {
+        const entity = icon.dataset.entity;
+        console.log("→ иконка entity:", entity);
+
+        icon.addEventListener("click", () => {
+            console.log(`🖱️ click по entity: ${entity}`);
+            openEntityModal(entity, modalSchema);
+        });
+    });
+
+    console.groupEnd();
+}
+
 function getGradientColor(value) {
 const x = Math.max(0, Math.min(100, value));
 let r, g;
@@ -189,4 +362,9 @@ function setDeviceVisibility(name, state) {
 
 
 window.resolveModalSchema = resolveModalSchema;
-
+window.loadObjectSettings = loadObjectSettings;
+window.updatePowerByName = updatePowerByName;
+window.updateBatteryFill = updateBatteryFill;
+window.PowerToIndicator = PowerToIndicator;
+window.formatPowerLabel = formatPowerLabel;
+window.setDeviceVisibility = setDeviceVisibility;

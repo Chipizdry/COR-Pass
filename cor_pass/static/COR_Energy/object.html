@@ -10,9 +10,6 @@
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <!-- Favicon SVG (основной) -->
-    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-    
       <!-- Fallback для старых браузеров -->
     <link rel="alternate icon" href="/static/favicon.png" type="image/png">
       
@@ -53,7 +50,7 @@
 <div id="control" class="tabcontent active">
     
              <!-- Иконка батареи -->
-             <div class="icon battery-icon" id="batteryIcon">
+             <div class="icon battery-icon" id="batteryIcon" data-entity="battery">
                 <div id="batteryFlowLabel" style="text-align: center; margin-bottom:4px; font-size: 14px;color:#291161; font-weight: bold;">
                     Батарея
                 </div>
@@ -117,7 +114,7 @@
 
 
               <!-- Иконка генератора -->
-             <div class="icon GeneratorIcon" id="GeneratorIcon">
+             <div class="icon GeneratorIcon" id="GeneratorIcon" data-entity="generator" >
                 <div id="generatorFlowLabel" style="text-align: center; margin-bottom:4px; font-size: 14px;color:#291161; font-weight: bold;">Генератор</div>
                  <svg width="138" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="0.5" y="0.5" width="226" height="31" rx="7.5" fill="white"/>
@@ -208,7 +205,7 @@
 
 
                <!-- Иконка солнечной батареи -->
-               <div class="icon solar-battery-icon" id="SolarBatteryIcon">
+               <div class="icon solar-battery-icon" id="SolarBatteryIcon" data-entity="solar">
                 <div id="solarPowerLabel" style="text-align: center; margin-bottom: 4px; font-size: 14px; color:#291161; font-weight: bold;">Панели</div>
 
                 <svg width="138" height="30" viewBox="0 0 227 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -284,7 +281,8 @@
             </div>
                    <!-- Иконка инвертора напряжения -->
         
-                        <div class="icon inverter-icon" id="inverterIcon">
+                        <div class="icon inverter-icon" id="inverterIcon" data-entity="inverter">
+                    <!--<div id="inverterPowerLabel" style="text-align: center; margin-bottom: 4px; font-size: 14px; color:#291161; font-weight: bold;">Инвертор</div> -->
                   
                 <svg width="140" height="140" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M30.198 39.9979C30.198 46.0732 35.1408 51.016 41.2161 51.016C47.2894 51.016 52.2306 
@@ -349,7 +347,7 @@
            
         </div>
         <!-- Иконка сети электропитания -->
-         <div class="icon power-grid-icon" id="power-grid-icon">
+         <div class="icon power-grid-icon" id="power-grid-icon" data-entity="grid">
             <div id="networkFlowLabel" style="text-align: center; margin-bottom: 4px; font-size: 14px;color:#291161; font-weight: bold;">
                 Электросеть
               </div>
@@ -417,7 +415,7 @@
         </div>
 
             <!-- Иконка нагрузки -->
-            <div class="icon power-icon" id="loadIcon">
+            <div class="icon power-icon" id="loadIcon" data-entity="load">
                 <div id="loadIndicatorLabel" style="text-align: center; margin-bottom:4px;color:#291161; font-size: 14px; font-weight: bold;">
                     Нагрузка
                   </div>
@@ -1228,76 +1226,6 @@ function getCurrentTimeFormatted() {
         }
 
  
-  
-
-async function loadObjectSettings(objectId) {
-    try {
-        const response = await fetch(`/api/modbus/${objectId}`, {
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error("Ошибка загрузки объекта");
-        }
-
-        const data = await response.json();
-
-        console.log("Объект:", data);
-        // Установка заголовка
-        document.getElementById("objectTitle").textContent = data.name || "    ";
-
-
-           // 🔽 ВАЖНО: получаем схему
-        const modalSchema = resolveModalSchema(data.vendor, data.model);
-
-        console.log("Schema:", modalSchema);
-
-        // Запускаем обработчик в зависимости от протокола
-        handleObjectByProtocol(data);
-
-    } catch (err) {
-        console.error("Ошибка:", err);
-    }
-}
-
-function handleObjectByProtocol(objectData) {
-
-    switch (objectData.vendor) {
-
-        case "Deye":
-            startMonitoringDeye(objectData);
-            break;
-
-        case "Victron":
-            startMonitoringVictron(objectData);
-            break;
-
-        case "Axioma":
-            startMonitoringAxioma(objectData);
-            break;
-
-        case "Pow Mr":
-            startMonitoringPowMr(objectData);
-            break;
-
-        case "Pylontech":
-            startMonitoringPylontech(objectData);
-            break;
-
-        case "COR-ID":
-            startMonitoringCorID(objectData);
-            break;
-
-        default:
-            console.warn("Неизвестный производитель:", objectData.vendor);
-            break;
-    }
-}
-
-
     </script>
     
 </body>

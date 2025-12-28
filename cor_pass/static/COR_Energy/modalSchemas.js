@@ -24,11 +24,95 @@ export const MODAL_SCHEMAS = {
 
         default: {
             battery: {
+                enabled: true,
+                modalId: "batteryModal",
                 title: "Батарея",
+
                 fields: [
                     { id: "soc", label: "SOC", unit: "%", source: "battery1SOC" },
-                    { id: "power", label: "Мощность", unit: "kW", source: "batteryTotalPower" }
+                    { id: "voltage", label: "Напряжение", unit: "V", source: "battery1Voltage" },
+                    { id: "current", label: "Ток", unit: "A", source: "battery1Current" },
+                    { id: "power", label: "Мощность", unit: "W", source: "batteryTotalPower" },
+                    { id: "temp", label: "Температура", unit: "°C", source: "battery1Temperature" }
+                ],
+
+                controls: [
+                    {
+                        type: "slider",
+                        id: "State_Of_Charge",
+                        label: "Минимальный SOC",
+                        min: 0,
+                        max: 99,
+                        step: 1,
+                        source: "batteryMinSoc",
+                        saveAction: "saveBatterySettings"
+                    }
                 ]
+            },
+
+           grid: {
+                enabled: true,
+                modalId: "GridSettingsModal",
+                title: "Сеть",
+                phases: true,
+
+                phaseFields: [
+                    { id: "voltage", label: "Напряжение", unit: "V", source: ["inputVoltageL1", "inputVoltageL2", "inputVoltageL3"] },
+                    { id: "current", label: "Ток", unit: "A", source: ["inputCurrentL1", "inputCurrentL2", "inputCurrentL3"] },
+                    { id: "power", label: "Мощность", unit: "kW", source: ["inputPowerL1", "inputPowerL2", "inputPowerL3"] }
+                ],
+
+                totals: [
+                    { id: "totalPower", label: "Общая мощность", unit: "kW", source: "inputPowerTotal" }
+                ],
+
+                controls: [
+                    {
+                        type: "slider",
+                        id: "feedInPowerSlider",
+                        label: "Ограничение отдачи в сеть",
+                        min: -100000,
+                        max: 100000,
+                        step: 100,
+                        source: "gridFeedLimit",
+                        saveAction: "saveAcSetpoint"
+                    }
+                ]
+            },
+
+            load: {
+                enabled: true,
+                modalId: "loadSettingsModal",
+                title: "Нагрузка",
+                phases: true,
+
+                phaseFields: [
+                    { label: "Напряжение", unit: "V", source: ["outputVoltageL1","outputVoltageL2","outputVoltageL3"] },
+                    { label: "Ток", unit: "A", source: ["outputCurrentL1","outputCurrentL2","outputCurrentL3"] },
+                    { label: "Мощность", unit: "kW", source: ["powerPhaseA","powerPhaseB","powerPhaseC"] }
+                ],
+
+                totals: [
+                    { label: "Общая нагрузка", unit: "kW", source: "total_load" }
+                ]
+            },
+
+            solar: {
+                enabled: true,
+                modalId: "SolarModal",
+                title: "Солнечные панели",
+                mppt: true
+            },
+
+            inverter: {
+                enabled: true,
+                modalId: "inverterModal",
+                title: "Инвертор",
+             
+            },
+
+            generator: {
+                enabled: true
             }
         }
     },
