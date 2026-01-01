@@ -1,5 +1,6 @@
 
 import { MODAL_SCHEMAS } from "./modalSchemas.js";
+import { buildModals } from "./modalBuilder.js";
 
 export function resolveModalSchema(vendor, model) {
     const vendorSchemas = MODAL_SCHEMAS[vendor];
@@ -8,8 +9,6 @@ export function resolveModalSchema(vendor, model) {
 }
 
 
-
-  
 
 async function loadObjectSettings(objectId) {
     try {
@@ -33,8 +32,10 @@ async function loadObjectSettings(objectId) {
 
            // 🔽 ВАЖНО: получаем схему
         const modalSchema = resolveModalSchema(data.vendor, data.model);
-
         console.log("Schema:", modalSchema);
+
+        // 🔥 СТРОИМ МОДАЛКИ ПО СХЕМЕ
+        buildModals(modalSchema);
         initIconModalHandlers(modalSchema);
         // Запускаем обработчик в зависимости от протокола
         handleObjectByProtocol(data);

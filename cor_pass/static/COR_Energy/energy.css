@@ -254,6 +254,39 @@ footer {
 }
 
 
+
+
+
+
+.single-phase-grid {
+    padding: 15px;
+    gap: 12px;
+}
+
+.info-card {
+    display: flex;
+    background: #f4f6ff;
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+}
+
+.data-label {
+    font-size: 13px;
+    color: #5B4296;
+}
+
+.data-value {
+    font-size: 13px;
+    color: #5B4296;
+    font-weight: bold;
+}
+
+
+
+
+
+
 /* Стиль для индикатора соединения */
 .status-indicator {
     display: inline-block;

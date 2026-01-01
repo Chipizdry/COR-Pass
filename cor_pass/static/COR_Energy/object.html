@@ -16,6 +16,7 @@
       <!-- Для Safari -->
     <link rel="mask-icon" href="/static/favicon.svg" color="#291161">
     <link rel="stylesheet" href="/static/COR_ID_css/styles.css">
+    <link rel="stylesheet" href="/static/COR_Energy/energy.css">
     <link rel="stylesheet" type="text/css" href="/static/COR_ID_css/modal.css">
     <link rel="stylesheet" href="/static/COR_Energy/monitoring.css">
 
@@ -734,27 +735,13 @@
 
         <!-- Модальное окно настроек батареи -->
         <div id="batteryModal" class="modal" style="display:none;">
-            <div class="modal-header">
+             <div class="modal-header">
                 <div class="modal-buttons">
                     <button class="modal-button close" data-action="close" id="closeBattery">✖</button>
                 </div>
                 <h3 style="margin-top:30; color:#291161;font-size: 17px;">Информация о батарее</h3>
             </div>   
-            <p>Текущее напряжение, В: <span id="batt_voltage">0</span></p>
-            <p>Ток заряда/разряда, A: <span id="batt_curr">0</span></p>
-            <p>Уровень заряда, %: <span id="chargeLevel">0</span></p>
-            <p>Мощность,Вт : <span id="PowerLevel">0</span></p>
-            <p>Температура,: <span id="Bat_Temp">0</span>°C</p>
-            <p>Порог разряда: <span id="vebusSOC">--</span> %</p>
- 
-              <!-- Ползунок для установки нижнего предела разряда батареи -->
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <input type="range" id="State_Of_Сharge" min="0" max="99" step="1" value="40" style="width: 250px;">
-                <span id="socSliderValue">40</span>%
-            </div>
-            <!-- Кнопка Сохранить -->
-            <button id="saveBatteryButton" onclick="saveBatterySettings()" disabled>Сохранить</button>
-            <div id="confirmationMessage" style="margin-bottom: 10px; color: rgb(11, 226, 11); display: none;"></div>             
+
         </div>
 
             <!-- Модальное окно параметров нагрузки -->
@@ -765,112 +752,19 @@
                </div>
                <h3 style="margin-top:30; color:#291161;font-size: 17px;">Параметры нагрузки</h3>
             </div> 
-                            
-                <!-- Таблица с фазами -->
-                <h3>Данные по фазам</h3>
-                <table class="phase-table">
-                    <thead>
-                        <tr>
-                            <th>Параметр</th>
-                            <th>Фаза A</th>
-                            <th>Фаза B</th>
-                            <th>Фаза C</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Напряжение (В)</td>
-                            <td id="outputVoltageL1">0</td>
-                            <td id="outputVoltageL2">0</td>
-                            <td id="outputVoltageL3">0</td>
-                        </tr>
-                        <tr>
-                            <td>Частота (Гц)</td>
-                            <td id="inputFrequencyL1">0</td>
-                            <td id="inputFrequencyL2">0</td>
-                            <td id="inputFrequencyL3">0</td>
-                        </tr>
-                        <tr>
-                            <td>Ток (А)</td>
-                            <td id="outputCurrentL1">0</td>
-                            <td id="outputCurrentL2">0</td>
-                            <td id="outputCurrentL3">0</td>
-                        </tr>
-                        <tr>
-                            <td>Мощность (кВт)</td>
-                            <td id="powerPhaseA">0</td>
-                            <td id="powerPhaseB">0</td>
-                            <td id="powerPhaseC">0</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <!-- Суммарная мощность -->
-                <p>Общая мощность нагрузки, КВт: <span id="total_load">0</span></p>
-                 <!-- Кнопка Сохранить -->
-                 <button id="saveLoadSettings" onclick="saveLoadSettings()">Сохранить</button>
-                 <div id="loadConfirmationMessage" style="margin-top: 10px; color: rgb(11, 226, 11); display: none;"></div>
-            
+                                
         </div>
 
-
-        
-            <!-- Модальное окно параметров сети -->
-            <div id="GridSettingsModal" class="modal" style="display:none;">
-                <div class="modal-header">
-                  <div class="modal-buttons">
-                    <button class="modal-button close" data-action="close" id="closeGridSettings">✖</button>
-                   </div>
-                   <h3 style="margin-top:30; color:#291161;font-size: 17px;">Параметры сети</h3>
-                </div> 
-                                
-                    <!-- Таблица с фазами -->
-                    <h3>Данные по фазам</h3>
-                    <table class="phase-table">
-                        <thead>
-                            <tr>
-                                <th>Параметр</th>
-                                <th>Фаза A</th>
-                                <th>Фаза B</th>
-                                <th>Фаза C</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Напряжение (В)</td>
-                                <td id="inputVoltageL1">0</td>
-                                <td id="inputVoltageL2">0</td>
-                                <td id="inputVoltageL3">0</td>
-                            </tr>
-                            <tr>
-                                <td>Частота (Гц)</td>
-                                <td id="inputFrequencyL1">0</td>
-                                <td id="inputFrequencyL2">0</td>
-                                <td id="inputFrequencyL3">0</td>
-                            </tr>
-                            <tr>
-                                <td>Ток (А)</td>
-                                <td id="inputCurrentL1">0</td>
-                                <td id="inputCurrentL2">0</td>
-                                <td id="inputCurrentL3">0</td>
-                            </tr>
-                            <tr>
-                                <td>Мощность (кВт)</td>
-                                <td id="inputPowerL1">0</td>
-                                <td id="inputPowerL2">0</td>
-                                <td id="inputPowerL3">0</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <!-- Суммарная мощность  -->
-                    <p>Общая мощность нагрузки, КВт: <span id="inputPowerTotal">0</span></p>
-                        <label for="feedInPowerSlider" style="font-weight: bold;">Ограничение отдачи в сеть (Вт)</label>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <input type="range" id="feedInPowerSlider" min="-100000" max="100000" step="100" value="0" style="width: 250px;">
-                            <span id="feedInSliderValue">0</span>
-                        </div>
-                        <button id="saveFeedInButton" onclick="saveAcSetpoint()" disabled>Сохранить</button>
-                        <div id="feedInConfirmationMessage" style="margin-top: 10px; color: rgb(11, 226, 11); display: none;"></div>
-            </div>
+  
+        <!-- Модальное окно параметров сети -->
+        <div id="GridSettingsModal" class="modal" style="display:none;">
+            <div class="modal-header">
+                <div class="modal-buttons">
+                <button class="modal-button close" data-action="close" id="closeGridSettings">✖</button>
+                </div>
+                <h3 style="margin-top:30; color:#291161;font-size: 17px;">Параметры сети</h3>
+            </div>                                
+        </div>
 
           <!--Модальное окно инвертора --> 
         <div id="inverterModal" class="modal" style="display:none;">
@@ -880,20 +774,6 @@
                  </div>
                  <h3 style="margin-top:30; color:#291161;font-size: 17px;">Информация о инверторе</h3>
             </div> 
-
-            <label for="ChargingCurrentSlider" style="font-weight: bold;">Ток заряда MAX (A)</label>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <input type="range" id="ChargingCurrentSlider" min="0" max="3000" step="100" value="0" style="width: 250px;">
-                <span id="ChargingSliderValue">0</span>
-            </div>
-
-            <label for="InverterPowerSlider" style="font-weight: bold;">Мощность инвертора (Вт)</label>
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <input type="range" id="InverterPowerSlider" min="0" max="300000" step="100" value="0" style="width: 250px;">
-                <span id="InverterSliderValue">0</span>
-            </div>
-            <button id="saveInverterPower" onclick="saveInverterPower()" disabled>Сохранить</button>
-            <div id="InverterConfirmationMessage" style="margin-top: 10px; color: rgb(11, 226, 11); display: none;"></div>
            
         </div>
 
@@ -1017,6 +897,7 @@
    <!-- <script src="/static/COR_Energy/object.js"></script> -->
     <script type="module" src="/static/COR_Energy/object.js"></script>
     <script src="/static/COR_Energy/protocols/deye.js"></script>
+    <script src="/static/COR_Energy/protocols/axioma.js"></script>
 
    <!-- <script src="/static/COR_Energy/power-settings.js"></script>
     <script src="/static/COR_Energy/chart.js"></script>
@@ -1143,6 +1024,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    makeModalDraggable('batteryModal');
+    makeModalDraggable('RegistersModal');
+    makeModalDraggable('loadSettingsModal');
+    makeModalDraggable('GridSettingsModal');
+    makeModalDraggable('SolarModal');
+    makeModalDraggable('inverterModal');
+    makeModalDraggable('ExcelModal');
     // Загружаем настройки объекта
     loadObjectSettings(objectId);
 });
@@ -1152,15 +1040,6 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("closeBattery").onclick = function() {
             document.getElementById("batteryModal").style.display = "none";
                 }
-
-            document.getElementById('feedInPowerSlider').addEventListener('input', function() {
-            document.getElementById('feedInSliderValue').textContent = this.value;
-            });
-                    
-
- 
-
-
 
         </script>
 
