@@ -893,26 +893,26 @@
                 </div>
             </div>
 
-   <!-- <script src="/static/COR_Energy/scripts.js"></script>-->
-   <!-- <script src="/static/COR_Energy/object.js"></script> -->
     <script type="module" src="/static/COR_Energy/object.js"></script>
     <script src="/static/COR_Energy/protocols/deye.js"></script>
     <script src="/static/COR_Energy/protocols/axioma.js"></script>
-
-   <!-- <script src="/static/COR_Energy/power-settings.js"></script>
-    <script src="/static/COR_Energy/chart.js"></script>
-    <script src="/static/COR_Energy/line_chart.js"></script>
-    <script src="/static/COR_Energy/chart_settings.js"></script>
-    <script src="/static/COR_Energy/timetable.js"></script> -->
     <script src="/static/COR_ID_Js/general_fun.js"></script>
     <script src="/static/COR_Energy/xlsx.full.min.js"></script>
     <script src="/static/COR_Energy/chart.min.js"></script>
         <script>
-// Глобальные переменные
- let gridData, solarData, genData, battData , InvGridOut , loadData;
- let deyeMonitorRunning = false;
 
-const lastData = {};
+// ============================
+// Глобальные переменные
+// ============================
+ window.lastData = {};   // все последние данные
+ window.battData = {};
+ window.gridData = {};
+ window.solarData = {};
+ window.genData = {};
+ window.LoadData = {};
+ window.InvGridOut = {};
+ window.gridDataPower = {};
+ window.deyeMonitorRunning = false;
 
 document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);

@@ -36,7 +36,7 @@ async function loadObjectSettings(objectId) {
 
         // 🔥 СТРОИМ МОДАЛКИ ПО СХЕМЕ
         buildModals(modalSchema);
-        updateUIByData(lastData);
+        updateUIByData(window.lastData);
         initIconModalHandlers(modalSchema);
         // Запускаем обработчик в зависимости от протокола
         handleObjectByProtocol(data);
@@ -80,7 +80,7 @@ function handleObjectByProtocol(objectData) {
     }
 }
 
-
+/*
 function openEntityModal(entity, modalSchema) {
     console.group(`🪟 openEntityModal: ${entity}`);
 
@@ -116,8 +116,50 @@ function openEntityModal(entity, modalSchema) {
         return;
     }
 
+    const allFields = modal.querySelectorAll("[data-source]");
+    console.log(`🔹 Все поля модалки '${entitySchema.modalId}':`, allFields);
     modal.style.display = "block";
     console.log("✅ Модалка открыта");
+     // 🔹 Обновляем значения внутри модалки сразу после открытия
+    if (entity === "battery") {
+        console.log("🔄 Обновляем данные батареи при открытии модалки:", battData);
+        updateUIByData(battData);
+    }
+
+    console.groupEnd();
+}
+
+*/
+// ============================
+// Открытие модалки
+// ============================
+function openEntityModal(entity, modalSchema) {
+    console.group(`🪟 openEntityModal: ${entity}`);
+
+    if (!modalSchema) {
+        console.warn("❌ Нет схемы модалок");
+        console.groupEnd();
+        return;
+    }
+
+    const entitySchema = modalSchema[entity];
+    if (!entitySchema || !entitySchema.modalId) {
+        console.warn(`❌ Сущность '${entity}' отсутствует или modalId не задан`);
+        console.groupEnd();
+        return;
+    }
+
+    const modal = document.getElementById(entitySchema.modalId);
+    if (!modal) {
+        console.error(`❌ Модалка '${entitySchema.modalId}' не найдена`);
+        console.groupEnd();
+        return;
+    }
+
+    modal.style.display = "block";
+
+    // 🔄 обновляем модалку сразу актуальными данными
+    updateUIByData(window.lastData);
 
     console.groupEnd();
 }
@@ -148,6 +190,21 @@ function initIconModalHandlers(modalSchema) {
     console.groupEnd();
 }
 
+
+// ============================
+// Инициализация и хэндлеры иконок
+// ============================
+/*
+function initIconModalHandlers(modalSchema) {
+    const icons = document.querySelectorAll(".icon[data-entity]");
+    icons.forEach(icon => {
+        const entity = icon.dataset.entity;
+        icon.addEventListener("click", () => {
+            openEntityModal(entity, modalSchema);
+        });
+    });
+}
+*/
 function getGradientColor(value) {
 const x = Math.max(0, Math.min(100, value));
 let r, g;
@@ -329,41 +386,49 @@ function setDeviceVisibility(name, state) {
 }
 
 
-function updateUIByData(data = {}) {
-    if (!data || typeof data !== "object") return;
 
-    Object.assign(lastData, data);
+export function updateUIByData(data = {}) {
+    if (!data || typeof data !== "object") {
+        console.warn("updateUIByData: пустые или некорректные данные", data);
+        return;
+    }
 
+    Object.assign(window.lastData, data);
+
+    console.group("🔄 updateUIByData");
     Object.entries(data).forEach(([key, value]) => {
         const nodes = document.querySelectorAll(`[data-source="${key}"]`);
-        if (!nodes.length) return;
+
+        if (!nodes.length) {
+            console.warn(`❌ Поле с data-source="${key}" не найдено в DOM`, value);
+            return;
+        }
 
         nodes.forEach(node => {
-            if (node.classList.contains("data-value") || node.tagName === "TD") {
+            let oldText = node.textContent;
+
+            if (node.classList.contains("data-value")) {
+                // сохраняем unit
+                const unit = node.querySelector("span")?.textContent || "";
+                node.textContent = formatValue(value) + (unit ? ` ${unit}` : "");
+            } else if (node.tagName === "TD") {
                 node.textContent = formatValue(value);
-            }
-            if (node.tagName === "INPUT") {
+            } else if (node.tagName === "INPUT" || node.tagName === "SELECT") {
                 node.value = value;
             }
+
+            console.log(`✅ Обновлено: ${key}`, "DOM:", node, "старое:", oldText, "новое:", node.textContent || node.value);
         });
     });
+    console.groupEnd();
 }
 
 
 function formatValue(val) {
     if (val == null || Number.isNaN(val)) return "—";
-
-    if (typeof val === "number") {
-        return Math.abs(val) >= 1000
-            ? val.toFixed(0)
-            : val.toFixed(1);
-    }
-
+    if (typeof val === "number") return Math.abs(val) >= 1000 ? val.toFixed(0) : val.toFixed(1);
     return val;
 }
-
-
-
 
 window.resolveModalSchema = resolveModalSchema;
 window.loadObjectSettings = loadObjectSettings;

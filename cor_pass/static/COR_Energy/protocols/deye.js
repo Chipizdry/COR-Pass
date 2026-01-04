@@ -1,13 +1,15 @@
 
+// ============================
+// Цикл мониторинга Deye
+// ============================
 async function startMonitoringDeye(objectData) {
     const INTERVAL = 2000; // интервал между циклами
     const INVERTER_MAX_POWER = 80000; // 80 кВт
+
     while (true) {
         console.log("---- Цикл обновления Deye ----");
 
         try {
-           
-          
             const host = objectData.ip_address;
             const port = objectData.port;
             const slave = objectData.slave_id || objectData.slave || 1;
@@ -16,14 +18,28 @@ async function startMonitoringDeye(objectData) {
 
             switch (protocol) {
                 case "modbus_over_tcp":
-                    gridData  = await readOutGridRegisters( host,  port, slave,object_id,protocol  );
-                    solarData = await readSunPanelRegisters(host,  port, slave,object_id,protocol );
-                    genData   = await readGeneratorRegisters(host,  port, slave,object_id,protocol );
-                    battData  = await readBatteryRegisters(host,  port, slave,object_id,protocol );
-                    updateUIByData(battData);
-                    InvGridOut = await readInverterGridRegisters(host, port, slave, object_id, protocol);
-                    gridDataPower = await readPower32_V104(host, port, slave, object_id, protocol);
-                    LoadData = await readLoadRegisters(host, port, slave, object_id, protocol);
+                    window.gridData  = await readOutGridRegisters(host, port, slave, object_id, protocol);
+                    window.solarData = await readSunPanelRegisters(host, port, slave, object_id, protocol);
+                    window.genData   = await readGeneratorRegisters(host, port, slave, object_id, protocol);
+                    window.battData  = await readBatteryRegisters(host, port, slave, object_id, protocol);
+                    window.LoadData  = await readLoadRegisters(host, port, slave, object_id, protocol);
+                    window.InvGridOut = await readInverterGridRegisters(host, port, slave, object_id, protocol);
+                    window.gridDataPower = await readPower32_V104(host, port, slave, object_id, protocol);
+
+                    // 🔹 обновляем lastData
+                    window.lastData = {
+                        ...window.lastData,
+                        ...window.gridData,
+                        ...window.solarData,
+                        ...window.genData,
+                        ...window.battData,
+                        ...window.LoadData,
+                        ...window.InvGridOut,
+                        ...window.gridDataPower
+                    };
+
+                    // 🔹 обновляем UI (включая все открытые модалки)
+                    window.updateUIByData(window.lastData);
                     break;
 
                 case "COR-Bridge":
@@ -31,13 +47,15 @@ async function startMonitoringDeye(objectData) {
                     solarData = await readSunPanelWS(host, port, slave);
                     genData   = await readGeneratorWS(host, port, slave);
                     battData  = await readBatteryWS(host, port, slave);
+
+                    lastData = { ...lastData, ...gridData, ...solarData, ...genData, ...battData };
+                    updateUIByData(lastData);
                     break;
 
                 default:
                     console.warn("Неизвестный протокол Deye:", protocol);
                     return; // выход из функции
             }
-
         } catch (err) {
             console.error("Ошибка мониторинга Deye:", err);
         }
@@ -619,15 +637,27 @@ async function startMonitoringDeye(objectData) {
     while (deyeMonitorRunning) {
         try {
 
-            let gridData, solarData, genData, battData, loadData;
 
             if (protocol === "modbus_over_tcp") {
+                /*
                 gridData  = await readOutGridRegisters(host, port, slave, object_id, protocol);
                 solarData = await readSunPanelRegisters(host, port, slave, object_id, protocol);
                 genData   = await readGeneratorRegisters(host, port, slave, object_id, protocol);
                 battData  = await readBatteryRegisters(host, port, slave, object_id, protocol);
                 loadData  = await readLoadRegisters(host, port, slave, object_id, protocol);
-                serviceData = await readServiceRegisters(host, port, slave, object_id, protocol);
+                serviceData = await readServiceRegisters(host, port, slave, object_id, protocol); */
+                
+                   gridData  = await readOutGridRegisters(host, port, slave, object_id, protocol);
+                   solarData = await readSunPanelRegisters(host, port, slave, object_id, protocol);
+                    genData   = await readGeneratorRegisters(host, port, slave, object_id, protocol);
+                    battData  = await readBatteryRegisters(host, port, slave, object_id, protocol);
+                    loadData  = await readLoadRegisters(host, port, slave, object_id, protocol);
+                    InvGridOut = await readInverterGridRegisters(host, port, slave, object_id, protocol);
+                    gridDataPower = await readPower32_V104(host, port, slave, object_id, protocol);
+                    serviceData = await readServiceRegisters(host, port, slave, object_id, protocol);
+
+                 
+
             } else {
                 console.warn("Unsupported Deye protocol:", protocol);
                 break;
@@ -675,9 +705,26 @@ async function startMonitoringDeye(objectData) {
                 }
 
 
+                // 🔹 обновляем lastData
+                    window.lastData = {
+                        ...window.lastData,
+                        ...window.gridData,
+                        ...window.solarData,
+                        ...window.genData,
+                        ...window.battData,
+                        ...window.LoadData,
+                        ...window.InvGridOut,
+                        ...window.gridDataPower
+                    };
+
+                    // 🔹 обновляем UI (включая все открытые модалки)
+                    window.updateUIByData(window.lastData);
+
         } catch (err) {
             console.error("Ошибка мониторинга Deye:", err);
         }
+
+          
 
         await new Promise(r => setTimeout(r, INTERVAL));
     }

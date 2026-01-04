@@ -2,7 +2,6 @@
 // ===============================
 // Конструктор модалок по schema
 // ===============================
-
 export function buildModals(schema) {
     if (!schema) return;
 
@@ -14,25 +13,27 @@ export function buildModals(schema) {
 
         // Заголовок
         const title = modal.querySelector("h3");
-        if (title && section.title) {
-            title.textContent = section.title;
-        }
+        if (title && section.title) title.textContent = section.title;
 
         // Тело модалки
         let body = modal.querySelector(".modal-body");
-
-        // если старые модалки — создаём body автоматически
         if (!body) {
             body = document.createElement("div");
             body.className = "modal-body";
             modal.appendChild(body);
         }
-
         body.innerHTML = "";
 
-        section.blocks?.forEach(block => {
-            body.appendChild(renderBlock(block));
-        });
+        // Рендерим blocks
+        section.blocks?.forEach(block => body.appendChild(renderBlock(block)));
+
+        // Рендерим fields (для Axioma и Victrone)
+        if (section.fields) {
+            body.appendChild(renderBlock({ type: "fieldList", fields: section.fields }));
+        }
+
+        // Рендерим controls (слайдеры и кнопки)
+        section.controls?.forEach(ctrl => body.appendChild(renderBlock(ctrl)));
     });
 }
 
@@ -96,6 +97,8 @@ function renderFieldList(fields = [], title = null) {
             <span class="data-value" data-source="${f.source}">—</span>
             <span class="unit">${f.unit || ""}</span>
         `;
+
+        console.log("🟢 Создано поле:", f.label, "data-source:", f.source, "unit:", f.unit);
 
         wrap.appendChild(row);
     });
