@@ -20,6 +20,7 @@ async function startMonitoringDeye(objectData) {
                     solarData = await readSunPanelRegisters(host,  port, slave,object_id,protocol );
                     genData   = await readGeneratorRegisters(host,  port, slave,object_id,protocol );
                     battData  = await readBatteryRegisters(host,  port, slave,object_id,protocol );
+                    updateUIByData(battData);
                     InvGridOut = await readInverterGridRegisters(host, port, slave, object_id, protocol);
                     gridDataPower = await readPower32_V104(host, port, slave, object_id, protocol);
                     LoadData = await readLoadRegisters(host, port, slave, object_id, protocol);

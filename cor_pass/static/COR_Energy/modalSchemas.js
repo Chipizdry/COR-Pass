@@ -28,18 +28,30 @@ export const MODAL_SCHEMAS = {
                 modalId: "batteryModal",
                 title: "Батарея",
 
-                fields: [
-                    { id: "soc", label: "SOC", unit: "%", source: "battery1SOC" },
-                    { id: "voltage", label: "Напряжение", unit: "V", source: "battery1Voltage" },
-                    { id: "current", label: "Ток", unit: "A", source: "battery1Current" },
-                    { id: "power", label: "Мощность", unit: "W", source: "batteryTotalPower" },
-                    { id: "temp", label: "Температура", unit: "°C", source: "battery1Temperature" }
-                ],
+                blocks: [
+                    {
+                        type: "fieldList",
+                        title: "Батарея 1",
+                        fields: [
+                            { label: "SOC", unit: "%", source: "battery1SOC" },
+                            { label: "Напряжение", unit: "V", source: "battery1Voltage" },
+                            { label: "Ток", unit: "A", source: "battery1Current" },
+                            { label: "Мощность", unit: "W", source: "battery1Power" }                   
+                        ]
+                    },
 
-                controls: [
+                    {
+                        type: "fieldList",
+                        title: "Батарея 2",
+                        fields: [
+                            { label: "SOC", unit: "%", source: "battery2SOC" },
+                            { label: "Напряжение", unit: "V", source: "battery2Voltage" },
+                            { label: "Ток", unit: "A", source: "battery2Current" },
+                            { label: "Мощность", unit: "W", source: "battery2Power" }                  
+                        ]
+                    },
                     {
                         type: "slider",
-                        id: "State_Of_Charge",
                         label: "Минимальный SOC",
                         min: 0,
                         max: 99,

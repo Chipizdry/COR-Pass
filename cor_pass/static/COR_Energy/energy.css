@@ -265,6 +265,17 @@ footer {
     gap: 12px;
 }
 
+.single-block-title {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    font-weight: 600;
+    color: #5B4296;
+    font-size: 16px;
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(91, 66, 150, 0.25);
+}
 
 .info-card {
     display: flex;

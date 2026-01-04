@@ -36,6 +36,7 @@ async function loadObjectSettings(objectId) {
 
         // 🔥 СТРОИМ МОДАЛКИ ПО СХЕМЕ
         buildModals(modalSchema);
+        updateUIByData(lastData);
         initIconModalHandlers(modalSchema);
         // Запускаем обработчик в зависимости от протокола
         handleObjectByProtocol(data);
@@ -328,6 +329,42 @@ function setDeviceVisibility(name, state) {
 }
 
 
+function updateUIByData(data = {}) {
+    if (!data || typeof data !== "object") return;
+
+    Object.assign(lastData, data);
+
+    Object.entries(data).forEach(([key, value]) => {
+        const nodes = document.querySelectorAll(`[data-source="${key}"]`);
+        if (!nodes.length) return;
+
+        nodes.forEach(node => {
+            if (node.classList.contains("data-value") || node.tagName === "TD") {
+                node.textContent = formatValue(value);
+            }
+            if (node.tagName === "INPUT") {
+                node.value = value;
+            }
+        });
+    });
+}
+
+
+function formatValue(val) {
+    if (val == null || Number.isNaN(val)) return "—";
+
+    if (typeof val === "number") {
+        return Math.abs(val) >= 1000
+            ? val.toFixed(0)
+            : val.toFixed(1);
+    }
+
+    return val;
+}
+
+
+
+
 window.resolveModalSchema = resolveModalSchema;
 window.loadObjectSettings = loadObjectSettings;
 window.updatePowerByName = updatePowerByName;
@@ -335,3 +372,4 @@ window.updateBatteryFill = updateBatteryFill;
 window.PowerToIndicator = PowerToIndicator;
 window.formatPowerLabel = formatPowerLabel;
 window.setDeviceVisibility = setDeviceVisibility;
+window.updateUIByData = updateUIByData;

@@ -1,5 +1,4 @@
 
-
 // ===============================
 // Конструктор модалок по schema
 // ===============================
@@ -41,53 +40,68 @@ export function buildModals(schema) {
 // Фабрика блоков
 // ===============================
 function renderBlock(block) {
-    switch (block.type) {
+    const container = document.createElement("div");
+    container.className = "modal-block";
 
+    let content;
+
+    switch (block.type) {
         case "fieldList":
-            return renderFieldList(block.fields);
+            content = renderFieldList(block.fields, block.title);
+            break;
 
         case "phaseTable":
-            return renderPhaseTable(block.phases);
+            content = renderPhaseTable(block.phases);
+            break;
 
         case "singlePhase":
-            return renderSinglePhase(block.fields);
-
+            content = renderSinglePhase(block.fields);
+            break;
 
         case "slider":
-            return renderSlider(block);
+            content = renderSlider(block);
+            break;
 
         case "text":
-            return renderText(block.text);
-
-        default:
-            console.warn("❓ Unknown block type:", block.type);
-            return document.createElement("div");
+            content = renderText(block.text);
+            break;
     }
+
+    container.appendChild(content);
+    return container;
 }
 
 // ===============================
 // Блок: список параметров
 // ===============================
-function renderFieldList(fields = []) {
+
+
+function renderFieldList(fields = [], title = null) {
     const wrap = document.createElement("div");
-    wrap.className = "modal-section";
+    wrap.className = "single-phase-grid";
+
+    if (title) {
+        const t = document.createElement("div");
+        t.className = "single-block-title";
+        t.textContent = title;
+        wrap.appendChild(t);
+    }
 
     fields.forEach(f => {
         const row = document.createElement("div");
         row.className = "modal-row";
-        row.dataset.source = f.source;
 
         row.innerHTML = `
             <span class="data-label">${f.label}</span>
-            <span class="data-value">—</span>
-            <span class="data-value">${f.unit || ""}</span>
+            <span class="data-value" data-source="${f.source}">—</span>
+            <span class="unit">${f.unit || ""}</span>
         `;
+
         wrap.appendChild(row);
     });
 
     return wrap;
 }
-
 // ===============================
 // Блок: фазовая таблица (1 / 3)
 // ===============================
@@ -112,8 +126,6 @@ function renderPhaseTable(phases = 3) {
     `;
     return table;
 }
-
-
 
 
 
@@ -160,7 +172,6 @@ function renderText(text) {
     return p;
 }
 
-
 function renderSinglePhase(fields = []) {
     const wrap = document.createElement("div");
     wrap.className = "single-phase-grid";
@@ -168,12 +179,14 @@ function renderSinglePhase(fields = []) {
     fields.forEach(f => {
         const card = document.createElement("div");
         card.className = "info-card";
-        card.dataset.source = f.source;
 
         card.innerHTML = `
             <div class="data-label">${f.label}</div>
-            <div class="data-value">— <span>${f.unit}</span></div>
+            <div class="data-value" data-source="${f.source}">
+                — <span>${f.unit}</span>
+            </div>
         `;
+
         wrap.appendChild(card);
     });
 
