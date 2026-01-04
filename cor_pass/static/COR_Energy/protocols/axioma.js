@@ -4,6 +4,8 @@
 async function startMonitoringAxioma(objectData) {
     const INTERVAL = 2000; // интервал между циклами
     const INVERTER_MAX_POWER = 80000; // 80 кВт
+    setDeviceVisibility("Generator", "hidden"); 
+
     while (true) {
         console.log("---- Цикл обновления Axioma ----");
         try {
@@ -37,3 +39,4 @@ async function startMonitoringAxioma(objectData) {
         await new Promise(resolve => setTimeout(resolve, INTERVAL));
     }
 }
+

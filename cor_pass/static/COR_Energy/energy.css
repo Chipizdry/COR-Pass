@@ -257,16 +257,17 @@ footer {
 
 
 
-
 .single-phase-grid {
     padding: 15px;
+    margin: 15px;
+    background: #f4f6ff;
+    border-radius: 20px;
     gap: 12px;
 }
 
+
 .info-card {
     display: flex;
-    background: #f4f6ff;
-    border-radius: 12px;
     padding: 10px;
     text-align: center;
 }

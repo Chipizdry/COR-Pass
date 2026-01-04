@@ -50,26 +50,54 @@ export const MODAL_SCHEMAS = {
                 ]
             },
 
-           grid: {
+            grid: {
                 enabled: true,
                 modalId: "GridSettingsModal",
                 title: "Сеть",
-                phases: true,
 
-                phaseFields: [
-                    { id: "voltage", label: "Напряжение", unit: "V", source: ["inputVoltageL1", "inputVoltageL2", "inputVoltageL3"] },
-                    { id: "current", label: "Ток", unit: "A", source: ["inputCurrentL1", "inputCurrentL2", "inputCurrentL3"] },
-                    { id: "power", label: "Мощность", unit: "kW", source: ["inputPowerL1", "inputPowerL2", "inputPowerL3"] }
-                ],
+                blocks: [
+                    {
+                        type: "phaseTable",
+                        phases: 3,
 
-                totals: [
-                    { id: "totalPower", label: "Общая мощность", unit: "kW", source: "inputPowerTotal" }
-                ],
+                        rows: [
+                            {
+                                label: "Напряжение",
+                                unit: "V",
+                                source: ["inputVoltageL1", "inputVoltageL2", "inputVoltageL3"]
+                            },
+                            {
+                                label: "Ток",
+                                unit: "A",
+                                source: ["inputCurrentL1", "inputCurrentL2", "inputCurrentL3"]
+                            },
+                            {
+                                label: "Мощность",
+                                unit: "kW",
+                                source: ["inputPowerL1", "inputPowerL2", "inputPowerL3"]
+                            }
+                        ]
+                    },
 
-                controls: [
+                    {
+                        type: "fieldList",
+                        fields: [
+                            {
+                                label: "Общая мощность",
+                                unit: "kW",
+                                source: "inputPowerTotal"
+                            },
+                            {
+                                label: "Частота",
+                                unit: "Hz",
+                                source: "inputFrequency"
+                            }
+
+                        ]
+                    },
+
                     {
                         type: "slider",
-                        id: "feedInPowerSlider",
                         label: "Ограничение отдачи в сеть",
                         min: -100000,
                         max: 100000,
@@ -78,7 +106,7 @@ export const MODAL_SCHEMAS = {
                         saveAction: "saveAcSetpoint"
                     }
                 ]
-            },
+            },   
 
             load: {
                 enabled: true,
@@ -192,7 +220,7 @@ export const MODAL_SCHEMAS = {
                 phases: true,
                 blocks: [
                 {
-                    type: "fieldList",
+                    type: "singlePhase",
                     fields: [
                         { label: "Напряжение:", unit: "V", source: "outputVoltage" },
                         { label: "Ток:", unit: "A", source: "outputCurrent" },
@@ -218,7 +246,7 @@ export const MODAL_SCHEMAS = {
             },
 
             generator: {
-                enabled: true
+                enabled: false
             }
         }
     },

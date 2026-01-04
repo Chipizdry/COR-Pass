@@ -1,8 +1,5 @@
 
 
-
-
-
 // ===============================
 // Конструктор модалок по schema
 // ===============================
@@ -94,6 +91,8 @@ function renderFieldList(fields = []) {
 // ===============================
 // Блок: фазовая таблица (1 / 3)
 // ===============================
+
+
 function renderPhaseTable(phases = 3) {
     const table = document.createElement("table");
     table.className = "phase-table";
@@ -113,6 +112,11 @@ function renderPhaseTable(phases = 3) {
     `;
     return table;
 }
+
+
+
+
+
 
 function renderPhaseRow(label, unit, base, phases) {
     return `
