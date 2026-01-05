@@ -186,11 +186,11 @@ export const MODAL_SCHEMAS = {
                 title: "Батарея",
 
                 fields: [
-                    { id: "soc", label: "SOC", unit: "%", source: "battery1SOC" },
-                    { id: "voltage", label: "Напряжение", unit: "V", source: "battery1Voltage" },
-                    { id: "current", label: "Ток", unit: "A", source: "battery1Current" },
+                    { id: "soc", label: "SOC", unit: "%", source: "batterySOC" },
+                    { id: "voltage", label: "Напряжение", unit: "V", source: "batteryVoltage" },
+                    { id: "current", label: "Ток", unit: "A", source: "batteryCurrent" },
                     { id: "power", label: "Мощность", unit: "W", source: "batteryTotalPower" },
-                    { id: "temp", label: "Температура", unit: "°C", source: "battery1Temperature" }
+                    { id: "temp", label: "Температура", unit: "°C", source: "batteryTemperature" }
                 ],
 
                 controls: [
@@ -236,7 +236,7 @@ export const MODAL_SCHEMAS = {
                     fields: [
                         { label: "Напряжение:", unit: "V", source: "outputVoltage" },
                         { label: "Ток:", unit: "A", source: "outputCurrent" },
-                        { label: "Мощность:", unit: "kW", source: "outputPower" },
+                        { label: "Мощность:", unit: "W", source: "outputActivePower" },
                         { label: "Частота:", unit: "Hz", source: "outputFrequency" }
                     ]
                 }

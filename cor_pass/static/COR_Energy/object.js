@@ -400,7 +400,7 @@ export function updateUIByData(data = {}) {
         const nodes = document.querySelectorAll(`[data-source="${key}"]`);
 
         if (!nodes.length) {
-            console.warn(`❌ Поле с data-source="${key}" не найдено в DOM`, value);
+          //  console.warn(`❌ Поле с data-source="${key}" не найдено в DOM`, value);
             return;
         }
 
@@ -417,7 +417,7 @@ export function updateUIByData(data = {}) {
                 node.value = value;
             }
 
-            console.log(`✅ Обновлено: ${key}`, "DOM:", node, "старое:", oldText, "новое:", node.textContent || node.value);
+           // console.log(`✅ Обновлено: ${key}`, "DOM:", node, "старое:", oldText, "новое:", node.textContent || node.value);
         });
     });
     console.groupEnd();

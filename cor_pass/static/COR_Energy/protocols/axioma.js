@@ -1,16 +1,18 @@
+
+
+
 const deviceId = "COR-B0B21CA3435C";
 let axiomaWS = null;
-
+ const INVERTER_MAX_POWER = 11000;
 async function startMonitoringAxioma(objectData) {
-    const INTERVAL = 2000;
+    const INTERVAL = 1000;
+     const INVERTER_MAX_POWER = 11000;
     setDeviceVisibility("Generator", "hidden");
 
     const protocol = objectData.protocol;
 
     switch (protocol) {
-
         case "modbus_over_tcp":
-            // старый polling (если понадобится)
             while (true) {
                 console.log("---- Цикл обновления Axioma (TCP) ----");
                 await new Promise(r => setTimeout(r, INTERVAL));
@@ -40,14 +42,8 @@ function hexToAscii(hex) {
     return result;
 }
 
-
-
-
-
-
 function startAxiomaCORBridgeWS(objectData) {
     const deviceId = "COR-B0B21CA3435C";
-
     console.log("🚀 Инициализация Axioma COR-Bridge WS", { deviceId });
 
     if (!deviceId) {
@@ -55,13 +51,9 @@ function startAxiomaCORBridgeWS(objectData) {
         return;
     }
 
-    const wsUrl =
-        `wss://dev-corid.cor-medical.ua/dev-modbus/responses` +
-        `?device_id=${deviceId}`;
-
+    const wsUrl = `wss://dev-corid.cor-medical.ua/dev-modbus/responses?device_id=${deviceId}`;
     console.log("🌐 WS URL:", wsUrl);
 
-    // защита от повторного запуска
     if (axiomaWS && axiomaWS.readyState === WebSocket.OPEN) {
         console.warn("⚠️ WS уже запущен");
         return;
@@ -69,64 +61,42 @@ function startAxiomaCORBridgeWS(objectData) {
 
     axiomaWS = new WebSocket(wsUrl);
 
-    axiomaWS.onopen = () => {
-        console.log("✅ Axioma COR-Bridge WS подключён");
-    };
+    axiomaWS.onopen = () => console.log("✅ Axioma COR-Bridge WS подключён");
 
     axiomaWS.onmessage = (event) => {
-    console.log("📩 WS сообщение получено:", event.data);
+        console.log("📩 WS сообщение получено:", event.data);
 
-    try {
-        const raw = JSON.parse(event.data);
-        console.log("🧩 WS JSON распарсен:", raw);
+        try {
+            const raw = JSON.parse(event.data);
+           // console.log("🧩 WS JSON распарсен:", raw);
 
-        const hex = raw?.data?.hex_response;
+            const hex = raw?.data?.hex_response;
+            if (!hex) {
+                console.warn("⚠️ Нет data.hex_response в сообщении", raw);
+                return;
+            }
 
-        if (!hex) {
-            console.warn("⚠️ Нет data.hex_response в сообщении", raw);
-            return;
+          //  console.log("🔢 hex_response:", hex);
+
+            // Универсальный парсер
+            const parsed = parseAxiomaHex(hex);
+
+            if (!parsed) {
+                console.warn("⚠️ Данные не распознаны");
+                return;
+            }
+
+            // Обновляем lastData
+            window.lastData = { ...window.lastData, ...parsed };
+            console.log("📊 lastData обновлён:", window.lastData);
+            updateUIByData(window.lastData);
+
+        } catch (e) {
+            console.error("❌ Ошибка обработки WS:", e, event.data);
         }
-
-        console.log("🔢 hex_response:", hex);
-
-        const parsed = parseQPIGS(hex);
-
-        if (!parsed) {
-            console.warn("⚠️ QPIGS не распарсен");
-            return;
-        }
-
-        console.log("🔍 QPIGS parsed:", parsed);
-
-        window.lastData = {
-            ...window.lastData,
-
-            battery1Voltage: parsed.batteryVoltage,
-            battery1SOC: parsed.batterySOC,
-            battery1Current: parsed.batteryChargeCurrent,
-            battery1Temperature: parsed.inverterTemp,
-
-            outputVoltage: parsed.outputVoltage,
-            outputFrequency: parsed.outputFrequency,
-            outputPower: parsed.outputActivePower,
-            loadPercent: parsed.loadPercent,
-
-            pvVoltage: parsed.pvVoltage,
-            pvCurrent: parsed.pvChargeCurrent
-        };
-
-        console.log("📊 lastData обновлён:", window.lastData);
-        updateUIByData(window.lastData);
-
-    } catch (e) {
-        console.error("❌ Ошибка обработки WS:", e, event.data);
-    }
-};
-
-
-    axiomaWS.onerror = (err) => {
-        console.error("❌ Axioma WS ошибка:", err);
     };
+
+    axiomaWS.onerror = (err) => console.error("❌ Axioma WS ошибка:", err);
 
     axiomaWS.onclose = (e) => {
         console.warn("🔌 Axioma WS закрыт", {
@@ -136,7 +106,6 @@ function startAxiomaCORBridgeWS(objectData) {
         });
 
         axiomaWS = null;
-
         console.log("⏳ Переподключение через 3 секунды...");
         setTimeout(() => startAxiomaCORBridgeWS(objectData), 3000);
     };
@@ -150,7 +119,70 @@ function stopAxiomaWS() {
     }
 }
 
+/**
+ * Универсальный парсер для разных типов данных
+ */
+function parseAxiomaHex(hexResponse) {
+    if (!hexResponse) return null;
 
+    const ascii = hexToAscii(hexResponse).trim();
+    console.log("🔤 ASCII вход:", ascii);
+
+    // Чистим управляющие символы
+    const clean = ascii.replace(/[()\r\n]/g, "");
+
+    // Определяем тип данных
+    if (clean.startsWith("E") || clean.startsWith("D")) {
+        // QFLAG
+        return parseQFLAG(clean);
+    } else if (ascii.startsWith("(")) {
+        // QPIGS
+        return parseQPIGS(hexResponse);
+    } else {
+        console.warn("❌ Неизвестный формат данных:", clean);
+        return null;
+    }
+}
+
+/**
+ * Парсер QFLAG
+ */
+function parseQFLAG(ascii) {
+    // Пример входа: EADJDKUVXYZ
+    // E — включено, D — выключено, буквы после них — что именно
+
+    if (!ascii || ascii.length < 2) return null;
+
+    const flagsMap = {
+        A: "silenceBuzzer",
+        B: "overloadBypass",
+        J: "powerSaving",
+        K: "lcdEscape",
+        U: "overloadRestart",
+        V: "overTempRestart",
+        X: "backlight",
+        Y: "alarmOnPrimaryInterrupt",
+        Z: "faultCodeRecord"
+    };
+
+    const result = {};
+
+    // Берём последовательность после E или D
+    const regex = /([ED])([A-Z])/g;
+    let match;
+    while ((match = regex.exec(ascii)) !== null) {
+        const status = match[1] === "E"; // E = true, D = false
+        const letter = match[2];
+        if (flagsMap[letter]) result[flagsMap[letter]] = status;
+    }
+
+    console.log("✅ QFLAG parsed:", result);
+    return result;
+}
+
+/**
+ * Парсер QPIGS (оставлен без изменений)
+ */
 function parseQPIGS(hexResponse) {
     console.log("➡️ parseQPIGS вход:", hexResponse);
 
@@ -164,7 +196,6 @@ function parseQPIGS(hexResponse) {
 
     const clean = ascii.replace(/[()]/g, "");
     const parts = clean.split(/\s+/);
-
     console.log("🧩 QPIGS parts:", parts);
 
     if (parts.length < 17) {
@@ -172,12 +203,16 @@ function parseQPIGS(hexResponse) {
         return null;
     }
 
+    const apparentPower = parseFloat(parts[4]); // VA
+    const outputVoltage = parseFloat(parts[2]) || 1; // V, защита от 0
+    const outputCurrent = apparentPower / outputVoltage; // A
+
     const result = {
-        gridVoltage: parseFloat(parts[0]),
-        gridFrequency: parseFloat(parts[1]),
-        outputVoltage: parseFloat(parts[2]),
+        inputVoltage: parseFloat(parts[0]),
+        inputFrequency: parseFloat(parts[1]),
+        outputVoltage: outputVoltage,
         outputFrequency: parseFloat(parts[3]),
-        outputApparentPower: parseInt(parts[4]),
+        outputApparentPower: apparentPower,
         outputActivePower: parseInt(parts[5]),
         loadPercent: parseInt(parts[6]),
         busVoltage: parseInt(parts[7]),
@@ -189,43 +224,48 @@ function parseQPIGS(hexResponse) {
         pvVoltage: parseFloat(parts[13]),
         batteryVoltageSCC: parseFloat(parts[14]),
         batteryDischargeCurrent: parseInt(parts[15]),
-        statusBits: parts[16]
+        statusBits: parts[16],
+        outputCurrent: outputCurrent
     };
 
     console.log("✅ QPIGS результат:", result);
+
+
+     // --- Добавляем обновление индикатора нагрузки ---
+    if ( result.outputApparentPower != null) {
+        const INVERTER_MAX_POWER = 11000; // можно вынести глобально
+        updatePowerByName(
+            "Load",
+            PowerToIndicator(result.outputApparentPower, INVERTER_MAX_POWER)
+        );
+        const loadIndicatorLabel = document.querySelector("#loadIndicatorLabel");
+        if (loadIndicatorLabel) {
+            loadIndicatorLabel.textContent = formatPowerLabel(result.outputApparentPower, "load");
+        }
+    }
+
+
+    // --- Обновление состояния АКБ ---
+const chargeCurrent = result.batteryChargeCurrent || 0;
+const dischargeCurrent = result.batteryDischargeCurrent || 0;
+const batteryVoltage = result.batteryVoltage || 0;
+
+let batteryTotalPower = 0;
+
+
+if (chargeCurrent > 0) {
+    batteryTotalPower = batteryVoltage * chargeCurrent * -1; // -W
+    
+} else if (dischargeCurrent > 0) {
+    batteryTotalPower = batteryVoltage * dischargeCurrent; // +W
+   
+}
+
+
+updatePowerByName("Battery", PowerToIndicator(batteryTotalPower, INVERTER_MAX_POWER));
+
     return result;
 }
 
-// hex_response -> QFLAG парсер
-function parseQFLAG(hexResponse) {
-    if (!hexResponse) return null;
-
-    const ascii = hexToAscii(hexResponse).trim();
-    console.log("🔤 ASCII QFLAG:", ascii);
-
-    // Ожидаем что ASCII будет типа "EAKUVXYZ ..." или "(EAKUVXYZ)<cr>"
-    // убираем скобки и <cr>
-    const clean = ascii.replace(/[()\r\n]/g, "");
-    if (!clean.startsWith("E") && !clean.startsWith("D")) {
-        console.warn("❌ Не похоже на QFLAG:", clean);
-        return null;
-    }
-
-    // QFLAG по протоколу: ExxxDxxx
-    const flags = {
-        A: clean.includes("A"), // Enable/disable silence buzzer
-        B: clean.includes("B"), // Enable/Disable overload bypass
-        J: clean.includes("J"), // Enable/Disable power saving
-        K: clean.includes("K"), // LCD escape after 1min
-        U: clean.includes("U"), // Overload restart
-        V: clean.includes("V"), // Over temperature restart
-        X: clean.includes("X"), // Backlight
-        Y: clean.includes("Y"), // Alarm on primary source interrupt
-        Z: clean.includes("Z"), // Fault code record
-    };
-
-    console.log("✅ QFLAG parsed:", flags);
-    return flags;
-}
 
 
