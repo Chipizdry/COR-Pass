@@ -2,35 +2,101 @@
 // ============================
 // Цикл мониторинга Deye
 // ============================
+
+
 async function startMonitoringDeye(objectData) {
-    const INTERVAL = 2000; // интервал между циклами
-    const INVERTER_MAX_POWER = 80000; // 80 кВт
 
-    while (true) {
-        console.log("---- Цикл обновления Deye ----");
+    if (deyeMonitorRunning) {
+        console.warn("Deye monitoring already running");
+        return;
+    }
 
+    deyeMonitorRunning = true;
+
+    const INTERVAL = 1000;
+    const INVERTER_MAX_POWER = 80000;
+
+    const {
+        ip_address: host,
+        port,
+        slave_id,
+        id: object_id,
+        protocol
+    } = objectData;
+
+    const slave = slave_id || 1;
+
+    while (deyeMonitorRunning) {
         try {
-            const host = objectData.ip_address;
-            const port = objectData.port;
-            const slave = objectData.slave_id || objectData.slave || 1;
-            const object_id = objectData.id;
-            const protocol = objectData.protocol;
 
-            switch (protocol) {
-                case "modbus_over_tcp":
-                    window.gridData  = await readOutGridRegisters(host, port, slave, object_id, protocol);
-                    window.solarData = await readSunPanelRegisters(host, port, slave, object_id, protocol);
-                    window.genData   = await readGeneratorRegisters(host, port, slave, object_id, protocol);
-                    window.battData  = await readBatteryRegisters(host, port, slave, object_id, protocol);
-                    window.LoadData  = await readLoadRegisters(host, port, slave, object_id, protocol);
-                    window.InvGridOut = await readInverterGridRegisters(host, port, slave, object_id, protocol);
-                    window.gridDataPower = await readPower32_V104(host, port, slave, object_id, protocol);
 
-                    // 🔹 обновляем lastData
+            if (protocol === "modbus_over_tcp") {
+                
+            gridData  = await readOutGridRegisters(host, port, slave, object_id, protocol);
+            solarData = await readSunPanelRegisters(host, port, slave, object_id, protocol);
+            solarExtData = await readSunPanelExtRegisters(host, port, slave, object_id, protocol);
+            genData   = await readGeneratorRegisters(host, port, slave, object_id, protocol);
+            battData  = await readBatteryRegisters(host, port, slave, object_id, protocol);
+            loadData  = await readLoadRegisters(host, port, slave, object_id, protocol);
+            InvGridOut = await readInverterGridRegisters(host, port, slave, object_id, protocol);
+            gridDataPower = await readPower32_V104(host, port, slave, object_id, protocol);
+            serviceData = await readServiceRegisters(host, port, slave, object_id, protocol);
+
+                 
+
+            } else {
+                console.warn("Unsupported Deye protocol:", protocol);
+                break;
+            }
+
+            /* ===== UI ===== */
+
+                if (solarExtData?.PVTotalPowerRaw != null) {
+                    updatePowerByName( "Solar", PowerToIndicator(solarExtData.PVTotalPowerRaw, INVERTER_MAX_POWER) );
+                    solarPowerLabel.textContent = formatPowerLabel(solarExtData.PVTotalPowerRaw, "solar");
+                }
+
+                if (genData?.GenTotalPower != null) {
+                    updatePowerByName("Generator", PowerToIndicator(genData.GenTotalPower, INVERTER_MAX_POWER));
+                    generatorFlowLabel.textContent = formatPowerLabel(genData.GenTotalPower, "generator");
+                   if (typeof serviceData?.genRelay === "boolean") {
+                    setDeviceVisibility( "Generator", serviceData.genRelay ? "visible" : "hidden");
+                    }
+                  
+                }
+
+                if (loadData?.LoadTotalPower != null) {
+                    updatePowerByName(
+                        "Load",
+                        PowerToIndicator(loadData.LoadTotalPower, INVERTER_MAX_POWER)
+                    );
+                    loadIndicatorLabel.textContent = formatPowerLabel(loadData.LoadTotalPower, "load");
+                }
+
+                if (battData?.batteryTotalPower != null) {
+                    updatePowerByName(
+                        "Battery",
+                        PowerToIndicator(battData.batteryTotalPower, INVERTER_MAX_POWER)
+                    );
+                    updateBatteryFill(battData.battery1SOC);
+                    batteryFlowLabel.textContent = formatPowerLabel(battData.batteryTotalPower, "battery");
+                }
+
+                if (gridData?.totalPower != null) {
+                    updatePowerByName(
+                        "Grid",
+                        PowerToIndicator(gridData.totalPower, INVERTER_MAX_POWER)
+                    );
+                    networkFlowLabel.textContent = formatPowerLabel(gridData.totalPower, "grid");
+                }
+
+
+                // 🔹 обновляем lastData
                     window.lastData = {
                         ...window.lastData,
                         ...window.gridData,
                         ...window.solarData,
+                        ...window.solarExtData,
                         ...window.genData,
                         ...window.battData,
                         ...window.LoadData,
@@ -40,29 +106,21 @@ async function startMonitoringDeye(objectData) {
 
                     // 🔹 обновляем UI (включая все открытые модалки)
                     window.updateUIByData(window.lastData);
-                    break;
 
-                case "COR-Bridge":
-                    gridData  = await readInverterGridWS(host, port, slave);
-                    solarData = await readSunPanelWS(host, port, slave);
-                    genData   = await readGeneratorWS(host, port, slave);
-                    battData  = await readBatteryWS(host, port, slave);
-
-                    lastData = { ...lastData, ...gridData, ...solarData, ...genData, ...battData };
-                    updateUIByData(lastData);
-                    break;
-
-                default:
-                    console.warn("Неизвестный протокол Deye:", protocol);
-                    return; // выход из функции
-            }
         } catch (err) {
             console.error("Ошибка мониторинга Deye:", err);
         }
 
-        await new Promise(resolve => setTimeout(resolve, INTERVAL));
+          
+
+        await new Promise(r => setTimeout(r, INTERVAL));
     }
+
+    deyeMonitorRunning = false;
 }
+
+
+
 
 /*  Регистры 622-625 соответствуют регистрам 687-690 , Сеть
     Регистры 633-637 соответствуют регистрам 691-695 , Выход инвертора
@@ -140,6 +198,71 @@ async function readGeneratorRegisters(host, port, slave_id, object_id, protocol)
 }
 
 
+async function readSunPanelExtRegisters(host, port, slave_id, object_id, protocol) {
+    const results = {};
+
+    const readBlock = async (start, count) => {
+        const url =
+            `/api/modbus_tcp/v1/read` +
+            `?protocol=${protocol}` +
+            `&host=${host}` +
+            `&port=${port}` +
+            `&slave_id=${slave_id}` +
+            `&object_id=${object_id}` +
+            `&start=${start}` +
+            `&count=${count}` +
+            `&func_code=3`;
+
+        const resp = await fetch(url, { headers: { accept: "application/json" } });
+        return resp.json();
+    };
+
+    // 718–730
+    const registers = [
+        { name: "PVTotalPowerRaw", start: 718, scale: 10 }, // ⚠️ опционально
+
+        { name: "PV5Voltage", start: 719, scale: 0.1 },
+        { name: "PV6Voltage", start: 720, scale: 0.1 },
+        { name: "PV7Voltage", start: 721, scale: 0.1 },
+        { name: "PV8Voltage", start: 722, scale: 0.1 },
+
+        { name: "PV5Current", start: 723, scale: 0.1 },
+        { name: "PV6Current", start: 724, scale: 0.1 },
+        { name: "PV7Current", start: 725, scale: 0.1 },
+        { name: "PV8Current", start: 726, scale: 0.1 },
+
+        { name: "PV5Power", start: 727, scale: 10 },
+        { name: "PV6Power", start: 728, scale: 10 },
+        { name: "PV7Power", start: 729, scale: 10 },
+        { name: "PV8Power", start: 730, scale: 10 },
+    ];
+
+    const startReg = registers[0].start;
+    const count = registers.length;
+
+    try {
+        const data = await readBlock(startReg, count);
+
+        if (data.ok && data.data?.length === count) {
+            registers.forEach((reg, idx) => {
+                results[reg.name] = data.data[idx] * reg.scale;
+            });
+
+            // ✅ суммарная мощность PV5–PV8
+            results.PVExtTotalPower =
+                (results.PV5Power || 0) +
+                (results.PV6Power || 0) +
+                (results.PV7Power || 0) +
+                (results.PV8Power || 0);
+        }
+
+    } catch (err) {
+        console.error("Ошибка чтения расширенных PV регистров:", err);
+    }
+
+    console.log("☀️ PV5–PV8 results:", results);
+    return results;
+}
 
 
 
@@ -610,126 +733,4 @@ async function readPower32_V104(host, port, slave_id, object_id, protocol) {
     console.log("Parsed HIGH power results:", results);
     return results;
 }
-
-
-async function startMonitoringDeye(objectData) {
-
-    if (deyeMonitorRunning) {
-        console.warn("Deye monitoring already running");
-        return;
-    }
-
-    deyeMonitorRunning = true;
-
-    const INTERVAL = 1500;
-    const INVERTER_MAX_POWER = 80000;
-
-    const {
-        ip_address: host,
-        port,
-        slave_id,
-        id: object_id,
-        protocol
-    } = objectData;
-
-    const slave = slave_id || 1;
-
-    while (deyeMonitorRunning) {
-        try {
-
-
-            if (protocol === "modbus_over_tcp") {
-                /*
-                gridData  = await readOutGridRegisters(host, port, slave, object_id, protocol);
-                solarData = await readSunPanelRegisters(host, port, slave, object_id, protocol);
-                genData   = await readGeneratorRegisters(host, port, slave, object_id, protocol);
-                battData  = await readBatteryRegisters(host, port, slave, object_id, protocol);
-                loadData  = await readLoadRegisters(host, port, slave, object_id, protocol);
-                serviceData = await readServiceRegisters(host, port, slave, object_id, protocol); */
-                
-                   gridData  = await readOutGridRegisters(host, port, slave, object_id, protocol);
-                   solarData = await readSunPanelRegisters(host, port, slave, object_id, protocol);
-                    genData   = await readGeneratorRegisters(host, port, slave, object_id, protocol);
-                    battData  = await readBatteryRegisters(host, port, slave, object_id, protocol);
-                    loadData  = await readLoadRegisters(host, port, slave, object_id, protocol);
-                    InvGridOut = await readInverterGridRegisters(host, port, slave, object_id, protocol);
-                    gridDataPower = await readPower32_V104(host, port, slave, object_id, protocol);
-                    serviceData = await readServiceRegisters(host, port, slave, object_id, protocol);
-
-                 
-
-            } else {
-                console.warn("Unsupported Deye protocol:", protocol);
-                break;
-            }
-
-            /* ===== UI ===== */
-
-                if (solarData?.PVTotalPower != null) {
-                    updatePowerByName( "Solar", PowerToIndicator(solarData.PVTotalPower, INVERTER_MAX_POWER) );
-                    solarPowerLabel.textContent = formatPowerLabel(solarData.PVTotalPower, "solar");
-                }
-
-                if (genData?.GenTotalPower != null) {
-                    updatePowerByName("Generator", PowerToIndicator(genData.GenTotalPower, INVERTER_MAX_POWER));
-                    generatorFlowLabel.textContent = formatPowerLabel(genData.GenTotalPower, "generator");
-                   if (typeof serviceData?.genRelay === "boolean") {
-                    setDeviceVisibility( "Generator", serviceData.genRelay ? "visible" : "hidden");
-                    }
-                  
-                }
-
-                if (loadData?.LoadTotalPower != null) {
-                    updatePowerByName(
-                        "Load",
-                        PowerToIndicator(loadData.LoadTotalPower, INVERTER_MAX_POWER)
-                    );
-                    loadIndicatorLabel.textContent = formatPowerLabel(loadData.LoadTotalPower, "load");
-                }
-
-                if (battData?.batteryTotalPower != null) {
-                    updatePowerByName(
-                        "Battery",
-                        PowerToIndicator(battData.batteryTotalPower, INVERTER_MAX_POWER)
-                    );
-                    updateBatteryFill(battData.battery1SOC);
-                    batteryFlowLabel.textContent = formatPowerLabel(battData.batteryTotalPower, "battery");
-                }
-
-                if (gridData?.totalPower != null) {
-                    updatePowerByName(
-                        "Grid",
-                        PowerToIndicator(gridData.totalPower, INVERTER_MAX_POWER)
-                    );
-                    networkFlowLabel.textContent = formatPowerLabel(gridData.totalPower, "grid");
-                }
-
-
-                // 🔹 обновляем lastData
-                    window.lastData = {
-                        ...window.lastData,
-                        ...window.gridData,
-                        ...window.solarData,
-                        ...window.genData,
-                        ...window.battData,
-                        ...window.LoadData,
-                        ...window.InvGridOut,
-                        ...window.gridDataPower
-                    };
-
-                    // 🔹 обновляем UI (включая все открытые модалки)
-                    window.updateUIByData(window.lastData);
-
-        } catch (err) {
-            console.error("Ошибка мониторинга Deye:", err);
-        }
-
-          
-
-        await new Promise(r => setTimeout(r, INTERVAL));
-    }
-
-    deyeMonitorRunning = false;
-}
-
 
