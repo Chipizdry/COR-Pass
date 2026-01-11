@@ -18,6 +18,7 @@
     <script src="/static/COR_ID_Js/general_fun.js"></script>
     <script src="/static/COR_Energy/xlsx.full.min.js"></script>
     <script src="/static/COR_Energy/chart.min.js"></script>
+    <script src="/static/COR_ID_Js/config.js"></script>
 
 </head>
 <body>
@@ -96,7 +97,12 @@
                         <option value="COR-Bridge">COR-Bridge</option>
                     </select>
                 </div>
-
+                <div class="form">
+                    <label for="objectAgentID">COR-Agent ID:</label>
+                    <select id="objectAgentID" required>
+                        <option value="" disabled selected>Выберите COR-Agent</option>
+                    </select>
+                </div>
                 <div class="form">
                     <label>IP адрес:</label>
                     <input type="text" id="objectIp" placeholder="192.168.1.100" required>
@@ -168,6 +174,16 @@
             </select>
         </div>
 
+         <div class="form">
+            <label for="objectProtocol">COR-Agent ID:</label>
+            <select id="editObjectAgentID" required>
+                <option value="" disabled selected>Выберите COR-Agent ID</option>
+                <option value="modbus_tcp">Modbus TCP</option>
+                <option value="modbus_rtu">Modbus RTU</option>
+                <option value="modbus_over_tcp">Modbus over TCP</option>
+                <option value="COR-Bridge">COR-Bridge</option>
+            </select>
+        </div>
         <div class="form">
             <label>IP адрес:</label>
             <input type="text" id="editObjectIp" required>
@@ -208,7 +224,8 @@
                 errorElement.style.display = 'none';
                 tableContainer.style.display = 'none';
 
-                const response = await fetch('/api/modbus/', {
+              //  const response = await fetch('/api/modbus/', {
+                  const response = await fetch( `${API_BASE_URL}/api/modbus/`, {    
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
@@ -221,7 +238,7 @@
                 }
 
                 let objects = await response.json();
-
+                console.log("📦 Данные объектов:", objects);
                 // ✔ защита от случаев, если бек вернёт { data: [...] }
                 if (!Array.isArray(objects)) {
                     if (Array.isArray(objects?.data)) {
@@ -252,6 +269,45 @@
                 console.error('Error loading objects:', error);
             }
         }
+
+
+        
+
+async function fetchDevices() {
+    const token = getToken();
+    checkToken();
+
+    try {
+        console.log("➡️ Запрос устройств...");
+
+        const response = await fetch(
+            `${API_BASE_URL}/api/energetic_device_proxy/devices`,
+            {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
+
+        console.log("⬅️ Ответ получен:", response.status);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("📦 Данные устройств:", data);
+
+        return data;
+
+    } catch (error) {
+        console.error("❌ Ошибка загрузки устройств:", error);
+        return [];
+    }
+}
+
         
         // Функция для отрисовки таблицы
 function renderTable(objects) {
@@ -406,9 +462,17 @@ function renderTable(objects) {
             // Здесь можно реализовать переход на страницу редактирования
         }
         
+        /*
         function addObject() {
             const modal = document.getElementById('addObjectModal');
             modal.style.display = 'block';
+            fillAgentSelect("objectAgentID");
+        }  */
+
+
+        function addObject() {
+            document.getElementById('addObjectModal').style.display = 'block';
+            fillAgentSelect("objectAgentID");
         }
 
         document.getElementById('closeAddObject').onclick = () => {
@@ -423,11 +487,12 @@ function renderTable(objects) {
             document.getElementById("editObjectDescription").value = obj.description || "";
             document.getElementById("editObjectVendor").value = obj.vendor || "";
             document.getElementById("editObjectProtocol").value = obj.protocol || "";
+            document.getElementById("editObjectAgentID").value = obj.agent_id || "";
             document.getElementById("editObjectIp").value = obj.ip_address || "";
             document.getElementById("editObjectPort").value = obj.port || "";
             document.getElementById("editObjectLogin").value = obj.inverter_login || "";
             document.getElementById("editObjectPassword").value = obj.inverter_password || "";
-
+            fillAgentSelect("editObjectAgentID", obj.agent_id);
             // Запоминаем ID текущего объекта
             window.currentEditObjectId = obj.id;
 
@@ -508,6 +573,7 @@ function renderTable(objects) {
         // Загружаем данные при загрузке страницы
         document.addEventListener('DOMContentLoaded', function() {
             loadObjects();
+            fetchDevices();
             // Инициализация модального окна для добавления объекта
             initModalControls('addObjectModal');
             makeModalDraggable('addObjectModal');
@@ -526,6 +592,7 @@ function renderTable(objects) {
                 const description = document.getElementById('objectDescription').value.trim();
                 const vendor = document.getElementById('objectVendor').value;   // ← новый параметр
                 const protocol = document.getElementById('objectProtocol').value.trim();
+                const agent_id = document.getElementById('objectAgentID').value;
                 const ip_address = document.getElementById('objectIp').value.trim();
                 const port = parseInt(document.getElementById('objectPort').value.trim());
                 const inverter_login = document.getElementById('objectLogin').value.trim();
@@ -537,6 +604,7 @@ function renderTable(objects) {
                     description,
                     vendor,               // ← добавлено
                     protocol,
+                    agent_id, 
                     ip_address,
                     port,
                     inverter_login,
@@ -546,7 +614,7 @@ function renderTable(objects) {
                 console.log("Отправка:", payload);
 
                 try {
-                    const response = await fetch('/api/modbus/', {
+                    const response = await fetch(`${API_BASE_URL}/api/modbus/`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -582,6 +650,7 @@ async function submitEditObjectForm() {
         description: document.getElementById("editObjectDescription").value.trim(),
         vendor: document.getElementById("editObjectVendor").value,
         protocol: document.getElementById("editObjectProtocol").value,
+        agent_id: document.getElementById("editObjectAgentID").value,
         ip_address: document.getElementById("editObjectIp").value.trim(),
         port: parseInt(document.getElementById("editObjectPort").value),
         inverter_login: document.getElementById("editObjectLogin").value.trim(),
@@ -591,7 +660,7 @@ async function submitEditObjectForm() {
     console.log("Отправка PUT:", payload);
 
     try {
-        const response = await fetch(`/api/modbus/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/modbus/${id}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json"
@@ -621,7 +690,7 @@ async function submitEditObjectForm() {
             if (!confirm("Удалить объект безвозвратно?")) return;
 
             try {
-                const response = await fetch(`/api/modbus/${objectId}`, {
+                const response = await fetch(`${API_BASE_URL}/api/modbus/${objectId}`, {
                     method: 'DELETE',
                     headers: {
                         'Accept': 'application/json'
@@ -668,6 +737,28 @@ async function submitEditObjectForm() {
             updateProtocolFields("editObjectProtocol", "editObjectIp", "editObjectPort");
         });
 
+        async function fillAgentSelect(selectId, selectedValue = null) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+
+            select.innerHTML = `<option value="" disabled selected>Загрузка...</option>`;
+
+            const devices = await fetchDevices();
+
+            select.innerHTML = `<option value="" disabled>Выберите COR-Agent</option>`;
+
+            devices.forEach(dev => {
+                const option = document.createElement("option");
+                option.value = dev.id; // <-- ВАЖНО: UUID
+               // option.textContent = `${dev.name} (${dev.device_id})`;
+                option.textContent = `${dev.device_id}`;
+                if (selectedValue && selectedValue === dev.id) {
+                    option.selected = true;
+                }
+
+                select.appendChild(option);
+            });
+        }
 
 
     </script>

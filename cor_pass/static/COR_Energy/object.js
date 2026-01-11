@@ -12,7 +12,7 @@ export function resolveModalSchema(vendor, model) {
 
 async function loadObjectSettings(objectId) {
     try {
-        const response = await fetch(`/api/modbus/${objectId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/modbus/${objectId}`, {
             method: "GET",
             headers: {
                 "Accept": "application/json"
