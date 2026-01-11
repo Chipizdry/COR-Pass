@@ -89,6 +89,10 @@ function startAxiomaCORBridgeWS(objectData) {
             // Обновляем lastData
             window.lastData = { ...window.lastData, ...parsed };
             console.log("📊 lastData обновлён:", window.lastData);
+
+
+
+
             updateUIByData(window.lastData);
 
         } catch (e) {
@@ -122,6 +126,8 @@ function stopAxiomaWS() {
 /**
  * Универсальный парсер для разных типов данных
  */
+
+/*
 function parseAxiomaHex(hexResponse) {
     if (!hexResponse) return null;
 
@@ -143,6 +149,48 @@ function parseAxiomaHex(hexResponse) {
         return null;
     }
 }
+*/
+
+
+function parseAxiomaHex(hexResponse) {
+    if (!hexResponse) return null;
+
+    const ascii = hexToAscii(hexResponse).trim();
+    console.log("🔤 ASCII вход:", ascii);
+
+    const clean = ascii.replace(/[()\r\n\x03\x19]/g, "").trim();
+    const parts = clean.split(/\s+/);
+
+    // ---------- QFLAG ----------
+    if (/^[ED][A-Z]/.test(clean)) {
+        return parseQFLAG(clean);
+    }
+
+    // ---------- QPIGS ----------
+    // Признак: первые два поля — числа с точкой
+    if (
+        parts.length >= 17 &&
+        !isNaN(parseFloat(parts[0])) &&
+        !isNaN(parseFloat(parts[1])) &&
+        parts[0].includes(".")
+    ) {
+        return parseQPIGS(hexResponse);
+    }
+
+    // ---------- QPGSn ----------
+    // Признак: первый символ 0/1 + серийник
+    if (
+        parts.length >= 18 &&
+        (parts[0] === "0" || parts[0] === "1") &&
+        /^[A-Z0-9]+$/i.test(parts[1])
+    ) {
+        return parseQPGS(parts);
+    }
+
+    console.warn("❌ Неизвестный формат данных:", clean);
+    return null;
+}
+
 
 /**
  * Парсер QFLAG
@@ -204,6 +252,7 @@ function parseQPIGS(hexResponse) {
     }
 
     const apparentPower = parseFloat(parts[4]); // VA
+
     const outputVoltage = parseFloat(parts[2]) || 1; // V, защита от 0
     const outputCurrent = apparentPower / outputVoltage; // A
 
@@ -232,40 +281,129 @@ function parseQPIGS(hexResponse) {
 
 
      // --- Добавляем обновление индикатора нагрузки ---
-    if ( result.outputApparentPower != null) {
+    if ( result.outputActivePower != null) {
         const INVERTER_MAX_POWER = 11000; // можно вынести глобально
         updatePowerByName(
             "Load",
-            PowerToIndicator(result.outputApparentPower, INVERTER_MAX_POWER)
+            PowerToIndicator(result.outputActivePower, INVERTER_MAX_POWER)
         );
         const loadIndicatorLabel = document.querySelector("#loadIndicatorLabel");
         if (loadIndicatorLabel) {
-            loadIndicatorLabel.textContent = formatPowerLabel(result.outputApparentPower, "load");
+            loadIndicatorLabel.textContent = formatPowerLabel(result.outputActivePower, "load");
         }
     }
 
+  
 
-    // --- Обновление состояния АКБ ---
-const chargeCurrent = result.batteryChargeCurrent || 0;
-const dischargeCurrent = result.batteryDischargeCurrent || 0;
-const batteryVoltage = result.batteryVoltage || 0;
+ // --- АКБ ---
+const chargeCurrent = Number(result.batteryChargeCurrent) || 0;
 
+const dischargeCurrent = Number(result.batteryDischargeCurrent) || 0;
+
+const batteryVoltage = Number(result.batteryVoltage) || 0;
+const batteryCurrent = chargeCurrent > 0 ? -chargeCurrent : dischargeCurrent;
+let inputPower = result.apparentPower || 0;
+
+result.batteryCurrent = batteryCurrent;
 let batteryTotalPower = 0;
 
+if (chargeCurrent >0) {
+    batteryTotalPower = -batteryVoltage * chargeCurrent;
 
-if (chargeCurrent > 0) {
-    batteryTotalPower = batteryVoltage * chargeCurrent * -1; // -W
-    
+    if(result.inputVoltage !== 0) {
+        inputPower = apparentPower + Math.abs(batteryTotalPower);
+    }
+
+
 } else if (dischargeCurrent > 0) {
-    batteryTotalPower = batteryVoltage * dischargeCurrent; // +W
-   
+    batteryTotalPower = batteryVoltage * dischargeCurrent;
+
+    if(result.inputVoltage !== 0) {
+        inputPower = apparentPower - Math.abs(batteryTotalPower);
+    }
+
+
+}
+ if(result.inputVoltage == 0) {inputPower = 0;}
+result.inputPower = inputPower;
+
+if (!isFinite(batteryTotalPower)) {
+    batteryTotalPower = 0;
 }
 
 
-updatePowerByName("Battery", PowerToIndicator(batteryTotalPower, INVERTER_MAX_POWER));
+result.batteryTotalPower = batteryTotalPower;
+ updateBatteryFill(result.batterySOC);
+// UI
+if (result.batteryTotalPower != null) {
+    const INVERTER_MAX_POWER = 11000;
+    updatePowerByName( "Battery", PowerToIndicator(result.batteryTotalPower,  INVERTER_MAX_POWER ) );
+     batteryFlowLabel.textContent = formatPowerLabel(result.batteryTotalPower, "battery");
+    console.log("🔋 batteryTotalPower:", result.batteryTotalPower);
+
+}
+
+
+
+if (result.inputPower != null) {
+    const INVERTER_MAX_POWER = 11000;
+    updatePowerByName("Grid", PowerToIndicator(result.inputPower, INVERTER_MAX_POWER));
+    networkFlowLabel.textContent = formatPowerLabel((result.inputPower), "grid");
+}
 
     return result;
 }
 
+
+
+
+function parseQPGS(parts) {
+    console.log("➡️ parseQPGS parts:", parts);
+
+    const result = {
+        parallelExist: parts[0] === "1",
+        serialNumber: parts[1],
+        workMode: parts[2],
+        faultCode: parseInt(parts[3]),
+
+        gridVoltage: parseFloat(parts[4]),
+        gridFrequency: parseFloat(parts[5]),
+
+        outputVoltage: parseFloat(parts[6]),
+        outputFrequency: parseFloat(parts[7]),
+
+        outputApparentPower: parseInt(parts[8]),
+        outputActivePower: parseInt(parts[9]),
+        loadPercent: parseInt(parts[10]),
+
+        batteryVoltage: parseFloat(parts[11]),
+        batteryChargeCurrent: parseInt(parts[12]),
+        batterySOC: parseInt(parts[13]),
+
+        pvVoltage: parseFloat(parts[14]),
+        totalChargeCurrent: parseInt(parts[15]),
+
+        totalOutputApparentPower: parseInt(parts[16]),
+        totalOutputActivePower: parseInt(parts[17]),
+        totalLoadPercent: parseInt(parts[18]),
+
+        inverterStatusBits: parts[19],
+
+        outputMode: parseInt(parts[20]),          // T
+        chargerPriority: parseInt(parts[21]),     // U
+
+        maxChargerCurrent: parseInt(parts[22]),   // VV
+        maxChargerRange: parseInt(parts[23]),     // WW
+        maxACChargerCurrent: parseInt(parts[24]), // ZZ
+
+        pvChargeCurrent: parseInt(parts[25]),     // XX
+        batteryDischargeCurrent: parseInt(parts[26]) // YYY
+    };
+
+    console.log("✅ QPGS parsed:", result);
+
+   
+    return result;
+}
 
 

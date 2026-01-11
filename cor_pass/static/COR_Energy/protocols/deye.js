@@ -83,10 +83,7 @@ async function startMonitoringDeye(objectData) {
                 }
 
                 if (gridData?.totalPower != null) {
-                    updatePowerByName(
-                        "Grid",
-                        PowerToIndicator(gridData.totalPower, INVERTER_MAX_POWER)
-                    );
+                    updatePowerByName("Grid", PowerToIndicator(gridData.totalPower, INVERTER_MAX_POWER));
                     networkFlowLabel.textContent = formatPowerLabel(gridData.totalPower, "grid");
                 }
 
