@@ -1,33 +1,47 @@
 
 
-
-const deviceId = "COR-B0B21CA3435C";
 let axiomaWS = null;
  const INVERTER_MAX_POWER = 11000;
+ 
 async function startMonitoringAxioma(objectData) {
     const INTERVAL = 1000;
-     const INVERTER_MAX_POWER = 11000;
+
     setDeviceVisibility("Generator", "hidden");
 
-    const protocol = objectData.protocol;
+    switch (objectData.protocol) {
 
-    switch (protocol) {
         case "modbus_over_tcp":
             while (true) {
-                console.log("---- Цикл обновления Axioma (TCP) ----");
                 await new Promise(r => setTimeout(r, INTERVAL));
             }
             break;
 
         case "COR-Bridge":
             console.log("🚀 Запуск COR-Bridge WS мониторинга");
-            startAxiomaCORBridgeWS(objectData);
+
+            const corBridgeId = objectData.cor_bridges?.[0];
+
+            if (!corBridgeId) {
+                console.error("❌ У объекта нет cor_bridges");
+                return;
+            }
+
+            const deviceId = await resolveCORBridgeDeviceId(corBridgeId);
+            console.log("🔍 Полученный device_id:", deviceId);
+
+            if (!deviceId) {
+                console.error("❌ Не удалось получить device_id");
+                return;
+            }
+
+            startAxiomaCORBridgeWS(deviceId);
             break;
 
         default:
-            console.warn("Неизвестный протокол Axioma:", protocol);
+            console.warn("Неизвестный протокол Axioma:", objectData.protocol);
     }
 }
+
 
 function hexToAscii(hex) {
     if (!hex || typeof hex !== "string") return "";
@@ -42,6 +56,8 @@ function hexToAscii(hex) {
     return result;
 }
 
+
+/*
 function startAxiomaCORBridgeWS(objectData) {
     const deviceId = "COR-B0B21CA3435C";
     console.log("🚀 Инициализация Axioma COR-Bridge WS", { deviceId });
@@ -114,6 +130,89 @@ function startAxiomaCORBridgeWS(objectData) {
         setTimeout(() => startAxiomaCORBridgeWS(objectData), 3000);
     };
 }
+
+*/
+
+
+
+function startAxiomaCORBridgeWS(deviceId) {
+   
+     console.log("🚀 Инициализация Axioma COR-Bridge WS", { deviceId });
+
+    if (!deviceId) {
+        console.error("❌ device_id не задан");
+        return;
+    }
+
+    const wsUrl =
+        `wss://dev-corid.cor-medical.ua/dev-modbus/responses?device_id=${deviceId}`;
+
+    console.log("🌐 WS URL:", wsUrl);
+
+    if (axiomaWS && axiomaWS.readyState === WebSocket.OPEN) {
+        console.warn("⚠️ WS уже запущен");
+        return;
+    }
+
+    axiomaWS = new WebSocket(wsUrl);
+
+    axiomaWS.onopen = () =>
+        console.log("✅ Axioma COR-Bridge WS подключён");
+
+    axiomaWS.onmessage = (event) => {
+        console.log("📩 WS сообщение получено:", event.data);
+
+        try {
+            const raw = JSON.parse(event.data);
+           // console.log("🧩 WS JSON распарсен:", raw);
+
+            const hex = raw?.data?.hex_response;
+            if (!hex) {
+                console.warn("⚠️ Нет data.hex_response в сообщении", raw);
+                return;
+            }
+
+          //  console.log("🔢 hex_response:", hex);
+
+            // Универсальный парсер
+            const parsed = parseAxiomaHex(hex);
+
+            if (!parsed) {
+                console.warn("⚠️ Данные не распознаны");
+                return;
+            }
+
+            // Обновляем lastData
+            window.lastData = { ...window.lastData, ...parsed };
+            console.log("📊 lastData обновлён:", window.lastData);
+
+
+
+
+            updateUIByData(window.lastData);
+
+        } catch (e) {
+            console.error("❌ Ошибка обработки WS:", e, event.data);
+        }
+    };
+
+    axiomaWS.onerror = (err) => console.error("❌ Axioma WS ошибка:", err);
+
+    axiomaWS.onclose = (e) => {
+        console.warn("🔌 Axioma WS закрыт", {
+            code: e.code,
+            reason: e.reason,
+            wasClean: e.wasClean
+        });
+
+        axiomaWS = null;
+        console.log("⏳ Переподключение через 3 секунды...");
+        setTimeout(() => startAxiomaCORBridgeWS(objectData), 3000);
+    };
+}
+
+
+
 
 function stopAxiomaWS() {
     if (axiomaWS) {

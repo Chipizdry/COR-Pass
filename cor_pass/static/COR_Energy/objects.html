@@ -462,13 +462,6 @@ function renderTable(objects) {
             // Здесь можно реализовать переход на страницу редактирования
         }
         
-        /*
-        function addObject() {
-            const modal = document.getElementById('addObjectModal');
-            modal.style.display = 'block';
-            fillAgentSelect("objectAgentID");
-        }  */
-
 
         function addObject() {
             document.getElementById('addObjectModal').style.display = 'block';
@@ -492,7 +485,8 @@ function renderTable(objects) {
             document.getElementById("editObjectPort").value = obj.port || "";
             document.getElementById("editObjectLogin").value = obj.inverter_login || "";
             document.getElementById("editObjectPassword").value = obj.inverter_password || "";
-            fillAgentSelect("editObjectAgentID", obj.agent_id);
+          // fillAgentSelect("editObjectAgentID", obj.agent_id);
+            fillAgentSelect("editObjectAgentID", Array.isArray(obj.cor_bridges) ? obj.cor_bridges[0] : null);
             // Запоминаем ID текущего объекта
             window.currentEditObjectId = obj.id;
 
@@ -544,7 +538,7 @@ function renderTable(objects) {
             };
 
             try {
-                const response = await fetch('/api/modbus/', {
+                const response = await fetch(`${API_BASE_URL}/api/modbus/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -598,7 +592,7 @@ function renderTable(objects) {
                 const inverter_login = document.getElementById('objectLogin').value.trim();
                 const inverter_password = document.getElementById('objectPassword').value.trim();
 
-
+               /*
                 const payload = {
                     name,
                     description,
@@ -609,6 +603,30 @@ function renderTable(objects) {
                     port,
                     inverter_login,
                     inverter_password
+                };
+                */
+
+                const corBridgeId = document.getElementById('objectAgentID').value;
+
+                const payload = {
+                    name,
+                    model_name: "",                  // ← временно, если нет UI
+                    description,
+                    protocol,
+                    vendor,
+
+                    ip_address,
+                    port,
+
+                    inverter_login,
+                    inverter_password,
+
+                    is_active: true,                 // ← обязательно
+                    timezone: "Europe/Kiev",          // ← из Swagger
+                    telegram_chat_ids: "",            // ← строка
+                    modbus_config_file: "",           // ← строка
+
+                    cor_bridges: [corBridgeId]        // ← 🔥 КЛЮЧЕВОЕ
                 };
 
                 console.log("Отправка:", payload);
@@ -645,17 +663,43 @@ async function submitEditObjectForm() {
 
     const id = window.currentEditObjectId;
 
+    /*
     const payload = {
         name: document.getElementById("editObjectName").value.trim(),
         description: document.getElementById("editObjectDescription").value.trim(),
         vendor: document.getElementById("editObjectVendor").value,
         protocol: document.getElementById("editObjectProtocol").value,
-        agent_id: document.getElementById("editObjectAgentID").value,
+      //  agent_id: document.getElementById("editObjectAgentID").value,
+        cor_bridges: [document.getElementById("editObjectAgentID").value],
         ip_address: document.getElementById("editObjectIp").value.trim(),
         port: parseInt(document.getElementById("editObjectPort").value),
         inverter_login: document.getElementById("editObjectLogin").value.trim(),
         inverter_password: document.getElementById("editObjectPassword").value.trim()
     };
+  */
+
+        const payload = {
+        name: document.getElementById("editObjectName").value.trim(),
+        description: document.getElementById("editObjectDescription").value.trim(),
+        vendor: document.getElementById("editObjectVendor").value,
+        protocol: document.getElementById("editObjectProtocol").value,
+
+        ip_address: document.getElementById("editObjectIp").value.trim(),
+        port: parseInt(document.getElementById("editObjectPort").value),
+
+        inverter_login: document.getElementById("editObjectLogin").value.trim(),
+        inverter_password: document.getElementById("editObjectPassword").value.trim(),
+
+        is_active: true,
+        timezone: "Europe/Kiev",
+        telegram_chat_ids: "",
+        modbus_config_file: "",
+
+        cor_bridges: [
+            document.getElementById("editObjectAgentID").value
+        ]
+    };
+
 
     console.log("Отправка PUT:", payload);
 
@@ -749,8 +793,7 @@ async function submitEditObjectForm() {
 
             devices.forEach(dev => {
                 const option = document.createElement("option");
-                option.value = dev.id; // <-- ВАЖНО: UUID
-               // option.textContent = `${dev.name} (${dev.device_id})`;
+                option.value = dev.id; 
                 option.textContent = `${dev.device_id}`;
                 if (selectedValue && selectedValue === dev.id) {
                     option.selected = true;

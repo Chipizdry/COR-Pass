@@ -80,56 +80,36 @@ function handleObjectByProtocol(objectData) {
     }
 }
 
-/*
-function openEntityModal(entity, modalSchema) {
-    console.group(`🪟 openEntityModal: ${entity}`);
+async function resolveCORBridgeDeviceId(corBridgeId) {
+    if (!corBridgeId) return null;
 
-    if (!modalSchema) {
-        console.warn("❌ Нет схемы модалок");
-        console.groupEnd();
-        return;
+    try {
+        const response = await fetch(
+            `${API_BASE_URL}/api/energetic_device_proxy/devices`,
+            { headers: { Accept: "application/json" } }
+        );
+
+        if (!response.ok) {
+            throw new Error("Не удалось загрузить COR-Bridge список");
+        }
+
+        const devices = await response.json();
+
+        const bridge = devices.find(d => d.id === corBridgeId);
+
+        if (!bridge) {
+            console.warn("❌ COR-Bridge не найден:", corBridgeId);
+            return null;
+        }
+
+        return bridge.device_id; // 🔥 COR-XXXX
+    } catch (err) {
+        console.error("❌ Ошибка resolveCORBridgeDeviceId:", err);
+        return null;
     }
-
-    console.log("modalSchema:", modalSchema);
-
-    const entitySchema = modalSchema[entity];
-    console.log("entitySchema:", entitySchema);
-
-    if (!entitySchema) {
-        console.warn(`❌ Сущность '${entity}' отсутствует в schema`);
-        console.groupEnd();
-        return;
-    }
-
-    if (!entitySchema.modalId) {
-        console.warn(`❌ modalId не задан для '${entity}'`);
-        console.groupEnd();
-        return;
-    }
-
-    const modal = document.getElementById(entitySchema.modalId);
-    console.log("Ищем modalId:", entitySchema.modalId, "→", modal);
-
-    if (!modal) {
-        console.error(`❌ Модалка '${entitySchema.modalId}' не найдена в DOM`);
-        console.groupEnd();
-        return;
-    }
-
-    const allFields = modal.querySelectorAll("[data-source]");
-    console.log(`🔹 Все поля модалки '${entitySchema.modalId}':`, allFields);
-    modal.style.display = "block";
-    console.log("✅ Модалка открыта");
-     // 🔹 Обновляем значения внутри модалки сразу после открытия
-    if (entity === "battery") {
-        console.log("🔄 Обновляем данные батареи при открытии модалки:", battData);
-        updateUIByData(battData);
-    }
-
-    console.groupEnd();
 }
 
-*/
+
 // ============================
 // Открытие модалки
 // ============================
@@ -438,3 +418,4 @@ window.PowerToIndicator = PowerToIndicator;
 window.formatPowerLabel = formatPowerLabel;
 window.setDeviceVisibility = setDeviceVisibility;
 window.updateUIByData = updateUIByData;
+window.resolveCORBridgeDeviceId = resolveCORBridgeDeviceId;
