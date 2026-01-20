@@ -8,6 +8,27 @@ export function resolveModalSchema(vendor, model) {
     return vendorSchemas[model] || vendorSchemas.default || null;
 }
 
+// ============================
+// Закрытие модалки
+// ============================
+
+document.addEventListener("click", (e) => {
+    const btn = e.target.closest('[data-action="close"]');
+    if (!btn) return;
+
+    const modal = btn.closest(".modal");
+    if (!modal) return;
+ window.activeModals[entity] = false;
+onModalClosed(entity);
+});
+
+function onModalClosed(entity) {
+    const hooks = window.currentModalSchema?.hooks;
+    if (!hooks?.onClose) return;
+
+    hooks.onClose(entity);
+}
+
 
 
 async function loadObjectSettings(objectId) {
@@ -40,6 +61,8 @@ async function loadObjectSettings(objectId) {
         initIconModalHandlers(modalSchema);
         // Запускаем обработчик в зависимости от протокола
         handleObjectByProtocol(data);
+        window.currentModalSchema = modalSchema;
+        window.currentObject = data;
 
     } catch (err) {
         console.error("Ошибка:", err);
@@ -81,12 +104,22 @@ function handleObjectByProtocol(objectData) {
 }
 
 async function resolveCORBridgeDeviceId(corBridgeId) {
+
+      const token = getToken();
+    checkToken();
     if (!corBridgeId) return null;
 
     try {
-        const response = await fetch(
+
+          const response = await fetch(
             `${API_BASE_URL}/api/energetic_device_proxy/devices`,
-            { headers: { Accept: "application/json" } }
+            {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            }
         );
 
         if (!response.ok) {
@@ -138,11 +171,28 @@ function openEntityModal(entity, modalSchema) {
 
     modal.style.display = "block";
 
+      // 🔥 АКТИВИРУЕМ ФЛАГ
+   window.activeModals[entity] = true;
+   onModalOpened(entity);
+
     // 🔄 обновляем модалку сразу актуальными данными
     updateUIByData(window.lastData);
 
     console.groupEnd();
 }
+
+
+
+function onModalOpened(entity) {
+    const hooks = window.currentModalSchema?.hooks;
+    if (!hooks?.onOpen) return;
+
+    hooks.onOpen(entity, {
+        object: window.currentObject,
+        lastData: window.lastData
+    });
+}
+
 
 
 function initIconModalHandlers(modalSchema) {
@@ -171,20 +221,6 @@ function initIconModalHandlers(modalSchema) {
 }
 
 
-// ============================
-// Инициализация и хэндлеры иконок
-// ============================
-/*
-function initIconModalHandlers(modalSchema) {
-    const icons = document.querySelectorAll(".icon[data-entity]");
-    icons.forEach(icon => {
-        const entity = icon.dataset.entity;
-        icon.addEventListener("click", () => {
-            openEntityModal(entity, modalSchema);
-        });
-    });
-}
-*/
 function getGradientColor(value) {
 const x = Math.max(0, Math.min(100, value));
 let r, g;

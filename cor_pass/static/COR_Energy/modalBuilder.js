@@ -52,7 +52,8 @@ function renderBlock(block) {
             break;
 
         case "phaseTable":
-            content = renderPhaseTable(block.phases);
+           // content = renderPhaseTable(block.phases);
+             content = renderPhaseTable(block);
             break;
 
         case "singlePhase":
@@ -109,8 +110,9 @@ function renderFieldList(fields = [], title = null) {
 // Блок: фазовая таблица (1 / 3)
 // ===============================
 
+function renderPhaseTable(block) {
+    const { phases = 3, rows = [] } = block;
 
-function renderPhaseTable(phases = 3) {
     const table = document.createElement("table");
     table.className = "phase-table";
 
@@ -122,15 +124,17 @@ function renderPhaseTable(phases = 3) {
             </tr>
         </thead>
         <tbody>
-            ${renderPhaseRow("Напряжение", "V", "inputVoltage", phases)}
-            ${renderPhaseRow("Ток", "A", "inputCurrent", phases)}
-            ${renderPhaseRow("Мощность", "kW", "inputPower", phases)}
+            ${rows.map(row => `
+                <tr>
+                    <td>${row.label} (${row.unit})</td>
+                    ${row.source.map(src => `<td data-source="${src}">—</td>`).join("")}
+                </tr>
+            `).join("")}
         </tbody>
     `;
+
     return table;
 }
-
-
 
 
 function renderPhaseRow(label, unit, base, phases) {

@@ -85,7 +85,7 @@ export const MODAL_SCHEMAS = {
                             },
                             {
                                 label: "Мощность",
-                                unit: "kW",
+                                unit: "W",
                                 source: ["inputPowerL1", "inputPowerL2", "inputPowerL3"]
                             }
                         ]
@@ -124,16 +124,48 @@ export const MODAL_SCHEMAS = {
                 enabled: true,
                 modalId: "loadSettingsModal",
                 title: "Нагрузка",
-                phases: true,
+                   blocks: [
+                    {
+                        type: "phaseTable",
+                        phases: 3,
 
-                phaseFields: [
-                    { label: "Напряжение", unit: "V", source: ["outputVoltageL1","outputVoltageL2","outputVoltageL3"] },
-                    { label: "Ток", unit: "A", source: ["outputCurrentL1","outputCurrentL2","outputCurrentL3"] },
-                    { label: "Мощность", unit: "kW", source: ["powerPhaseA","powerPhaseB","powerPhaseC"] }
-                ],
+                        rows: [
+                            {
+                                label: "Напряжение",
+                                unit: "V",
+                                source: ["LoadPhaseVoltageA", "LoadPhaseVoltageB", "LoadPhaseVoltageC"]
+                            },
+                            {
+                                label: "Ток",
+                                unit: "A",
+                                source: ["LoadPhaseCurrentA", "LoadPhaseCurrentB", "LoadPhaseCurrentC"]
+                            },
+                            {
+                                label: "Мощность",
+                                unit: "W",
+                                source: ["LoadPhasePowerA", "LoadPhasePowerB", "LoadPhasePowerC"]
+                            }
+                        ]
+                    },
 
-                totals: [
-                    { label: "Общая нагрузка", unit: "kW", source: "total_load" }
+                    {
+                        type: "fieldList",
+                        fields: [
+                            {
+                                label: "Общая мощность",
+                                unit: "W",
+                                source: "LoadTotalPower"
+                            },
+                            {
+                                label: "Частота",
+                                unit: "Hz",
+                                source: "LoadFrequency"
+                            }
+
+                        ]
+                    }
+
+                  
                 ]
             },
 
@@ -152,8 +184,67 @@ export const MODAL_SCHEMAS = {
             },
 
             generator: {
-                enabled: true
+                enabled: true,
+
+
+                modalId: "GeneratorModal",
+                title: "Генератор",
+
+                blocks: [
+                    {
+                        type: "phaseTable",
+                        phases: 3,
+
+                        rows: [
+                            {
+                                label: "Напряжение",
+                                unit: "V",
+                                source: ["GenPhaseVoltageA", "GenPhaseVoltageB", "GenPhaseVoltageC"]
+                            },
+                            {
+                                label: "Ток",
+                                unit: "A",
+                                source: ["GenPhaseCurrentA", "GenPhaseCurrentB", "GenPhaseCurrentC"]
+                            },
+                            {
+                                label: "Мощность",
+                                unit: "W",
+                                source: ["GenPhasePowerA", "GenPhasePowerB", "GenPhasePowerC"]
+                            }
+                        ]
+                    },
+
+                    {
+                        type: "fieldList",
+                        fields: [
+                            {
+                                label: "Общая мощность",
+                                unit: "W",
+                                source: "GenTotalPower"
+                            }
+
+                        ]
+                    }
+
+                  
+                ]
+            },
+
+            hooks: {
+                onOpen(entity, ctx) {
+                if (entity === "batterySettings") {
+                    startBatteryServicePolling(ctx.object);
+                }
+                },
+
+                onClose(entity) {
+                if (entity === "batterySettings") {
+                    stopBatteryServicePolling();
+                }
+                }
             }
+
+
         }
     },
 

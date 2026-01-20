@@ -734,7 +734,7 @@
        <!-- Модальные окна -->
 
         <!-- Модальное окно настроек батареи -->
-        <div id="batteryModal" class="modal" style="display:none;">
+        <div id="batteryModal" class="modal"  data-entity="batterySettings" style="display:none;">
              <div class="modal-header">
                 <div class="modal-buttons">
                     <button class="modal-button close" data-action="close" id="closeBattery">✖</button>
@@ -745,7 +745,7 @@
         </div>
 
             <!-- Модальное окно параметров нагрузки -->
-        <div id="loadSettingsModal" class="modal" style="display:none;">
+        <div id="loadSettingsModal" class="modal" data-entity="loadSettings" style="display:none;">
             <div class="modal-header">
               <div class="modal-buttons">
                 <button class="modal-button close" data-action="close" id="closeLoadSettings">✖</button>
@@ -757,7 +757,7 @@
 
   
         <!-- Модальное окно параметров сети -->
-        <div id="GridSettingsModal" class="modal" style="display:none;">
+        <div id="GridSettingsModal" class="modal" data-entity="gridSettings" style="display:none;">
             <div class="modal-header">
                 <div class="modal-buttons">
                 <button class="modal-button close" data-action="close" id="closeGridSettings">✖</button>
@@ -767,7 +767,7 @@
         </div>
 
           <!--Модальное окно инвертора --> 
-        <div id="inverterModal" class="modal" style="display:none;">
+        <div id="inverterModal" class="modal" data-entity="inverterSettings" style="display:none;">
             <div class="modal-header">
                 <div class="modal-buttons">
                   <button class="modal-button close" data-action="close" id="closeInverterModal">✖</button>
@@ -777,8 +777,18 @@
            
         </div>
 
+        <!-- Модальное окно генератора -->
+        <div id="GeneratorModal" class="modal" data-entity="generatorSettings" style="display:none;">
+            <div class="modal-header">
+                <div class="modal-buttons">
+                    <button class="modal-button close" data-action="close" id="closeGeneratorModal">✖</button>
+                </div>
+                <h3 style="margin-top:30; color:#291161;font-size: 17px;">Параметры генератора</h3>
+            </div> 
+        </div>
+
         <!-- Модальное окно Солнечных панелей -->
-            <div id="SolarModal" class="modal" style="display:none; position: fixed; top: 10vh; left: 50%; transform: translateX(-50%); height: 40vh;  box-shadow: 0 0 15px rgba(0,0,0,0.2);  flex-direction: column;">
+            <div id="SolarModal" class="modal" data-entity="solarSettings" style="display:none; position: fixed; top: 10vh; left: 50%; transform: translateX(-50%); height: 40vh;  box-shadow: 0 0 15px rgba(0,0,0,0.2);  flex-direction: column;">
 
                 <!-- Фиксированный заголовок -->
                 <div class="modal-header" style=" padding: 1px;  position: sticky; top: 0; z-index: 10;">
@@ -915,6 +925,8 @@
  window.gridDataPower = {};
  window.deyeMonitorRunning = false;
 
+ window.activeModals = {};
+
 document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
     const objectId = params.get("object_Id");
@@ -930,6 +942,7 @@ document.addEventListener("DOMContentLoaded", () => {
     makeModalDraggable('GridSettingsModal');
     makeModalDraggable('SolarModal');
     makeModalDraggable('inverterModal');
+    makeModalDraggable('GeneratorModal');
     makeModalDraggable('ExcelModal');
     // Загружаем настройки объекта
     loadObjectSettings(objectId);

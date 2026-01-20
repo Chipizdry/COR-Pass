@@ -198,6 +198,7 @@ footer {
     margin-top: 8px;   /* Уменьшаем отступы сверху и снизу */
     margin-bottom: 15px;
     font-size: 0.8em;
+    color: #291161;
 }
 
 .phase-table th, .phase-table td {

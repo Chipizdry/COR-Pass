@@ -57,83 +57,6 @@ function hexToAscii(hex) {
 }
 
 
-/*
-function startAxiomaCORBridgeWS(objectData) {
-    const deviceId = "COR-B0B21CA3435C";
-    console.log("🚀 Инициализация Axioma COR-Bridge WS", { deviceId });
-
-    if (!deviceId) {
-        console.error("❌ device_id не задан для COR-Bridge");
-        return;
-    }
-
-    const wsUrl = `wss://dev-corid.cor-medical.ua/dev-modbus/responses?device_id=${deviceId}`;
-    console.log("🌐 WS URL:", wsUrl);
-
-    if (axiomaWS && axiomaWS.readyState === WebSocket.OPEN) {
-        console.warn("⚠️ WS уже запущен");
-        return;
-    }
-
-    axiomaWS = new WebSocket(wsUrl);
-
-    axiomaWS.onopen = () => console.log("✅ Axioma COR-Bridge WS подключён");
-
-    axiomaWS.onmessage = (event) => {
-        console.log("📩 WS сообщение получено:", event.data);
-
-        try {
-            const raw = JSON.parse(event.data);
-           // console.log("🧩 WS JSON распарсен:", raw);
-
-            const hex = raw?.data?.hex_response;
-            if (!hex) {
-                console.warn("⚠️ Нет data.hex_response в сообщении", raw);
-                return;
-            }
-
-          //  console.log("🔢 hex_response:", hex);
-
-            // Универсальный парсер
-            const parsed = parseAxiomaHex(hex);
-
-            if (!parsed) {
-                console.warn("⚠️ Данные не распознаны");
-                return;
-            }
-
-            // Обновляем lastData
-            window.lastData = { ...window.lastData, ...parsed };
-            console.log("📊 lastData обновлён:", window.lastData);
-
-
-
-
-            updateUIByData(window.lastData);
-
-        } catch (e) {
-            console.error("❌ Ошибка обработки WS:", e, event.data);
-        }
-    };
-
-    axiomaWS.onerror = (err) => console.error("❌ Axioma WS ошибка:", err);
-
-    axiomaWS.onclose = (e) => {
-        console.warn("🔌 Axioma WS закрыт", {
-            code: e.code,
-            reason: e.reason,
-            wasClean: e.wasClean
-        });
-
-        axiomaWS = null;
-        console.log("⏳ Переподключение через 3 секунды...");
-        setTimeout(() => startAxiomaCORBridgeWS(objectData), 3000);
-    };
-}
-
-*/
-
-
 
 function startAxiomaCORBridgeWS(deviceId) {
    
@@ -225,30 +148,6 @@ function stopAxiomaWS() {
 /**
  * Универсальный парсер для разных типов данных
  */
-
-/*
-function parseAxiomaHex(hexResponse) {
-    if (!hexResponse) return null;
-
-    const ascii = hexToAscii(hexResponse).trim();
-    console.log("🔤 ASCII вход:", ascii);
-
-    // Чистим управляющие символы
-    const clean = ascii.replace(/[()\r\n]/g, "");
-
-    // Определяем тип данных
-    if (clean.startsWith("E") || clean.startsWith("D")) {
-        // QFLAG
-        return parseQFLAG(clean);
-    } else if (ascii.startsWith("(")) {
-        // QPIGS
-        return parseQPIGS(hexResponse);
-    } else {
-        console.warn("❌ Неизвестный формат данных:", clean);
-        return null;
-    }
-}
-*/
 
 
 function parseAxiomaHex(hexResponse) {

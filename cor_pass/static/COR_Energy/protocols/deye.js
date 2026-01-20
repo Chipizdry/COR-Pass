@@ -42,7 +42,7 @@ async function startMonitoringDeye(objectData) {
             gridDataPower = await readPower32_V104(host, port, slave, object_id, protocol);
             serviceData = await readServiceRegisters(host, port, slave, object_id, protocol);
 
-                 
+            energyServiceData = await readEnergyServiceRegisters(host, port, slave, object_id, protocol);
 
             } else {
                 console.warn("Unsupported Deye protocol:", protocol);
@@ -82,9 +82,9 @@ async function startMonitoringDeye(objectData) {
                     batteryFlowLabel.textContent = formatPowerLabel(battData.batteryTotalPower, "battery");
                 }
 
-                if (gridData?.totalPower != null) {
-                    updatePowerByName("Grid", PowerToIndicator(gridData.totalPower, INVERTER_MAX_POWER));
-                    networkFlowLabel.textContent = formatPowerLabel(gridData.totalPower, "grid");
+                if (gridData?.inputPowerTotal != null) {
+                    updatePowerByName("Grid", PowerToIndicator(gridData.inputPowerTotal, INVERTER_MAX_POWER));
+                    networkFlowLabel.textContent = formatPowerLabel(gridData.inputPowerTotal, "grid");
                 }
 
 
@@ -96,7 +96,7 @@ async function startMonitoringDeye(objectData) {
                         ...window.solarExtData,
                         ...window.genData,
                         ...window.battData,
-                        ...window.LoadData,
+                        ...window.loadData,
                         ...window.InvGridOut,
                         ...window.gridDataPower
                     };
@@ -144,7 +144,7 @@ async function readGeneratorRegisters(host, port, slave_id, object_id, protocol)
     const count = 11; // 661–671
 
     const url =
-        `/api/modbus_tcp/v1/read` +
+        `${API_BASE_URL}/api/modbus_tcp/v1/read` +
         `?protocol=${protocol}` +
         `&host=${host}` +
         `&port=${port}` +
@@ -184,6 +184,12 @@ async function readGeneratorRegisters(host, port, slave_id, object_id, protocol)
             results.GenPhasePowerB = (pB_high << 16) | pB_low;
             results.GenPhasePowerC = (pC_high << 16) | pC_low;
             results.GenTotalPower  = (pT_high << 16) | pT_low;
+
+            // --- calculate currents ---
+            results.GenPhaseCurrentA = results.GenPhasePowerA / (results.GenPhaseVoltageA || 1);
+            results.GenPhaseCurrentB = results.GenPhasePowerB / (results.GenPhaseVoltageB || 1);
+            results.GenPhaseCurrentC = results.GenPhasePowerC / (results.GenPhaseVoltageC || 1);
+
         }
 
     } catch (err) {
@@ -200,7 +206,7 @@ async function readSunPanelExtRegisters(host, port, slave_id, object_id, protoco
 
     const readBlock = async (start, count) => {
         const url =
-            `/api/modbus_tcp/v1/read` +
+            `${API_BASE_URL}/api/modbus_tcp/v1/read` +
             `?protocol=${protocol}` +
             `&host=${host}` +
             `&port=${port}` +
@@ -284,7 +290,7 @@ async function readBatteryRegisters(host, port, slave_id, object_id, protocol) {
     const count = registers.length;
 
     const url =
-        `/api/modbus_tcp/v1/read` +
+        `${API_BASE_URL}/api/modbus_tcp/v1/read` +
         `?protocol=${protocol}` +
         `&host=${host}` +
         `&port=${port}` +
@@ -328,7 +334,7 @@ async function readSunPanelRegisters(host, port, slave_id, object_id, protocol) 
 
     const readBlock = async (start, count) => {
         const url =
-            `/api/modbus_tcp/v1/read` +
+            `${API_BASE_URL}/api/modbus_tcp/v1/read` +
             `?protocol=${protocol}` +
             `&host=${host}` +
             `&port=${port}` +
@@ -397,7 +403,7 @@ async function readLoadRegisters(host, port, slave_id, object_id, protocol) {
     const count = 17; // 644–660
 
     const url =
-        `/api/modbus_tcp/v1/read` +
+        `${API_BASE_URL}/api/modbus_tcp/v1/read` +
         `?protocol=${protocol}` +
         `&host=${host}` +
         `&port=${port}` +
@@ -419,6 +425,7 @@ async function readLoadRegisters(host, port, slave_id, object_id, protocol) {
             results.LoadPhaseVoltageA = data.data[0] * 0.1; // 644
             results.LoadPhaseVoltageB = data.data[1] * 0.1; // 645
             results.LoadPhaseVoltageC = data.data[2] * 0.1; // 646
+
 
             /* ---------- Frequency ---------- */
             results.LoadFrequency = data.data[11] * 0.01;  // 655
@@ -444,6 +451,12 @@ async function readLoadRegisters(host, port, slave_id, object_id, protocol) {
                 ((pC_high << 16) | pC_low) << 0;
             results.LoadTotalPower =
                 ((pT_high << 16) | pT_low) << 0;
+
+
+            results.LoadPhaseCurrentA = results.LoadPhasePowerA / (results.LoadPhaseVoltageA || 1); // 647
+            results.LoadPhaseCurrentB = results.LoadPhasePowerB / (results.LoadPhaseVoltageB || 1); // 648
+            results.LoadPhaseCurrentC = results.LoadPhasePowerC / (results.LoadPhaseVoltageC || 1); // 649 
+
         }
 
     } catch (err) {
@@ -463,7 +476,7 @@ async function readServiceRegisters(host, port, slave_id, object_id, protocol) {
     // Универсальная функция чтения блоков регистров
     const readBlock = async (start, count) => {
         const url =
-            `/api/modbus_tcp/v1/read` +
+            `${API_BASE_URL}/api/modbus_tcp/v1/read` +
             `?protocol=${protocol}` +
             `&host=${host}` +
             `&port=${port}` +
@@ -553,7 +566,7 @@ async function readInverterGridRegisters(host, port, slave_id, object_id, protoc
     const count = registers.length;
 
     const url =
-        `/api/modbus_tcp/v1/read` +
+        `${API_BASE_URL}/api/modbus_tcp/v1/read` +
         `?protocol=${protocol}` +
         `&host=${host}` +
         `&port=${port}` +
@@ -591,7 +604,7 @@ async function readOutGridRegisters(host, port, slave_id, object_id, protocol) {
 
     const readBlock = async (start, count) => {
         const url =
-            `/api/modbus_tcp/v1/read` +
+            `${API_BASE_URL}/api/modbus_tcp/v1/read` +
             `?protocol=${protocol}` +
             `&host=${host}` +
             `&port=${port}` +
@@ -614,26 +627,43 @@ async function readOutGridRegisters(host, port, slave_id, object_id, protocol) {
         if (data.ok && data.data?.length === totalCount) {
 
             // === Первый блок ===
-            results.phaseVoltageA = data.data[0] * 0.1;
-            results.phaseVoltageB = data.data[1] * 0.1;
-            results.phaseVoltageC = data.data[2] * 0.1;
+          //  results.phaseVoltageA = data.data[0] * 0.1;
+          //  results.phaseVoltageB = data.data[1] * 0.1;
+          //  results.phaseVoltageC = data.data[2] * 0.1;
+
+            results.inputVoltageL1 = data.data[0] * 0.1;
+            results.inputVoltageL2 = data.data[1] * 0.1;
+            results.inputVoltageL3 = data.data[2] * 0.1;
 
             results.lineVoltageAB = data.data[3] * 0.1;
             results.lineVoltageBC = data.data[4] * 0.1;
             results.lineVoltageCA = data.data[5] * 0.1;
 
-            results.powerA = data.data[6];
-            results.powerB = data.data[7];
-            results.powerC = data.data[8];
+           // results.powerA = data.data[6];
+           // results.powerB = data.data[7];
+           // results.powerC = data.data[8];
 
-            results.totalPower         = data.data[9];
+
+            results.inputPowerL1 = data.data[6];
+            results.inputPowerL2 = data.data[7];
+            results.inputPowerL3 = data.data[8];
+
+
+           // results.totalPower         = data.data[9];
             results.totalApparentPower = data.data[10];
-            results.gridFrequency      = data.data[11] * 0.01;
+           // results.gridFrequency      = data.data[11] * 0.01;
+
+            results.inputPowerTotal = data.data[9];
+            results.inputFrequency  = data.data[11] * 0.01;
 
             // === Второй блок ===
-            results.currentA = data.data[12] * 0.01;
-            results.currentB = data.data[13] * 0.01;
-            results.currentC = data.data[14] * 0.01;
+            //results.currentA = data.data[12] * 0.01;
+            //results.currentB = data.data[13] * 0.01;
+            //results.currentC = data.data[14] * 0.01;
+
+            results.inputCurrentL1 = data.data[12] * 0.01;
+            results.inputCurrentL2 = data.data[13] * 0.01;
+            results.inputCurrentL3 = data.data[14] * 0.01;
 
             results.outCurrentA = data.data[15] * 0.01;
             results.outCurrentB = data.data[16] * 0.01;
@@ -699,7 +729,7 @@ async function readPower32_V104(host, port, slave_id, object_id, protocol) {
     const count = registers.length;
 
     const url =
-        `/api/modbus_tcp/v1/read` +
+        `${API_BASE_URL}/api/modbus_tcp/v1/read` +
         `?protocol=${protocol}` +
         `&host=${host}` +
         `&port=${port}` +
@@ -730,4 +760,72 @@ async function readPower32_V104(host, port, slave_id, object_id, protocol) {
     console.log("Parsed HIGH power results:", results);
     return results;
 }
+
+
+
+async function readEnergyServiceRegisters(host, port, slave_id, object_id, protocol) {
+    const results = {};
+
+    const registers = [
+        { start: 115, name: "batteryCapacityShutdown", scale: 1 },
+        { start: 116, name: "batteryCapacityRestart", scale: 1 },
+        { start: 117, name: "batteryCapacityLowBatt", scale: 1 },
+
+        { start: 118, name: "batteryVoltageShutdown", scale: 0.01 },
+        { start: 119, name: "batteryVoltageRestart", scale: 0.01 },
+        { start: 120, name: "batteryVoltageLowBatt", scale: 0.01 },
+
+        { start: 121, name: "generatorMaxRunTime", scale: 0.1 },   // hours
+        { start: 122, name: "generatorCoolingTime", scale: 0.1 }, // hours
+
+        { start: 123, name: "generatorChargeStartVoltage", scale: 0.01 },
+        { start: 124, name: "generatorChargeStartCapacity", scale: 1 },
+        { start: 125, name: "generatorChargeCurrent", scale: 1 },
+
+        { start: 126, name: "gridChargeStartVoltage", scale: 0.01 },
+        { start: 127, name: "gridChargeStartCapacity", scale: 1 },
+        { start: 128, name: "gridChargeCurrent", scale: 1 },
+
+        { start: 129, name: "generatorChargeEnable", scale: 1, bool: true },
+        { start: 130, name: "gridChargeEnable", scale: 1, bool: true },
+    ];
+
+    const startReg = registers[0].start;
+    const count = registers.length;
+
+    const url =
+        `${API_BASE_URL}/api/modbus_tcp/v1/read` +
+        `?protocol=${protocol}` +
+        `&host=${host}` +
+        `&port=${port}` +
+        `&slave_id=${slave_id}` +
+        `&object_id=${object_id}` +
+        `&start=${startReg}` +
+        `&count=${count}` +
+        `&func_code=3`;
+
+    try {
+        const resp = await fetch(url, { headers: { accept: "application/json" } });
+        const data = await resp.json();
+
+        if (data.ok && data.data?.length === count) {
+            registers.forEach((reg, idx) => {
+                let val = data.data[idx];
+
+                if (reg.bool) {
+                    results[reg.name] = val !== 0;
+                } else {
+                    results[reg.name] = val * reg.scale;
+                }
+            });
+        }
+
+    } catch (err) {
+        console.error("Ошибка чтения служебных регистров (115–130):", err);
+    }
+
+    console.log("⚙️ Energy service registers:", results);
+    return results;
+}
+
 
