@@ -87,30 +87,24 @@ function startAxiomaCORBridgeWS(deviceId) {
 
         try {
             const raw = JSON.parse(event.data);
-           // console.log("🧩 WS JSON распарсен:", raw);
 
+            const cmd = raw?.data?.cmd;
             const hex = raw?.data?.hex_response;
-            if (!hex) {
-                console.warn("⚠️ Нет data.hex_response в сообщении", raw);
+
+            if (!cmd || !hex) {
+                console.warn("⚠️ Нет cmd или hex_response", raw);
                 return;
             }
 
-          //  console.log("🔢 hex_response:", hex);
-
-            // Универсальный парсер
-            const parsed = parseAxiomaHex(hex);
+            const parsed = parseAxiomaByCmd(cmd, hex);
 
             if (!parsed) {
                 console.warn("⚠️ Данные не распознаны");
                 return;
             }
 
-            // Обновляем lastData
             window.lastData = { ...window.lastData, ...parsed };
             console.log("📊 lastData обновлён:", window.lastData);
-
-
-
 
             updateUIByData(window.lastData);
 
@@ -118,6 +112,7 @@ function startAxiomaCORBridgeWS(deviceId) {
             console.error("❌ Ошибка обработки WS:", e, event.data);
         }
     };
+
 
     axiomaWS.onerror = (err) => console.error("❌ Axioma WS ошибка:", err);
 
@@ -145,48 +140,33 @@ function stopAxiomaWS() {
     }
 }
 
-/**
- * Универсальный парсер для разных типов данных
- */
 
 
-function parseAxiomaHex(hexResponse) {
-    if (!hexResponse) return null;
+function parseAxiomaByCmd(cmd, hexResponse) {
+    switch (cmd) {
 
-    const ascii = hexToAscii(hexResponse).trim();
-    console.log("🔤 ASCII вход:", ascii);
+        case "QPIGS":
+            return parseQPIGS(hexResponse);
 
-    const clean = ascii.replace(/[()\r\n\x03\x19]/g, "").trim();
-    const parts = clean.split(/\s+/);
+        case "QFLAG":
+            return parseQFLAG(
+                hexToAscii(hexResponse)
+                    .replace(/[()\r\n\x03\x19]/g, "")
+                    .trim()
+            );
 
-    // ---------- QFLAG ----------
-    if (/^[ED][A-Z]/.test(clean)) {
-        return parseQFLAG(clean);
+        case "QPGS":
+            return parseQPGS(
+                hexToAscii(hexResponse)
+                    .replace(/[()\r\n\x03\x19]/g, "")
+                    .trim()
+                    .split(/\s+/)
+            );
+
+        default:
+            console.warn("❌ Неизвестная команда:", cmd);
+            return null;
     }
-
-    // ---------- QPIGS ----------
-    // Признак: первые два поля — числа с точкой
-    if (
-        parts.length >= 17 &&
-        !isNaN(parseFloat(parts[0])) &&
-        !isNaN(parseFloat(parts[1])) &&
-        parts[0].includes(".")
-    ) {
-        return parseQPIGS(hexResponse);
-    }
-
-    // ---------- QPGSn ----------
-    // Признак: первый символ 0/1 + серийник
-    if (
-        parts.length >= 18 &&
-        (parts[0] === "0" || parts[0] === "1") &&
-        /^[A-Z0-9]+$/i.test(parts[1])
-    ) {
-        return parseQPGS(parts);
-    }
-
-    console.warn("❌ Неизвестный формат данных:", clean);
-    return null;
 }
 
 
@@ -322,8 +302,23 @@ if (chargeCurrent >0) {
 
 
 }
+
+if(chargeCurrent === 0 && dischargeCurrent ===0) {
+    batteryTotalPower = 0;
+    inputPower = apparentPower;
+}
+
  if(result.inputVoltage == 0) {inputPower = 0;}
 result.inputPower = inputPower;
+
+
+// --- Input current ---
+let inputCurrent = 0;
+if (result.inputVoltage > 0 && isFinite(result.inputPower)) {
+    inputCurrent = result.inputPower / result.inputVoltage;
+}
+result.inputCurrent = inputCurrent;
+
 
 if (!isFinite(batteryTotalPower)) {
     batteryTotalPower = 0;
