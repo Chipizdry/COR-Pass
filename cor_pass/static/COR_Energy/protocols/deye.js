@@ -44,6 +44,15 @@ async function startMonitoringDeye(objectData) {
 
             energyServiceData = await readEnergyServiceRegisters(host, port, slave, object_id, protocol);
 
+
+            const calculatedSOC = calculateBatterySOCVoltage(battData, energyServiceData);
+
+           if (calculatedSOC !== null) {
+                battData.calculatedSOC = calculatedSOC;
+                battData.battery1SOC = calculatedSOC;
+                battData.battery2SOC = calculatedSOC;
+            }
+
             } else {
                 console.warn("Unsupported Deye protocol:", protocol);
                 break;
@@ -78,7 +87,7 @@ async function startMonitoringDeye(objectData) {
                         "Battery",
                         PowerToIndicator(battData.batteryTotalPower, INVERTER_MAX_POWER)
                     );
-                    updateBatteryFill(battData.battery1SOC);
+                     updateBatteryFill(battData.battery1SOC);
                     batteryFlowLabel.textContent = formatPowerLabel(battData.batteryTotalPower, "battery");
                 }
 
@@ -627,10 +636,6 @@ async function readOutGridRegisters(host, port, slave_id, object_id, protocol) {
         if (data.ok && data.data?.length === totalCount) {
 
             // === Первый блок ===
-          //  results.phaseVoltageA = data.data[0] * 0.1;
-          //  results.phaseVoltageB = data.data[1] * 0.1;
-          //  results.phaseVoltageC = data.data[2] * 0.1;
-
             results.inputVoltageL1 = data.data[0] * 0.1;
             results.inputVoltageL2 = data.data[1] * 0.1;
             results.inputVoltageL3 = data.data[2] * 0.1;
@@ -639,28 +644,14 @@ async function readOutGridRegisters(host, port, slave_id, object_id, protocol) {
             results.lineVoltageBC = data.data[4] * 0.1;
             results.lineVoltageCA = data.data[5] * 0.1;
 
-           // results.powerA = data.data[6];
-           // results.powerB = data.data[7];
-           // results.powerC = data.data[8];
-
-
             results.inputPowerL1 = data.data[6];
             results.inputPowerL2 = data.data[7];
             results.inputPowerL3 = data.data[8];
-
-
-           // results.totalPower         = data.data[9];
             results.totalApparentPower = data.data[10];
-           // results.gridFrequency      = data.data[11] * 0.01;
-
             results.inputPowerTotal = data.data[9];
             results.inputFrequency  = data.data[11] * 0.01;
 
             // === Второй блок ===
-            //results.currentA = data.data[12] * 0.01;
-            //results.currentB = data.data[13] * 0.01;
-            //results.currentC = data.data[14] * 0.01;
-
             results.inputCurrentL1 = data.data[12] * 0.01;
             results.inputCurrentL2 = data.data[13] * 0.01;
             results.inputCurrentL3 = data.data[14] * 0.01;
@@ -767,27 +758,36 @@ async function readEnergyServiceRegisters(host, port, slave_id, object_id, proto
     const results = {};
 
     const registers = [
-        { start: 115, name: "batteryCapacityShutdown", scale: 1 },
+        { start: 101, name: "batteryFloatVoltage", scale: 0.1 },        // V
+        { start: 102, name: "batteryCapacityAh", scale: 1 },             // Ah
+        { start: 103, name: "batteryEmptyVoltage", scale: 0.1 },        // V
+        { start: 104, name: "zeroExportPower", scale: 1 },
+        { start: 105, name: "equalizationDayCycle", scale: 1 },          // days
+        { start: 106, name: "equalizationTime", scale: 0.1 },            // hours (MCU 0–100)
+        { start: 107, name: "tempCompensation", scale: 1, signed: true },// mV/℃
+        { start: 108, name: "batteryMaxChargeCurrent", scale: 1 },       // A
+        { start: 109, name: "batteryMaxDischargeCurrent", scale: 1 },    // A
+        { start: 110, name: "parallelBatteryEnable", bool: true },
+        { start: 111, name: "batteryWorkMode", enum: { 0: "voltage", 1: "capacity", 2: "no_battery" }},
+        { start: 112, name: "liBatteryWakeup", bits: { batt1: 0, batt2: 8 } }, // Bit0: battery1, Bit8: battery2
+        { start: 113, name: "batteryResistance", scale: 1 },             // mΩ
+        { start: 114, name: "batteryChargeEfficiency", scale: 0.1 },     // %
+        { start: 115, name: "batteryCapacityShutdown", scale: 1 },       // %
         { start: 116, name: "batteryCapacityRestart", scale: 1 },
         { start: 117, name: "batteryCapacityLowBatt", scale: 1 },
-
-        { start: 118, name: "batteryVoltageShutdown", scale: 0.01 },
-        { start: 119, name: "batteryVoltageRestart", scale: 0.01 },
-        { start: 120, name: "batteryVoltageLowBatt", scale: 0.01 },
-
-        { start: 121, name: "generatorMaxRunTime", scale: 0.1 },   // hours
-        { start: 122, name: "generatorCoolingTime", scale: 0.1 }, // hours
-
-        { start: 123, name: "generatorChargeStartVoltage", scale: 0.01 },
-        { start: 124, name: "generatorChargeStartCapacity", scale: 1 },
-        { start: 125, name: "generatorChargeCurrent", scale: 1 },
-
-        { start: 126, name: "gridChargeStartVoltage", scale: 0.01 },
+        { start: 118, name: "batteryVoltageShutdown", scale: 0.1 },     // V
+        { start: 119, name: "batteryVoltageRestart", scale: 0.1 },
+        { start: 120, name: "batteryVoltageLowBatt", scale: 0.1 },
+        { start: 121, name: "generatorMaxRunTime", scale: 0.1 },          // hours
+        { start: 122, name: "generatorCoolingTime", scale: 0.1 },
+        { start: 123, name: "generatorChargeStartVoltage", scale: 0.1 },
+        { start: 124, name: "generatorChargeStartCapacity", scale: 1 },  // %
+        { start: 125, name: "generatorChargeCurrent", scale: 1 },         // A
+        { start: 126, name: "gridChargeStartVoltage", scale: 0.1 },
         { start: 127, name: "gridChargeStartCapacity", scale: 1 },
         { start: 128, name: "gridChargeCurrent", scale: 1 },
-
-        { start: 129, name: "generatorChargeEnable", scale: 1, bool: true },
-        { start: 130, name: "gridChargeEnable", scale: 1, bool: true },
+        { start: 129, name: "generatorChargeEnable", bool: true },
+        { start: 130, name: "gridChargeEnable", bool: true },
     ];
 
     const startReg = registers[0].start;
@@ -812,20 +812,63 @@ async function readEnergyServiceRegisters(host, port, slave_id, object_id, proto
             registers.forEach((reg, idx) => {
                 let val = data.data[idx];
 
+                if (reg.signed && val > 0x7FFF) {
+                    val -= 0x10000;
+                }
+
                 if (reg.bool) {
                     results[reg.name] = val !== 0;
-                } else {
+                } 
+                else if (reg.enum) {
+                    results[reg.name] = reg.enum[val] ?? val;
+                }
+                else if (reg.bits) {
+                    results[reg.name] = {};
+                    for (const [key, bit] of Object.entries(reg.bits)) {
+                        results[reg.name][key] = ((val >> bit) & 1) === 0;
+                    }
+                }
+                else {
                     results[reg.name] = val * reg.scale;
                 }
             });
         }
-
     } catch (err) {
-        console.error("Ошибка чтения служебных регистров (115–130):", err);
+        console.error("Ошибка чтения регистров энергии (101–130):", err);
     }
 
     console.log("⚙️ Energy service registers:", results);
     return results;
 }
 
+
+
+function calculateBatterySOCVoltage(battData, energyServiceData) {
+    if (!battData || !energyServiceData) return null;
+
+    if (energyServiceData.batteryWorkMode !== "voltage") {
+        return null; // не voltage-режим
+    }
+
+    const v1 = battData.battery1Voltage;
+    const v2 = battData.battery2Voltage;
+
+    if (typeof v1 !== "number" || typeof v2 !== "number") {
+        return null;
+    }
+
+    const vAvg = (v1 + v2) / 2;
+
+    const vMax = energyServiceData.batteryFloatVoltage;      // 100%
+    const vMin = energyServiceData.batteryVoltageShutdown;  // 0%
+
+    if (vMax <= vMin) return null;
+
+    let soc = ((vAvg - vMin) / (vMax - vMin)) * 100;
+
+    // 🔒 защита от выхода за пределы
+    soc = Math.max(0, Math.min(100, soc));
+
+    return Math.round(soc * 10) / 10; // 1 знак после запятой
+}
 
