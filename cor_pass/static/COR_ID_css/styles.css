@@ -1,14 +1,12 @@
-
-
-
-body, html {
+body,
+html {
     height: 100%;
     margin: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     font-family: Arial, sans-serif;
-    background-image:url('/static/background.jpg');
+    background-image: url('../background.jpg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -16,31 +14,39 @@ body, html {
 }
 
 .container {
-    width: 212px;
+    box-sizing: border-box;
+    width: 406px;
+    min-height: fit-content;
     margin: 0 auto;
-    padding: 20px;
-    border: 1px solid #ccc;
+    padding: 40px 30px;
+    border: 1px solid #fff;
     border-radius: 30px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     background-color: rgba(255, 255, 255, 0.5);
     text-align: center;
     align-items: center;
     display: flex;
-    flex-direction: column; /* Элементы располагаются вертикально */
-    justify-content: center; /* Выравнивание элементов по центру по вертикали */
+    flex-direction: column;
+    /* Элементы располагаются вертикально */
+    justify-content: center;
+    /* Выравнивание элементов по центру по вертикали */
+    gap: 28px;
 }
 
 .header-container {
-    display: flex; /* Используем flexbox для выравнивания */
-    align-items: center; /* Выравниваем элементы по вертикали */
-    justify-content: space-between; /* Распределяем пространство между элементами */
-    margin-bottom: 20px; /* Отступ снизу для разделения с другими элементами */
+    display: flex;
+    /* Используем flexbox для выравнивания */
+    align-items: center;
+    /* Выравниваем элементы по вертикали */
+    justify-content: space-between;
+    /* Распределяем пространство между элементами */
+    margin-bottom: 20px;
+    /* Отступ снизу для разделения с другими элементами */
     gap: 40px;
 }
 
 .settings-container {
-    display: flex; 
-    align-items: center; 
+    display: flex;
+    align-items: center;
     justify-content: space-between;
     margin-bottom: 20px;
     gap: 90px;
@@ -48,11 +54,12 @@ body, html {
 
 
 #back-link {
-  text-align: left;
-  top: 10px;
-  left: -50px;
-  text-decoration: none;
-  color: #007bff; /* цвет ссылки */
+    text-align: left;
+    top: 10px;
+    left: -50px;
+    text-decoration: none;
+    color: #007bff;
+    /* цвет ссылки */
 }
 
 #back-link:hover {
@@ -74,7 +81,7 @@ form {
 input[type="email"],
 input[type="password"],
 input[type="text"],
-input[type="number"]{
+input[type="number"] {
     padding: 10px;
     margin-bottom: 10px;
     border: 1px solid #f0f0f0;
@@ -83,12 +90,14 @@ input[type="number"]{
     box-sizing: border-box;
 }
 
-input:focus, textarea:focus, select:focus {
-    outline: 2px solid #7B43F2; /* Фиолетовый цвет */
-
+input:focus,
+textarea:focus,
+select:focus {
+    outline: 2px solid #7B43F2;
+    /* Фиолетовый цвет */
 }
 
- .toggle-password {
+.toggle-password {
     position: absolute;
     right: 10px;
     top: 40%;
@@ -96,12 +105,13 @@ input:focus, textarea:focus, select:focus {
     cursor: pointer;
     font-size: 18px;
     user-select: none;
-    }
+}
 
 /* Основной цвет placeholder */
 ::placeholder {
     color: #B1A1DA;
-    opacity: 1; /* Убирает полупрозрачность */
+    opacity: 1;
+    /* Убирает полупрозрачность */
 }
 
 /* Для браузеров, использующих `:-ms-input-placeholder` */
@@ -118,10 +128,14 @@ input:focus, textarea:focus, select:focus {
 #message {
     color: red;
 }
+
 #messageOk {
-    color:#5B4296;
+    color: #5B4296;
 }
-button, input[type="submit"], input[type="button"] {
+
+button,
+input[type="submit"],
+input[type="button"] {
     padding: 10px;
     border: none;
     margin: 10px 0;
@@ -130,16 +144,19 @@ button, input[type="submit"], input[type="button"] {
     cursor: pointer;
     border-radius: 12px;
     width: 100%;
-    max-width: 200px;
+    /*     max-width: 200px; */
     height: 40px;
 }
-button:hover, input[type="submit"]:hover, input[type="button"]:hover {
-    background-color: #7B43F2;
+
+button:hover,
+input[type="submit"]:hover,
+input[type="button"]:hover {
+    outline: none;
 }
 
 button:active {
-    background-color: #5F41B2;
     transform: translateY(2px);
+    outline: none;
 }
 
 button:disabled {
@@ -188,14 +205,15 @@ button:disabled {
     padding: 1px;
     box-sizing: border-box;
 }
+
 #admin-button-container {
-    width: 100%; 
-    max-width: 200px; 
+    width: 100%;
+    max-width: 200px;
 }
 
 .add-button {
     padding: 10px;
-    border: 1px solid #7527B2; 
+    border: 1px solid #7527B2;
     margin: 10px 0;
     background-color: #7527B2;
     color: white;
@@ -211,16 +229,16 @@ button:disabled {
     font-size: 14px;
     transition: background-color 0.3s, color 0.3s, transform 0.2s;
     text-decoration: none;
-  }
-  
-  .add-button:hover {
+}
+
+.add-button:hover {
     background-color: #5f1b91;
-  }
-  
+}
+
 
 .delete-button {
     padding: 10px;
-    border: 1px solid #DF1125; 
+    border: 1px solid #DF1125;
     margin: 10px 0;
     background-color: white;
     color: #DF1125;
@@ -232,14 +250,15 @@ button:disabled {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px; /* Отступ между иконкой и текстом */
+    gap: 12px;
+    /* Отступ между иконкой и текстом */
     font-size: 13px;
     transition: background-color 0.3s, color 0.3s, transform 0.2s;
 }
 
 .delete-button:hover {
     background-color: #ffffff;
-    color: #830714; 
+    color: #830714;
     transform: translateY(-2px);
     cursor: pointer;
 }
@@ -251,33 +270,36 @@ button:disabled {
 }
 
 .plus-button {
-    background-color: #7527B2; /* Цвет фона кнопки */
-    color: white; /* Цвет текста */
-    border: none; /* Убираем границу */
-    padding: 10px 5px; /* Внутренние отступы */
-    border-radius: 12px; /* Скругление углов */
-    cursor: pointer; /* Курсор в виде руки */
-    font-size: 13px; /* Размер шрифта */
-    transition: background-color 0.3s, transform 0.2s; /* Плавные переходы */
+    background-color: #7527B2;
+    /* Цвет фона кнопки */
+    color: white;
+    /* Цвет текста */
+    border: none;
+    /* Убираем границу */
+    padding: 10px 5px;
+    /* Внутренние отступы */
+    border-radius: 12px;
+    /* Скругление углов */
+    cursor: pointer;
+    /* Курсор в виде руки */
+    font-size: 13px;
+    /* Размер шрифта */
+    transition: background-color 0.3s, transform 0.2s;
+    /* Плавные переходы */
     max-width: 100px;
-    height: 40px; /* Фиксированная высота кнопки */
-    display: flex; /* Включаем flexbox для выравнивания текста внутри кнопки */
-    align-items: center; /* Выравниваем текст по вертикали внутри кнопки */
-    justify-content: center; /* Выравниваем текст по горизонтали внутри кнопки */
-}
-
-
-
-.button span {
-    flex-grow: 1;
-    text-align: left;
-    padding-left: 10px;
-    position: relative;
-    top: -10px; /* Немного поднимаем текст */
+    height: 40px;
+    /* Фиксированная высота кнопки */
+    display: flex;
+    /* Включаем flexbox для выравнивания текста внутри кнопки */
+    align-items: center;
+    /* Выравниваем текст по вертикали внутри кнопки */
+    justify-content: center;
+    /* Выравниваем текст по горизонтали внутри кнопки */
 }
 
 .button svg {
-    margin-left: 80px; /* Отодвигаем иконку вправо */
+    margin-left: 80px;
+    /* Отодвигаем иконку вправо */
     top: -16px;
 }
 
@@ -288,57 +310,80 @@ button:disabled {
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    border: 2px solid white; /* Белая рамка кружка */
-    background-color: transparent; /* Прозрачный фон кружка */
-    color: white; /* Белый плюс */
+    border: 2px solid white;
+    /* Белая рамка кружка */
+    background-color: transparent;
+    /* Прозрачный фон кружка */
+    color: white;
+    /* Белый плюс */
     font-size: 18px;
     font-weight: bold;
-  }
-  
-  .icon-circle span {
+}
+
+.icon-circle span {
     display: block;
     transform: translateY(-1px);
-  }
-  
+}
+
 .icon-button {
     background: none;
     border: none;
     cursor: pointer;
-  }
-  
-  .icon-button:hover {
+}
+
+.icon-button:hover {
     opacity: 0.7;
-  }
-  .custom-button {
-    padding: 10px;
+}
+
+.buttons-container {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.custom-button {
+    width: 343px !important;
+    height: 82px;
+    padding: 16px;
     border: none;
-    margin: 10px auto;
+    margin: auto;
     background-color: white;
-    color: #7527B2;
+    color: #291161;
     cursor: pointer;
     border-radius: 12px;
-    width: 100%;
-    max-width: 200px;
-    height: 40px;
     display: flex;
-    align-items: center; /* Выравнивание по вертикали */
-    justify-content: space-between; /* Распределение пространства между элементами */
-    font-size: 14px;
-    font-family: 'Montserrat', sans-serif; /* Подключение шрифта Montserrat */
+    gap: 14px;
+    align-items: center;
+    /* Выравнивание по вертикали */
+    justify-content: space-between;
+    /* Распределение пространства между элементами */
+    font-family: 'Montserrat', sans-serif;
+    /* Подключение шрифта Montserrat */
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.icon-left,
+.icon-left {
+    width: 50px !important;
+    height: 50px !important;
+    flex-shrink: 0 !important;
+}
+
 .icon-right {
-    width: 28px; /* Размер иконок */
-    height: 28px;
-    flex-shrink: 0; /* Запрет сжатия иконок */
+    width: 30px !important;
+    height: 30px !important;
+    flex-shrink: 0 !important;
 }
 
 .button-text {
-    flex-grow: 1; /* Текст занимает всё доступное пространство */
-    text-align: center; /* Центрирование текста */
-    margin: 0 8px; /* Отступы между текстом и иконками */
+    flex-grow: 1;
+    /* Текст занимает всё доступное пространство */
+    text-align: left;
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 600;
 }
 
 .custom-button:hover {
@@ -349,16 +394,8 @@ button:disabled {
     transform: translateY(2px);
 }
 
-.icon-left,
-.icon-right {
-    width: 24px;
-    height: 24px;
-    flex-shrink: 0;
-}
-
-
 h1 {
-    color:#291161;
+    color: #291161;
     font-size: 24px;
     margin-bottom: 20px;
     text-align: center;
@@ -399,7 +436,7 @@ input[type="password"] {
 
 input[type="submit"] {
     width: 200px;
-    background-color: #D2CAE8; 
+    background-color: #D2CAE8;
     color: #fff;
     padding: 10px 20px;
     border: none;
@@ -418,18 +455,21 @@ input[type="submit"] {
 
 .password-container {
     position: relative;
-    align-items: center; 
+    align-items: center;
     justify-content: center;
     min-height: 50px;
 }
 
 .password-input {
     width: 100%;
-    padding: 12px 45px 12px 15px; /* Увеличиваем отступ справа для иконки */
+    padding: 12px 45px 12px 15px;
+    /* Увеличиваем отступ справа для иконки */
     font-size: 16px;
     border: 1px solid #ccc;
-    border-radius: 8px; /* Скругляем углы */
-    box-sizing: border-box; /* Учитываем padding в ширине */
+    border-radius: 8px;
+    /* Скругляем углы */
+    box-sizing: border-box;
+    /* Учитываем padding в ширине */
 }
 
 .hidden {
@@ -439,13 +479,17 @@ input[type="submit"] {
 
 .message {
     color: #5B4296;
-    font-size: 14px; /* Уменьшите размер шрифта по необходимости */
-    text-align: center; /* Центрируйте текст */
-    margin-top: 10px; /* Дополнительный отступ сверху для лучшей читаемости */
+    font-size: 14px;
+    /* Уменьшите размер шрифта по необходимости */
+    text-align: center;
+    /* Центрируйте текст */
+    margin-top: 10px;
+    /* Дополнительный отступ сверху для лучшей читаемости */
     font-weight: bold;
 }
 
-.registration-title, .forgot-password-link {
+.registration-title,
+.forgot-password-link {
     text-align: center;
 }
 
@@ -463,26 +507,27 @@ input[type="button"].registration-button:hover {
 }
 
 a:hover {
-    color: blue; 
-} 
+    color: blue;
+}
 
 .inactive-button {
     background-color: gray;
-    color: #3a3838; 
-    cursor: not-allowed; 
-    
+    color: #3a3838;
+    cursor: not-allowed;
+
     pointer-events: none;
 }
 
 .inactive-button:hover {
-    background-color: gray;}
+    background-color: gray;
+}
 
 
 .error-message {
     color: red;
     font-size: 9px;
-    margin-top: 3px; 
-    margin-bottom: 3px; 
+    margin-top: 3px;
+    margin-bottom: 3px;
 }
 
 
@@ -490,52 +535,67 @@ a:hover {
 .confirmationMessage {
     color: #5B4296;
     font-size: 14px;
-    margin-top: 10px;}
- 
- .language-switcher {
-            position: relative;
-            margin-left: center ; /*-109px; /* Отступ справа от панели */
-            /*width: 54px; */
-        }
+    margin-top: 10px;
+}
 
-        #lang-select {
-            display: none; /* Скрытие оригинального select элемента */
-        }
+.language-switcher {
+    position: relative;
+    margin-left: center;
+    /*-109px; /* Отступ справа от панели */
+    /*width: 54px; */
+}
+
+#lang-select {
+    display: none;
+    /* Скрытие оригинального select элемента */
+}
 
 .select2-container--default .select2-selection--single {
-            border: none;
-            height: 36px;
-            padding-left: 1px; /* Отступ слева для иконок */
-            background-repeat: no-repeat;
-            background-position: center left;
-            background-size: 14px; /* Размер иконок */
-            font-size: 10px; /* Уменьшение размера шрифта */
-            border-radius: 12px;
-        }
+    border: none;
+    height: 36px;
+    padding-left: 1px;
+    /* Отступ слева для иконок */
+    background-repeat: no-repeat;
+    background-position: center left;
+    background-size: 14px;
+    /* Размер иконок */
+    font-size: 10px;
+    /* Уменьшение размера шрифта */
+    border-radius: 12px;
+}
 
 .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 36px; /* Выравнивание текста по вертикали */
-        }
+    line-height: 36px;
+    /* Выравнивание текста по вертикали */
+}
 
 .select2-container--default .select2-selection--single .flag-img {
-            width: 14px; /* Ширина изображения флага */
-            height: auto; /* Автоматическая высота */
-            vertical-align: middle; /* Выравнивание по вертикали */
-            margin-right: 5px; /* Отступ справа от текста */
-            
-        }
+    width: 14px;
+    /* Ширина изображения флага */
+    height: auto;
+    /* Автоматическая высота */
+    vertical-align: middle;
+    /* Выравнивание по вертикали */
+    margin-right: 5px;
+    /* Отступ справа от текста */
 
-        /* Стили для уменьшения размера флагов и текста в выпадающем списке */
+}
+
+/* Стили для уменьшения размера флагов и текста в выпадающем списке */
 .select2-dropdown .select2-results__option {
-            font-size: 10px;
-        }
+    font-size: 10px;
+}
 
 .select2-dropdown .select2-results__option .flag-img {
-            width: 14px; /* Уменьшение ширины изображения флага */
-            height: auto; /* Автоматическая высота */
-            vertical-align: middle; /* Выравнивание по вертикали */
-            margin-right: 5px; /* Отступ справа от текста */
-        }  
+    width: 14px;
+    /* Уменьшение ширины изображения флага */
+    height: auto;
+    /* Автоматическая высота */
+    vertical-align: middle;
+    /* Выравнивание по вертикали */
+    margin-right: 5px;
+    /* Отступ справа от текста */
+}
 
 .link-button {
     background: none;
@@ -544,35 +604,36 @@ a:hover {
     cursor: pointer;
     font-size: 14px;
     font-family: inherit;
-    }
+}
 
 
-.link-button-left{
+.link-button-left {
     text-align: left;
     font-size: 12px;
     float: left;
     white-space: nowrap;
-    max-width:60px;width:60px;
+    max-width: 60px;
+    width: 60px;
     max-height: 20px;
     height: 20px;
     margin-top: 0px;
     margin-bottom: 0px;
-    margin-left:25px;
-}    
+    margin-left: 25px;
+}
 
 .link-button:hover {
-     color: darkblue;
-     text-decoration: underline;
-     background: none;
-     border: none;
+    color: darkblue;
+    text-decoration: underline;
+    background: none;
+    border: none;
 
-        }        
+}
 
 .logo {
     display: flex;
-    justify-content: center; /* Центрирование логотипа */
-    margin-top: 10px; /* Отступ сверху для логотипа */
-      }
+    justify-content: center;
+    /* Центрирование логотипа */
+}
 
 /* Стили для рамки вокруг генератора паролей */
 .password-generator {
@@ -602,38 +663,50 @@ a:hover {
 
 /* Стили для выпадающих списков */
 select#birth,
-select#user_sex ,
-select#deviceType{
+select#user_sex,
+select#deviceType {
     width: 200px;
-    padding: 10px;         /* Внутренние отступы */
+    padding: 10px;
+    /* Внутренние отступы */
     font-size: 14px;
     color: #5B4296;
-    border: 1px solid #ccc;/* Рамка вокруг */
-    border-radius: 12px;   /* Скругленные углы */
-    box-sizing: border-box;/* Учитываем отступы и границы при расчете ширины */
+    border: 1px solid #ccc;
+    /* Рамка вокруг */
+    border-radius: 12px;
+    /* Скругленные углы */
+    box-sizing: border-box;
+    /* Учитываем отступы и границы при расчете ширины */
     background-color: white;
-    appearance: none;      /* Скрываем стандартный стиль стрелки */
-    margin-bottom: 10px;   /* Отступ снизу для разделения полей */
+    appearance: none;
+    /* Скрываем стандартный стиль стрелки */
+    margin-bottom: 10px;
+    /* Отступ снизу для разделения полей */
 }
 
 /* Стили для фокуса на выпадающих списках */
 select#birth:focus,
 select#user_sex:focus,
-select#deviceType:focus
- {
-    outline: none;         /* Убираем обводку при фокусе */
-    border-color: #7527B2; /* Цвет рамки при фокусе, как у кнопок */
-    background-color: #ffffff; /* Фон при фокусе, как у кнопок */
-    color: #7527B2;          /* Цвет текста при фокусе, как у кнопок */
-    box-shadow: 0 0 5px rgba(117, 39, 178, 0.5); /* Тень для акцента */
+select#deviceType:focus {
+    outline: none;
+    /* Убираем обводку при фокусе */
+    border-color: #7527B2;
+    /* Цвет рамки при фокусе, как у кнопок */
+    background-color: #ffffff;
+    /* Фон при фокусе, как у кнопок */
+    color: #7527B2;
+    /* Цвет текста при фокусе, как у кнопок */
+    box-shadow: 0 0 5px rgba(117, 39, 178, 0.5);
+    /* Тень для акцента */
 }
 
 /* Стили для выбранной опции в выпадающем списке */
 select#birth option:checked,
 select#user_sex option:checked,
 select#deviceType:checked {
-    background-color: #5B4296; /* Цвет фона выбранной опции */
-    color: white;              /* Цвет текста выбранной опции */
+    background-color: #5B4296;
+    /* Цвет фона выбранной опции */
+    color: white;
+    /* Цвет текста выбранной опции */
 }
 
 
@@ -647,30 +720,40 @@ select#deviceType:checked {
 }
 
 #qrcode {
-    display: block; /* Убираем побочные отступы inline-элементов */
-    margin: 0 auto; /* Центрируем элемент внутри родителя */
-    text-align: center; /* Если в HTML-коде есть текст, он центрируется */
+    display: block;
+    /* Убираем побочные отступы inline-элементов */
+    margin: 0 auto;
+    /* Центрируем элемент внутри родителя */
+    text-align: center;
+    /* Если в HTML-коде есть текст, он центрируется */
     max-width: 100%;
     display: inline-block;
 }
 
 #userCorId.clickable {
-    cursor: pointer; /* Изменяет курсор на "руку" при наведении */
-    color: blue; /* Цвет текста */
-   /* text-decoration: underline; /* Подчеркивание текста */
+    cursor: pointer;
+    /* Изменяет курсор на "руку" при наведении */
+    color: blue;
+    /* Цвет текста */
+    /* text-decoration: underline; /* Подчеркивание текста */
 }
 
 #userCorId.clickable:hover {
-    color: darkblue; /* Темный цвет при наведении */
+    color: darkblue;
+    /* Темный цвет при наведении */
 }
+
 #userCorId {
-    margin-top: 0; /* уменьшенный отступ */
+    margin-top: 0;
+    /* уменьшенный отступ */
 }
 
 .eye-icon {
     position: absolute;
-    right: 15px; /* Расстояние от правого края поля */
-    top: 40%; /* Выравнивание по центру по вертикали */
+    right: 15px;
+    /* Расстояние от правого края поля */
+    top: 40%;
+    /* Выравнивание по центру по вертикали */
     transform: translateY(-50%);
     cursor: pointer;
     width: 20px;
@@ -710,8 +793,10 @@ select#deviceType:checked {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
-    justify-content: center; /* Выравнивание по центру по горизонтали */
-    align-items: center; /* Выравнивание по центру по вертикали */
+    justify-content: center;
+    /* Выравнивание по центру по горизонтали */
+    align-items: center;
+    /* Выравнивание по центру по вертикали */
 }
 
 .card {
@@ -721,10 +806,14 @@ select#deviceType:checked {
     padding: 10px;
     width: 420px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    display: flex; /* Используем flexbox для расположения иконки и контента */
-    gap: 10px; /* Отступ между иконкой и контентом */
-    align-items: center; /* Выравнивание по вертикали */
-    position: relative; /* Для позиционирования звездочки */
+    display: flex;
+    /* Используем flexbox для расположения иконки и контента */
+    gap: 10px;
+    /* Отступ между иконкой и контентом */
+    align-items: center;
+    /* Выравнивание по вертикали */
+    position: relative;
+    /* Для позиционирования звездочки */
 }
 
 
@@ -748,26 +837,37 @@ select#deviceType:checked {
     color: #291161;
     line-height: 1.1;
 }
+
 /* Стили для заголовков внутри карточки сессии */
 .session-card .card-content strong {
-    color: #7527B2; /* Цвет заголовков (другой оттенок темы) */
-    font-weight: 600; /* Увеличиваем жирность заголовков */
+    color: #7527B2;
+    /* Цвет заголовков (другой оттенок темы) */
+    font-weight: 600;
+    /* Увеличиваем жирность заголовков */
 }
 
 .card:hover {
-    background-color: rgba(255, 255, 255, 0.8); /* Увеличиваем прозрачность фона */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Увеличиваем тень */
-    transform: translateY(-2px); /* Слегка поднимаем карточку */
-    cursor: pointer; /* Меняем курсор на указатель */
+    background-color: rgba(255, 255, 255, 0.8);
+    /* Увеличиваем прозрачность фона */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    /* Увеличиваем тень */
+    transform: translateY(-2px);
+    /* Слегка поднимаем карточку */
+    cursor: pointer;
+    /* Меняем курсор на указатель */
 }
 
 
 .icon-container {
     display: flex;
-    align-items: center; /* Выравнивание иконки по центру по вертикали */
-    justify-content: center; /* Выравнивание иконки по центру по горизонтали */
-    width: 40px; /* Ширина контейнера для иконки */
-    height: 100%; /* Иконка занимает всю высоту карточки */
+    align-items: center;
+    /* Выравнивание иконки по центру по вертикали */
+    justify-content: center;
+    /* Выравнивание иконки по центру по горизонтали */
+    width: 40px;
+    /* Ширина контейнера для иконки */
+    height: 100%;
+    /* Иконка занимает всю высоту карточки */
 }
 
 .icon-placeholder {
@@ -776,25 +876,33 @@ select#deviceType:checked {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #FFFFFF; /* Цвет фона для заглушки */
-    border-radius: 50%; /* Круглая форма */
+    background-color: #FFFFFF;
+    /* Цвет фона для заглушки */
+    border-radius: 50%;
+    /* Круглая форма */
     font-size: 24px;
-    font-weight: bold; /* Жирный шрифт */
-    color: #291161; /* Цвет текста */
+    font-weight: bold;
+    /* Жирный шрифт */
+    color: #291161;
+    /* Цвет текста */
 }
 
 .favicon {
     width: 36px;
     height: 36px;
-    border-radius: 50%; /* Круглая форма для иконки */
+    border-radius: 50%;
+    /* Круглая форма для иконки */
 }
 
 .content {
-    flex: 1; /* Контент занимает оставшееся пространство */
+    flex: 1;
+    /* Контент занимает оставшееся пространство */
     display: flex;
     flex-direction: column;
-    gap: 4px; /* Отступ между заголовком и логином */
-    align-items: flex-start; /* Выравнивание по левому краю */
+    gap: 4px;
+    /* Отступ между заголовком и логином */
+    align-items: flex-start;
+    /* Выравнивание по левому краю */
 }
 
 .card-header h3 {
@@ -810,9 +918,12 @@ select#deviceType:checked {
 
 .star-container {
     display: flex;
-    align-items: center; /* Выравнивание звездочки по вертикали */
-    justify-content: flex-end; /* Звездочка справа */
-    margin-left: auto; /* Звездочка прижимается к правому краю */
+    align-items: center;
+    /* Выравнивание звездочки по вертикали */
+    justify-content: flex-end;
+    /* Звездочка справа */
+    margin-left: auto;
+    /* Звездочка прижимается к правому краю */
 }
 
 
@@ -822,7 +933,8 @@ select#deviceType:checked {
 }
 
 .star.favorite svg {
-    transform: scale(1.0); /* Увеличение звездочки при активации */
+    transform: scale(1.0);
+    /* Увеличение звездочки при активации */
 }
 
 
@@ -839,8 +951,10 @@ select#deviceType:checked {
 }
 
 #placeholder {
-    width: 144px; /* Ширина SVG */
-    height: 144px; /* Высота SVG */
+    width: 144px;
+    /* Ширина SVG */
+    height: 144px;
+    /* Высота SVG */
 }
 
 #previewImage {
@@ -848,24 +962,33 @@ select#deviceType:checked {
     top: 0;
     left: 0;
     cursor: grab;
-    max-width: none; /* Отключаем ограничение по ширине */
-    max-height: none; /* Отключаем ограничение по высоте */
+    max-width: none;
+    /* Отключаем ограничение по ширине */
+    max-height: none;
+    /* Отключаем ограничение по высоте */
     display: none;
 }
 
 
 .form textarea {
-    width: 200px;              /* Фиксированная ширина как у input */
-    min-height: 40px;          /* Минимальная высота */
-    max-height: 300px;         /* Ограничение, чтобы окно не разрасталось бесконечно */
+    width: 200px;
+    /* Фиксированная ширина как у input */
+    min-height: 40px;
+    /* Минимальная высота */
+    max-height: 300px;
+    /* Ограничение, чтобы окно не разрасталось бесконечно */
     padding: 10px;
     font-size: 14px;
-    color: #5B4296;            /* Фирменный фиолетовый */
+    color: #5B4296;
+    /* Фирменный фиолетовый */
     border: 1px solid #ccc;
-    border-radius: 12px;       /* Скруглённые углы */
+    border-radius: 12px;
+    /* Скруглённые углы */
     box-sizing: border-box;
-    resize: vertical;          /* Можно растягивать только вверх/вниз */
-    overflow-y: auto;          /* Появляется скролл при большой высоте */
+    resize: vertical;
+    /* Можно растягивать только вверх/вниз */
+    overflow-y: auto;
+    /* Появляется скролл при большой высоте */
     background-color: white;
 }
 
@@ -878,4 +1001,451 @@ select#deviceType:checked {
     box-shadow: 0 0 5px rgba(117, 39, 178, 0.5);
 }
 
+.mainscreen_buttons {
+    position: absolute;
+    top: 50px;
+    right: 50px;
+    display: flex;
+    gap: 20px;
+}
 
+.mainscreen_buttons button {
+    width: 64px;
+    height: 64px;
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid #fff;
+    border-radius: 20px;
+    padding: 20px 26px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.mainscreen_buttons svg {
+    transform: scale(2.4);
+    /* іконка чомусь займає 10*24, а не 24*24, тому поки так */
+}
+
+#reportProblemModal {
+    display: none;
+}
+
+#reportProblemModal.active {
+    box-sizing: border-box;
+    width: 660px !important;
+    max-width: 660px !important;
+    height: fit-content;
+    max-height: 90% !important;
+    margin: auto;
+    padding: 16px;
+    padding-bottom: 30px;
+    position: fixed;
+    display: flex !important;
+    /* Дуже важливо, інакше збивається display */
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: all;
+    transition: opacity .15s ease;
+}
+
+.modal-container {
+    width: 600px !important;
+    max-width: 600px !important;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    text-align: center;
+}
+
+.text-modal-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+.header-modal {
+    font-size: 24px;
+    line-height: 30px;
+    font-weight: 600;
+    color: #291161;
+}
+
+.text-modal {
+    color: #5B4296;
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 400;
+    text-align: center;
+}
+
+.rp-card {
+    background: #EDEAF6;
+    border: 2px solid #B9ADD9;
+    border-radius: 24px;
+    padding: 22px 22px 18px;
+    box-shadow: 0 20px 60px rgba(25, 10, 60, 0.18);
+    position: relative;
+}
+
+.rp-field {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rp-field-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 400;
+    color: #B1A1DA;
+    margin: 0;
+    padding: 0;
+}
+
+label {
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 400;
+    color: #B1A1DA;
+    margin: 0;
+}
+
+.rp-textarea {
+    width: 100%;
+    min-height: 200px;
+    height: auto;
+    max-height: 420px;
+    padding: 16px;
+    box-sizing: border-box !important;
+    resize: none;
+    border: 1px solid #fff;
+    border-radius: 20px;
+    outline: none;
+    background: rgba(255, 255, 255, 0.6);
+    font-size: 18px;
+    line-height: 24px;
+    color: #2A1665;
+    overflow: hidden;
+}
+
+textarea:focus {
+    outline: transparent;
+}
+
+.modal-buttons-container {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 16px;
+    padding: 16px !important;
+    border: 1px solid #fff;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.rp-tooltip {
+    position: absolute;
+    top: 68px;
+    left: 50%;
+    transform: translate(-50%, 6px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    padding: 10px 12px;
+    border: 1px solid #fff;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(40px);
+    color: #291161;
+    font-size: 14px;
+    line-height: 18px;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+/* Показуємо tooltip, коли hover по контейнеру, і кнопка disabled */
+.modal-buttons-container:has(#rpUploadBtn:disabled):hover .rp-tooltip {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.rp-upload-btn:disabled {
+    color: #D2CAE8;
+    border: 1px solid #D2CAE8;
+    background: rgba(255, 255, 255, 0.6);
+    cursor: not-allowed;
+}
+
+.rp-upload-btn {
+    margin: 0;
+    width: 100%;
+    height: 46px;
+    border-radius: 14px;
+    border: 1px solid #7527B2;
+    background: rgba(255, 255, 255, 0.6);
+    color: #7527B2;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.rp-files {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+}
+
+.rp-files-label {
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 500;
+    color: #5B4296;
+}
+
+.rp-files-hint {
+    font-size: 14px;
+    line-height: 18px;
+    color: #B2AFBA;
+}
+
+.rp-files-list {
+    display: none;
+    gap: 24px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Контейнер плашки файлу */
+.rp-file-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 400;
+    color: #5B4296;
+    cursor: default;
+}
+
+/* Назва */
+.rp-file-name {
+    padding: 0;
+    max-width: 130px;
+    /* Обрізання на три крапки */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Розширення */
+.rp-file-ext {
+    padding: 0;
+}
+
+.rp-submit {
+    margin: 0 auto;
+    display: block;
+    height: 64px;
+    width: 151px;
+    padding: 20 26px;
+    border: none;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 18px;
+    line-height: 24px;
+    color: #fff;
+    background: #7527B2;
+    cursor: pointer;
+    transition: opacity .15s ease, transform .05s ease;
+}
+
+.rp-submit:active {
+    transform: translateY(1px);
+}
+
+.rp-submit:disabled {
+    background: #D2CAE8;
+    cursor: not-allowed;
+}
+
+#requestSended.active {
+    box-sizing: border-box;
+    height: 378px;
+    width: 660px;
+    min-height: fit-content;
+    min-width: fit-content;
+    max-height: 378px !important;
+    max-width: 660px !important;
+    padding: 40px 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#requestSended {
+    display: none;
+}
+
+.success-mark {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+#requestSended .text-modal-container {
+    margin: 28px 0;
+}
+
+#mainscreenBtn {
+    width: 157px;
+    height: 64px;
+    padding: 20px 26px;
+    margin: 0 !important;
+    border-radius: 20px;
+    background: #7527B2;
+    color: #fff;
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 600;
+}
+
+#mainscreenMenu.active {
+    box-sizing: border-box;
+    width: 406px;
+    height: fit-content;
+    max-height: 538px;
+    position: fixed;
+    top: 130px;
+    right: 50px;
+    padding: 40px 30px;
+    color: #291161;
+    background: #F7F7F7;
+    border: 1px solid #fff;
+    border-radius: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 28px;
+}
+
+#mainscreenMenu {
+    display: none;
+}
+
+.menu-container {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.mainscreen_menu h2 {
+    width: 346px;
+    font-size: 24px;
+    line-height: 30px;
+    font-weight: 600;
+    text-align: left;
+    margin: 0;
+    padding: 0;
+}
+
+.menu-button-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 1px;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.menu-buttons button {
+    width: 346px;
+    height: 64px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    gap: 10px;
+    border: 1px solid #7527B2;
+    background: #fff;
+    color: #7527B2;
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 600;
+}
+
+#admin-button-container {
+    width: 346px !important;
+}
+
+#LogOut-btn {
+    justify-content: space-between;
+    background: #7527B2;
+    color: #fff;
+    align-items: center;
+}
+
+.header-label {
+    width: 100%;
+    font-weight: 600;
+    font-size: 30px;
+    line-height: 40px;
+    color: #291161;
+    text-align: left;
+}
+
+.safety-button {
+    width: 100%;
+    position: relative;
+    display: flex;
+    flex: 1 100% 1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: #5B4296;
+    cursor: pointer;
+}
+
+.safety-button label {
+    color: #5B4296;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.safety-button:not(:last-child)::before{
+    content: "";
+    display: block;
+    position: absolute;
+    bottom: -15px;
+    height: 1px;
+    border-radius: 23px;
+    background: linear-gradient(90deg, rgba(171, 119, 235, 0.00) 0%, rgba(171, 119, 235, 0.50) 50.27%, rgba(171, 119, 235, 0.00) 100%);
+    width: 100%;
+}

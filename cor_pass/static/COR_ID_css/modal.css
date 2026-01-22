@@ -179,9 +179,10 @@
 /* Стили для контейнера навигации */
 .navigation-container {
     display: flex;
+    gap: 4px;
     justify-content: space-between;
     width: 100%;
-    padding: 0 10px;
+    padding: 0;
     box-sizing: border-box;
     margin-top: 20px;
     margin-bottom: 10px;
@@ -195,7 +196,8 @@
     border: none;
     color: #7B43F2;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px;
+    line-height: 20px;
     font-family: inherit;
     padding: 5px 10px;
     transition: color 0.3s ease;
@@ -218,12 +220,12 @@
 /* Эффекты при наведении */
 .navigation-container .link-button:hover {
     color: #5F41B2;
-    text-decoration: underline;
+    text-decoration: none;
 }
 
 /* Эффекты при нажатии */
 .navigation-container .link-button:active {
-    color: #4A2D8C;
+    color: #5F41B2;
 }
 
 #qrcode {
@@ -931,9 +933,29 @@
 
 .custom-scroll::-webkit-scrollbar-track {
     border-radius: 3px;
+    margin: 20px;
 }
 
 .custom-scroll::-webkit-scrollbar-thumb {
     background: #B1A1DA;
     border-radius: 3px;
+}
+
+.glassPageContent .df .jcsb {
+    overflow: hidden;
+}
+
+.modal-backdrop {
+   position: fixed;
+   inset: 0;
+   background: rgba(54, 41, 84, 0.5);
+   z-index: 8900;
+   opacity: 0;
+   pointer-events: none;
+   transition: opacity 0.2s ease;
+}
+
+.modal.active+.modal-backdrop {
+   opacity: 1;
+   pointer-events: auto;
 }

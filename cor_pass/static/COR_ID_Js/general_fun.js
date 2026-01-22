@@ -36,6 +36,7 @@ const modalConfigs = {
     blockModal: { width: '660px', height: '378px', top: '50%', left: '50%' },
     unblockModal: { width: '660px', height: '378px', top: '50%', left: '50%' },
     deleteModal: { width: '660px', height: '378px', top: '50%', left: '50%' },
+    restoreModal: { width: '660px', height: '378px', top: '50%', left: '50%' },
     limitModal: { width: '660px', height: 'auto', top: '50%', left: '50%' },
     infoModal: { width: '660px', height: '671px', top: '50%', left: '50%' },
 };
