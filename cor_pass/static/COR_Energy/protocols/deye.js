@@ -3,6 +3,92 @@
 // Цикл мониторинга Deye
 // ============================
 
+// Объект с полной информацией о предупреждениях (аналогично DEYE_FAULT_INFO)
+const DEYE_WARNING_INFO = {
+    // W01-W10 из первой таблицы
+    1: {  name:"W01", description: "Reserved", solution: "1. Check the operating status of the fan. 2. If the fan is running abnormally, open the cover of the inverter to check the connection of the fan."  },
+    2: {  name:"W02", description: "FAN_IN_Warn", solution: "1. Check the operating status of the fan. 2. If the fan is running abnormally, open the cover of the inverter to check the connection of the fan." },    
+    3: {  name:"W03", description: "Grid_phase_warn",  solution: "1. Check the phase sequence connection of the power grid. 2. Try to change the grid type, 0, 240/120. 3. If there is still no solution to check the wiring at the grid end." },
+    4: {  name:"W04", description: "Meter_offline_warn", solution: "Meter communication failure. Check whether the meter has successful communication and whether the wiring is normal." },
+    5: {  name:"W05", description: "CT_WRONG_direction_warn", solution: "Check whether the arrow on CT's case point to the inverter or not, and check if the installation location of CTs are correct."  },
+    6: {  name:"W06", description: "CT_Notconnect_warn", solution: "Check whether the wires of CTs are connected correctly or not." },
+    7: {  name:"W07", description: "FAN_OUT1_Warn",  solution: "Check whether the FAN are connected correctly and operating normally."  },
+    8: {  name:"W08", description: "FAN_OUT2_Warn",  solution: "Check whether the FAN are connected correctly and operating normally." },
+    9: {  name:"W09", description: "FAN_OUT3_Warn", solution: "1. Measure whether the grid port voltage is too high. 2. Check whether the AC cable is too thin to carry current." },
+    10:{  name:"W10", description: "VW_activate", solution: "Check whether the FAN are connected correctly and operating normally." },
+    11:{  name:"W11", description: "DC_Bus_Leakage_Warn",  solution: " This is a critical warning that requires checking the solar panel or battery connections. Main causes and actions: Check panel/battery voltage: Make sure that the PV (solar panel) or battery voltage is within the inverter's operating range. Reboot: Try to completely turn off the inverter (AC and DC), wait 10-15 minutes until the screen turns off, and then turn it on again. Check cables: Inspect the terminals for looseness or oxidation. Service center: If the W11/F11 error persists after reboot, contact the installer or service center."   },
+    31:{  name:"W31", description: "Battery_comm_warn",  solution: "Abnormal battery communication. 1. Check whether the BMS connection is stable. 2. Check whether the BMS data is abnormal." },
+    32:{  name:"W32", description: "Parallel_comm_warn", solution: "Unstable parallel communication. 1. Check the connection of the parallel communication line. Please do not wind the parallel communication line with other cables. 2. Check whether the parallel dip switch is on." }
+};
+
+
+ const DEYE_FAULT_INFO = {
+  // F01–F19 из таблиц на страницах 51–52
+  1:  { name: "F01", description: "DC_Inversed_Failure", solution: "Check the PV input polarity." },
+  2:  { name: "F02", description: "DC_Insulation_Failure", solution: "Check whether the PV is grounded, secondly, check whether the impedance of the PV to the ground is normal." },
+  3:  { name: "F03", description: "GFDI_Failure", solution: "1. Check whether the PV modules are grounded. 2. Check whether the impedance of the PV to the ground is normal, whether there is leakage current." },
+  4:  { name: "F04", description: "GFDI_Ground_Failure", solution: "Check whether the PV is grounded." },
+  5:  { name: "F05", description: "EEPROM_Read_Failure", solution: "Restart the inverter 3 times and restore the factory settings." },
+  6:  { name: "F06", description: "EEPROM_Write_Failure", solution: "Restart the inverter 3 times and restore the factory settings." },
+  7:  { name: "F07", description: "DCDC1_START_Failure", solution: "The BUS voltage can't be reached by PV or battery. 1. Switch off the DC switches and restart the inverter." },
+  8:  { name: "F08", description: "DCDC2_START_Failure", solution: "The BUS voltage can't be reached by PV or battery. 1. Switch off the DC switches and restart the inverter." },
+  9:  { name: "F09", description: "IGBT_Failure", solution: "Restart the inverter 3 times and restore the factory settings." },
+  10: { name: "F10", description: "AuxPowerBoard_Failure", solution: "1. First check whether the inverter switch is open. 2. Restart the inverter 3 times and restore the factory settings." },
+  11: { name: "F11", description: "AC_MainContactor_Failure", solution: "Restart the inverter 3 times and restore the factory settings." },
+  12: { name: "F12", description: "AC_SlaveContactor_Failure", solution: "Restart the inverter 3 times and restore the factory settings." },
+  13: { name: "F13", description: "Working_Mode_Change", solution: "1. When the grid type and frequency have changed it will report F13. 2. When the battery mode has been changed to 'No battery' mode, it will report F13. 3. For some old FW version, it will report F13 when the system's work mode has been changed. 4. Generally, this error will disappear automatically. 5. If it remains the same, turn off DC and AC switches for one minute, then turn on the DC and AC switches." },
+  14: { name: "F14", description: "DC_OverCurr_Failure", solution: "Restart the inverter 3 times and restore the factory settings." },
+  15: { name: "F15", description: "AC_OverCurr_SW_Failure", solution: "AC side over current fault. 1. Please check whether the backup load power and common load power are within the range. 2. Restart and check whether it is normal." },
+  16: { name: "F16", description: "GFCI_Failure", solution: "Leakage current fault. 1. Check the PV side cable ground connection. 2. Restart the system 2-3 times." },
+  17: { name: "F17", description: "Tz_PV_OverCurr_Fault", solution: "1. Check the PV connection and whether the PV is unstable. 2. Restart the inverter 3 times." },
+  18: { name: "F18", description: "Tz_AC_OverCurr_Fault", solution: "AC side over current fault. 1. Please check whether the backup load power and common load power are within the range. 2. Restart and check whether it is normal." },
+  19: { name: "F19", description: "Tz_Integ_Fault", solution: "Restart the inverter 3 times and restore the factory settings." },
+  20: { name: "F20", description: "Tz_Dc_OverCurr_Fault", solution: "DC side over current fault 1. Check PV module connection and battery connection; 2. When in the off-grid mode, starting the inverter under a high power load may report F20. Please reduce the load power connected. 3. If it remains the same, turn off DC and AC switches for one minute, then turn on the DC and AC switches." },
+  21: { name: "F21", description: "Tz_HV_Overcurr_Fault", solution: "BUS over current 1. Check the PV input current and battery current setting. 2. Restart the system 2~3 times." },
+  22: { name: "F22", description: "Tz_EmergStop_Fault", solution: "Remotely shutdown It means the inverter is remotely controlled." },
+  23: { name: "F23", description: "Tz_GFCI_OC_Fault", solution: "Leakage current fault 1. Check PV side cable ground connection. 2. Restart the system 2~3 times." },
+  24: { name: "F24", description: "DC_Insulation_Fault", solution: "PV isolation resistance is too low 1. Check the connection of PV panels and inverter is firm and correct. 2. Check whether the PE cable of inverter is connected to ground." },
+  25: { name: "F25", description: "DC_Feedback_Fault", solution: "Restart the inverter 3 times and restore the factory settings." },
+  26: { name: "F26", description: "BusUnbalance_Fault", solution: "1. Please wait for a while and check whether it is normal. 2. When the load power of 3 phases has a big different, it will report the F26. 3. When there's DC leakage current, it will report F26. 4. Restart the system 2~3 times." },
+  27: { name: "F27", description: "DC_Insulation_Fault", solution: "Restart the inverter 3 times and restore the factory settings." },
+  28: { name: "F28", description: "DCIOver_M1_Fault", solution: "Restart the inverter 3 times and restore the factory settings." },
+  29: { name: "F29", description: "Parallel_Comm_Fault", solution: "1. When inverters are connected in parallel, check the parallel communication cable connection and hybrid inverter communication address setting. 2. During the parallel system startup period, inverters will report F29. But when all inverters are in ON status, it will disappear automatically." },
+  30: { name: "F30", description: "AC_MainContactor_Fault", solution: "Restart the inverter 3 times and restore the factory settings." },
+  31: { name: "F31", description: "AC_SlaveContactor_Fault", solution: "1. Check whether the grid orientation is correct, 2. Restart the inverter 3 times and restore the factory settings" },
+  32: { name: "F32", description: "DCIOver_M2_Fault", solution: "Restart the inverter 3 times and restore the factory settings." },
+  33: { name: "F33", description: "AC_OverCurr_Fault", solution: "1. Check whether the grid current is too large. 2. Restart the inverter 3 times and restore the factory settings." },
+  34: { name: "F34", description: "AC_Overload_Fault", solution: "Check the backup load connection, make sure it is within the allowed power range." },
+  35: { name: "F35", description: "AC_NotUtility_Fault", solution: "Check the grid voltage and frequency, whether the connection of the power grid is normal." },
+  36: { name: "F36", description: "Reserved", solution: "N/A" },
+  37: { name: "F37", description: "Reserved", solution: "N/A" },
+  38: { name: "F38", description: "Reserved", solution: "N/A" },
+  39: { name: "F39", description: "INT_AC_OverCurr_Fault", solution: "Inverter AC overcurrent, restart the inverter." },
+  40: { name: "F40", description: "INT_DC_OverCurr_Fault", solution: "Inverter DC overcurrent, restart the inverter." },
+  41: { name: "F41", description: "Parallel_system_Stop", solution: "Check the hybrid inverter work status. If there is at least one hybrid inverter shutdown, all hybrid inverters will report F41 fault." },
+  42: { name: "F42", description: "Parallel_Version_Fault", solution: "1. Check whether the inverter version is consistent. 2. Please contact us to upgrade the software version." },
+  43: { name: "F43", description: "Reserved", solution: "N/A" },
+  44: { name: "F44", description: "Reserved", solution: "N/A" },
+  45: { name: "F45", description: "AC_UV_OverVolt_Fault", solution: "Grid voltage out of range. 1. Check the voltage is in the range of specification or not. 2. Check whether AC cables are firmly and correctly connected." },
+  46: { name: "F46", description: "AC_UV_UnderVolt_Fault", solution: "Grid voltage out of range. 1. Check the voltage is in the range of specification or not. 2. Check whether AC cables are firmly and correctly connected." },
+  47: { name: "F47", description: "AC_OverFreq_Fault", solution: "Grid frequency out of range. 1. Check whether the frequency is in the range of the specification or not. 2. Check whether AC cables are firmly and correctly connected." },
+  48: { name: "F48", description: "AC_UnderFreq_Fault", solution: "Grid frequency out of range. 1. Check whether the frequency is in the range of the specification or not. 2. Check whether AC cables are firmly and correctly connected." },
+  49: { name: "F49", description: "AC_U_GridCurr_DcHigh_Fault", solution: "Restart the inverter 3 times and restore the factory settings." },
+  50: { name: "F50", description: "AC_V_GridCurr_DcHigh_Fault", solution: "Restart the inverter 3 times and restore the factory settings." },
+  51: { name: "F51", description: "Battery_Temp_High_Fault", solution: "Check whether the temperature data of BMS is too high." },
+  52: { name: "F52", description: "DC_VoltHigh_Fault", solution: "BUS voltage is too high. 1. Check whether battery voltage is too high. 2. Check the PV input voltage, make sure if it is within the allowed range." },
+  53: { name: "F53", description: "DC_VoltLow_Fault", solution: "BUS voltage is too low. 1. Check whether battery voltage is too low. 2. If the battery voltage is too low, use PV or grid to charge the battery." },
+  54: { name: "F54", description: "BAT2_VoltHigh_Fault", solution: "1. Check the battery 2 terminal voltage is high. 2. Restart the inverter 2 times and restore the factory settings." },
+  55: { name: "F55", description: "BAT1_VoltHigh_Fault", solution: "1. Check the battery 1 terminal voltage is high. 2. Restart the inverter 2 times and restore the factory settings." },
+  56: { name: "F56", description: "BAT1_VoltLow_Fault", solution: "1. Check the battery 1 terminal voltage is low. 2. Restart the inverter 2 times and restore the factory settings." },
+  57: { name: "F57", description: "BAT2_VoltLow_Fault", solution: "1. Check the battery 2 terminal voltage is low. 2. Restart the inverter 2 times and restore the factory settings." },
+  58: { name: "F58", description: "Battery_Comm_Lose", solution: "1. It means that the communication between the hybrid inverter and the battery BMS is disconnected when ‘BMS_Err-Stop’ is active. 2. To avoid this error, disable ‘BMS_Err-Stop’ item on the LCD." },
+  59: { name: "F59", description: "Reserved", solution: "N/A" },
+  60: { name: "F60", description: "GEN_FAULT", solution: "Check whether the voltage and frequency of the generator are normal, and then restart." },
+  61: { name: "F61", description: "INVERTER_Manual_OFF", solution: "Check whether the switch of the inverter is turned on, restart the inverter, and restore the factory settings." },
+  62: { name: "F62", description: "DRMs_Stop", solution: "Check the DRM function is active or not." },
+  63: { name: "F63", description: "ARC_Fault", solution: "1. ARC fault detection is only for US market. 2. Check PV module cable connection and clear the fault." },
+  64: { name: "F64", description: "Heatsink_HighTemp_Fault", solution: "Heat sink temperature is too high. 1. Check whether the working environment temperature is too high. 2. Turn off the inverter for 10 minutes and restart." }
+};
 
 async function startMonitoringDeye(objectData) {
 
@@ -43,6 +129,7 @@ async function startMonitoringDeye(objectData) {
             serviceData = await readServiceRegisters(host, port, slave, object_id, protocol);
 
             energyServiceData = await readEnergyServiceRegisters(host, port, slave, object_id, protocol);
+            deyeFaults = await readDeyeFaults(host, port, slave, object_id, protocol);
 
 
             const calculatedSOC = calculateBatterySOCVoltage(battData, energyServiceData);
@@ -840,6 +927,109 @@ async function readEnergyServiceRegisters(host, port, slave_id, object_id, proto
     console.log("⚙️ Energy service registers:", results);
     return results;
 }
+
+
+
+// Обновленная функция readDeyeFaults
+async function readDeyeFaults(host, port, slave_id, object_id, protocol) {
+    const startReg = 553;
+    const count = 6;
+
+    const url =
+        `${API_BASE_URL}/api/modbus_tcp/v1/read` +
+        `?protocol=${protocol}` +
+        `&host=${host}` +
+        `&port=${port}` +
+        `&slave_id=${slave_id}` +
+        `&object_id=${object_id}` +
+        `&start=${startReg}` +
+        `&count=${count}` +
+        `&func_code=3`;
+
+    try {
+        const resp = await fetch(url, { headers: { accept: "application/json" } });
+        const data = await resp.json();
+
+        if (!data.ok || !Array.isArray(data.data)) {
+            console.warn("⚠️ Deye faults read failed:", data);
+            return null;
+        }
+
+        const [w1, w2, f1, f2, f3, f4] = data.data;
+
+        console.debug("🚨 Deye fault raw registers:", {
+            553: `0x${w1.toString(16)}`,
+            554: `0x${w2.toString(16)}`,
+            555: `0x${f1.toString(16)}`,
+            556: `0x${f2.toString(16)}`,
+            557: `0x${f3.toString(16)}`,
+            558: `0x${f4.toString(16)}`
+        });
+
+        return {
+            warnings: decodeDeyeWarnings([w1, w2]),
+            faults: decodeDeyeFaults([f1, f2, f3, f4])
+        };
+
+    } catch (err) {
+        console.error("❌ Error reading Deye faults:", err);
+        return null;
+    }
+}
+
+
+function decodeDeyeFaults(words) {
+    const faults = [];
+
+    words.forEach((word, wordIndex) => {
+        for (let bit = 0; bit < 16; bit++) {
+            if (!(word & (1 << bit))) continue;
+
+            const faultNumber = wordIndex * 16 + bit + 1; // F01–F64
+            const info = DEYE_FAULT_INFO[faultNumber];
+
+            if (!info || info.description === "Reserved") continue;
+
+            faults.push({
+                code: info.name,              // Fxx
+                name: info.description,
+                solution: info.solution
+            });
+        }
+    });
+
+    return faults;
+}
+
+
+
+// Обновленная функция декодирования предупреждений
+function decodeDeyeWarnings(words) {
+    const warnings = [];
+
+    words.forEach((word, wordIndex) => {
+        for (let bit = 0; bit < 16; bit++) {
+            if (!(word & (1 << bit))) continue;
+
+            const warningNumber = wordIndex * 16 + bit + 1; // W01–W32
+            const info = DEYE_WARNING_INFO[warningNumber];
+
+            if (!info || info.description === "Reserved") continue;
+
+            warnings.push({
+                code: info.name,              // Wxx
+                name: info.description,
+                solution: info.solution
+            });
+        }
+    });
+
+    return warnings;
+}
+
+
+
+
 
 
 
