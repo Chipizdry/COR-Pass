@@ -509,6 +509,27 @@
 
         </div>
 
+    <div class ="icon error-icon" id="ErrorIcon" data-entity="error">
+        <div id="errorIndicatorLabel" style="text-align: center; margin-bottom:34px;color:#291161; font-size: 14px; font-weight: bold;">
+            Ошибка
+          </div>    
+        <svg width="50" height="50" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="24" height="24" rx="12" fill="#DF1125"/>
+            <path d="M14.8691 7.72437C15.2618 7.40402 15.8408 7.42662 
+            16.207 7.79273C16.5731 8.15885 16.5957 8.73785 16.2753 
+            9.13063L16.207 9.2068L13.414 11.9998L16.207 14.7927L16.2753 
+            14.8689C16.5957 15.2617 16.5731 15.8407 16.207 16.2068C15.8408 
+            16.5729 15.2618 16.5955 14.8691 16.2752L14.7929 16.2068L11.9999 
+            13.4138L9.20696 16.2068C8.81643 16.5973 8.18342 16.5973 
+            7.79289 16.2068C7.40237 15.8163 7.40237 15.1833 7.79289 
+            14.7927L10.5859 11.9998L7.79289 9.2068L7.72453 9.13063C7.40418 
+            8.73785 7.42678 8.15885 7.79289 7.79273C8.15901 7.42662 
+            8.73801 7.40402 9.13078 7.72437L9.20696 7.79273L11.9999 
+            10.5857L14.7929 7.79273L14.8691 7.72437Z" fill="white"/>
+        </svg>  
+    </div>
+
+
     <div class="svg-wrapper"> 
         <svg width="700" height="600" xmlns="http://www.w3.org/2000/svg">
      
@@ -944,6 +965,13 @@ document.addEventListener("DOMContentLoaded", () => {
     makeModalDraggable('inverterModal');
     makeModalDraggable('GeneratorModal');
     makeModalDraggable('ExcelModal');
+
+    setIconStatus("Grid", "offline"); 
+    setIconStatus("Battery", "offline");
+    setIconStatus("Inverter", "offline");
+    setIconStatus("Load", "offline");
+    setIconStatus("Solar", "offline"); 
+    setIconStatus("Generator", "offline");
     // Загружаем настройки объекта
     loadObjectSettings(objectId);
 });

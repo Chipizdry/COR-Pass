@@ -150,6 +150,7 @@ async function startMonitoringDeye(objectData) {
                 if (solarExtData?.PVTotalPowerRaw != null) {
                     updatePowerByName( "Solar", PowerToIndicator(solarExtData.PVTotalPowerRaw, INVERTER_MAX_POWER) );
                     solarPowerLabel.textContent = formatPowerLabel(solarExtData.PVTotalPowerRaw, "solar");
+                     setIconStatus("Solar", "normal");
                 }
 
                 if (genData?.GenTotalPower != null) {
@@ -158,7 +159,7 @@ async function startMonitoringDeye(objectData) {
                    if (typeof serviceData?.genRelay === "boolean") {
                     setDeviceVisibility( "Generator", serviceData.genRelay ? "visible" : "hidden");
                     }
-                  
+                    setIconStatus("Generator", "normal");
                 }
 
                 if (loadData?.LoadTotalPower != null) {
@@ -167,6 +168,7 @@ async function startMonitoringDeye(objectData) {
                         PowerToIndicator(loadData.LoadTotalPower, INVERTER_MAX_POWER)
                     );
                     loadIndicatorLabel.textContent = formatPowerLabel(loadData.LoadTotalPower, "load");
+                    setIconStatus("Load", "normal");
                 }
 
                 if (battData?.batteryTotalPower != null) {
@@ -176,11 +178,13 @@ async function startMonitoringDeye(objectData) {
                     );
                      updateBatteryFill(battData.battery1SOC);
                     batteryFlowLabel.textContent = formatPowerLabel(battData.batteryTotalPower, "battery");
+                    setIconStatus("Battery", "normal");
                 }
 
                 if (gridData?.inputPowerTotal != null) {
                     updatePowerByName("Grid", PowerToIndicator(gridData.inputPowerTotal, INVERTER_MAX_POWER));
                     networkFlowLabel.textContent = formatPowerLabel(gridData.inputPowerTotal, "grid");
+                    setIconStatus("Grid", "normal");
                 }
 
 

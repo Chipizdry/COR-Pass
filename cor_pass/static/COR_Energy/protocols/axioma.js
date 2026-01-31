@@ -61,6 +61,7 @@ function hexToAscii(hex) {
 function startAxiomaCORBridgeWS(deviceId) {
    
      console.log("🚀 Инициализация Axioma COR-Bridge WS", { deviceId });
+           
 
     if (!deviceId) {
         console.error("❌ device_id не задан");
@@ -93,10 +94,19 @@ function startAxiomaCORBridgeWS(deviceId) {
 
             if (!cmd || !hex) {
                 console.warn("⚠️ Нет cmd или hex_response", raw);
+            setIconStatus("Grid", "offline"); 
+            setIconStatus("Battery", "offline");
+            setIconStatus("Inverter", "offline");
+            setIconStatus("Load", "offline");
+            setIconStatus("Solar", "offline"); 
+            setDeviceVisibility("ErrorIcon", "visible");
+
                 return;
             }
 
             const parsed = parseAxiomaByCmd(cmd, hex);
+
+          
 
             if (!parsed) {
                 console.warn("⚠️ Данные не распознаны");
@@ -107,6 +117,18 @@ function startAxiomaCORBridgeWS(deviceId) {
             console.log("📊 lastData обновлён:", window.lastData);
 
             updateUIByData(window.lastData);
+              // OFFLINE — бледно-серый
+              //  setIconStatus("Grid", "offline");
+
+              //setIconStatus("Grid", "normal");
+              setDeviceVisibility("ErrorIcon", "hidden");  
+
+                // Авария — красный
+                //setIconStatus("Battery", "alarm");
+
+                // Предупреждение — оранжевый
+                //setIconStatus("Inverter", "warning");
+
 
         } catch (e) {
             console.error("❌ Ошибка обработки WS:", e, event.data);
@@ -140,45 +162,53 @@ function stopAxiomaWS() {
     }
 }
 
-
-
 function parseAxiomaByCmd(cmd, hexResponse) {
+
+    const ascii = hexToAscii(hexResponse)
+        .replace(/[()\r\n\x03\x19]/g, "")
+        .trim();
+
+    // ✅ Все команды QPGS, QPGS0, QPGS1... идут в один парсер
+    if (cmd.startsWith("QPGS")) {
+        return parseQPGSn(cmd, ascii);
+    }
+
     switch (cmd) {
 
         case "QPIGS":
             return parseQPIGS(hexResponse);
 
         case "QFLAG":
-            return parseQFLAG(
-                hexToAscii(hexResponse)
-                    .replace(/[()\r\n\x03\x19]/g, "")
-                    .trim()
-            );
+            return parseQFLAG(ascii);
 
-        case "QPGS":
-            return parseQPGS(
-                hexToAscii(hexResponse)
-                    .replace(/[()\r\n\x03\x19]/g, "")
-                    .trim()
-                    .split(/\s+/)
-            );
+        case "QPIWS":
+            return parseQPIWS(ascii);    
 
         default:
             console.warn("❌ Неизвестная команда:", cmd);
             return null;
     }
 }
-
-
 /**
  * Парсер QFLAG
  */
-function parseQFLAG(ascii) {
-    // Пример входа: EADJDKUVXYZ
-    // E — включено, D — выключено, буквы после них — что именно
+function parseQFLAG(hexOrAscii) {
+    if (!hexOrAscii) return null;
 
-    if (!ascii || ascii.length < 2) return null;
+    // Если пришла hex-строка — конвертируем в ASCII
+    let ascii;
+    if (/^[0-9A-Fa-f]+$/.test(hexOrAscii.replace(/\s/g, ''))) {
+        ascii = '';
+        for (let i = 0; i < hexOrAscii.length; i += 2) {
+            const hexByte = hexOrAscii.substr(i, 2);
+            if (hexByte.trim() === '') continue;
+            ascii += String.fromCharCode(parseInt(hexByte, 16));
+        }
+    } else {
+        ascii = hexOrAscii;
+    }
 
+    // Расшифровка всех флагов QFLAG
     const flagsMap = {
         A: "silenceBuzzer",
         B: "overloadBypass",
@@ -192,19 +222,221 @@ function parseQFLAG(ascii) {
     };
 
     const result = {};
+    let currentState = null;
 
-    // Берём последовательность после E или D
-    const regex = /([ED])([A-Z])/g;
-    let match;
-    while ((match = regex.exec(ascii)) !== null) {
-        const status = match[1] === "E"; // E = true, D = false
-        const letter = match[2];
-        if (flagsMap[letter]) result[flagsMap[letter]] = status;
+    // Убираем скобки, пробелы и символ конца строки
+    ascii = ascii.replace(/[()\s\r\n]/g, "").trim();
+
+    for (let i = 0; i < ascii.length; i++) {
+        const ch = ascii[i].toUpperCase();
+
+        if (ch === "E") {
+            currentState = true;  // все последующие буквы включены
+        } 
+        else if (ch === "D") {
+            currentState = false; // все последующие буквы выключены
+        }
+        else if (flagsMap[ch] && currentState !== null) {
+            result[flagsMap[ch]] = currentState;
+        }
     }
 
     console.log("✅ QFLAG parsed:", result);
     return result;
 }
+
+function parseQPGSn(cmd, asciiResponse) {
+
+    // cmd может быть "QPGS" или "QPGS0"
+    let unitIndex = null;
+
+    if (cmd.length === 5) {
+        unitIndex = parseInt(cmd.replace("QPGS", ""), 10);
+    }
+
+    const clean = asciiResponse
+        .replace(/[()\r\n]/g, "")
+        .trim();
+
+    const parts = clean.split(/\s+/);
+
+    if (parts.length < 18) {
+        console.warn("❌ Недостаточно полей QPGS:", parts.length, parts);
+        return null;
+    }
+
+    const result = {
+        unit: unitIndex, // null если просто QPGS
+
+        parallelExist: parts[0] === "1",
+        serialNumber: parts[1],
+        workMode: parts[2],
+        faultCode: parseInt(parts[3]),
+
+        gridVoltage: parseFloat(parts[4]),
+        gridFrequency: parseFloat(parts[5]),
+
+        outputVoltage: parseFloat(parts[6]),
+        outputFrequency: parseFloat(parts[7]),
+
+        outputApparentPower: parseInt(parts[8]),
+        outputActivePower: parseInt(parts[9]),
+        loadPercent: parseInt(parts[10]),
+
+        batteryVoltage: parseFloat(parts[11]),
+        batteryChargeCurrent: parseInt(parts[12]),
+        batterySOC: parseInt(parts[13]),
+
+        pvVoltage: parseFloat(parts[14]),
+        totalChargeCurrent: parseInt(parts[15]),
+
+        totalOutputApparentPower: parseInt(parts[16]),
+        totalOutputActivePower: parseInt(parts[17])
+    };
+
+    // Полный пакет (27 полей)
+    if (parts.length >= 27) {
+
+        result.totalLoadPercent = parseInt(parts[18]);
+        result.inverterStatusBits = parts[19];
+
+        result.outputMode = parseInt(parts[20]);
+        result.chargerPriority = parseInt(parts[21]);
+
+        result.maxChargerCurrent = parseInt(parts[22]);
+        result.maxChargerRange = parseInt(parts[23]);
+        result.maxACChargerCurrent = parseInt(parts[24]);
+
+        result.pvChargeCurrent = parseInt(parts[25]);
+        result.batteryDischargeCurrent = parseInt(parts[26]);
+    }
+
+    console.log(`✅ ${cmd} parsed (${parts.length} fields):`, result);
+
+    return result;
+}
+
+
+/**
+ * Парсер QPIWS — Device Warning Status inquiry
+ * Возвращает битовую маску предупреждений a0–a31
+ */
+function parseQPIWS(asciiResponse) {
+
+    if (!asciiResponse) return null;
+
+    // Убираем скобки, CR/LF и мусор
+    const clean = asciiResponse
+        .replace(/[()\r\n]/g, "")
+        .trim();
+
+    // Ответ должен быть 32 символа "0/1"
+    if (clean.length < 32) {
+        console.warn("❌ QPIWS: недостаточно бит:", clean.length, clean);
+        return null;
+    }
+
+    // Берём первые 32 бита
+    const bits = clean.substring(0, 32).split("");
+
+    // Таблица предупреждений по документации
+    const warningsMap = [
+        { bit: 0,  name: "reserved0", description: "Reserved" },
+
+        { bit: 1,  name: "inverterFault", description: "Inverter fault" },
+        { bit: 2,  name: "busOverFault", description: "Bus Over Fault" },
+        { bit: 3,  name: "busUnderFault", description: "Bus Under Fault" },
+        { bit: 4,  name: "busSoftFail", description: "Bus Soft Fail Fault" },
+
+        { bit: 5,  name: "lineFail", description: "LINE_FAIL Warning" },
+        { bit: 6,  name: "opvShort", description: "OPVShort Warning" },
+
+        { bit: 7,  name: "inverterVoltageLow", description: "Inverter voltage too low" },
+        { bit: 8,  name: "inverterVoltageHigh", description: "Inverter voltage too high" },
+
+        { bit: 9,  name: "overTemperature", description: "Over temperature" },
+        { bit: 10, name: "fanLocked", description: "Fan locked" },
+        { bit: 11, name: "batteryVoltageHigh", description: "Battery voltage high" },
+
+        { bit: 12, name: "batteryLowAlarm", description: "Battery low alarm" },
+
+        { bit: 13, name: "reserved13", description: "Reserved" },
+
+        { bit: 14, name: "batteryUnderShutdown", description: "Battery under shutdown" },
+
+        { bit: 15, name: "reserved15", description: "Reserved" },
+
+        { bit: 16, name: "overload", description: "Over load" },
+
+        { bit: 17, name: "eepromFault", description: "Eeprom fault" },
+
+        { bit: 18, name: "inverterOverCurrent", description: "Inverter Over Current Fault" },
+        { bit: 19, name: "inverterSoftFail", description: "Inverter Soft Fail Fault" },
+        { bit: 20, name: "selfTestFail", description: "Self Test Fail Fault" },
+
+        { bit: 21, name: "opDcVoltageOver", description: "OP DC Voltage Over Fault" },
+        { bit: 22, name: "batteryOpen", description: "Bat Open Fault" },
+        { bit: 23, name: "currentSensorFail", description: "Current Sensor Fail Fault" },
+        { bit: 24, name: "batteryShort", description: "Battery Short Fault" },
+
+        { bit: 25, name: "powerLimit", description: "Power limit Warning" },
+        { bit: 26, name: "pvVoltageHigh", description: "PV voltage high Warning" },
+
+        { bit: 27, name: "mpptOverloadFault", description: "MPPT overload fault" },
+        { bit: 28, name: "mpptOverloadWarning", description: "MPPT overload warning" },
+
+        { bit: 29, name: "batteryTooLowToCharge", description: "Battery too low to charge" },
+
+        { bit: 30, name: "reserved30", description: "Reserved" },
+        { bit: 31, name: "reserved31", description: "Reserved" }
+    ];
+
+    // Формируем результат
+    const result = {
+        rawBits: clean,
+        activeWarnings: [],
+        activeFaults: []
+    };
+
+    // a1 определяет Fault/Warning для некоторых битов
+    const inverterFaultMain = bits[1] === "1";
+
+    warningsMap.forEach(item => {
+
+        if (bits[item.bit] === "1") {
+
+            // По документации: bits 9,10,11,16 зависят от a1
+            let type = "warning";
+
+            if ([9,10,11,16].includes(item.bit)) {
+                type = inverterFaultMain ? "fault" : "warning";
+            }
+
+            // Остальные жёстко Fault
+            if ([1,2,3,4,7,8,18,19,20,21,22,23,24].includes(item.bit)) {
+                type = "fault";
+            }
+
+            const entry = {
+                bit: item.bit,
+                name: item.name,
+                description: item.description,
+                type
+            };
+
+            if (type === "fault") {
+                result.activeFaults.push(entry);
+            } else {
+                result.activeWarnings.push(entry);
+            }
+        }
+    });
+
+    console.log("✅ QPIWS parsed:", result);
+
+    return result;
+}
+
 
 /**
  * Парсер QPIGS (оставлен без изменений)
@@ -257,7 +489,11 @@ function parseQPIGS(hexResponse) {
 
     console.log("✅ QPIGS результат:", result);
 
-
+        setIconStatus("Grid", "normal");
+        setIconStatus("Battery", "normal");
+        setIconStatus("Inverter", "normal");
+        setIconStatus("Load", "normal");
+        setIconStatus("Solar", "normal");
      // --- Добавляем обновление индикатора нагрузки ---
     if ( result.outputActivePower != null) {
         const INVERTER_MAX_POWER = 11000; // можно вынести глобально
@@ -344,58 +580,6 @@ if (result.inputPower != null) {
     networkFlowLabel.textContent = formatPowerLabel((result.inputPower), "grid");
 }
 
-    return result;
-}
-
-
-
-
-function parseQPGS(parts) {
-    console.log("➡️ parseQPGS parts:", parts);
-
-    const result = {
-        parallelExist: parts[0] === "1",
-        serialNumber: parts[1],
-        workMode: parts[2],
-        faultCode: parseInt(parts[3]),
-
-        gridVoltage: parseFloat(parts[4]),
-        gridFrequency: parseFloat(parts[5]),
-
-        outputVoltage: parseFloat(parts[6]),
-        outputFrequency: parseFloat(parts[7]),
-
-        outputApparentPower: parseInt(parts[8]),
-        outputActivePower: parseInt(parts[9]),
-        loadPercent: parseInt(parts[10]),
-
-        batteryVoltage: parseFloat(parts[11]),
-        batteryChargeCurrent: parseInt(parts[12]),
-        batterySOC: parseInt(parts[13]),
-
-        pvVoltage: parseFloat(parts[14]),
-        totalChargeCurrent: parseInt(parts[15]),
-
-        totalOutputApparentPower: parseInt(parts[16]),
-        totalOutputActivePower: parseInt(parts[17]),
-        totalLoadPercent: parseInt(parts[18]),
-
-        inverterStatusBits: parts[19],
-
-        outputMode: parseInt(parts[20]),          // T
-        chargerPriority: parseInt(parts[21]),     // U
-
-        maxChargerCurrent: parseInt(parts[22]),   // VV
-        maxChargerRange: parseInt(parts[23]),     // WW
-        maxACChargerCurrent: parseInt(parts[24]), // ZZ
-
-        pvChargeCurrent: parseInt(parts[25]),     // XX
-        batteryDischargeCurrent: parseInt(parts[26]) // YYY
-    };
-
-    console.log("✅ QPGS parsed:", result);
-
-   
     return result;
 }
 

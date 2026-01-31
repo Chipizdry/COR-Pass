@@ -173,6 +173,9 @@ footer {
 }
 
 
+.error-icon {  top: 220px; left: 385px;display: none;}
+
+
 .icon svg {
     display: block;
     margin: 0 auto; /* Для центрирования SVG внутри блока */

@@ -388,7 +388,9 @@ function setDeviceVisibility(name, state) {
         Generator: ["GeneratorIcon", "generatorLine"],
         Load: ["loadIcon", "loadLine"],
         Grid: ["power-grid-icon", "gridLine"],
-        Sun: ["SolarBatteryIcon", "solarLine"]
+        Sun: ["SolarBatteryIcon", "solarLine"],
+        Inverter: ["inverterIcon"],
+        ErrorIcon: ["ErrorIcon"]
         // при необходимости новые сущности сюда
     };
 
@@ -399,6 +401,80 @@ function setDeviceVisibility(name, state) {
         const el = document.getElementById(id);
         if (el) el.style.display = show ? "block" : "none";
     });
+}
+
+function setIconStatus(type, status) {
+
+    const statusColors = {
+        offline: "rgba(160,160,160,0.3)",
+        normal: null,
+        warning: "orange",
+        alarm: "red"
+    };
+
+    // SVG иконки
+    const iconMap = {
+        Battery: "batteryIcon",
+        Grid: "power-grid-icon",
+        Load: "loadIcon",
+        Generator: "GeneratorIcon",
+        Solar: "SolarBatteryIcon",
+        Inverter: "inverterIcon"
+    };
+
+    // HTML подписи
+    const labelMap = {
+        Battery: "batteryFlowLabel",
+        Grid: "networkFlowLabel",
+        Load: "loadIndicatorLabel",
+        Generator: "generatorFlowLabel",
+        Solar: "solarPowerLabel",
+        Inverter: "inverterFlowLabel"
+    };
+
+    const color = statusColors[status];
+
+    // ==========================
+    // ✅ 1) Меняем SVG иконку
+    // ==========================
+    const iconId = iconMap[type];
+    const icon = document.getElementById(iconId);
+
+    if (icon) {
+
+        if (status === "normal") {
+            icon.querySelectorAll("*").forEach(el => {
+                el.style.stroke = "";
+                el.style.fill = "";
+                el.style.opacity = "";
+            });
+        } else {
+            icon.querySelectorAll("path, rect, circle, text, tspan").forEach(el => {
+                if (el.hasAttribute("stroke")) el.style.stroke = color;
+                el.style.fill = color;
+                el.style.opacity = "1";
+            });
+        }
+    }
+
+    // ==========================
+    // ✅ 2) Меняем HTML подпись
+    // ==========================
+    const labelId = labelMap[type];
+    const label = document.getElementById(labelId);
+
+    if (label) {
+
+        if (status === "normal") {
+            label.style.color = ""; // вернуть оригинальный
+            label.style.opacity = "";
+        } else {
+            label.style.color = color;
+            label.style.opacity = "1";
+        }
+    }
+
+    console.log(`✅ ${type} status=${status}`);
 }
 
 
@@ -453,5 +529,8 @@ window.updateBatteryFill = updateBatteryFill;
 window.PowerToIndicator = PowerToIndicator;
 window.formatPowerLabel = formatPowerLabel;
 window.setDeviceVisibility = setDeviceVisibility;
+window.setIconStatus = setIconStatus;
 window.updateUIByData = updateUIByData;
 window.resolveCORBridgeDeviceId = resolveCORBridgeDeviceId;
+
+
