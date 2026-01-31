@@ -1,5 +1,6 @@
 
-
+let offlineTimer = null;
+const OFFLINE_DELAY = 4000; // 4 секунды
 let axiomaWS = null;
  const INVERTER_MAX_POWER = 11000;
  
@@ -82,9 +83,10 @@ function startAxiomaCORBridgeWS(deviceId) {
 
     axiomaWS.onopen = () =>
         console.log("✅ Axioma COR-Bridge WS подключён");
-
+        resetOfflineTimer();
     axiomaWS.onmessage = (event) => {
         console.log("📩 WS сообщение получено:", event.data);
+        resetOfflineTimer();
 
         try {
             const raw = JSON.parse(event.data);
@@ -92,15 +94,18 @@ function startAxiomaCORBridgeWS(deviceId) {
             const cmd = raw?.data?.cmd;
             const hex = raw?.data?.hex_response;
 
+
+              // ✅ Специальный случай: RS485 не отвечает
+            if (hex === "No response from RS485") {
+                setDeviceVisibility("ErrorIcon", "visible");
+                setErrorText("Нет связи с инвертором (RS bus)");
+                // ничего не парсим
+                return;
+            }
+
             if (!cmd || !hex) {
                 console.warn("⚠️ Нет cmd или hex_response", raw);
-            setIconStatus("Grid", "offline"); 
-            setIconStatus("Battery", "offline");
-            setIconStatus("Inverter", "offline");
-            setIconStatus("Load", "offline");
-            setIconStatus("Solar", "offline"); 
-            setDeviceVisibility("ErrorIcon", "visible");
-
+            setErrorText("Нет связи с COR-Bridge");
                 return;
             }
 

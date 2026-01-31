@@ -203,6 +203,8 @@ async function startMonitoringDeye(objectData) {
 
                     // 🔹 обновляем UI (включая все открытые модалки)
                     window.updateUIByData(window.lastData);
+                     setDeviceVisibility("ErrorIcon", "hidden");  
+
 
         } catch (err) {
             console.error("Ошибка мониторинга Deye:", err);

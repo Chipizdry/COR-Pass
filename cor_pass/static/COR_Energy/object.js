@@ -522,6 +522,43 @@ function formatValue(val) {
     return val;
 }
 
+function setErrorText(text) {
+    const label = document.getElementById("errorIndicatorLabel");
+
+    if (!label) {
+        console.warn("❌ errorIndicatorLabel не найден");
+        return;
+    }
+
+    label.textContent = text;
+}
+
+
+function setOfflineState() {
+
+    console.warn("⚠️ Нет данных > 4 сек → OFFLINE");
+
+    setIconStatus("Grid", "offline");
+    setIconStatus("Battery", "offline");
+    setIconStatus("Inverter", "offline");
+    setIconStatus("Load", "offline");
+    setIconStatus("Solar", "offline");
+
+    setDeviceVisibility("ErrorIcon", "visible");
+}
+
+
+function resetOfflineTimer() {
+
+    // если таймер уже был → убираем
+    if (offlineTimer) clearTimeout(offlineTimer);
+
+    // запускаем новый таймер
+    offlineTimer = setTimeout(() => {
+        setOfflineState();
+    }, OFFLINE_DELAY);
+}
+
 window.resolveModalSchema = resolveModalSchema;
 window.loadObjectSettings = loadObjectSettings;
 window.updatePowerByName = updatePowerByName;
@@ -532,5 +569,6 @@ window.setDeviceVisibility = setDeviceVisibility;
 window.setIconStatus = setIconStatus;
 window.updateUIByData = updateUIByData;
 window.resolveCORBridgeDeviceId = resolveCORBridgeDeviceId;
-
-
+window.setOfflineState = setOfflineState;
+window.resetOfflineTimer = resetOfflineTimer;
+window.setErrorText = setErrorText;

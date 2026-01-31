@@ -173,7 +173,16 @@ footer {
 }
 
 
-.error-icon {  top: 220px; left: 385px;display: none;}
+.error-icon {  top: 150px; left: 341px;display: none;}
+
+#errorIcon,
+#ErrorIcon {
+    width: 140px;
+    height: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 
 
 .icon svg {
