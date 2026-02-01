@@ -559,6 +559,48 @@ function resetOfflineTimer() {
     }, OFFLINE_DELAY);
 }
 
+function registerFail(type, message) {
+
+    if (type === "rs485") {
+        rs485FailCount++;
+
+        if (rs485FailCount >= FAIL_RS_BUS) {
+            setDeviceVisibility("ErrorIcon", "visible");
+            setErrorText(message);
+            setOfflineState();
+        }
+    }
+
+    if (type === "cor") {
+        corFailCount++;
+
+        if (corFailCount >= FAIL_COR_BRIDGE) {
+            setDeviceVisibility("ErrorIcon", "visible");
+            setErrorText(message);
+            setOfflineState()
+        }
+    }
+    if (type === "nakk") {
+        corFailCount++;
+
+        if (corFailCount >= FAIL_NAKK) {
+            setDeviceVisibility("ErrorIcon", "visible");
+            setErrorText(message);
+            setOfflineState();
+        }
+    }
+}
+
+
+function resetFails() {
+    rs485FailCount = 0;
+    corFailCount = 0;
+
+    setDeviceVisibility("ErrorIcon", "hidden");
+}
+
+
+
 window.resolveModalSchema = resolveModalSchema;
 window.loadObjectSettings = loadObjectSettings;
 window.updatePowerByName = updatePowerByName;
@@ -572,3 +614,5 @@ window.resolveCORBridgeDeviceId = resolveCORBridgeDeviceId;
 window.setOfflineState = setOfflineState;
 window.resetOfflineTimer = resetOfflineTimer;
 window.setErrorText = setErrorText;
+window.registerFail = registerFail;
+window.resetFails = resetFails;

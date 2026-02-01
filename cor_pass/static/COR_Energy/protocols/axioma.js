@@ -1,4 +1,10 @@
 
+let rs485FailCount = 0;
+let corFailCount = 0;
+
+const FAIL_COR_BRIDGE = 3; 
+const FAIL_RS_BUS = 3;
+const FAIL_NAKK=3;
 let offlineTimer = null;
 const OFFLINE_DELAY = 4000; // 4 секунды
 let axiomaWS = null;
@@ -36,7 +42,7 @@ async function startMonitoringAxioma(objectData) {
             }
 
             startAxiomaCORBridgeWS(deviceId);
-            break;
+        break;
 
         default:
             console.warn("Неизвестный протокол Axioma:", objectData.protocol);
@@ -93,19 +99,24 @@ function startAxiomaCORBridgeWS(deviceId) {
 
             const cmd = raw?.data?.cmd;
             const hex = raw?.data?.hex_response;
+            const asciiTest = hexToAscii(hex).trim();
 
+            if (asciiTest.includes("NAK")) {
+                console.warn("⚠️ Инвертор вернул NAK (команда отклонена):", asciiTest);
+                registerFail("nakk", "Инвертор отклонил команду (NAK)");
+                return; 
+            }
 
-              // ✅ Специальный случай: RS485 не отвечает
+              // ✅ Случай: RS485 не отвечает
             if (hex === "No response from RS485") {
-                setDeviceVisibility("ErrorIcon", "visible");
-                setErrorText("Нет связи с инвертором (RS bus)");
-                // ничего не парсим
+                 console.warn("⚠️ Инвертор не отвечает:", asciiTest);
+                registerFail("rs485", "Нет связи с инвертором (RS bus)");
                 return;
             }
 
             if (!cmd || !hex) {
                 console.warn("⚠️ Нет cmd или hex_response", raw);
-            setErrorText("Нет связи с COR-Bridge");
+                 registerFail("cor", "Нет связи с COR-Bridge");
                 return;
             }
 
@@ -122,19 +133,7 @@ function startAxiomaCORBridgeWS(deviceId) {
             console.log("📊 lastData обновлён:", window.lastData);
 
             updateUIByData(window.lastData);
-              // OFFLINE — бледно-серый
-              //  setIconStatus("Grid", "offline");
-
-              //setIconStatus("Grid", "normal");
-              setDeviceVisibility("ErrorIcon", "hidden");  
-
-                // Авария — красный
-                //setIconStatus("Battery", "alarm");
-
-                // Предупреждение — оранжевый
-                //setIconStatus("Inverter", "warning");
-
-
+            resetFails();
         } catch (e) {
             console.error("❌ Ошибка обработки WS:", e, event.data);
         }
@@ -467,7 +466,6 @@ function parseQPIGS(hexResponse) {
     }
 
     const apparentPower = parseFloat(parts[4]); // VA
-
     const outputVoltage = parseFloat(parts[2]) || 1; // V, защита от 0
     const outputCurrent = apparentPower / outputVoltage; // A
 
@@ -499,24 +497,19 @@ function parseQPIGS(hexResponse) {
         setIconStatus("Inverter", "normal");
         setIconStatus("Load", "normal");
         setIconStatus("Solar", "normal");
-     // --- Добавляем обновление индикатора нагрузки ---
-    if ( result.outputActivePower != null) {
-        const INVERTER_MAX_POWER = 11000; // можно вынести глобально
-        updatePowerByName(
-            "Load",
-            PowerToIndicator(result.outputActivePower, INVERTER_MAX_POWER)
-        );
-        const loadIndicatorLabel = document.querySelector("#loadIndicatorLabel");
-        if (loadIndicatorLabel) {
-            loadIndicatorLabel.textContent = formatPowerLabel(result.outputActivePower, "load");
-        }
-    }
+    
 
-  
+  // --- ☀️ Solar (PV панели) ---
+    const pvVoltage = Number(result.pvVoltage) || 0;
+    const pvCurrent = Number(result.pvChargeCurrent) || 0;
+
+    // Мощность солнечного входа
+    let solarPower = pvVoltage * pvCurrent;
+    if (!isFinite(solarPower)) solarPower = 0;
+    result.solarPower = solarPower;
 
  // --- АКБ ---
 const chargeCurrent = Number(result.batteryChargeCurrent) || 0;
-
 const dischargeCurrent = Number(result.batteryDischargeCurrent) || 0;
 
 const batteryVoltage = Number(result.batteryVoltage) || 0;
@@ -568,22 +561,33 @@ if (!isFinite(batteryTotalPower)) {
 
 result.batteryTotalPower = batteryTotalPower;
  updateBatteryFill(result.batterySOC);
-// UI
+
 if (result.batteryTotalPower != null) {
     const INVERTER_MAX_POWER = 11000;
     updatePowerByName( "Battery", PowerToIndicator(result.batteryTotalPower,  INVERTER_MAX_POWER ) );
-     batteryFlowLabel.textContent = formatPowerLabel(result.batteryTotalPower, "battery");
-    console.log("🔋 batteryTotalPower:", result.batteryTotalPower);
-
+    batteryFlowLabel.textContent = formatPowerLabel(result.batteryTotalPower, "battery");
 }
 
 
+if ( result.outputActivePower != null) {
+    const INVERTER_MAX_POWER = 11000; 
+    updatePowerByName( "Load", PowerToIndicator(result.outputActivePower, INVERTER_MAX_POWER));
+    loadIndicatorLabel.textContent = formatPowerLabel(result.outputActivePower, "load");
+}
 
 if (result.inputPower != null) {
     const INVERTER_MAX_POWER = 11000;
     updatePowerByName("Grid", PowerToIndicator(result.inputPower, INVERTER_MAX_POWER));
     networkFlowLabel.textContent = formatPowerLabel((result.inputPower), "grid");
 }
+
+
+if (result.solarPower != null) {
+    const INVERTER_MAX_POWER = 11000;
+    updatePowerByName("Solar",PowerToIndicator(result.solarPower, INVERTER_MAX_POWER));
+    solarPowerLabel.textContent = formatPowerLabel(result.solarPower, "solar");
+}
+
 
     return result;
 }
