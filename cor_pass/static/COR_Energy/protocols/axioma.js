@@ -3,8 +3,8 @@ let rs485FailCount = 0;
 let corFailCount = 0;
 
 const FAIL_COR_BRIDGE = 3; 
-const FAIL_RS_BUS = 3;
-const FAIL_NAKK=3;
+const FAIL_RS_BUS = 4;
+const FAIL_NAKK=5;
 let offlineTimer = null;
 const OFFLINE_DELAY = 4000; // 4 секунды
 let axiomaWS = null;
@@ -91,7 +91,7 @@ function startAxiomaCORBridgeWS(deviceId) {
         console.log("✅ Axioma COR-Bridge WS подключён");
         resetOfflineTimer();
     axiomaWS.onmessage = (event) => {
-        console.log("📩 WS сообщение получено:", event.data);
+       // console.log("📩 WS сообщение получено:", event.data);
         resetOfflineTimer();
 
         try {
@@ -321,29 +321,27 @@ function parseQPGSn(cmd, asciiResponse) {
 }
 
 
-/**
- * Парсер QPIWS — Device Warning Status inquiry
- * Возвращает битовую маску предупреждений a0–a31
- */
 function parseQPIWS(asciiResponse) {
 
     if (!asciiResponse) return null;
 
-    // Убираем скобки, CR/LF и мусор
+    // ==========================
+    // 1) Очистка ответа
+    // ==========================
     const clean = asciiResponse
         .replace(/[()\r\n]/g, "")
         .trim();
 
-    // Ответ должен быть 32 символа "0/1"
     if (clean.length < 32) {
         console.warn("❌ QPIWS: недостаточно бит:", clean.length, clean);
         return null;
     }
 
-    // Берём первые 32 бита
     const bits = clean.substring(0, 32).split("");
 
-    // Таблица предупреждений по документации
+    // ==========================
+    // 2) Таблица битов
+    // ==========================
     const warningsMap = [
         { bit: 0,  name: "reserved0", description: "Reserved" },
 
@@ -395,48 +393,80 @@ function parseQPIWS(asciiResponse) {
         { bit: 31, name: "reserved31", description: "Reserved" }
     ];
 
-    // Формируем результат
+    // ==========================
+    // 3) Результат
+    // ==========================
     const result = {
         rawBits: clean,
         activeWarnings: [],
         activeFaults: []
     };
 
-    // a1 определяет Fault/Warning для некоторых битов
     const inverterFaultMain = bits[1] === "1";
 
+    // ==========================
+    // 4) Разбор битов
+    // ==========================
     warningsMap.forEach(item => {
 
-        if (bits[item.bit] === "1") {
+        // ❌ Reserved не показываем
+        if (item.name.startsWith("reserved")) return;
 
-            // По документации: bits 9,10,11,16 зависят от a1
-            let type = "warning";
+        if (bits[item.bit] !== "1") return;
 
-            if ([9,10,11,16].includes(item.bit)) {
-                type = inverterFaultMain ? "fault" : "warning";
-            }
+        let type = "warning";
 
-            // Остальные жёстко Fault
-            if ([1,2,3,4,7,8,18,19,20,21,22,23,24].includes(item.bit)) {
-                type = "fault";
-            }
+        // Bits зависят от a1
+        if ([9,10,11,16].includes(item.bit)) {
+            type = inverterFaultMain ? "fault" : "warning";
+        }
 
-            const entry = {
-                bit: item.bit,
-                name: item.name,
-                description: item.description,
-                type
-            };
+        // Всегда Fault
+        if ([1,2,3,4,7,8,18,19,20,21,22,23,24,27].includes(item.bit)) {
+            type = "fault";
+        }
 
-            if (type === "fault") {
-                result.activeFaults.push(entry);
-            } else {
-                result.activeWarnings.push(entry);
-            }
+        const entry = {
+            bit: item.bit,
+            description: item.description,
+            type
+        };
+
+        if (type === "fault") {
+            result.activeFaults.push(entry);
+        } else {
+            result.activeWarnings.push(entry);
         }
     });
 
     console.log("✅ QPIWS parsed:", result);
+
+    // ==========================
+    // 5) UI отображение
+    // ==========================
+
+    // ❗ Fault важнее Warning
+    if (result.activeFaults.length > 0) {
+
+        setDeviceVisibility("FaultIcon", "visible");
+        setErrorText("Ошибка: " + result.activeFaults[0].description);
+
+        setDeviceVisibility("WarningIcon", "hidden");
+    }
+
+    else if (result.activeWarnings.length > 0) {
+
+        setDeviceVisibility("WarningIcon", "visible");
+        setWarningText("Предупреждение: " + result.activeWarnings[0].description);
+
+        setDeviceVisibility("FaultIcon", "hidden");
+    }
+
+    else {
+        // Всё чисто
+        setDeviceVisibility("WarningIcon", "hidden");
+        setDeviceVisibility("FaultIcon", "hidden");
+    }
 
     return result;
 }
@@ -446,10 +476,9 @@ function parseQPIWS(asciiResponse) {
  * Парсер QPIGS (оставлен без изменений)
  */
 function parseQPIGS(hexResponse) {
-    console.log("➡️ parseQPIGS вход:", hexResponse);
-
+ 
     const ascii = hexToAscii(hexResponse).trim();
-    console.log("🔤 ASCII:", ascii);
+   // console.log("🔤 ASCII:", ascii);
 
     if (!ascii.startsWith("(")) {
         console.warn("❌ Не QPIGS:", ascii);
@@ -458,7 +487,7 @@ function parseQPIGS(hexResponse) {
 
     const clean = ascii.replace(/[()]/g, "");
     const parts = clean.split(/\s+/);
-    console.log("🧩 QPIGS parts:", parts);
+   // console.log("🧩 QPIGS parts:", parts);
 
     if (parts.length < 17) {
         console.warn("❌ Недостаточно полей QPIGS:", parts.length, parts);

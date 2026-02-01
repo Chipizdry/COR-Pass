@@ -390,7 +390,8 @@ function setDeviceVisibility(name, state) {
         Grid: ["power-grid-icon", "gridLine"],
         Sun: ["SolarBatteryIcon", "solarLine"],
         Inverter: ["inverterIcon"],
-        ErrorIcon: ["ErrorIcon"]
+        ErrorIcon: ["ErrorIcon"],
+        WarningIcon: ["WarningIcon"]
         // при необходимости новые сущности сюда
     };
 
@@ -529,7 +530,28 @@ function setErrorText(text) {
         console.warn("❌ errorIndicatorLabel не найден");
         return;
     }
+    label.textContent = text;
+}
 
+
+function setWarningText(text) {
+    const label = document.getElementById("warningIndicatorLabel");
+
+    if (!label) {
+        console.warn("❌ warningIndicatorLabel не найден");
+        return;
+    }
+    label.textContent = text;
+}
+
+
+function setFaultText(text) {
+    const label = document.getElementById("faultIndicatorLabel");
+
+    if (!label) {
+        console.warn("❌ faultIndicatorLabel не найден");
+        return;
+    }
     label.textContent = text;
 }
 
@@ -566,6 +588,8 @@ function registerFail(type, message) {
 
         if (rs485FailCount >= FAIL_RS_BUS) {
             setDeviceVisibility("ErrorIcon", "visible");
+            setDeviceVisibility("WarningIcon", "hidden");
+            setDeviceVisibility("FaultIcon", "hidden");
             setErrorText(message);
             setOfflineState();
         }
@@ -576,6 +600,8 @@ function registerFail(type, message) {
 
         if (corFailCount >= FAIL_COR_BRIDGE) {
             setDeviceVisibility("ErrorIcon", "visible");
+            setDeviceVisibility("WarningIcon", "hidden");
+            setDeviceVisibility("FaultIcon", "hidden");
             setErrorText(message);
             setOfflineState()
         }
@@ -585,6 +611,8 @@ function registerFail(type, message) {
 
         if (corFailCount >= FAIL_NAKK) {
             setDeviceVisibility("ErrorIcon", "visible");
+            setDeviceVisibility("WarningIcon", "hidden");
+            setDeviceVisibility("FaultIcon", "hidden");
             setErrorText(message);
             setOfflineState();
         }
@@ -614,5 +642,7 @@ window.resolveCORBridgeDeviceId = resolveCORBridgeDeviceId;
 window.setOfflineState = setOfflineState;
 window.resetOfflineTimer = resetOfflineTimer;
 window.setErrorText = setErrorText;
+window.setWarningText = setWarningText;
+window.setFaultText = setFaultText;
 window.registerFail = registerFail;
 window.resetFails = resetFails;
